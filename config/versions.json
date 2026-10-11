@@ -1,0 +1,16 @@
+{
+  "f1": {
+    "elf": "SLPM_654.28",
+    "serial": "SLPM-65428",
+    "title": "Biohazard Outbreak (Japan)",
+    "obsrv": {"lobby_port": 8300, "game_port": 8690, "kddi_title_dir": "00000002"},
+    "notes": "Disc is v1.00; the online server pushes a 0x7AA0-byte v1.01 code patch (see docs/NETWORK.md)."
+  },
+  "f2": {
+    "elf": "SLPM_656.92",
+    "serial": "SLPM-65692",
+    "title": "Biohazard Outbreak File 2 (Japan)",
+    "obsrv": {"lobby_port": 8200, "game_port": 8590, "kddi_title_dir": "00000010"},
+    "notes": ""
+  }
+}

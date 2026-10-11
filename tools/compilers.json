@@ -1,0 +1,29 @@
+{
+  "_comment": "decomp.me compiler ids (github.com/decompme/compilers, platforms/ps2) built before each game's master date. Biohazard Outbreak JP shipped 2003-12-11, File 2 JP 2004-09-09. Capcom precedent: CVX = Metrowerks, DMC3 (2005) = mwcps2-3.0b52-030722 for game code + ee-gcc for libraries. Trim this list once docs/COMPILER.md pins the real one.",
+  "candidates": {
+    "f1": [
+      "mwcps2-3.0.3-020716",
+      "mwcps2-3.0b22-020926",
+      "mwcps2-3.0b38-030307",
+      "mwcps2-3.0.1b44-030325",
+      "mwcps2-3.0.1b51-030512",
+      "mwcps2-3.0b50-030527",
+      "mwcps2-3.0b52-030722",
+      "mwcps2-3.0.1b74-030811",
+      "mwcps2-3.0.1b75-030916",
+      "ee-gcc2.96",
+      "ee-gcc2.95.3-136",
+      "ee-gcc3.2-030926"
+    ],
+    "f2": [
+      "mwcps2-3.0b52-030722",
+      "mwcps2-3.0.1b75-030916",
+      "mwcps2-3.0.1b87-031208",
+      "mwcps2-3.0.1b95-040309",
+      "mwcps2-3.0.1b103-040528",
+      "ee-gcc2.96",
+      "ee-gcc2.95.3-136",
+      "ee-gcc3.2-030926"
+    ]
+  }
+}

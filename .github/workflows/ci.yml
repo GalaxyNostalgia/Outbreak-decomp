@@ -1,0 +1,11 @@
+name: ci
+on: [push, pull_request]
+jobs:
+  firewall:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: No game data in the repository
+        run: python3 -I tools/firewall.py
+      - name: Scripts compile
+        run: python3 -m py_compile configure.py tools/*.py

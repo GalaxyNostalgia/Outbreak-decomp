@@ -1,0 +1,42 @@
+# Game data and everything derived from it. Never commit these.
+/orig/
+/asm/
+/assets/
+/build/
+*.iso
+*.ISO
+*.bin
+*.img
+*.mdf
+*.cso
+*.chd
+*.xdelta
+*.ppf
+SLPM_*
+!config/SLPM_*/
+SLPS_*
+SLUS_*
+SLES_*
+*.IRX
+*.irx
+*.AFS
+*.afs
+
+# splat byproducts
+/include/macro.inc
+/include/labels.inc
+/include/include_asm.h
+/include/gte_macros.inc
+*.ld
+!config/**/*.ld
+undefined_*_auto.txt
+
+# tools fetched by configure.py
+/tools/compilers/
+
+# python / editors
+__pycache__/
+*.pyc
+.venv/
+.vscode/
+.idea/
