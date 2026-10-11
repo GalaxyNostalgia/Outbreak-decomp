@@ -50,6 +50,25 @@ def cut(text_s, name):
     sys.exit(f"{name} not found in {text_s}")
 
 
+def jump_tables(asm_dir, body):
+    """The function's jump tables from the data asm, with entries pointing at its labels (m2c needs them)."""
+    names = sorted(set(re.findall(r"\b(jtbl_[0-9A-F]+)\b", body)))
+    if not names:
+        return ""
+    out = ["", ".section .rodata"]
+    data = "".join(p.read_text() for p in sorted(asm_dir.glob("data/*.s")))
+    for name in names:
+        m = re.search(rf"(?ms)^dlabel {name}\n(.*?)^enddlabel", data)
+        if not m:
+            continue
+        out.append(f"glabel {name}")
+        for w in re.findall(r"\.word 0x([0-9A-F]{8})", m.group(1)):
+            if int(w, 16) == 0:
+                break
+            out.append(f"    .word .L{w}")
+    return "\n".join(out) + "\n"
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("target")
@@ -60,6 +79,10 @@ def main():
     key, _, t = a.target.partition(".")
     elf = versions[key]["elf"]
     body = cut(ROOT / "asm" / elf / t / "text.s", a.function)
+    tables = jump_tables(ROOT / "asm" / elf / t, body)
+    for target in sorted(set(re.findall(r"\.word \.L([0-9A-F]{8})", tables))):
+        if not re.search(rf"^\s*\.L{target}:", body, re.M):
+            body = re.sub(rf"(?m)^(\s*/\* [0-9A-F]+ {target} )", rf".L{target}:\n\1", body, count=1)
     body = re.sub(r"/\*.*?\*/", "", body)
     calls = sorted(set(re.findall(r"\bjal\s+(\w+)", body)))
     data = sorted(set(re.findall(r"\b(D_[0-9A-F]+)\b", body)))
@@ -67,7 +90,7 @@ def main():
     if not a.m2c.exists():
         sys.exit(f"m2c not found at {a.m2c}: git clone https://github.com/matt-kempster/m2c next to the repo")
     with tempfile.NamedTemporaryFile("w", suffix=".s", delete=False) as f:
-        f.write(PRELUDE + body)
+        f.write(PRELUDE + body + tables)
         path = f.name
     r = subprocess.run([sys.executable, str(a.m2c), "--target", "mips-mwcc-c", "--valid-syntax", path],
                        capture_output=True, text=True)

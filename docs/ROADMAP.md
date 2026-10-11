@@ -31,6 +31,10 @@ Each phase ends with a check that a machine can run. "Done" means the check pass
 
 - 2026-10-11: game code is Metrowerks 3.0.x; `build.py` links decompiled C in place of asm, and 7 File 1
   `game` functions are in `src/`, byte-identical ([COMPILER.md](COMPILER.md), [DECOMPILING.md](DECOMPILING.md)).
+- 2026-10-11: the boot path's system layer (IOP modules, memory, DMA queue, GS setup) is in C; `NON_MATCHING`
+  marks functions that are written but not byte-identical yet. Code layout: Sony libraries 0x100000-0x11DFFF,
+  CRI ADX/Sofdec 0x11E000-0x17FFFF, Sony pad/memory card/dbc 0x180000-0x188FFF, Capcom engine and game
+  0x189000-0x1D7FFF.
 
 
 1. Run the compiler test in [COMPILER.md](COMPILER.md) on 10–20 small functions per game. Both ELFs say

@@ -12,6 +12,14 @@ char *strcat(char *dst, const char *src);
 char *strupr(char *s);                       /* upper-cases ASCII in place (Sony libc ctype table) */
 s32 sprintf(char *dst, const char *fmt, ...);
 s32 printf(const char *fmt, ...);
+/* On PC the game's heap comes from a block in the program's own image (src/ps2ram.c), so every address the
+   game handles stays below 0x10000000 like on the PS2: its DMA queue keeps a type in an address's top 4 bits. */
+#ifdef PLATFORM_PC
+#define malloc pc_game_malloc
+#define free pc_game_free
+#endif
+void *malloc(u32 size);
+void free(void *p);
 
 s32 sceOpen(const char *name, s32 flags, ...);
 s32 sceClose(s32 fd);

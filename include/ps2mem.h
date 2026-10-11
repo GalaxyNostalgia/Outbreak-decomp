@@ -19,8 +19,22 @@ extern u8 pc_ram[];
 #ifdef PLATFORM_PC
 volatile u32 *pc_hw_reg(u32 addr);
 #define HW_REG32(addr) (*pc_hw_reg(addr))
+#define HW_REG64(addr) (*(volatile u64 *)pc_hw_reg(addr))
 #else
 #define HW_REG32(addr) (*(volatile u32 *)(addr))
+#define HW_REG64(addr) (*(volatile u64 *)(addr))
 #endif
+
+/* GS privileged registers */
+#define GS_PMODE 0x12000000
+#define GS_SMODE2 0x12000020
+#define GS_DISPFB1 0x12000070
+#define GS_DISPLAY1 0x12000080
+#define GS_DISPFB2 0x12000090
+#define GS_DISPLAY2 0x120000A0
+#define GS_EXTWRITE 0x120000D0
+#define GS_CSR 0x12001000
+#define GS_IMR 0x12001010
+#define GS_BUSDIR 0x12001040
 
 #endif

@@ -7,8 +7,6 @@
    Sony graphics library builds. Layouts follow the GS registers; the offsets match what
    the game's library code reads and writes (see func_00112E38 sceGsSetDefDBuff). */
 
-typedef unsigned long long u64;
-
 typedef struct { u64 FBP:9; u64 FBW:6; u64 PSM:5; u64 pad0:12; u64 DBX:11; u64 DBY:11; u64 pad1:10; } sceGsDispfb;
 typedef struct { u64 FBP:9; u64 pad0:7; u64 FBW:6; u64 pad1:2; u64 PSM:6; u64 pad2:2; u64 FBMSK:32; } sceGsFrame;
 
@@ -58,6 +56,7 @@ void sceGsResetPath(void);
 void sceGsSetDefDBuff(sceGsDBuff *db, s16 psm, s16 w, s16 h, s16 ztest, s16 zpsm, s16 clear);
 s32 sceGsSwapDBuff(sceGsDBuff *db, s32 id);
 s32 sceGsSyncV(s32 mode);
+void *sceGsSyncVCallback(s32 (*func)(s32));
 s32 sceGsSyncPath(s32 mode, u16 timeout);
 s32 sceGsSetDefLoadImage(sceGsLoadImage *lp, s16 dbp, s16 dbw, s16 dpsm, s16 x, s16 y, s16 w, s16 h);
 s32 sceGsExecLoadImage(sceGsLoadImage *lp, void *src);
@@ -66,7 +65,6 @@ void sceDevVif0Reset(void);
 void sceDevVif1Reset(void);
 void sceDevVu0Reset(void);
 void sceDevVu1Reset(void);
-void sceDmaReset(s32 mode);
 s32 FlushCache(s32 op);
 void *memset(void *dst, s32 c, u32 n);
 

@@ -1,0 +1,66 @@
+#include "system.h"
+
+
+TexEntry *func_0019E140(void) {
+    s32 i;
+
+    for (i = 0; i < 0x200; i++) {
+        if (D_0027E2F0[i].used == 0) {
+            D_0023BA68++;
+            return &D_0027E2F0[i];
+        }
+    }
+    return NULL;
+}
+
+void func_0019E1A0(TexEntry *e) {
+    TexEntry *prev = e->prev;
+    TexEntry *next = e->next;
+
+    if (prev != NULL) {
+        prev->next = next;
+    } else if (next != NULL) {
+        D_0023BA6C = next;
+    } else {
+        D_0023BA6C = NULL;
+    }
+    if (next != NULL) {
+        next->prev = prev;
+    }
+    if (e->owner != NULL) {
+        e->owner->resident = 0;
+        e->owner->state = 4;
+    }
+    func_0018D600(e, 0, sizeof(TexEntry));
+    D_0023BA68--;
+}
+
+s32 func_0019E4B0(void) {
+    while (D_0023BA6C != NULL) {
+        func_0019E1A0(D_0023BA6C);
+    }
+    return 1;
+}
+
+u32 func_0019BF60(u32 size) {
+    s32 i;
+    u32 blocks;
+    VramBlock *b;
+
+    if (D_0023BA60 >= 6) {
+        return 0;
+    }
+    func_0019E4B0();
+    blocks = (((size + 0xFF) >> 8) + 0x1F) & ~0x1F;
+    for (b = D_0027E2C0, i = 0; i < 6; b++, i++) {
+        if (b->used == 0) {
+            break;
+        }
+    }
+    b->used = 1;
+    b->addr = D_00281DB0.vramNext;
+    b->size = blocks;
+    D_0023BA60++;
+    D_00281DB0.vramNext += blocks;
+    return b->addr;
+}

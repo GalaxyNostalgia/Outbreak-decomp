@@ -1,4 +1,5 @@
 #include "libgraph.h"
+#include "libdma.h"
 #include "ps2mem.h"
 
 /* Boot-time graphics setup, called first thing by main(): resets the vector units and

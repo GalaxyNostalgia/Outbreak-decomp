@@ -45,6 +45,21 @@ s32 WakeupThread(s32 id);
 s32 iWakeupThread(s32 id);
 s32 RotateThreadReadyQueue(s32 priority);
 s32 CreateSema(struct SemaParam *param);
+s32 AddIntcHandler(s32 cause, s32 (*handler)(s32 cause), s32 next);
+s32 AddIntcHandler2(s32 cause, s32 (*handler)(s32 cause, void *arg, void *addr), s32 next, void *arg);
+s32 RemoveIntcHandler(s32 cause, s32 id);
+s32 AddDmacHandler(s32 channel, s32 (*handler)(s32 channel), s32 next);
+s32 AddDmacHandler2(s32 channel, s32 (*handler)(s32 channel, void *arg, void *addr), s32 next, void *arg);
+s32 RemoveDmacHandler(s32 channel, s32 id);
+s32 EnableIntc(s32 cause);
+s32 DisableIntc(s32 cause);
+s32 EnableDmac(s32 channel);
+s32 DisableDmac(s32 channel);
+s32 iEnableIntc(s32 cause);
+s32 iDisableIntc(s32 cause);
+void iFlushCache(s32 op);
+s32 DIntr(void);
+s32 EIntr(void);
 s32 DeleteSema(s32 id);
 s32 SignalSema(s32 id);
 s32 iSignalSema(s32 id);
@@ -71,6 +86,5 @@ s32 sceSifLoadStartModule(const char *path, s32 argLen, const char *args, s32 *r
 s32 sceDevctl(const char *name, s32 cmd, void *arg, u32 argLen, void *buf, u32 bufLen);
 s32 sceCdInit(s32 mode);
 s32 sceCdMmode(s32 media);
-void *sceDmaGetChan(s32 id);
 
 #endif
