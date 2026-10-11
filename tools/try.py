@@ -5,9 +5,10 @@
     python -I tools/try.py f1.game scratch.c --flags "-O4,p" --cc mwcps2-2.4-001213 -v
 
 Functions are matched by name: `func_005B47E0` in the C file is compared with the function
-splat named func_005B47E0 in asm/<ELF>/<target>/text.s. Relocated fields (jal targets,
-%hi/%lo, gp offsets) are masked on both sides, so a function that differs only by
-addresses still counts as a match. Exit code 0 when every function matches.
+splat named func_005B47E0 in asm/<ELF>/<target>/text.s. Fields the object file relocates
+(jal targets, %hi/%lo, gp offsets) are compared without their address bits, so a function
+that differs only by addresses still counts as a match; tools/build.py then checks the real
+bytes. Exit code 0 when every function matches.
 """
 import argparse
 import json
@@ -20,8 +21,6 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 CROSS = os.environ.get("CROSS", "mips-linux-gnu-")
-DEFAULT_CC = "mwcps2-2.4-001213"       # its output carries .comment "MW MIPS C Compiler (2.4.1.01)", same as the games
-DEFAULT_FLAGS = "-O4,p"
 LINE = re.compile(r"/\* [0-9A-F]+ ([0-9A-F]{8}) ([0-9A-F]{8}) \*/")
 
 
@@ -41,15 +40,6 @@ def original_functions(asm_text):
     return out
 
 
-def mask(w):
-    op = w >> 26
-    if op in (2, 3):                         # j / jal
-        return w & 0xFC000000
-    if op in (0x0F,) or (op not in (0, 0x1C, 0x10, 0x11, 0x12, 0x13) and ((w >> 21) & 31) in (1, 28)):
-        return w & 0xFFFF0000                # lui, or a load/store/addiu through $at or $gp
-    return w
-
-
 def compile_c(src, cc, flags, out):
     cdir = ROOT / "tools/compilers"
     exe = cdir / cc / "mwccps2.exe"
@@ -65,11 +55,17 @@ def compile_c(src, cc, flags, out):
 
 
 def object_functions(obj):
-    """{name: [words]} from an MW object (one .text section per function)."""
+    """{name: (words, {word_index: reloc_type})} from an MW object (one .text section per function)."""
     d = obj.read_bytes()
     shoff, = struct.unpack_from("<I", d, 0x20)
     shentsize, shnum, shstrndx = struct.unpack_from("<HHH", d, 0x2E)
     sh = [struct.unpack_from("<10I", d, shoff + i * shentsize) for i in range(shnum)]
+    relocs = {}
+    for s in sh:
+        if s[1] == 9:                        # SHT_REL: info = section it applies to
+            for k in range(s[5] // 8):
+                r_off, r_info = struct.unpack_from("<II", d, s[4] + k * 8)
+                relocs.setdefault(s[7], {})[r_off // 4] = r_info & 0xFF
     out = {}
     for s in sh:
         if s[1] != 2:                        # SHT_SYMTAB
@@ -84,45 +80,64 @@ def object_functions(obj):
             sec = sh[shndx]
             size = size or sec[5]
             body = d[sec[4] + value:sec[4] + value + size]
-            out[name] = list(struct.unpack(f"<{len(body) // 4}I", body))
+            rel = {i - value // 4: t for i, t in relocs.get(shndx, {}).items()}
+            out[name] = (list(struct.unpack(f"<{len(body) // 4}I", body)), rel)
     return out
+
+
+R_MIPS_26, R_MIPS_HI16, R_MIPS_LO16, R_MIPS_GPREL16 = 4, 5, 6, 7
+
+
+def mask_rel(w, rtype):
+    if rtype == R_MIPS_26:
+        return w & 0xFC000000
+    if rtype in (R_MIPS_HI16, R_MIPS_LO16, R_MIPS_GPREL16):
+        return w & 0xFFFF0000
+    return w
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("target", help="f1.game, f2.main, ...")
     ap.add_argument("src", type=Path)
-    ap.add_argument("--cc", default=DEFAULT_CC)
-    ap.add_argument("--flags", default=DEFAULT_FLAGS)
+    ap.add_argument("--cc", help="compiler id (default: the game's, from config/versions.json)")
+    ap.add_argument("--flags", help="compiler flags (default: the game's)")
     ap.add_argument("-v", "--verbose", action="store_true", help="show both sides of non-matching functions")
     a = ap.parse_args()
     versions = json.loads((ROOT / "config/versions.json").read_text())
     key, _, t = a.target.partition(".")
     en = key.endswith("en")
-    elf = versions[key[:-2] if en else key]["elf"]
+    ver = versions[key[:-2] if en else key]
+    elf = ver["elf"]
+    a.cc = a.cc or ver["compiler"]["cc"]
+    a.flags = a.flags or ver["compiler"]["flags"]
     asm = ROOT / "asm" / elf / ("en/" + t if en else t) / "text.s"
     orig = original_functions(asm)
     obj = ROOT / "build" / "try.o"
     obj.parent.mkdir(exist_ok=True)
-    compile_c(a.src.resolve(), a.cc, a.flags, obj)
+    compile_c(a.src.resolve(), a.cc, f"{a.flags} -DVERSION_{key[:-2].upper() if en else key.upper()}"
+              + (" -DENGLISH" if en else ""), obj)
     mine = object_functions(obj)
     ok = True
-    for name, words in mine.items():
+    for name, (words, rel) in mine.items():
         if name not in orig:
             print(f"  ?  {name}: no such function in {a.target}")
             ok = False
             continue
         want = orig[name]
-        same = len(words) == len(want) and all(mask(x) == mask(y) for x, y in zip(words, want))
+        # relocated fields are compared without their address bits; everything else exactly
+        mx = [mask_rel(w, rel[i]) if i in rel else w for i, w in enumerate(words)]
+        my = [mask_rel(w, rel[i]) if i in rel else w for i, w in enumerate(want)]
+        same = len(words) == len(want) and mx == my
         ok &= same
-        diff = sum(mask(x) != mask(y) for x, y in zip(words, want)) + abs(len(words) - len(want))
+        diff = sum(x != y for x, y in zip(mx, my)) + abs(len(words) - len(want))
         print(f"  {'OK' if same else 'XX'} {name}: {len(words)} vs {len(want)} instructions"
               + ("" if same else f", {diff} differ"))
         if not same and a.verbose:
             for i in range(max(len(words), len(want))):
                 x = f"{words[i]:08x}" if i < len(words) else "--------"
                 y = f"{want[i]:08x}" if i < len(want) else "--------"
-                flag = "" if i < min(len(words), len(want)) and mask(words[i]) == mask(want[i]) else "  <"
+                flag = "" if i < min(len(mx), len(my)) and mx[i] == my[i] else "  <"
                 print(f"      {i * 4:4x}  mine {x}  orig {y}{flag}")
     sys.exit(0 if ok else 1)
 

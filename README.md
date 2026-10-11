@@ -16,7 +16,10 @@ Japanese releases), aiming for a native PC version built from the same source th
 | `f2` | Biohazard Outbreak File 2 | SLPM-65692 (VER 1.03) | `SLPM_656.92` + 9 overlays (`BIN/*.DAT`) | 10/10 targets rebuild byte-identical from asm |
 | `f1en` / `f2en` | same, with the English fan patch v2.1 | your patched image in `orig/<ELF>/english/` | the 4 binaries per game the patch changes | 8/8 targets rebuild byte-identical from asm |
 
-Decompiled so far: 7 of ~14,500 File 1 functions (`src/`), linked into the build and byte-identical; File 2 not started. About half of File 2's code is
+Decompiled so far: 10 of ~14,500 File 1 functions (`src/`), byte-identical in the PS2 build; File 2 not started.
+
+**PC port** (`pc/`, [docs/PCPORT.md](docs/PCPORT.md)): a 32-bit native build that maps PS2 memory, reads your disc
+image and runs the decompiled code natively. It can't start the game yet; `--test` runs the decompiled disc functions. About half of File 2's code is
 shared with File 1 and only needs decompiling once. What's in the binaries: [docs/LAYOUT.md](docs/LAYOUT.md).
 
 Japanese only, on purpose: Obsrv emulates the Japanese online service, and nobody emulates the US/EU one.
@@ -68,7 +71,7 @@ python -I tools/build.py f1 f2       # rebuild all 19 binaries and check they're
 
 ## Plan
 
-[docs/ROADMAP.md](docs/ROADMAP.md): baseline → compiler → decompilation → IOP → PC platform layer → Obsrv →
+[docs/ROADMAP.md](docs/ROADMAP.md) and [docs/PCPORT.md](docs/PCPORT.md): baseline → compiler → decompilation → IOP → PC platform layer → Obsrv →
 English. Online details: [docs/NETWORK.md](docs/NETWORK.md). Compiler proof: [docs/COMPILER.md](docs/COMPILER.md).
 
 ## Thanks

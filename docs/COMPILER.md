@@ -12,9 +12,11 @@ prove it ourselves.
   this) comes from some object linked into the ELF, probably a runtime/library object, not the game code.
 - `-O4,p` (DMC3's setting) **rules out 3.0b38, 3.0b50 and 3.0b52** for File 1: they schedule `actor_update.c`
   differently. `-O3` and `-O4,s` match with all of them, so flags aren't pinned yet either.
-- **Provisional default:** `mwcps2-3.0.1b75-030916` with `-O4,p` (`config/versions.json`), the newest build
-  dated before File 1's release that matches. Narrow it with harder functions (loops, switches, floats,
-  inlining). Overlays may have been built with different flags than the main ELF.
+- **Then the main ELF's disc helper `func_001A8300` ruled out every 3.0.1 build:** only 3.0b38, 3.0b50 and
+  3.0b52 compile it correctly, with `-O3`, `-O3,s` or `-O4,s`.
+- **Current default: `mwcps2-3.0b52-030722` with `-O3`** (`config/versions.json`), the build Capcom used for
+  DMC3. All 10 decompiled functions (main ELF and `game` overlay) match with it. b38/b50 and the `,s`
+  variants still need a function that tells them apart.
 - Every overlay is in Metrowerks' `MWo3` format, so the Metrowerks linker built them.
 
 ## Step 1: read the fingerprints
@@ -42,7 +44,7 @@ prove it ourselves.
 
 | Game | Range | Compiler | Flags | Evidence |
 |---|---|---|---|---|
-| f1 | game code (`game` overlay) | MW 3.0.x, provisionally `mwcps2-3.0.1b75-030916` | `-O4,p` (or `-O3`/`-O4,s`) | 7 functions match |
+| f1 | game code (main ELF + `game` overlay) | MW 3.0b38/b50/b52, using `mwcps2-3.0b52-030722` | `-O3` (or `-O3,s`/`-O4,s`) | 10 functions match |
 | f1 | libraries | ? | ? | |
 | f2 | game code | ? | ? | |
 | f2 | libraries | ? | ? | |

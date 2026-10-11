@@ -1,1 +1,13 @@
 _start = 0x00100008; // type:func
+
+// Sony libc (identified by behaviour; see src/SLPM_654.28/main/cdfile.c)
+sprintf = 0x0010A570; // type:func
+strcat = 0x0010A8F8; // type:func
+strcpy = 0x0010AD00; // type:func
+strlen = 0x0010AE98; // type:func
+strupr = 0x0010CAE8; // type:func
+
+// Sony libkernel file I/O
+sceOpen = 0x001187B0; // type:func
+sceClose = 0x00118A38; // type:func
+sceLseek = 0x00118BB8; // type:func
