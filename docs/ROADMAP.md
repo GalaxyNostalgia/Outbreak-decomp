@@ -18,23 +18,24 @@ Each phase ends with a check that a machine can run. "Done" means the check pass
 - **Check:** the pipeline rebuilds synthetic PS2-shaped ELFs (with, without and fully stripped section headers)
   byte-for-byte. Done on 2026-10-11.
 
-## Phase 1: Byte-identical baseline from assembly (both games)
+## Phase 1: Byte-identical baseline from assembly (both games) ✅
 
-1. Dump both discs (your own copies) and verify them against Redump; put the images in `orig/<ELF>/`.
-2. `python configure.py f1 f2`; commit the generated `config/<ELF>/` (build.sha1, splat.yaml, survey.json).
-3. Fix whatever the generated split gets wrong (VU microcode sections, odd alignments) until
-   `python -I tools/build.py f1 f2` prints OK for both.
-4. Note the survey's compiler fingerprints, Sony SDK versions, CRI versions and IOP modules in `docs/COMPILER.md`.
-- **Check:** both builds print `OK` in CI-like conditions (clean clone + your discs).
+- Each game is a main ELF plus Metrowerks `MWo3` overlays: 9 binaries for File 1, 10 for File 2
+  ([LAYOUT.md](LAYOUT.md)). `configure.py` extracts and hashes all of them and writes one splat config each.
+- `config/<ELF>/main.yaml` splits the ELF's single load segment into EE code and the VU/data region by hand.
+- **Check:** `python -I tools/build.py f1 f2` prints OK for all 19 targets. Done on 2026-10-11.
+- Left for Phase 2: split the main ELF's data region (VU microcode, kernel-patch code, .data/.rodata/.sdata)
+  and each overlay's .data into proper sections.
 
 ## Phase 2: Pin the compilers and map the binary
 
-1. Run the compiler test in [COMPILER.md](COMPILER.md) on 10–20 small functions per game. Expect Metrowerks
-   for game code and ee-gcc for Sony/CRI libraries (Capcom's DMC3 and CVX pattern). Record the exact ids and flags.
+1. Run the compiler test in [COMPILER.md](COMPILER.md) on 10–20 small functions per game. Both ELFs say
+   `MW MIPS C Compiler (2.4.1.01)` and the overlays are Metrowerks `MWo3`, so start with mwcps2 2.4.
+   Record the exact ids and flags.
 2. Split `.text` into libraries vs game code. Identify Sony SDK, CRI ADX/Sofdec and Capcom library functions
    by signature: compare against symbol-bearing builds of other Capcom PS2 games and PS2 SDK objects of the same version.
-3. Cross-match f1 and f2: File 2 was built on File 1's engine. A function-hash comparison finds the shared code,
-   so each function is decompiled once and built for both games (`#if VERSION_F2`).
+3. Cross-match f1 and f2: `tools/xmatch.py` already finds ~49% of File 2's code bytes identical in File 1
+   (89% of the main ELF, all of `nethttp`). Each shared function is decompiled once and built for both games.
 4. Find translation-unit boundaries (string/rodata grouping, alignment gaps) and split `text` into per-file
    subsegments.
 - **Check:** `build.py` links C objects; one matched function per game is in `src/` and both builds stay OK.

@@ -1,0 +1,274 @@
+{
+ "size": 1294104,
+ "sha1": "0211217647e5ad47aec97073feb8b8f9265d361b",
+ "entry": "0x100008",
+ "gp": "0x241c70",
+ "gp_source": "crt0 at entry+0x1b8",
+ "compiler_guess": [
+  "Metrowerks CodeWarrior for PS2 (mwccps2): MW MIPS C Compiler (2.4.1.01)"
+ ],
+ "counters": {
+  "mw_markers": 1,
+  "sn_markers": 0,
+  "mw_mangling": 0,
+  "gcc29_mangling": 0,
+  "mw_sections": 0
+ },
+ "mw_comments": [
+  "MW MIPS C Compiler (2.4.1.01)"
+ ],
+ "gcc_comments": [],
+ "sdk_versions": [
+  "PsIIlibcdvd 2800",
+  "PsIIlibdbc  2800",
+  "PsIIlibdma  2800",
+  "PsIIlibipu  2800",
+  "PsIIlibmc2  2811",
+  "PsIIlibpad2 2800",
+  "PsIIlibscf  2800",
+  "PsIIlibvu0  2800"
+ ],
+ "cri": [
+  "CRI CFT/PS2EE Ver.1.33",
+  "CRI M2V/PS2EE Ver.1.860",
+  "CRI MPS/PS2EE Ver.1.860",
+  "CRI MPV/PS2EE Ver.1.862",
+  "CRI SFD/PS2EE Ver.1.862",
+  "CRI SFH/PS2EE Ver.1.15",
+  "CRI SFX/PS2EE Ver.1.30",
+  "CRI SUD/PS2EE Ver.0.03"
+ ],
+ "loads": [
+  {
+   "type": "0x1",
+   "offset": "0x200",
+   "vaddr": "0x100000",
+   "filesz": "0x13ba00",
+   "memsz": "0x234600",
+   "flags": "0x7",
+   "align": "0x80"
+  },
+  {
+   "type": "0x1",
+   "offset": "0x13bc00",
+   "vaddr": "0x340000",
+   "filesz": "0x0",
+   "memsz": "0x1fb500",
+   "flags": "0x7",
+   "align": "0x80"
+  },
+  {
+   "type": "0x1",
+   "offset": "0x13bc00",
+   "vaddr": "0x540000",
+   "filesz": "0x0",
+   "memsz": "0x64480",
+   "flags": "0x7",
+   "align": "0x80"
+  },
+  {
+   "type": "0x1",
+   "offset": "0x13bc00",
+   "vaddr": "0x540000",
+   "filesz": "0x0",
+   "memsz": "0x1e4780",
+   "flags": "0x7",
+   "align": "0x80"
+  },
+  {
+   "type": "0x1",
+   "offset": "0x13bc00",
+   "vaddr": "0x540000",
+   "filesz": "0x0",
+   "memsz": "0x17f200",
+   "flags": "0x7",
+   "align": "0x80"
+  },
+  {
+   "type": "0x1",
+   "offset": "0x13bc00",
+   "vaddr": "0x6c0000",
+   "filesz": "0x0",
+   "memsz": "0x15c880",
+   "flags": "0x7",
+   "align": "0x80"
+  },
+  {
+   "type": "0x1",
+   "offset": "0x13bc00",
+   "vaddr": "0x6c0000",
+   "filesz": "0x0",
+   "memsz": "0x60980",
+   "flags": "0x7",
+   "align": "0x80"
+  },
+  {
+   "type": "0x1",
+   "offset": "0x13bc00",
+   "vaddr": "0x820000",
+   "filesz": "0x0",
+   "memsz": "0x100",
+   "flags": "0x7",
+   "align": "0x80"
+  },
+  {
+   "type": "0x1",
+   "offset": "0x13bc00",
+   "vaddr": "0x820000",
+   "filesz": "0x0",
+   "memsz": "0x83580",
+   "flags": "0x7",
+   "align": "0x80"
+  },
+  {
+   "type": "0x1",
+   "offset": "0x13bc00",
+   "vaddr": "0x820000",
+   "filesz": "0x0",
+   "memsz": "0x99180",
+   "flags": "0x7",
+   "align": "0x80"
+  },
+  {
+   "type": "0x1",
+   "offset": "0x13bc00",
+   "vaddr": "0x8b9180",
+   "filesz": "0x0",
+   "memsz": "0x0",
+   "flags": "0x6",
+   "align": "0x10"
+  }
+ ],
+ "sections": [
+  {
+   "name": ".shstrtab",
+   "offset": "0x13bc00",
+   "addr": "0x0",
+   "size": "0x2d",
+   "flags": "0x0",
+   "nobits": false
+  },
+  {
+   "name": ".strtab",
+   "offset": "0x0",
+   "addr": "0x0",
+   "size": "0x0",
+   "flags": "0x0",
+   "nobits": false
+  },
+  {
+   "name": ".symtab",
+   "offset": "0x0",
+   "addr": "0x0",
+   "size": "0x0",
+   "flags": "0x0",
+   "nobits": false
+  },
+  {
+   "name": ".comment",
+   "offset": "0x13bc2d",
+   "addr": "0x0",
+   "size": "0x2b",
+   "flags": "0x0",
+   "nobits": false
+  },
+  {
+   "name": ".reginfo",
+   "offset": "0x13bc58",
+   "addr": "0x0",
+   "size": "0x18",
+   "flags": "0x0",
+   "nobits": false
+  }
+ ],
+ "overlays": {
+  "submain": {
+   "path": "PROG/SUBMAIN.BIN",
+   "size": 113920,
+   "sha1": "c179236b018977a48552a622a606da610671f226",
+   "id": 1,
+   "load": "0x340000",
+   "text": "0xf3c0",
+   "data": "0xc900",
+   "bss": "0x1df800",
+   "name": "submain.bin"
+  },
+  "demo": {
+   "path": "PROG/DEMO.BIN",
+   "size": 147328,
+   "sha1": "542a708f1ab4fa8ed170bf1c2f1d610dc4457227",
+   "id": 2,
+   "load": "0x540000",
+   "text": "0x17bc0",
+   "data": "0xc380",
+   "bss": "0x40500",
+   "name": "demo.bin"
+  },
+  "game": {
+   "path": "PROG/GAME.BIN",
+   "size": 1892992,
+   "sha1": "933d47e5498f13dcbf37c6a4a8152f7ffd01d8b5",
+   "id": 3,
+   "load": "0x540000",
+   "text": "0x194cc0",
+   "data": "0x39580",
+   "bss": "0x16500",
+   "name": "game.bin"
+  },
+  "netwk": {
+   "path": "PROG/NETWK.BIN",
+   "size": 781312,
+   "sha1": "34b8d6d16485ed9291f446f57689188ded05eba0",
+   "id": 4,
+   "load": "0x540000",
+   "text": "0x96040",
+   "data": "0x28b80",
+   "bss": "0xc0600",
+   "name": "netwk.bin"
+  },
+  "netdnas": {
+   "path": "PROG/NETDNAS.BIN",
+   "size": 762496,
+   "sha1": "50faf59942cbaa420aaba0afac72dc43d8cb9a59",
+   "id": 5,
+   "load": "0x6c0000",
+   "text": "0x840c0",
+   "data": "0x36180",
+   "bss": "0xa2600",
+   "name": "netdnas.bin"
+  },
+  "nethttp": {
+   "path": "PROG/NETHTTP.BIN",
+   "size": 392320,
+   "sha1": "baefe93072950788f3f2041d5215b30081e614b7",
+   "id": 6,
+   "load": "0x6c0000",
+   "text": "0x54cc0",
+   "data": "0xaf80",
+   "bss": "0xd00",
+   "name": "nethttp.bin"
+  },
+  "single": {
+   "path": "PROG/SINGLE.BIN",
+   "size": 112512,
+   "sha1": "4a0241e265090175b2fa6eaa4d0790b395e416d9",
+   "id": 8,
+   "load": "0x820000",
+   "text": "0x187c0",
+   "data": "0x2f80",
+   "bss": "0x67e00",
+   "name": "single.bin"
+  },
+  "netaq": {
+   "path": "PROG/NETAQ.BIN",
+   "size": 21504,
+   "sha1": "cbc2a0840d0be659553baa88d8dbe710058dd22b",
+   "id": 9,
+   "load": "0x820000",
+   "text": "0x4540",
+   "data": "0xe80",
+   "bss": "0x93d80",
+   "name": "netaq.bin"
+  }
+ }
+}

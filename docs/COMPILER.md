@@ -3,13 +3,16 @@
 A matching decomp needs the exact compiler and flags. Nobody has published which ones Outbreak used, so we
 prove it ourselves.
 
-## What we expect
+## What we know (2026-10-11)
 
-- Capcom's *Code: Veronica X* (2001) used Metrowerks CodeWarrior for PS2.
-- *Devil May Cry 3* (2005) used Metrowerks `mwcps2-3.0b52-030722` with `-O3,p -fl divbyzerocheck -inline depth=8`
-  for game code, and ee-gcc for the Sony SDK, CRI and Capcom libraries.
-- So for f1 (master ~Nov 2003) and f2 (~Aug 2004), test Metrowerks 3.0.x builds from 2003–2004 first, and
-  expect ee-gcc in the libraries. `tools/compilers.json` lists the decomp.me builds dated before each release.
+- Both main ELFs carry the `.comment` **`MW MIPS C Compiler (2.4.1.01)`**.
+- Every overlay is in Metrowerks' `MWo3` format, so the Metrowerks linker built them.
+- Capcom precedent: *Code: Veronica X* (2001) used Metrowerks; *DMC3* (2005) used `mwcps2-3.0b52-030722` with
+  `-O3,p -fl divbyzerocheck -inline depth=8`.
+- So test **mwcps2 2.4** first. decomp.me's closest build is `mwcps2-2.4-001213` (2.4, Dec 2000); 2.4.1.01
+  may be a later patch release, in which case 2.4 might match most code and miss a few codegen details. Keep
+  2.3.3 and the 3.0 builds as fallbacks (`tools/compilers.json`). The Sony SDK 2.8 and CRI libraries may have
+  been built with ee-gcc by their vendors even though no GCC `.comment` survived the MW linker.
 
 ## Step 1: read the fingerprints
 

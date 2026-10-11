@@ -32,7 +32,7 @@ def tracked():
 def known_hashes():
     hs = set()
     for f in (ROOT / "config").glob("*/build.sha1"):
-        hs.add(f.read_text().split()[0])
+        hs.update(line.split()[0] for line in f.read_text().splitlines() if line.strip())
     return hs
 
 

@@ -3,13 +3,36 @@
     "elf": "SLPM_654.28",
     "serial": "SLPM-65428",
     "title": "Biohazard Outbreak (Japan)",
+    "system_cnf_ver": "1.04",
+    "overlays": {
+      "submain": "PROG/SUBMAIN.BIN",
+      "demo": "PROG/DEMO.BIN",
+      "game": "PROG/GAME.BIN",
+      "netwk": "PROG/NETWK.BIN",
+      "netdnas": "PROG/NETDNAS.BIN",
+      "nethttp": "PROG/NETHTTP.BIN",
+      "single": "PROG/SINGLE.BIN",
+      "netaq": "PROG/NETAQ.BIN"
+    },
     "obsrv": {"lobby_port": 8300, "game_port": 8690, "kddi_title_dir": "00000002"},
-    "notes": "Disc is v1.00; the online server pushes a 0x7AA0-byte v1.01 code patch (see docs/NETWORK.md)."
+    "notes": "The online server pushes a 0x7AA0-byte v1.01 code patch (see docs/NETWORK.md)."
   },
   "f2": {
     "elf": "SLPM_656.92",
     "serial": "SLPM-65692",
     "title": "Biohazard Outbreak File 2 (Japan)",
+    "system_cnf_ver": "1.03",
+    "overlays": {
+      "submain": "BIN/0.DAT",
+      "demo": "BIN/1.DAT",
+      "game": "BIN/2.DAT",
+      "netwk": "BIN/3.DAT",
+      "netdnas": "BIN/4.DAT",
+      "nethttp": "BIN/5.DAT",
+      "insdnas": "BIN/6.DAT",
+      "single": "BIN/8.DAT",
+      "netaq": "BIN/9.DAT"
+    },
     "obsrv": {"lobby_port": 8200, "game_port": 8590, "kddi_title_dir": "00000010"},
     "notes": ""
   }

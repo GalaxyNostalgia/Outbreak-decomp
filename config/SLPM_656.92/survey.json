@@ -1,0 +1,294 @@
+{
+ "size": 1356096,
+ "sha1": "5c82ff5cabe85ddea2a92fbd4e70cbe630dcaa9e",
+ "entry": "0x100008",
+ "gp": "0x2510f0",
+ "gp_source": "crt0 at entry+0x1b8",
+ "compiler_guess": [
+  "Metrowerks CodeWarrior for PS2 (mwccps2): MW MIPS C Compiler (2.4.1.01)"
+ ],
+ "counters": {
+  "mw_markers": 1,
+  "sn_markers": 0,
+  "mw_mangling": 0,
+  "gcc29_mangling": 0,
+  "mw_sections": 0
+ },
+ "mw_comments": [
+  "MW MIPS C Compiler (2.4.1.01)"
+ ],
+ "gcc_comments": [],
+ "sdk_versions": [
+  "PsIIlibcdvd 2800",
+  "PsIIlibdbc  2800",
+  "PsIIlibdma  2800",
+  "PsIIlibipu  2800",
+  "PsIIlibmc2  3020",
+  "PsIIlibpad2 2800",
+  "PsIIlibscf  2800",
+  "PsIIlibvu0  2800"
+ ],
+ "cri": [
+  "CRI CFT/PS2EE Ver.1.33",
+  "CRI M2V/PS2EE Ver.1.860",
+  "CRI MPS/PS2EE Ver.1.860",
+  "CRI MPV/PS2EE Ver.1.862",
+  "CRI SFD/PS2EE Ver.1.862",
+  "CRI SFH/PS2EE Ver.1.15",
+  "CRI SFX/PS2EE Ver.1.30",
+  "CRI SUD/PS2EE Ver.0.03"
+ ],
+ "loads": [
+  {
+   "type": "0x1",
+   "offset": "0x200",
+   "vaddr": "0x100000",
+   "filesz": "0x14ac00",
+   "memsz": "0x241d00",
+   "flags": "0x7",
+   "align": "0x80"
+  },
+  {
+   "type": "0x1",
+   "offset": "0x14ae00",
+   "vaddr": "0x343000",
+   "filesz": "0x0",
+   "memsz": "0x1ffe00",
+   "flags": "0x7",
+   "align": "0x80"
+  },
+  {
+   "type": "0x1",
+   "offset": "0x14ae00",
+   "vaddr": "0x543000",
+   "filesz": "0x0",
+   "memsz": "0x69b00",
+   "flags": "0x7",
+   "align": "0x80"
+  },
+  {
+   "type": "0x1",
+   "offset": "0x14ae00",
+   "vaddr": "0x543000",
+   "filesz": "0x0",
+   "memsz": "0x227f00",
+   "flags": "0x7",
+   "align": "0x80"
+  },
+  {
+   "type": "0x1",
+   "offset": "0x14ae00",
+   "vaddr": "0x543000",
+   "filesz": "0x0",
+   "memsz": "0x16b680",
+   "flags": "0x7",
+   "align": "0x80"
+  },
+  {
+   "type": "0x1",
+   "offset": "0x14ae00",
+   "vaddr": "0x6af000",
+   "filesz": "0x0",
+   "memsz": "0x122380",
+   "flags": "0x7",
+   "align": "0x80"
+  },
+  {
+   "type": "0x1",
+   "offset": "0x14ae00",
+   "vaddr": "0x6af000",
+   "filesz": "0x0",
+   "memsz": "0x60980",
+   "flags": "0x7",
+   "align": "0x80"
+  },
+  {
+   "type": "0x1",
+   "offset": "0x14ae00",
+   "vaddr": "0x6af000",
+   "filesz": "0x0",
+   "memsz": "0xa1580",
+   "flags": "0x7",
+   "align": "0x80"
+  },
+  {
+   "type": "0x1",
+   "offset": "0x14ae00",
+   "vaddr": "0x7d2000",
+   "filesz": "0x0",
+   "memsz": "0x100",
+   "flags": "0x7",
+   "align": "0x80"
+  },
+  {
+   "type": "0x1",
+   "offset": "0x14ae00",
+   "vaddr": "0x7d2000",
+   "filesz": "0x0",
+   "memsz": "0x88a80",
+   "flags": "0x7",
+   "align": "0x80"
+  },
+  {
+   "type": "0x1",
+   "offset": "0x14ae00",
+   "vaddr": "0x7d2000",
+   "filesz": "0x0",
+   "memsz": "0x99e00",
+   "flags": "0x7",
+   "align": "0x80"
+  },
+  {
+   "type": "0x1",
+   "offset": "0x14ae00",
+   "vaddr": "0x86be00",
+   "filesz": "0x0",
+   "memsz": "0x0",
+   "flags": "0x6",
+   "align": "0x10"
+  }
+ ],
+ "sections": [
+  {
+   "name": ".shstrtab",
+   "offset": "0x14ae00",
+   "addr": "0x0",
+   "size": "0x2d",
+   "flags": "0x0",
+   "nobits": false
+  },
+  {
+   "name": ".strtab",
+   "offset": "0x0",
+   "addr": "0x0",
+   "size": "0x0",
+   "flags": "0x0",
+   "nobits": false
+  },
+  {
+   "name": ".symtab",
+   "offset": "0x0",
+   "addr": "0x0",
+   "size": "0x0",
+   "flags": "0x0",
+   "nobits": false
+  },
+  {
+   "name": ".comment",
+   "offset": "0x14ae2d",
+   "addr": "0x0",
+   "size": "0x2b",
+   "flags": "0x0",
+   "nobits": false
+  },
+  {
+   "name": ".reginfo",
+   "offset": "0x14ae58",
+   "addr": "0x0",
+   "size": "0x18",
+   "flags": "0x0",
+   "nobits": false
+  }
+ ],
+ "overlays": {
+  "submain": {
+   "path": "BIN/0.DAT",
+   "size": 117376,
+   "sha1": "9ecea17d4c3f23c7948bb76ad50a413bc338cd65",
+   "id": 1,
+   "load": "0x343000",
+   "text": "0x101c0",
+   "data": "0xc880",
+   "bss": "0x1e3380",
+   "name": "submain.bin"
+  },
+  "demo": {
+   "path": "BIN/1.DAT",
+   "size": 170624,
+   "sha1": "633c2c267ee9a3bf7ab59ef5bccc9c5c2fcc9fd5",
+   "id": 2,
+   "load": "0x543000",
+   "text": "0x21440",
+   "data": "0x8600",
+   "bss": "0x40080",
+   "name": "demo.bin"
+  },
+  "game": {
+   "path": "BIN/2.DAT",
+   "size": 2173184,
+   "sha1": "627a407f3fb54445cd0fcef9ae60dafa2c8fcf37",
+   "id": 3,
+   "load": "0x543000",
+   "text": "0x1d2b40",
+   "data": "0x3fd80",
+   "bss": "0x15600",
+   "name": "game.bin"
+  },
+  "netwk": {
+   "path": "BIN/3.DAT",
+   "size": 762752,
+   "sha1": "df0f9103b140812853989bad1cf89ed0abb1f450",
+   "id": 4,
+   "load": "0x543000",
+   "text": "0x91040",
+   "data": "0x29300",
+   "bss": "0xb1300",
+   "name": "netwk.bin"
+  },
+  "netdnas": {
+   "path": "BIN/4.DAT",
+   "size": 659328,
+   "sha1": "47f799624599c5fff22bac31b76516f23de91b15",
+   "id": 5,
+   "load": "0x6af000",
+   "text": "0x70ec0",
+   "data": "0x30080",
+   "bss": "0x81400",
+   "name": "netdnas.bin"
+  },
+  "nethttp": {
+   "path": "BIN/5.DAT",
+   "size": 392320,
+   "sha1": "c16a49304c476265220cf06f998da2fa4a047fe6",
+   "id": 6,
+   "load": "0x6af000",
+   "text": "0x54cc0",
+   "data": "0xaf80",
+   "bss": "0xd00",
+   "name": "nethttp.bin"
+  },
+  "insdnas": {
+   "path": "BIN/6.DAT",
+   "size": 203392,
+   "sha1": "df9f84cc87167c9980a3ebdf9f747e51874ec647",
+   "id": 7,
+   "load": "0x6af000",
+   "text": "0x29c40",
+   "data": "0x7e00",
+   "bss": "0x6fb00",
+   "name": "insdnas.bin"
+  },
+  "single": {
+   "path": "BIN/8.DAT",
+   "size": 134144,
+   "sha1": "feeccb716a1757f0ccf42e8ee80360cd1b9d9bcf",
+   "id": 9,
+   "load": "0x7d2000",
+   "text": "0x1c1c0",
+   "data": "0x4a00",
+   "bss": "0x67e80",
+   "name": "single.bin"
+  },
+  "netaq": {
+   "path": "BIN/9.DAT",
+   "size": 22144,
+   "sha1": "c17d2f1f5b7a7eb7cf50da02af9c076aa85c09ea",
+   "id": 10,
+   "load": "0x7d2000",
+   "text": "0x4ec0",
+   "data": "0x780",
+   "bss": "0x94780",
+   "name": "netaq.bin"
+  }
+ }
+}

@@ -12,8 +12,11 @@ Japanese releases), aiming for a native PC version built from the same source th
 
 | Key | Game | Disc | Executable | Status |
 |---|---|---|---|---|
-| `f1` | Biohazard Outbreak | SLPM-65428 | `SLPM_654.28` | waiting for first dump |
-| `f2` | Biohazard Outbreak File 2 | SLPM-65692 | `SLPM_656.92` | waiting for first dump |
+| `f1` | Biohazard Outbreak | SLPM-65428 (VER 1.04) | `SLPM_654.28` + 8 overlays (`PROG/*.BIN`) | 9/9 targets rebuild byte-identical from asm |
+| `f2` | Biohazard Outbreak File 2 | SLPM-65692 (VER 1.03) | `SLPM_656.92` + 9 overlays (`BIN/*.DAT`) | 10/10 targets rebuild byte-identical from asm |
+
+Decompiled so far: 0 of ~14,500 (File 1) and ~15,450 (File 2) functions. About half of File 2's code is
+shared with File 1 and only needs decompiling once. What's in the binaries: [docs/LAYOUT.md](docs/LAYOUT.md).
 
 Japanese only, on purpose: Obsrv emulates the Japanese online service, and nobody emulates the US/EU one.
 English comes from the fan translation applied to the Japanese games ([docs/TRANSLATION.md](docs/TRANSLATION.md)).
@@ -34,24 +37,27 @@ Put your disc images (verified against Redump) in place:
 ```
 orig/SLPM_654.28/<anything>.iso     # Biohazard Outbreak
 orig/SLPM_656.92/<anything>.iso     # Biohazard Outbreak File 2
+
+(or the extracted files instead of the image: the ELF, SYSTEM.CNF and PROG/ or BIN/)
 ```
 
 Then:
 
 ```sh
 python configure.py f1 f2            # extract, verify sha1, survey, disassemble
-python -I tools/build.py f1 f2       # rebuild both executables and check they're byte-identical
+python -I tools/build.py f1 f2       # rebuild all 19 binaries and check they're byte-identical
 ```
 
-`build.py` must print `OK` for each game. That's the rule for every commit.
+`build.py` must print `OK` for every target (`f1.main`, `f1.game`, …). That's the rule for every commit.
 
 ## Tools
 
 | | |
 |---|---|
-| `configure.py` | per game: extract the executable from your image, check sha1, write the first splat config, run splat |
+| `configure.py` | per game: extract the executable and overlays from your image, check sha1s, write splat configs, run splat |
 | `tools/build.py` | assemble + link at the original addresses, compare byte-for-byte, report the first difference |
-| `tools/survey.py` | ELF layout, `$gp`, compiler fingerprints, SDK/CRI versions, IOP modules, network strings |
+| `tools/survey.py` | ELF layout, `$gp`, compiler fingerprints, SDK/CRI versions, IOP modules; writes the splat configs for the ELF and its `MWo3` overlays |
+| `tools/xmatch.py` | finds functions File 1 and File 2 share, so each is decompiled once |
 | `tools/iso_list.py` | list a disc's files; `--diff` shows what a patch (e.g. the English one) changed |
 | `tools/firewall.py` | refuses executables, images, disassembly and big binaries in git |
 | `tools/compilers.json` | candidate compilers (decomp.me builds) for `configure.py --compilers` |

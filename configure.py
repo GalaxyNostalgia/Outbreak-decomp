@@ -6,12 +6,12 @@
     python configure.py --tools-only   # compilers only (CI, no game files)
 
 For each game (each step is skipped once done):
-  1. Find the executable in orig/<ELF>/: the ELF itself or a disc image (*.iso)
-     it is extracted from (f1 = SLPM_654.28, f2 = SLPM_656.92).
-  2. Check its sha1 against config/<ELF>/build.sha1. The first person to run
-     this records it; commit that file (a hash is not game data).
-  3. Survey the ELF and write config/<ELF>/splat.yaml if there is none.
-  4. Disassemble it with splat into asm/<ELF>/.
+  1. Find the executable and its Metrowerks overlays (f1: PROG/*.BIN,
+     f2: BIN/*.DAT) in orig/<ELF>/, or extract them from a disc image there.
+  2. Check their sha1s against config/<ELF>/build.sha1. The first person to
+     run this records them; commit that file (hashes are not game data).
+  3. Survey the ELF and write config/<ELF>/main.yaml + <overlay>.yaml.
+  4. Disassemble every target with splat into asm/<ELF>/<target>/.
 Then:  python -I tools/build.py <f1|f2>   (must print OK: byte-identical rebuild)
 
 orig/, asm/, assets/, build/ and tools/compilers/ are git-ignored. Nothing from
@@ -44,17 +44,20 @@ def sha1(path):
     return h.hexdigest()
 
 
-def find_executable(elfname):
+def find_files(ver):
+    """orig/<ELF>/ must hold the ELF and its overlays, or a disc image to take them from."""
+    elfname = ver["elf"]
     d = ROOT / "orig" / elfname
     d.mkdir(parents=True, exist_ok=True)
-    elf = d / elfname
-    if elf.exists():
-        return elf
+    wanted = [elfname] + list(ver.get("overlays", {}).values())
+    if all((d / w).exists() for w in wanted):
+        return d, wanted
     isos = sorted(d.glob("*.iso")) + sorted(d.glob("*.ISO"))
     if not isos:
-        sys.exit(f"Put {elfname} or the disc image (*.iso) in {d.relative_to(ROOT)}/")
+        sys.exit(f"Put the disc image (*.iso) in {d.relative_to(ROOT)}/ "
+                 f"(or the extracted {', '.join(wanted)})")
     import pycdlib
-    step(f"extracting {elfname} from {isos[0].name}")
+    step(f"extracting {len(wanted)} files from {isos[0].name}")
     iso = pycdlib.PyCdlib()
     iso.open(str(isos[0]))
     try:
@@ -63,10 +66,12 @@ def find_executable(elfname):
         boot = cnf.read_text(errors="replace")
         if elfname not in boot:
             sys.exit(f"{isos[0].name} boots something else:\n{boot}")
-        iso.get_file_from_iso(str(elf), iso_path=f"/{elfname};1")
+        for w in wanted:
+            (d / w).parent.mkdir(parents=True, exist_ok=True)
+            iso.get_file_from_iso(str(d / w), iso_path=f"/{w};1")
     finally:
         iso.close()
-    return elf
+    return d, wanted
 
 
 def fetch(url, dest):
@@ -102,28 +107,34 @@ def get_compilers(ids):
 
 def configure(key, ver):
     elfname = ver["elf"]
-    step(f"[{key}] {ver['title']} - {elfname}")
-    elf = find_executable(elfname)
+    step(f"[{key}] {ver['title']} - {elfname} + {len(ver.get('overlays', {}))} overlays")
+    d, files = find_files(ver)
     cdir = ROOT / "config" / elfname
     cdir.mkdir(parents=True, exist_ok=True)
     shaf = cdir / "build.sha1"
-    got = sha1(elf)
+    got = {f: sha1(d / f) for f in files}
     if shaf.exists():
-        want = shaf.read_text().split()[0]
-        if got != want:
-            sys.exit(f"{elf.name}: sha1 {got} is not the supported {elfname} ({want}).\n"
-                     "Different disc revision? Open an issue with the sha1 and SYSTEM.CNF contents.")
-        step(f"[{key}] sha1 OK")
+        want = dict(reversed(line.split(None, 1)) for line in shaf.read_text().splitlines() if line.strip())
+        bad = [f for f in files if want.get(f) != got[f]]
+        if bad:
+            sys.exit("\n".join(f"{f}: sha1 {got[f]} != supported {want.get(f)}" for f in bad) +
+                     "\nDifferent disc revision? Open an issue with these hashes and your SYSTEM.CNF.")
+        step(f"[{key}] sha1 OK ({len(files)} files)")
     else:
-        shaf.write_text(f"{got}  {elfname}\n")
-        step(f"[{key}] recorded sha1 {got} in {shaf.relative_to(ROOT)} - commit it")
-    if not (cdir / "splat.yaml").exists():
+        shaf.write_text("".join(f"{got[f]}  {f}\n" for f in files))
+        step(f"[{key}] recorded {len(files)} hashes in {shaf.relative_to(ROOT)} - commit it")
+    if not (cdir / "main.yaml").exists():
         step(f"[{key}] surveying the ELF")
-        subprocess.run([sys.executable, "-I", "tools/survey.py", str(elf), "--write", key], cwd=ROOT, check=True)
-    if not (ROOT / "asm" / elfname).exists():
-        step(f"[{key}] disassembling with splat")
-        subprocess.run([sys.executable, "-m", "splat", "split", f"config/{elfname}/splat.yaml"],
+        subprocess.run([sys.executable, "-I", "tools/survey.py", str(d / elfname), "--write", key],
                        cwd=ROOT, check=True)
+    for target in ["main", *ver.get("overlays", {})]:
+        if not (ROOT / "asm" / elfname / target).exists():
+            step(f"[{key}] disassembling {target} with splat")
+            r = subprocess.run([sys.executable, "-m", "splat", "split", f"config/{elfname}/{target}.yaml"],
+                               cwd=ROOT, capture_output=True, text=True)
+            if r.returncode:
+                sys.stderr.write(r.stdout[-3000:] + r.stderr[-3000:])
+                sys.exit(f"splat failed on {target}")
     step(f"[{key}] ready:  python -I tools/build.py {key}")
 
 

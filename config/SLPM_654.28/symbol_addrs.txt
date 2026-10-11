@@ -1,0 +1,1 @@
+_start = 0x00100008; // type:func
