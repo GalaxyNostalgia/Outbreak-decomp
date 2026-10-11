@@ -11,6 +11,7 @@ s32 strlen(const char *s);
 char *strcat(char *dst, const char *src);
 char *strupr(char *s);                       /* upper-cases ASCII in place (Sony libc ctype table) */
 s32 sprintf(char *dst, const char *fmt, ...);
+s32 printf(const char *fmt, ...);
 
 s32 sceOpen(const char *name, s32 flags, ...);
 s32 sceClose(s32 fd);
