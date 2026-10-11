@@ -35,9 +35,19 @@ def original_functions(asm_text):
         if m and cur:
             out[cur].append(int.from_bytes(bytes.fromhex(m.group(2)), "little"))
     for k, w in out.items():                 # drop alignment padding after the last instruction
-        while len(w) > 1 and w[-1] == 0 and w[-2] != 0x03E00008 and (w[-2] >> 26) not in (2, 3):
+        while len(w) > 1 and w[-1] == 0 and not is_jump(w[-2]):
             w.pop()
     return out
+
+
+def is_jump(w):
+    """Instructions with a delay slot: the nop after them belongs to the function."""
+    op = w >> 26
+    if op in (1, 2, 3, 4, 5, 6, 7, 0x14, 0x15, 0x16, 0x17):   # REGIMM, j, jal, beq/bne/blez/bgtz(+l)
+        return True
+    if op == 0x11 and ((w >> 21) & 31) == 8:                  # bc1x
+        return True
+    return op == 0 and (w & 0x3F) in (8, 9)                   # jr, jalr
 
 
 def compile_c(src, cc, flags, out):
@@ -120,6 +130,8 @@ def main():
     mine = object_functions(obj)
     ok = True
     for name, (words, rel) in mine.items():
+        while len(words) > 1 and words[-1] == 0 and not is_jump(words[-2]):
+            words = words[:-1]
         if name not in orig:
             print(f"  ?  {name}: no such function in {a.target}")
             ok = False

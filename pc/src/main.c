@@ -18,9 +18,10 @@
 #error "build with -DGAME_ELF=\"SLPM_654.28\" (CMake sets it from OUTBREAK_GAME)"
 #endif
 
-/* decompiled game code (src/SLPM_654.28/main/cdfile.c) */
+/* decompiled game code (src/SLPM_654.28/main/) */
 int func_001A8300(const char *name);
 void func_001BC780(char *dst, const char *name);
+int func_001A87F0(int argc, char **argv);   /* the game's main() */
 
 void pc_unimplemented(uint32_t addr, const char *name) {
     log_error("game called %s (0x%08x), which isn't decompiled yet", name, addr);
@@ -67,6 +68,11 @@ int main(int argc, char **argv) {
         log_info("self-test %s", fails ? "FAILED" : "passed");
         return fails ? 1 : 0;
     }
-    log_info("the boot path isn't decompiled yet; run with --test to exercise the decompiled code");
+    /* crt0 would now set up the kernel (thread, heap, _InitSys) and call main(argc, argv).
+       On PC the platform layer has done the equivalent; hand over to the game. */
+    static char boot[] = "cdrom0:\\" GAME_ELF ";1";
+    char *game_argv[] = {boot, NULL};
+    log_info("starting the game: main(1, {\"%s\"})", boot);
+    func_001A87F0(1, game_argv);
     return 0;
 }

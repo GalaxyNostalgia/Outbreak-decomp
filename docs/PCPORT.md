@@ -5,9 +5,16 @@ decompile for the decomp also becomes native PC code. The PS2 SDK, CRI middlewar
 replacements in `pc/`. This page explains how that works while the decomp is incomplete.
 
 Status (2026-10-11): `pc/` builds a 32-bit `outbreak-f1`. It maps PS2 memory, opens the user's disc
-image, loads the executable's data, and runs decompiled game code natively. `--test` runs the decompiled
-disc helpers (`src/SLPM_654.28/main/cdfile.c`) against the real files on the disc. The game itself
-can't start yet: its boot path isn't decompiled.
+image, loads the executable's data, and calls the game's own `main()` (decompiled,
+`src/SLPM_654.28/main/main.c`) natively. It stops at the first function that isn't decompiled yet:
+
+```
+[info] starting the game: main(1, {"cdrom0:\SLPM_654.28;1"})
+[error] game called func_001A85C0 (0x001a85c0), which isn't decompiled yet
+```
+
+`func_001A85C0` is the system init (graphics reset, IOP modules, …): the next thing to decompile.
+`--test` runs the decompiled disc helpers (`src/SLPM_654.28/main/cdfile.c`) against the real files on the disc.
 
 ## Building
 
@@ -86,7 +93,9 @@ apart. If testing shows desyncs, the gameplay code involved will use PS2-accurat
 
 ## Order of work for File 1
 
-1. **Boot path:** `_start` → `main` → initialisation (SIF/IOP modules, graphics, pad, memory card) →
+1. **Boot path:** `_start` (crt0: `SetupThread`, `SetupHeap`, `_InitSys` `func_0011D648`, `FlushCache`)
+   → `main` `func_001A87F0` ✅ → system init `func_001A85C0` → per-frame loop (`func_001B9070`,
+   `func_001C53F0`, `func_001C5430`). Init covers (SIF/IOP modules, graphics, pad, memory card) →
    the overlay loader → `submain`. Each decompiled step lets `outbreak-f1` run further; the stubs show
    where it stops.
 2. **Graphics bring-up:** interpret the GS packets the game builds, enough to show the logo and menus.
