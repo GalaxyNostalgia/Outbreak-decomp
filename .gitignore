@@ -14,6 +14,7 @@
 *.ppf
 SLPM_*
 !config/SLPM_*/
+!src/SLPM_*/
 SLPS_*
 SLUS_*
 SLES_*

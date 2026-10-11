@@ -27,7 +27,11 @@ Each phase ends with a check that a machine can run. "Done" means the check pass
 - Left for Phase 2: split the main ELF's data region (VU microcode, kernel-patch code, .data/.rodata/.sdata)
   and each overlay's .data into proper sections.
 
-## Phase 2: Pin the compilers and map the binary
+## Phase 2: Pin the compilers and map the binary (started)
+
+- 2026-10-11: game code is Metrowerks 3.0.x; `build.py` links decompiled C in place of asm, and 7 File 1
+  `game` functions are in `src/`, byte-identical ([COMPILER.md](COMPILER.md), [DECOMPILING.md](DECOMPILING.md)).
+
 
 1. Run the compiler test in [COMPILER.md](COMPILER.md) on 10–20 small functions per game. Both ELFs say
    `MW MIPS C Compiler (2.4.1.01)` and the overlays are Metrowerks `MWo3`, so start with mwcps2 2.4.

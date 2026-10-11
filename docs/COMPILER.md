@@ -5,14 +5,17 @@ prove it ourselves.
 
 ## What we know (2026-10-11)
 
-- Both main ELFs carry the `.comment` **`MW MIPS C Compiler (2.4.1.01)`**.
+- **Game code is Metrowerks CodeWarrior for PS2 3.0.x.** Seven File 1 `game` functions match exactly with
+  every 3.0 build from `mwcps2-3.0-011126` to `mwcps2-3.0.1b87-031208` (`tools/try.py`). The 2.3/2.4 builds
+  can't match: they emit MMI register moves (`padduw`-style) where the games use `daddu`.
+- The main ELF's `.comment` `MW MIPS C Compiler (2.4.1.01)` (decomp.me's `mwcps2-2.4-001213` writes exactly
+  this) comes from some object linked into the ELF, probably a runtime/library object, not the game code.
+- `-O4,p` (DMC3's setting) **rules out 3.0b38, 3.0b50 and 3.0b52** for File 1: they schedule `actor_update.c`
+  differently. `-O3` and `-O4,s` match with all of them, so flags aren't pinned yet either.
+- **Provisional default:** `mwcps2-3.0.1b75-030916` with `-O4,p` (`config/versions.json`), the newest build
+  dated before File 1's release that matches. Narrow it with harder functions (loops, switches, floats,
+  inlining). Overlays may have been built with different flags than the main ELF.
 - Every overlay is in Metrowerks' `MWo3` format, so the Metrowerks linker built them.
-- Capcom precedent: *Code: Veronica X* (2001) used Metrowerks; *DMC3* (2005) used `mwcps2-3.0b52-030722` with
-  `-O3,p -fl divbyzerocheck -inline depth=8`.
-- So test **mwcps2 2.4** first. decomp.me's closest build is `mwcps2-2.4-001213` (2.4, Dec 2000); 2.4.1.01
-  may be a later patch release, in which case 2.4 might match most code and miss a few codegen details. Keep
-  2.3.3 and the 3.0 builds as fallbacks (`tools/compilers.json`). The Sony SDK 2.8 and CRI libraries may have
-  been built with ee-gcc by their vendors even though no GCC `.comment` survived the MW linker.
 
 ## Step 1: read the fingerprints
 
@@ -39,7 +42,7 @@ prove it ourselves.
 
 | Game | Range | Compiler | Flags | Evidence |
 |---|---|---|---|---|
-| f1 | game code | ? | ? | |
+| f1 | game code (`game` overlay) | MW 3.0.x, provisionally `mwcps2-3.0.1b75-030916` | `-O4,p` (or `-O3`/`-O4,s`) | 7 functions match |
 | f1 | libraries | ? | ? | |
 | f2 | game code | ? | ? | |
 | f2 | libraries | ? | ? | |

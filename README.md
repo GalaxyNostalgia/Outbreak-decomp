@@ -16,7 +16,7 @@ Japanese releases), aiming for a native PC version built from the same source th
 | `f2` | Biohazard Outbreak File 2 | SLPM-65692 (VER 1.03) | `SLPM_656.92` + 9 overlays (`BIN/*.DAT`) | 10/10 targets rebuild byte-identical from asm |
 | `f1en` / `f2en` | same, with the English fan patch v2.1 | your patched image in `orig/<ELF>/english/` | the 4 binaries per game the patch changes | 8/8 targets rebuild byte-identical from asm |
 
-Decompiled so far: 0 of ~14,500 (File 1) and ~15,450 (File 2) functions. About half of File 2's code is
+Decompiled so far: 7 of ~14,500 File 1 functions (`src/`), linked into the build and byte-identical; File 2 not started. About half of File 2's code is
 shared with File 1 and only needs decompiling once. What's in the binaries: [docs/LAYOUT.md](docs/LAYOUT.md).
 
 Japanese only, on purpose: Obsrv emulates the Japanese online service, and nobody emulates the US/EU one.
@@ -28,6 +28,7 @@ Linux or **WSL2 on Windows** (Ubuntu 24.04):
 
 ```sh
 sudo apt install python3-venv binutils-mips-linux-gnu git
+# (64-bit Linux runs the 32-bit Windows compilers through wibo; no Wine needed)
 python3 -m venv .venv && . .venv/bin/activate
 pip install -r requirements.txt
 python3 -I tools/firewall.py --install        # pre-commit hook that keeps game data out of git
@@ -46,6 +47,7 @@ Then:
 
 ```sh
 python configure.py f1 f2            # extract, verify sha1, survey, disassemble
+python configure.py --compilers      # Metrowerks compilers (decomp.me builds) + wibo, to build the C
 python -I tools/build.py f1 f2       # rebuild all 19 binaries and check they're byte-identical
 ```
 
@@ -59,6 +61,7 @@ python -I tools/build.py f1 f2       # rebuild all 19 binaries and check they're
 | `tools/build.py` | assemble + link at the original addresses, compare byte-for-byte, report the first difference |
 | `tools/survey.py` | ELF layout, `$gp`, compiler fingerprints, SDK/CRI versions, IOP modules; writes the splat configs for the ELF and its `MWo3` overlays |
 | `tools/xmatch.py` | finds functions File 1 and File 2 share, so each is decompiled once |
+| `tools/try.py` | compiles a C file with the game's compiler and compares each function with the original ([docs/DECOMPILING.md](docs/DECOMPILING.md)) |
 | `tools/iso_list.py` | list a disc's files; `--diff` shows what a patch (e.g. the English one) changed |
 | `tools/firewall.py` | refuses executables, images, disassembly and big binaries in git |
 | `tools/compilers.json` | candidate compilers (decomp.me builds) for `configure.py --compilers` |

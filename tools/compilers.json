@@ -1,26 +1,25 @@
 {
-  "_comment": "decomp.me compiler ids (github.com/decompme/compilers, platforms/ps2). Both main executables carry the .comment 'MW MIPS C Compiler (2.4.1.01)', so the Metrowerks 2.x line comes first; 3.0 builds stay in case parts of the code were built with a newer one. ee-gcc only for possible Sony/CRI libraries.",
+  "_comment": "decomp.me compiler ids (github.com/decompme/compilers, platforms/ps2). Game code is Metrowerks 3.0.x (2.x builds emit MMI moves the games don't use); the main ELF's '2.4.1.01' .comment comes from another object. 3.0b38/b50/b52 fail at -O4,p on actor_update.c. config/versions.json holds the current default.",
   "candidates": {
     "f1": [
-      "mwcps2-2.4-001213",
-      "mwcps2-2.3.3-000906",
-      "mwcps2-2.3-991202",
       "mwcps2-3.0-011126",
       "mwcps2-3.0.1-020123",
       "mwcps2-3.0.3-020716",
+      "mwcps2-3.0b38-030307",
+      "mwcps2-3.0.1b44-030325",
+      "mwcps2-3.0.1b51-030512",
+      "mwcps2-3.0b50-030527",
       "mwcps2-3.0b52-030722",
-      "ee-gcc2.96",
-      "ee-gcc2.95.3-136"
+      "mwcps2-3.0.1b74-030811",
+      "mwcps2-3.0.1b75-030916",
+      "mwcps2-3.0.1b87-031208",
+      "mwcps2-2.4-001213"
     ],
     "f2": [
-      "mwcps2-2.4-001213",
-      "mwcps2-2.3.3-000906",
-      "mwcps2-3.0-011126",
-      "mwcps2-3.0.1-020123",
-      "mwcps2-3.0.3-020716",
-      "mwcps2-3.0b52-030722",
-      "ee-gcc2.96",
-      "ee-gcc2.95.3-136"
+      "mwcps2-3.0.1b75-030916",
+      "mwcps2-3.0.1b87-031208",
+      "mwcps2-3.0.1b95-040309",
+      "mwcps2-3.0.1b103-040528"
     ]
   }
 }
