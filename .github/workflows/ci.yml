@@ -8,14 +8,4 @@ jobs:
       - name: No game data in the repository
         run: python3 -I tools/firewall.py
       - name: Scripts compile
-        run: python3 -m py_compile configure.py tools/*.py pc/tools/*.py
-  pc:
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v4
-      - name: 32-bit toolchain
-        run: sudo apt-get update && sudo apt-get install -y gcc-multilib cmake
-      - name: Build the PC port (File 1)
-        run: |
-          cmake -S pc -B build/pc -DOUTBREAK_GAME=f1 -DCMAKE_C_FLAGS=-m32
-          cmake --build build/pc
+        run: python3 -m py_compile configure.py tools/*.py

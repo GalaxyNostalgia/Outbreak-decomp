@@ -18,9 +18,11 @@ Japanese releases), aiming for a native PC version built from the same source th
 
 Decompiled so far: 11 of ~14,500 File 1 functions, including `main()`, (`src/`), byte-identical in the PS2 build; File 2 not started.
 
-**PC port** (`pc/`, [docs/PCPORT.md](docs/PCPORT.md)): a 32-bit native build that maps PS2 memory, reads your disc
-image and runs the game's decompiled `main()` natively, stopping at the first function that isn't decompiled yet. About half of File 2's code is
-shared with File 1 and only needs decompiling once. What's in the binaries: [docs/LAYOUT.md](docs/LAYOUT.md).
+About half of File 2's code is shared with File 1 and only needs decompiling once. What's in the binaries:
+[docs/LAYOUT.md](docs/LAYOUT.md).
+
+**PC port:** [GalaxyNostalgia/Outbreak-PC](https://github.com/GalaxyNostalgia/Outbreak-PC) builds a native
+Windows version from this repo's decompiled C (it includes this repo as a submodule).
 
 Japanese only, on purpose: Obsrv emulates the Japanese online service, and nobody emulates the US/EU one.
 English comes from the fan translation applied to the Japanese games ([docs/TRANSLATION.md](docs/TRANSLATION.md)).
@@ -71,7 +73,7 @@ python -I tools/build.py f1 f2       # rebuild all 19 binaries and check they're
 
 ## Plan
 
-[docs/ROADMAP.md](docs/ROADMAP.md) and [docs/PCPORT.md](docs/PCPORT.md): baseline → compiler → decompilation → IOP → PC platform layer → Obsrv →
+[docs/ROADMAP.md](docs/ROADMAP.md): baseline → compiler → decompilation → IOP → PC platform layer → Obsrv →
 English. Online details: [docs/NETWORK.md](docs/NETWORK.md). Compiler proof: [docs/COMPILER.md](docs/COMPILER.md).
 
 ## Thanks

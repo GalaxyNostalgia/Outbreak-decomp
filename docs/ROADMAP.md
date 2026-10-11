@@ -62,8 +62,8 @@ Each phase ends with a check that a machine can run. "Done" means the check pass
 
 ## Phase 5: PC port (from the same source) (started)
 
-- 2026-10-11: `pc/` builds a 32-bit PC executable that maps PS2 memory at the same addresses, loads the
-  executable's data from the user's disc and runs decompiled code natively ([PCPORT.md](PCPORT.md)).
+- 2026-10-11: the port lives in [Outbreak-PC](https://github.com/GalaxyNostalgia/Outbreak-PC): a 32-bit Windows
+  build that runs the decompiled `main()` natively ([PCPORT.md](PCPORT.md)).
 
 
 A `PLATFORM_PC` build compiles the decompiled C with a modern compiler and links a platform layer in place
