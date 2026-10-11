@@ -11,3 +11,30 @@ strupr = 0x0010CAE8; // type:func
 sceOpen = 0x001187B0; // type:func
 sceClose = 0x00118A38; // type:func
 sceLseek = 0x00118BB8; // type:func
+
+// Sony libc / libkernel (identified by behaviour)
+memset = 0x00107D08; // type:func
+FlushCache = 0x001145E0; // type:func
+
+// Sony libdev / libdma: hardware resets (VIF0/VIF1 FBRST at 0x10003810/0x10003C10, VU FBRST bits)
+sceDevVif0Reset = 0x001028A8; // type:func
+sceDevVif1Reset = 0x00102BD8; // type:func
+sceDevVu0Reset = 0x00101ED0; // type:func
+sceDevVu1Reset = 0x00102408; // type:func
+sceDmaReset = 0x00103140; // type:func
+
+// Sony libgraph (GS)
+sceGsResetGraph = 0x001122A8; // type:func
+sceGsGetGParam = 0x00112438; // type:func
+sceGsResetPath = 0x00112448; // type:func
+sceGsSetDefDispEnv = 0x00112560; // type:func
+sceGsPutDispEnv = 0x001128D8; // type:func
+sceGsSetDefDrawEnv = 0x00112A60; // type:func
+sceGsSetDefClear = 0x00112C48; // type:func
+sceGsPutDrawEnv = 0x00112D50; // type:func
+sceGsSetDefDBuff = 0x00112E38; // type:func
+sceGsSwapDBuff = 0x001130D0; // type:func
+sceGsSyncV = 0x00113130; // type:func
+sceGsSyncPath = 0x001131C8; // type:func
+sceGsSetDefLoadImage = 0x001134E0; // type:func
+sceGsExecLoadImage = 0x001136C8; // type:func
