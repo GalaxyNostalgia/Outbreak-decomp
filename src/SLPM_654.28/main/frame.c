@@ -1,4 +1,6 @@
-#include "common.h"
+#include "system.h"
+#include "ps2mem.h"
+#include "libgraph.h"
 extern f32 D_0023BB60;
 extern s32 D_0023BB64;
 extern u16 D_0023BBA4;
@@ -43,3 +45,39 @@ s32 func_001B9070(void) {
     return 0;
 }
 #endif
+
+extern s32 D_0023BAF4;          /* a movie is playing (CRI Sofdec runs the frame) */
+void func_0012BC20(s32 unused);  /* CRI ADX v-blank server */
+void func_0015F790(void);        /* CRI Sofdec: wait for the next frame */
+s32 func_001AB9C0(s32 nowait);
+
+void func_001A8470(void) {
+    if (D_0023BAF4 != 0) {
+        func_0012BC20(0);
+    }
+}
+
+/* End of frame: ask the v-blank handler to flip, and wait until it has (when the frame took no longer than
+   its v-blank budget). */
+void func_001A84A0(void) {
+    func_001AB9C0(1);
+    if (D_00281DB0.vcount <= D_00281DB0.swapWait) {
+        u64 csr = HW_REG64(GS_CSR);
+        D_00281DB0.swapRequest = 1;
+        D_00281DB0.vsync = (csr >> 13) & 1;
+        do {
+            if (D_0023BAF4 != 0) {
+                func_0015F790();
+            } else {
+                sceGsSyncV(0);
+            }
+        } while (D_00281DB0.swapRequest != 0);
+    } else {
+        D_00281DB0.swapRequest = 1;
+        if (D_0023BAF4 != 0) {
+            func_0015F790();
+        } else {
+            sceGsSyncV(0);
+        }
+    }
+}
