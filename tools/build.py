@@ -150,16 +150,25 @@ def build_target(label, cfgp, quiet=False):
 
 
 def targets(versions, wanted):
+    """(label, config) for every target: <key>.<target>, plus <key>en.<target> for the English patch."""
     out = []
     for key, ver in versions.items():
+        cdir = ROOT / "config" / ver["elf"]
         names = ["main", *ver.get("overlays", {})]
-        for t in names:
-            label = f"{key}.{t}"
-            if not wanted or key in wanted or label in wanted:
-                cfgp = ROOT / "config" / ver["elf"] / f"{t}.yaml"
-                if cfgp.exists() or wanted:
+        for variant, suffix in ((key, ""), (f"{key}en", ".en")):
+            for t in names:
+                label, cfgp = f"{variant}.{t}", cdir / f"{t}{suffix}.yaml"
+                if wanted and variant not in wanted and label not in wanted:
+                    continue
+                if suffix and cfgp.exists() and not wanted:
+                    # English targets only when the user has a patched image in orig/<ELF>/english/
+                    tp = yaml.safe_load(cfgp.read_text())["options"]["target_path"]
+                    if not (ROOT / tp).exists():
+                        continue
+                if cfgp.exists() or (wanted and not suffix):
                     out.append((label, cfgp))
-    unknown = set(wanted) - {l for l, _ in out} - set(versions)
+    known = set(versions) | {f"{k}en" for k in versions} | {l for l, _ in out}
+    unknown = set(wanted) - known
     if unknown:
         sys.exit(f"unknown target(s): {', '.join(sorted(unknown))}")
     return out
@@ -168,7 +177,8 @@ def targets(versions, wanted):
 def main():
     versions = json.loads((ROOT / "config/versions.json").read_text())
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("targets", nargs="*", help="f1, f2, f1.main, f2.game, ... (default: everything configured)")
+    ap.add_argument("targets", nargs="*",
+                    help="f1, f2, f1en, f2en, f1.main, f2en.game, ... (default: everything configured)")
     ap.add_argument("--keep-going", action="store_true", help="build every target even after a mismatch")
     a = ap.parse_args()
     ok = True

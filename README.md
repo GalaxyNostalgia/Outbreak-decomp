@@ -14,6 +14,7 @@ Japanese releases), aiming for a native PC version built from the same source th
 |---|---|---|---|---|
 | `f1` | Biohazard Outbreak | SLPM-65428 (VER 1.04) | `SLPM_654.28` + 8 overlays (`PROG/*.BIN`) | 9/9 targets rebuild byte-identical from asm |
 | `f2` | Biohazard Outbreak File 2 | SLPM-65692 (VER 1.03) | `SLPM_656.92` + 9 overlays (`BIN/*.DAT`) | 10/10 targets rebuild byte-identical from asm |
+| `f1en` / `f2en` | same, with the English fan patch v2.1 | your patched image in `orig/<ELF>/english/` | the 4 binaries per game the patch changes | 8/8 targets rebuild byte-identical from asm |
 
 Decompiled so far: 0 of ~14,500 (File 1) and ~15,450 (File 2) functions. About half of File 2's code is
 shared with File 1 and only needs decompiling once. What's in the binaries: [docs/LAYOUT.md](docs/LAYOUT.md).

@@ -86,9 +86,11 @@ The game logic stays at its original 30 Hz tick, which online play needs; render
   go live on Obsrv only with the admins' agreement.
 - **Check:** a mixed PC + PCSX2 room on a local server completes a scenario without desync.
 
-## Phase 7: English
+## Phase 7: English (baseline done ✅)
 
-- Support Silent Hell & REfan988's English patch (GPL-3.0) by building the patched executable as a third and
+- 2026-10-11: the v2.1 patch was measured ([TRANSLATION.md](TRANSLATION.md)): text data plus one instruction per
+  game. `f1en`/`f2en` targets rebuild byte-identical.
+- Remaining: support Silent Hell & REfan988's English patch (GPL-3.0) by building the patched executable as a third and
   fourth target (`f1en`, `f2en`) and reading the patched data files from the user's patched image. See
   [TRANSLATION.md](TRANSLATION.md).
 - **Check:** the PC build shows English text from a user-patched image and still plays with unpatched JP players.

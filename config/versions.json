@@ -14,6 +14,10 @@
       "single": "PROG/SINGLE.BIN",
       "netaq": "PROG/NETAQ.BIN"
     },
+    "english": {
+      "patch": "REfan988 & Silent Hell, github.com/SilentHeII/Outbreak-Translation v2.1, 'File 1.xdelta'",
+      "changed": ["SLPM_654.28", "PROG/DEMO.BIN", "PROG/GAME.BIN", "PROG/NETWK.BIN"]
+    },
     "obsrv": {"lobby_port": 8300, "game_port": 8690, "kddi_title_dir": "00000002"},
     "notes": "The online server pushes a 0x7AA0-byte v1.01 code patch (see docs/NETWORK.md)."
   },
@@ -32,6 +36,10 @@
       "insdnas": "BIN/6.DAT",
       "single": "BIN/8.DAT",
       "netaq": "BIN/9.DAT"
+    },
+    "english": {
+      "patch": "REfan988 & Silent Hell, github.com/SilentHeII/Outbreak-Translation v2.1, 'File 2.xdelta'",
+      "changed": ["SLPM_656.92", "BIN/1.DAT", "BIN/2.DAT", "BIN/3.DAT"]
     },
     "obsrv": {"lobby_port": 8200, "game_port": 8590, "kddi_title_dir": "00000010"},
     "notes": ""
