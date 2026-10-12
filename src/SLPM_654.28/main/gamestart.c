@@ -1,3 +1,4 @@
+#include "task.h"
 #include "cri.h"
 #include "sce.h"
 
@@ -99,7 +100,6 @@ void func_001ADED0(void) {
     D_0023BB9C = D_0023BB88.second;
 }
 
-extern u8 D_002F85D0[0x200];
 
 void func_001B63A0(void) {
     memset(D_002F85D0, 0, sizeof(D_002F85D0));

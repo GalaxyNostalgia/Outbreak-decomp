@@ -4,57 +4,8 @@
 /* Game options and sound start-up: the options block, master/BGM/SE volumes, the three ADX
    streams the game keeps for music and sound effects. */
 
-/* The game's settings and per-session state (0xE0 bytes, cleared in gameinit.c). Field names
-   are what the code does with them so far. */
-typedef struct {
-    u8 unk0;
-    u8 unk1;
-    u8 unk2;
-    u8 unk3;
-    u8 unk4;
-    u8 sound;           /* 0x05: 0/1 (stereo/mono?) */
-    u8 unk6;
-    u8 unk7;
-    u8 unk8;
-    u8 bgmVol;          /* 0x09: 0-7 */
-    u8 seVol;           /* 0x0A: 0-7 */
-    u8 unkB;
-    u8 unkC;
-    u8 unkD;
-    u8 unkE;
-    u8 unkF;
-    u8 unk10[7];
-    u8 unk17;
-    u8 unk18;
-    u8 unk19;
-    u16 unk1A;
-    u16 unk1C;
-    u16 unk1E;
-    u16 unk20;
-    u16 unk22;
-    u16 unk24;
-    u16 unk26;
-    u8 unk28;
-    u8 unk29;
-    u8 unk2A;
-    u8 unk2B;
-    u8 unk2C;           /* below 6 */
-    s8 adjustX;         /* 0x2D: screen position, -10..10 */
-    s8 adjustY;         /* 0x2E */
-    u8 unk2F;           /* 0/1 */
-    u8 brightness;      /* 0x30: 0x38..0xA4, default 0x80 */
-    u8 unk31;
-    u8 unk32;
-    u8 unk33[7];
-    u8 unk3A;
-    u8 unk3B;
-    u8 unk3C;
-    u8 unk3D;
-    u8 unk3E[0xB5 - 0x3E];
-    u8 unkB5;
-} Options;
+#include "options.h"
 
-extern Options D_00306590;
 extern s8 D_00306390[0x10];        /* options as saved */
 extern s8 D_00231B30[0x10];        /* default saved options */
 
@@ -159,9 +110,9 @@ typedef struct {
     s16 pad;
     s32 vol;       /* 0x04 */
     s32 target;    /* 0x08 */
-    s32 unkC;
+    f32 speed;     /* 0x0C: volume fade per frame */
     f32 fvol;      /* 0x10 */
-    s32 unk14;
+    s32 limit;     /* 0x14: the fade stops here */
 } AdxStream;
 
 extern s32 D_0029B050[3];
@@ -246,7 +197,7 @@ void func_001B9240(void) {
     D_00306590.adjustY = D_00306390[7];
     D_00306590.brightness = D_00306390[5];
     func_001AE0A0();
-    D_00306590.unk32 = 0;
+    D_00306590.online = 0;
     D_00306590.unk1A = 0xFFFF;
     D_00306590.unk18 = 0;
     D_00306590.unk19 = 0;
@@ -325,7 +276,7 @@ s32 func_001ACEA0(void) {
             s->target = s->vol = D_00306590.seVol * 127 / 100;
             s->fvol = (f32)(D_00306590.seVol * 127) / 100.0f;
         }
-        s->unkC = 0;
+        s->speed = 0;
         s->nch = D_00239F50[i];
         if (s->nch == 2) {
             size = ADX_WORK(s->nch, s->nch * 1200000 / 44 * 5);
@@ -343,5 +294,59 @@ s32 func_001ACEA0(void) {
     }
     D_0023BB10 = 1;
     return 0;
+}
+#endif
+
+s32 func_001AF500(void) {
+    return D_00306590.online;
+}
+
+void func_0012BC38(void);    /* CRI ADX: run the server */
+
+#ifdef NON_MATCHING   /* first draft: one instruction short, fade-end test scheduled differently */
+/* Volume fades of the three ADX streams, once a frame. */
+void func_001AD740(void) {
+    s32 i;
+    s32 j;
+    void **h;
+    AdxStream *s;
+    f32 v;
+    s32 vol;
+
+    D_00306590.adxBusy = 0;
+    i = 0;
+    if (func_001B6980(0xE) == 0) {
+        for (j = 0, h = D_0029B0B8; j < 3; j++, h++) {
+            if (h != NULL && (ADXT_GetStat(*h) == 1 || ADXT_GetStat(*h) == 2)) {
+                D_00306590.adxBusy = 1;
+                break;
+            }
+        }
+        i = 0;
+    }
+    do {
+        s = &D_0029B060[i];
+        if (s->active == 0 && s->speed != 0.0f) {
+            v = s->fvol + s->speed;
+            if (v < 0.0f) {
+                v = 0.0f;
+            }
+            vol = (v / 127.0f) * s->target;
+            if (s->target < vol) {
+                vol = s->target;
+                v = s->target;
+            }
+            if (vol != s->vol) {
+                ADXT_SetOutVol(D_0029B0B8[i], D_00216570[vol & 0x7F] / 10);
+            }
+            s->vol = vol;
+            s->fvol = v;
+            if ((s->vol >= s->limit && s->speed > 0.0f) || (s->vol <= s->limit && s->speed < 0.0f)) {
+                s->speed = 0.0f;
+            }
+        }
+        i++;
+    } while (i < 3);
+    func_0012BC38();
 }
 #endif

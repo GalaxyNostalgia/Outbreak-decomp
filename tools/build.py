@@ -80,6 +80,23 @@ def compiler_for(src, versions_key):
     return c["cc"], c["flags"]
 
 
+def c_addr_syms(label):
+    """PROVIDE an address for every func_XXXXXXXX / D_XXXXXX the C names, so C can use a variable or function
+    that no asm of this target touches (e.g. another overlay's) without a hand-written definition."""
+    key, _, target = label.partition(".")
+    elf = VERSIONS[key[:-2] if key.endswith("en") else key]["elf"]
+    names = set()
+    for src in sorted((ROOT / "src" / elf / target).rglob("*.c")):
+        names |= set(re.findall(r"\b((?:func|D)_([0-9A-F]{6,8}))\b", src.read_text()))
+    return [f"PROVIDE({n} = 0x{a});" for n, a in sorted(names)]
+
+
+# C functions' jump tables: {func: (obj, section, size)}. Each is linked at the address of the original
+# function's table (which the data asm still holds, with the same values) so the code refers to it there.
+JUMP_TABLES = {}
+JT_PLACED = []
+
+
 def compile_sources(label, o, b):
     """Compile src/<ELF>/<target>/**.c. Returns {name: (obj, section, size)} of the functions."""
     key, _, target = label.partition(".")
@@ -116,6 +133,8 @@ def compile_sources(label, o, b):
         for name, size in mwo_sections.sections(obj):
             if name.startswith(".text."):
                 out[name[6:]] = (obj, name, size)
+            elif name.startswith(".rodata."):
+                JUMP_TABLES[name[8:]] = (obj, name, size)
             elif name in (".data", ".rodata", ".sdata", ".bss", ".sbss") and size:
                 sys.exit(f"[{label}] {rel}: C data ({name}) isn't supported yet; keep data in asm")
     return out
@@ -152,6 +171,13 @@ def splice(text_s, vram, cfuncs, b):
         if a in chosen:
             obj, sec, name, size = chosen[a]
             out.append((obj, sec, a - vram))
+            if name in JUMP_TABLES:
+                jt = sorted(set(re.findall(r"%hi\((jtbl_([0-9A-F]{8}))\)", t)))
+                if not jt:
+                    sys.exit(f"{name}: its C has a jump table, the asm has none")
+                # several tables: MW puts them in one section, in the same order as the original's
+                jobj, jsec, _ = JUMP_TABLES[name]
+                JT_PLACED.append((jobj, jsec, min(int(a_, 16) for _, a_ in jt)))
             for lab, la in re.findall(r"(?m)^[jgd]label (\w+)\n(?:.*\n)*?\s*/\* [0-9A-F]+ ([0-9A-F]{8})", t):
                 if lab != name:
                     abs_syms.append((lab, int(la, 16)))
@@ -196,6 +222,8 @@ def build_target(label, cfgp, quiet=False):
     if missing:
         sys.exit(f"[{label}] splat did not produce {missing[0].relative_to(ROOT)}")
     # Phase 2: C functions from src/<ELF>/<target>/ replace their asm, pinned at the same address
+    JUMP_TABLES.clear()
+    JT_PLACED.clear()
     cfuncs = compile_sources(label, o, b)
     abs_syms, n_c, c_bytes = [], 0, 0
     if cfuncs:
@@ -243,9 +271,11 @@ def build_target(label, cfgp, quiet=False):
         for s, sec, bvram in bss:
             at = f"{bvram:#x} " if bvram is not None else ""
             ld.append(f"    .{name}_bss {at}(NOLOAD) : {{ {objmap[s].relative_to(ROOT)}({sec}); }}")
+    for jobj, jsec, ja in JT_PLACED:
+        ld.append(f"    .jt_{jsec[8:]} {ja:#x} (NOLOAD) : {{ {jobj.relative_to(ROOT)}({jsec}); }}")
     ld += ["    /DISCARD/ : { *(.reginfo) *(.MIPS.abiflags) *(.pdr) *(.gnu.attributes) *(.comment) *(.mdebug*)"
            " *(.mwcats*) *(.rel.mwcats*) *(.rel.pdr) *(.note*) }",
-           "}"] + [f"{lab} = {la:#x};" for lab, la in abs_syms] + [""]
+           "}"] + [f"{lab} = {la:#x};" for lab, la in abs_syms] + c_addr_syms(label) + [""]
     script = b / "link.ld"
     script.write_text("\n".join(ld))
     extra = []

@@ -28,3 +28,14 @@ Notes
 - C data (`.rodata`/`.data`/`.sdata`) isn't linked yet: functions with jump tables, float constants or
   strings stay in asm for now.
 - English targets (`f1en.*`) compile the same sources with `-DENGLISH`.
+
+## Notes from matching
+
+- **Switch jump tables** work in C: `tools/mwo_sections.py` names a function's `.rodata` after it, and
+  `tools/build.py` links it at the original table's address (the data asm still holds the same values).
+- **Names the C uses for things outside its own target** (another overlay's variable or entry point, e.g.
+  `D_540080` in DEMO.BIN) get their address through a linker `PROVIDE`, so no hand-written definition is needed.
+- **Register allocation follows declaration order.** When only register numbers differ, try permuting the local
+  variable declarations before anything else.
+- `if (len > 4)` and `if (len >= 5)` compile differently (`slti $at` vs `slti $v0`).
+- An empty `case 0:` placed **last** in a switch is what produces the leading `beqz` the original has.

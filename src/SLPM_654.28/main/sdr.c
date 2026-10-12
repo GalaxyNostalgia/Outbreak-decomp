@@ -248,3 +248,293 @@ s32 func_001A70F0(s32 stereo) {
     return 0;
 }
 #endif
+
+/* Sending: each frame the queued commands are packed into a byte stream (D_00293000, ended by 0xFF)
+   and sent to the driver in one RPC. */
+
+extern u8 D_00293000[0x200];
+extern char D_00224030[];   /* "SDR: SdrSendReq: Caution: sbuff overflow. ..." */
+extern char D_00224090[];   /* "SDR: SdrSendReq: Error: Rpc faild.\n" */
+extern char D_002240F0[];   /* "SDR: snddrv.c: makebuff8: Error: Length over\n" */
+extern char D_00224120[];   /* "SDR: snddrv.c: makebuff: Error: Length over\n" */
+extern char D_00224150[];   /* "SDR: snddrv.c: makebuff_ext: Error: Length invalid\n" */
+extern char D_00224190[];   /* "SDR: snddrv.c: sending_req: Error: unknown command\n" */
+
+/* A command with optional bytes: flags in the opcode's low bits say which follow. */
+s32 func_001A7580(u32 cmd, u8 a, u8 b, u16 c, u8 d) {
+    u32 op = cmd >> 24;
+    s32 len;
+    s32 hasA = op & 1;
+    s32 hasB;
+    s32 hasC;
+    u8 *p;
+
+    len = 4;
+
+    if (hasA) {
+        len++;
+    }
+    hasB = op & 2;
+    hasC = op & 4;
+    if (hasB) {
+        len++;
+    }
+    if (hasC) {
+        len += 2;
+    }
+    if (D_00292DA8[0] + len >= 0x200) {
+        return -1;
+    }
+    p = &D_00293000[D_00292DA8[0]];
+    p[0] = op;
+    p[1] = cmd >> 16;
+    p[2] = cmd >> 8;
+    p[3] = cmd;
+    p += 4;
+    if (hasA) {
+        *p++ = a;
+    }
+    if (hasB) {
+        *p++ = b;
+    }
+    if (hasC) {
+        p[0] = (c & 0xFFFF) >> 8;
+        p[1] = c & 0xFFFF;
+        p += 2;
+    }
+    p[0] = d;
+    D_00292DA8[0] += len + 1;
+    p[1] = 0xFF;
+    return 0;
+}
+
+/* Opcode 0x35: the command word and three more bytes. */
+s32 func_001A7660(SdrSlot *s) {
+    s32 sh;
+    s32 n;
+    u32 w;
+
+    if (D_00292DA8[0] + 8 >= 0x200) {
+        return -1;
+    }
+    w = s->id;
+    sh = 24;
+    n = 4;
+    do {
+        D_00293000[D_00292DA8[0]] = w >> sh;
+        n--;
+        sh -= 8;
+        D_00292DA8[0]++;
+    } while (n > 0);
+    w = s->a;
+    sh = 16;
+    n = 3;
+    do {
+        D_00293000[D_00292DA8[0]] = w >> sh;
+        n--;
+        sh -= 8;
+        D_00292DA8[0]++;
+    } while (n > 0);
+    D_00293000[D_00292DA8[0]] = 0xFF;
+    return 0;
+}
+
+/* makebuff8: up to 4 bytes of the command word, then up to 4 more bytes */
+s32 func_001A7730(u32 cmd, s32 len, u8 b0, u8 b1, u8 b2, u8 b3) {
+    s32 sh;
+    s32 n;
+
+    if (len > 8) {
+        printf(D_002240F0);
+        return -1;
+    }
+    if (D_00292DA8[0] + len >= 0x200) {
+        return -1;
+    }
+    for (sh = 24, n = 4; n > 0 && len > 0; sh -= 8, n--, len--) {
+        D_00293000[D_00292DA8[0]++] = cmd >> sh;
+    }
+    if (len-- > 0) {
+        D_00293000[D_00292DA8[0]++] = b0;
+    }
+    if (len-- > 0) {
+        D_00293000[D_00292DA8[0]++] = b1;
+    }
+    if (len-- > 0) {
+        D_00293000[D_00292DA8[0]++] = b2;
+    }
+    if (len-- > 0) {
+        D_00293000[D_00292DA8[0]++] = b3;
+    }
+    D_00293000[D_00292DA8[0]] = 0xFF;
+    return 0;
+}
+
+/* makebuff: the first len bytes of the command word */
+s32 func_001A78D0(u32 cmd, s32 len) {
+    s32 sh;
+
+    if (len > 4) {
+        printf(D_00224120);
+        return -1;
+    }
+    if (D_00292DA8[0] + len >= 0x200) {
+        return -1;
+    }
+    for (sh = 24; len > 0; len--) {
+        D_00293000[D_00292DA8[0]] = cmd >> sh;
+        sh -= 8;
+        D_00292DA8[0]++;
+    }
+    D_00293000[D_00292DA8[0]] = 0xFF;
+    return 0;
+}
+
+/* makebuff_ext: the first len bytes of a command that goes on for total bytes (no end mark yet) */
+s32 func_001A7980(u32 cmd, s32 len, s32 total) {
+    s32 sh;
+
+    if (len >= total || len > 4) {
+        printf(D_00224150);
+        return -1;
+    }
+    if (D_00292DA8[0] + total >= 0x200) {
+        return -1;
+    }
+    for (sh = 24; len > 0; len--) {
+        D_00293000[D_00292DA8[0]] = cmd >> sh;
+        sh -= 8;
+        D_00292DA8[0]++;
+    }
+    return 0;
+}
+
+#define SLOT_U8(s, off) (((u8 *)(s))[off])
+#define SLOT_U16(s, off) (*(u16 *)((u8 *)(s) + (off)))
+
+#ifdef NON_MATCHING   /* keeps the command word in a0; the original in v0 (and three instructions fewer) */
+/* sending_req: pack one queued command; its opcode says how many bytes it takes. */
+s32 func_001A7A20(SdrSlot *s) {
+    s32 cmd = s->id;
+    s32 op = cmd >> 24;
+    s32 grp;
+
+    if (op == 0x7F) {
+        return 0;
+    }
+    grp = op & 0xF0;
+    if (op == -1) {
+        return 0;
+    }
+    switch (grp) {
+    case 0x00:
+        return func_001A7580(cmd, SLOT_U8(s, 4), SLOT_U8(s, 5), SLOT_U16(s, 6), SLOT_U8(s, 8));
+    case 0x20:
+        if (op & 8) {
+            if (op == 0x29) {
+                return func_001A78D0(cmd, 3);
+            }
+            return func_001A78D0(cmd, 1);
+        }
+        if (op == 0x22 || op == 0x20 || op == 0x24 || op == 0x23) {
+            return func_001A78D0(cmd, 3);
+        }
+        return func_001A78D0(cmd, 2);
+    case 0x30:
+    case 0x70:
+        if (op == 0x38 || op == 0x30 || op == 0x71 || op == 0x73) {
+            return func_001A78D0(cmd, 2);
+        }
+        if (op == 0x31 || op == 0x37 || (op >= 0x39 && op <= 0x3B) || op == 0x72 || op == 0x75) {
+            return func_001A78D0(cmd, 3);
+        }
+        if (op == 0x3D || op == 0x36 || op == 0x74) {
+            return func_001A78D0(cmd, 4);
+        }
+        if (op == 0x77 || op == 0x3C || op == 0x3E) {
+            return func_001A7730(cmd, 5, SLOT_U8(s, 4), 0, 0, 0);
+        }
+        if (op == 0x3F) {
+            return func_001A7730(cmd, 7, SLOT_U8(s, 4), SLOT_U8(s, 5), SLOT_U8(s, 6), 0);
+        }
+        if (op == 0x35) {
+            return func_001A7660(s);
+        }
+        return func_001A78D0(cmd, 1);
+    case 0x40:
+        if ((op >= 0x47 && op <= 0x4A) || op == 0x41 || op == 0x42) {
+            return func_001A78D0(cmd, 2);
+        }
+        if (op == 0x4B) {
+            return func_001A78D0(cmd, 3);
+        }
+        if (op == 0x45 || op == 0x4C) {
+            return func_001A78D0(cmd, 4);
+        }
+        if (op == 0x44) {
+            return func_001A7730(cmd, 6, SLOT_U8(s, 4), SLOT_U8(s, 5), 0, 0);
+        }
+        if (op == 0x4D || op == 0x4E) {
+            return func_001A7980(cmd, 3, 0x15);
+        }
+        if (op == 0x4F) {
+            return func_001A7730(s->a, 6, (cmd >> 8) & 0xFF, cmd & 0xFF, 0, 0);
+        }
+        return func_001A78D0(cmd, 1);
+    case 0x60:
+    case 0x50:
+        return func_001A78D0(cmd, 2);
+    default:
+        printf(D_00224190);
+        return -1;
+    }
+}
+#endif
+
+s32 func_001A7A20(SdrSlot *s);
+
+/* SdrSendReq: pack the queued commands and send them (nowait: give up if the last send is still
+   going). The RPC's end callback releases the semaphore. */
+s32 func_001A7280(s32 nowait) {
+    s32 i;
+    SdrSlot *s;
+    s32 size;
+
+    if (nowait != 0) {
+        if (PollSema(D_00239F18) < 0) {
+            return -1;
+        }
+    } else {
+        WaitSema(D_00239F18);
+    }
+    i = D_00292DB8[0];
+    while ((s = &D_00292DC0[i])->id >= 0) {
+        if (func_001A7A20(s) < 0) {
+            printf(D_00224030);
+            break;
+        }
+        s->id = -1;
+        i = (i + 1) % 32;
+    }
+    D_00292DB8[0] = i;
+    if (D_00292DA8[0] != 0) {
+        size = (D_00292DA8[0] + 16) & ~15;
+        if (nowait != 0) {
+            nowait = 1;
+        }
+        if (sceSifCallRpc(&D_00292F70, SDR_DEV, nowait, D_00293000, size, D_00293000, 0,
+                          func_001A7430, (void *)D_00239F18) < 0) {
+            printf(D_00224090);
+            SignalSema(D_00239F18);
+            return -1;
+        }
+        D_00292DA8[0] = 0;
+    } else {
+        SignalSema(D_00239F18);
+    }
+    return 0;
+}
+
+s32 func_001AB9C0(s32 nowait) {
+    return func_001A7280(nowait);
+}

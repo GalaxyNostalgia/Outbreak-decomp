@@ -12,6 +12,8 @@ char *strcat(char *dst, const char *src);
 char *strupr(char *s);                       /* upper-cases ASCII in place (Sony libc ctype table) */
 s32 sprintf(char *dst, const char *fmt, ...);
 s32 printf(const char *fmt, ...);
+s32 strncmp(const char *a, const char *b, u32 n);
+char *strncpy(char *dst, const char *src, u32 n);
 char *strrchr(const char *s, s32 c);
 s32 strcmp(const char *a, const char *b);
 void *memcpy(void *dst, const void *src, u32 n);

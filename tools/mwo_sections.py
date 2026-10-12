@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Rename the per-function sections of a Metrowerks PS2 object so GNU ld can place
-functions individually: `.text` -> `.text.<func>` (and `.rel.text` -> `.rel.text.<func>`).
+functions individually: `.text` -> `.text.<func>` (and `.rel.text` -> `.rel.text.<func>`), and a
+function's jump tables `.rodata` -> `.rodata.<func>`.
 
 MW already emits one `.text` section per function; it just names them all `.text`.
 The new names go into a copy of .shstrtab appended to the file; no contents move.
@@ -42,10 +43,17 @@ def rename(src, dst):
                 if d[off] >> 4 == 13:
                     d[off] = (2 << 4) | (d[off] & 0xF)
 
+    # a function's .rodata (its switch jump tables) comes right before its .text
+    for i, s in enumerate(shdrs):
+        if name(s[0]) == ".rodata":
+            nxt = next((j for j in range(i + 1, e_shnum) if name(shdrs[j][0]) == ".text"), None)
+            if nxt in owner:
+                owner[i] = owner[nxt]
     new = bytearray(names)
     for i, s in enumerate(shdrs):
         n = name(s[0])
-        target = i if n == ".text" else (s[7] if n == ".rel.text" and s[1] == SHT_REL else None)
+        target = i if n in (".text", ".rodata") else \
+            (s[7] if n in (".rel.text", ".rel.rodata") and s[1] == SHT_REL else None)
         if target is not None and target in owner:
             s[0] = len(new)
             new += f"{n}.{owner[target]}".encode() + b"\0"

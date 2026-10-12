@@ -49,7 +49,8 @@ typedef struct {
     s32 nextSwapWait;       /* 0x058 */
     s32 vcount;             /* 0x05C: v-blanks since the last frame was finished */
     s32 swapRequest;        /* 0x060 */
-    u8 unk64[0x3A4 - 0x64];
+    u8 unk64[0x3A0 - 0x64];
+    u32 clearColor;         /* 0x3A0: 0xAARRGGBB the frame is cleared to */
     s32 offsetX;            /* 0x3A4: XYOFFSET (2048 - width / 2) */
     s32 offsetY;            /* 0x3A8 */
     s32 unk3AC;

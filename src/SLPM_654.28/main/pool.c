@@ -1,0 +1,45 @@
+#include "common.h"
+
+/* Free lists the game rebuilds every frame. */
+
+void func_001A50F0(s32 count, u32 *items);   /* util.c */
+
+extern u32 D_002FAAE0[0xA0];
+extern u8 D_0023BB7C;
+extern u16 *D_0023BB70;          /* top of the id stack */
+extern u16 D_002F8AE0[];         /* the id stack ends here */
+extern s16 D_0023BB78;           /* ids on the stack */
+
+void func_001B1360(void) {
+    s32 id;
+    s32 i;
+
+    func_001A50F0(0xA0, D_002FAAE0);
+    D_0023BB7C = 1;
+    D_0023BB70 = D_002F8AE0;
+    id = 0xFF;
+    i = 0;
+    do {
+        *--D_0023BB70 = id;
+        i++;
+        id--;
+    } while (i < 0x100);
+    D_0023BB78 = 0x100;
+}
+
+extern s32 D_0023BB30;           /* per-frame callbacks registered */
+extern void (*D_0029B0D0[])(void);
+
+void func_001AED60(void) {
+    void (**cb)(void);
+    s32 n;
+
+    func_001B1360();
+    n = D_0023BB30;
+    cb = D_0029B0D0;
+    while (n != 0) {
+        (*cb)();
+        n--;
+        cb++;
+    }
+}

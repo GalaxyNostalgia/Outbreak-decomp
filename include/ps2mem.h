@@ -13,6 +13,14 @@ extern u8 pc_ram[];
 #define PS2_RAM(addr) ((void *)(addr))
 #endif
 
+/* The scratchpad (16 KiB of fast RAM at 0x70000000). The PC build backs it with a 16 KiB block. */
+#ifdef PLATFORM_PC
+extern u8 pc_spr[];
+#define PS2_SPR(addr) ((void *)(pc_spr + ((u32)(addr) & 0x3FFF)))
+#else
+#define PS2_SPR(addr) ((void *)(addr))
+#endif
+
 /* Hardware registers (0x10000000-0x1000FFFF EE devices, 0x12000000 GS privileged).
    On PC these go to pc_hw_reg(), which models the few the game uses (timers) and
    ignores the rest. */
