@@ -68,6 +68,23 @@ def rename(src, dst):
     open(dst, "wb").write(d)
 
 
+def undefined_symbols(path):
+    """Names of the symbols an ELF32 LE object uses but doesn't define."""
+    d = open(path, "rb").read()
+    e_shoff, = struct.unpack_from("<I", d, 0x20)
+    e_shentsize, e_shnum, _ = struct.unpack_from("<HHH", d, 0x2E)
+    sh = [struct.unpack_from("<10I", d, e_shoff + i * e_shentsize) for i in range(e_shnum)]
+    out = set()
+    for s in sh:
+        if s[1] == SHT_SYMTAB:
+            so = sh[s[6]][4]
+            for k in range(s[5] // 16):
+                st_name, _, _, _, _, st_shndx = struct.unpack_from("<IIIBBH", d, s[4] + k * 16)
+                if st_shndx == 0 and st_name:
+                    out.add(d[so + st_name:d.index(b"\0", so + st_name)].decode())
+    return out
+
+
 def sections(path):
     """[(name, size)] of an ELF32 LE object."""
     d = open(path, "rb").read()

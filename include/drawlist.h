@@ -8,7 +8,7 @@
 typedef struct {
     s32 unk0;           /* 0x00 */
     s32 mode;           /* 0x04: the font (index into D_00216A80) */
-    s32 encoding;       /* 0x08: 0 Shift-JIS, else EUC */
+    s32 encoding;       /* 0x08: 0 Shift-JIS, 1 EUC, 2 UTF-8 */
     s32 glyphSize;      /* 0x0C: pixels */
     s32 packed;         /* 0x10: glyphs are 2-bit and get expanded */
     s32 unk14;          /* 0x14 */
@@ -38,7 +38,9 @@ typedef struct {
     u32 color;          /* 0x80 */
     s32 unk84;          /* 0x84 */
     s32 unk88;          /* 0x88 */
-    u8 unk8C[0x98 - 0x8C];
+    u32 glyphCount;     /* 0x8C: glyphs in the font */
+    s32 unk90;          /* 0x90 */
+    s32 unicode;        /* 0x94: the font maps all of Unicode (else ASCII is drawn as is) */
     u32 height;         /* 0x98 */
     s32 unk9C;          /* 0x9C */
     s32 unkA0;          /* 0xA0 */

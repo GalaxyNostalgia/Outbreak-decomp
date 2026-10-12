@@ -753,3 +753,114 @@ void func_001B43C0(u8 *s) {
     dl->ptr = p;
 }
 #endif
+
+#ifdef NON_MATCHING   /* close: operand order / scheduling differs */
+/* UTF-8: decodes the character at *s and advances *s; -1 for a bad sequence. */
+u32 func_001B52A0(u8 **s) {
+    u32 c = *(*s)++;
+    u32 c1, c2;
+
+    if ((s32)c < 0x80) {
+        return c;
+    }
+    if ((s32)c >= 0xC0 && (s32)c < 0xE0) {
+        c1 = **s;
+        if (c1 == 0) {
+            return -1;
+        }
+        (*s)++;
+        if ((s32)c1 < 0x80 || (s32)c1 >= 0xC0) {
+            return -1;
+        }
+        return ((c & 0x1F) << 6) | (c1 & 0x3F);
+    }
+    if ((s32)c >= 0xE0 && (s32)c < 0xF0) {
+        c1 = **s;
+        if (c1 == 0) {
+            return -1;
+        }
+        (*s)++;
+        if ((s32)c1 < 0x80 || (s32)c1 >= 0xC0) {
+            return -1;
+        }
+        c2 = **s;
+        if (c2 == 0) {
+            return -1;
+        }
+        (*s)++;
+        if ((s32)c2 < 0x80 || (s32)c2 >= 0xC0) {
+            return -1;
+        }
+        return ((c & 0xF) << 12) | ((c1 & 0x3F) << 6) | (c2 & 0x3F);
+    }
+    return -1;
+}
+#endif
+
+/* The glyph for a Unicode character: a 256-entry page table at the start of the font, then
+   pages of 256 u16 glyph numbers (+1, 0 = none). Missing ones become '?' when the font has
+   all of Unicode. */
+#ifdef NON_MATCHING   /* close: operand order / scheduling differs */
+s32 func_001B53D0(DrawList *dl, u32 c) {
+    u8 *font = dl->font;
+    u8 page = font[(c >> 8) & 0xFF];
+    u16 g;
+
+    if (page != 0) {
+        g = *(u16 *)((page << 9) + font - 0x100 + (c & 0xFF) * 2);
+        if (g != 0) {
+            return g - 1;
+        }
+    }
+    if (dl->unicode == 0) {
+        return 0;
+    }
+    return func_001B53D0(dl, '?');
+}
+#endif
+
+s32 func_001B5440(DrawList *dl, u32 glyph) {
+    return glyph < dl->glyphCount;
+}
+
+#ifdef NON_MATCHING   /* the Shift-JIS lead-byte test is laid out differently */
+/* Bytes in the character at s, | 0x10 when the font has no glyph for it (0 at the end). */
+s32 func_001B5450(u8 *s) {
+    s32 n;
+    DrawList *dl = &D_0029CD80;
+    u32 c = *s;
+    u32 u;
+
+    if (c == 0) {
+        return 0;
+    }
+    n = 2;
+    if (dl->encoding != 2) {
+        if ((c >= 0x80 && c < 0xC0) || (c >= 0xE0 && c < 0x100)) {
+            return 0x12;
+        }
+        return 1;
+    }
+    if (c < 0x80) {
+        n = 1;
+    } else if (c >= 0xC0 && c < 0xE0) {
+    } else if (c >= 0xE0 && c < 0xF0) {
+        n = 3;
+    } else {
+        return 1;
+    }
+    u = func_001B52A0(&s);
+    if (dl->unicode == 0) {
+        if (u < 0x10) {
+            return n | 0x10;
+        }
+        if (u < 0x80) {
+            return n;
+        }
+    }
+    if (!func_001B5440(dl, func_001B53D0(dl, u))) {
+        n |= 0x10;
+    }
+    return n;
+}
+#endif

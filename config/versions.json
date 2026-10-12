@@ -4,7 +4,7 @@
     "serial": "SLPM-65428",
     "title": "Biohazard Outbreak (Japan)",
     "system_cnf_ver": "1.04",
-    "compiler": {"cc": "mwcps2-3.0b52-030722", "flags": "-O3", "note": "3.0b38/b50/b52 with -O3, -O3,s or -O4,s all match so far; b52 is what Capcom used for DMC3 (docs/COMPILER.md)"},
+    "compiler": {"cc": "mwcps2-3.0b52-030722", "flags": "-O3 -str readonly", "note": "-str readonly: string literals go in the function's .rodata, before its jump tables. 3.0b38/b50/b52 with -O3, -O3,s or -O4,s all match so far; b52 is what Capcom used for DMC3 (docs/COMPILER.md)"},
     "overlays": {
       "submain": "PROG/SUBMAIN.BIN",
       "demo": "PROG/DEMO.BIN",
@@ -27,7 +27,7 @@
     "serial": "SLPM-65692",
     "title": "Biohazard Outbreak File 2 (Japan)",
     "system_cnf_ver": "1.03",
-    "compiler": {"cc": "mwcps2-3.0b52-030722", "flags": "-O3", "note": "assumed same as File 1; not tested on File 2 yet"},
+    "compiler": {"cc": "mwcps2-3.0b52-030722", "flags": "-O3 -str readonly", "note": "assumed same as File 1; not tested on File 2 yet"},
     "overlays": {
       "submain": "BIN/0.DAT",
       "demo": "BIN/1.DAT",

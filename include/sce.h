@@ -13,6 +13,7 @@ char *strupr(char *s);                       /* upper-cases ASCII in place (Sony
 s32 sprintf(char *dst, const char *fmt, ...);
 s32 printf(const char *fmt, ...);
 s32 strncmp(const char *a, const char *b, u32 n);
+char *strstr(const char *s, const char *find);
 char *strncpy(char *dst, const char *src, u32 n);
 char *strrchr(const char *s, s32 c);
 s32 strcmp(const char *a, const char *b);

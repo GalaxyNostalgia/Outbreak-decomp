@@ -95,7 +95,6 @@ def c_addr_syms(label):
 # function's table (which the data asm still holds, with the same values) so the code refers to it there.
 JUMP_TABLES = {}
 JT_PLACED = []
-STRINGS = {}       # func -> (obj, section, size): its string literals
 
 
 def compile_sources(label, o, b):
@@ -136,8 +135,6 @@ def compile_sources(label, o, b):
                 out[name[6:]] = (obj, name, size)
             elif name.startswith(".rodata."):
                 JUMP_TABLES[name[8:]] = (obj, name, size)
-            elif name.startswith(".data."):
-                STRINGS[name[6:]] = (obj, name, size)
             elif name in (".data", ".rodata", ".sdata", ".bss", ".sbss") and size:
                 sys.exit(f"[{label}] {rel}: C data ({name}) isn't supported yet; keep data in asm")
     return out
@@ -175,23 +172,18 @@ def splice(text_s, vram, cfuncs, b):
             obj, sec, name, size = chosen[a]
             out.append((obj, sec, a - vram))
             if name in JUMP_TABLES:
-                jt = sorted(set(re.findall(r"%hi\((jtbl_([0-9A-F]{8}))\)", t)))
-                if not jt:
-                    sys.exit(f"{name}: its C has a jump table, the asm has none")
-                # several tables: MW puts them in one section, in the same order as the original's
+                # the function's read-only data: its switch jump tables and string literals (the
+                # game was built with -str readonly). It goes where the original's was: at the
+                # lowest address the asm takes (%hi) that the C no longer names, i.e. that came
+                # from a literal or a jump table.
                 jobj, jsec, _ = JUMP_TABLES[name]
-                JT_PLACED.append((jobj, jsec, min(int(a_, 16) for _, a_ in jt)))
-            if name in STRINGS:
-                # a function's string literals: MW puts them in a .data section of their own,
-                # which the original has right before the function's jump tables (if any)
-                sobj, ssec, ssize = STRINGS[name]
-                refs = sorted(int(a_, 16) for a_ in re.findall(r"%hi\(D_([0-9A-F]{8})\)", t))
-                jt = [int(a_, 16) for a_ in re.findall(r"%hi\(jtbl_([0-9A-F]{8})\)", t)]
-                if jt:
-                    refs = [r_ for r_ in refs if min(jt) - ssize - 0x10 <= r_ < min(jt)]
+                named = mwo_sections.undefined_symbols(jobj)
+                refs = sorted(int(a_, 16) for s_, a_ in
+                              re.findall(r"%hi\(((?:jtbl|D)_([0-9A-F]{8}))\)", t) if s_ not in named)
                 if not refs:
-                    sys.exit(f"{name}: can't tell where its string literals go")
-                JT_PLACED.append((sobj, ssec, refs[0]))
+                    sys.exit(f"{name}: its C has read-only data (jump tables or strings) but I can't "
+                             f"tell where the original's is")
+                JT_PLACED.append((jobj, jsec, refs[0]))
             for lab, la in re.findall(r"(?m)^[jgd]label (\w+)\n(?:.*\n)*?\s*/\* [0-9A-F]+ ([0-9A-F]{8})", t):
                 if lab != name:
                     abs_syms.append((lab, int(la, 16)))
@@ -238,7 +230,6 @@ def build_target(label, cfgp, quiet=False):
     # Phase 2: C functions from src/<ELF>/<target>/ replace their asm, pinned at the same address
     JUMP_TABLES.clear()
     JT_PLACED.clear()
-    STRINGS.clear()
     cfuncs = compile_sources(label, o, b)
     abs_syms, n_c, c_bytes = [], 0, 0
     if cfuncs:
