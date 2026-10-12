@@ -205,3 +205,6 @@ sceMc2WaitAsync = 0x00181B30; // type:func
 sceMc2GetInfo = 0x00181B58; // type:func
 sceMc2Format = 0x00181B98; // type:func
 sceMc2Unformat = 0x00181BD8; // type:func
+sceWrite = 0x00119050; // type:func
+vsprintf = 0x0010F5C0; // type:func
+func_001D7E00 = 0x001D7E00; // type:func

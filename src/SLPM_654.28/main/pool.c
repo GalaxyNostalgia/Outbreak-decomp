@@ -1,4 +1,5 @@
 #include "common.h"
+#include "sce.h"
 
 /* Free lists the game rebuilds every frame. */
 
@@ -42,4 +43,27 @@ void func_001AED60(void) {
         n--;
         cb++;
     }
+}
+
+extern s16 D_0023BB74;
+
+/* The same id stack, after clearing its first entry (the original clears the same 0x20 bytes
+   256 times). */
+void func_001B13D0(void) {
+    s32 i;
+    u16 id;
+
+    for (i = 0; i < 0x100; i++) {
+        memset(D_002F8AE0, 0, 0x20);
+    }
+    id = 0xFF;
+    i = 0;
+    D_0023BB70 = D_002F8AE0;
+    do {
+        *--D_0023BB70 = id;
+        i++;
+        id--;
+    } while (i < 0x100);
+    D_0023BB74 = 0;
+    D_0023BB78 = 0x100;
 }

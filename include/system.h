@@ -2,6 +2,7 @@
 #define SYSTEM_H
 
 #include "common.h"
+#include "fltex.h"
 #include "libdma.h"
 
 /* Interrupt handlers end with "sync; ei". On PC handlers are plain calls with nothing to re-enable. */
@@ -144,27 +145,13 @@ typedef struct {
     u32 size;
 } VramBlock;
 
-/* Texture cache entries, a linked list of what's resident in GS memory. */
-typedef struct TexOwner {
-    s32 state;
-    u8 unk4[0x31];
-    u8 resident;     /* 0x35 */
-} TexOwner;
-
-typedef struct TexEntry {
-    struct TexEntry *prev;
-    struct TexEntry *next;
-    TexOwner *owner;
-    u8 unkC[8];
-    s16 used;        /* 0x14 */
-    u8 unk16[6];
-} TexEntry;
+/* Texture cache entries, a linked list of what's resident in GS memory (fltex.h). */
+typedef FlTexture TexOwner;
+typedef FlVramNode TexEntry;
 
 extern s32 D_0023BA60;           /* VRAM blocks in use */
 extern s32 D_0023BA68;           /* texture entries in use */
-extern TexEntry *D_0023BA6C;     /* first texture entry */
 extern VramBlock D_0027E2C0[6];
-extern TexEntry D_0027E2F0[0x200];
 
 /* memory.c */
 s32 func_00189480(LinearHeap *heap, u32 mem, u32 size, s32 align);

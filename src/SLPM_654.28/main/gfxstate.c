@@ -373,3 +373,9 @@ s32 func_00195970(u8 cmd, u32 arg) {
     }
     return 1;
 }
+
+extern u32 D_00282150[];
+
+void func_00196C00(u32 v) {
+    D_00282150[0] = v;
+}

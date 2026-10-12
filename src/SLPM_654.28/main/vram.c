@@ -5,7 +5,7 @@ TexEntry *func_0019E140(void) {
     s32 i;
 
     for (i = 0; i < 0x200; i++) {
-        if (D_0027E2F0[i].used == 0) {
+        if (D_0027E2F0[i].addr == 0) {
             D_0023BA68++;
             return &D_0027E2F0[i];
         }
@@ -27,9 +27,9 @@ void func_0019E1A0(TexEntry *e) {
     if (next != NULL) {
         next->prev = prev;
     }
-    if (e->owner != NULL) {
-        e->owner->resident = 0;
-        e->owner->state = 4;
+    if (e->tex != NULL) {
+        e->tex->inVram = 0;
+        e->tex->owner = 4;
     }
     func_0018D600(e, 0, sizeof(TexEntry));
     D_0023BA68--;

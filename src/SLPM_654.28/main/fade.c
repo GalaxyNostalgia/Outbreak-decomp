@@ -1,5 +1,7 @@
 #include "common.h"
 #include "options.h"
+#include "task.h"
+#include "sce.h"
 
 /* Screen fades. */
 
@@ -218,4 +220,118 @@ void func_001BA870(void) {
     D_002F8820.target = NULL;
     D_002F8820.frames = 0;
     func_001BA940();
+}
+
+/* Letterbox bars (top and bottom), fading in or out. */
+typedef struct {
+    u8 mode;            /* 0x00: 0 idle, 1 fading in, 2 fading out */
+    s32 timer;          /* 0x04 */
+    s32 duration;       /* 0x08 */
+    s16 x0, y0, x1, y1; /* 0x0C: top bar */
+    u32 color;          /* 0x14 */
+    s16 bx0, by0, bx1, by1; /* 0x18: bottom bar */
+    u32 color2;         /* 0x20 */
+} Letterbox;
+
+extern Letterbox D_002F8860;
+
+void func_001BA060(s32 top, s32 bottom);
+
+#ifdef NON_MATCHING   /* first draft */
+void func_001B9ED0(Task *t) {
+    if (t->step == 0) {
+        t->step++;
+        memset(&D_002F8860, 0, sizeof(Letterbox));
+        func_001BA060(0x40, 0x40);
+        return;
+    }
+    switch (D_002F8860.mode) {
+    case 0:
+        break;
+    case 2:
+        if (D_002F8860.timer > 0) {
+            D_002F8860.timer--;
+        }
+        if (D_002F8860.timer == 0) {
+            D_002F8860.mode = 0;
+            break;
+        }
+        D_002F8860.color &= 0xFFFFFF;
+        D_002F8860.color |= ((D_002F8860.timer * 255 / D_002F8860.duration) & 0xFF) << 24;
+        D_002F8860.color2 = D_002F8860.color;
+        break;
+    case 1:
+        if (D_002F8860.timer > 0) {
+            D_002F8860.timer--;
+        }
+        D_002F8860.color &= 0xFFFFFF;
+        D_002F8860.color |= (((D_002F8860.duration - D_002F8860.timer) * 255 / D_002F8860.duration) & 0xFF) << 24;
+        D_002F8860.color2 = D_002F8860.color;
+        break;
+    }
+}
+#endif
+
+#ifdef NON_MATCHING   /* first draft */
+/* Bars of these heights at the top and bottom of the 640x448 screen. */
+void func_001BA060(s32 top, s32 bottom) {
+    D_002F8860.y1 = top;
+    D_002F8860.y0 = 0;
+    D_002F8860.x0 = 0;
+    D_002F8860.by1 = 0x1C0;
+    D_002F8860.by0 = 0x1C0 - bottom;
+    D_002F8860.x1 = 0x280;
+    D_002F8860.bx1 = 0x280;
+    D_002F8860.bx0 = 0;
+}
+#endif
+
+/* A full-screen fade with a float level. */
+typedef struct {
+    u8 mode;            /* 0x00: 1 rising, 2 falling, 0x63 done */
+    s32 wait;           /* 0x04 */
+    u8 pad8[4];
+    f32 level;          /* 0x0C */
+    f32 step;           /* 0x10 */
+    s16 x, y, w, h;     /* 0x14 */
+    u8 pad1C[4];
+} LevelFade;
+
+extern LevelFade D_002F8890;
+
+void func_001B9A60(Task *t) {
+    if (t->step == 0) {
+        t->step = 1;
+        memset(&D_002F8890, 0, sizeof(LevelFade));
+        D_002F8890.x = 0;
+        D_002F8890.w = 0x280;
+        D_002F8890.h = 0x1E0;
+        D_002F8890.y = 0;
+        return;
+    }
+    switch (D_002F8890.mode) {
+    case 0:
+        break;
+    case 1:
+        D_002F8890.level += D_002F8890.step;
+        if (!(D_002F8890.level <= 1.0f)) {
+            D_002F8890.level = 1.0f;
+            D_002F8890.mode = 0x63;
+            D_002F8890.wait = 0x63;
+        }
+        break;
+    case 2:
+        D_002F8890.level += D_002F8890.step;
+        if (D_002F8890.level < 0.0f) {
+            D_002F8890.level = 0.0f;
+            D_002F8890.wait = 0x63;
+            D_002F8890.mode = 0;
+        }
+        break;
+    default:
+        if (D_002F8890.wait == 0) {
+            D_002F8890.mode = 0;
+        }
+        break;
+    }
 }

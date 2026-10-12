@@ -114,3 +114,11 @@ void func_001A8990(u32 ovl) {
         }
     }
 }
+
+extern u8 D_0030665A[];     /* (Options) overlay to come back to */
+
+/* Loads SINGLE.BIN/NETAQ.BIN's slot (overlay 4). */
+void func_001A8B40(void) {
+    func_001A8990(4);
+    D_0030665A[0] = 4;
+}
