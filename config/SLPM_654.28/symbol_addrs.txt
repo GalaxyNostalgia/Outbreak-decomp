@@ -141,3 +141,28 @@ sceDbcEnd = 0x00188680; // type:func
 strcmp = 0x0010ABB8; // type:func
 strncpy = 0x0010B338; // type:func
 strtok = 0x0010C538; // type:func
+
+// Sony SIF RPC
+sceSifCallRpc = 0x00117728; // type:func
+
+// CRI ADX (named from their error strings and how the game calls them)
+ADXF_LoadPartitionNw = 0x00128450; // type:func
+ADXF_LoadPtFromAfsNw = 0x00128478; // type:func
+ADXF_GetPtStat = 0x00128858; // type:func
+ADXT_Init = 0x00129F28; // type:func
+ADXPS2_SetupThrd = 0x0012B378; // type:func
+ADXT_Create = 0x00131320; // type:func
+ADXT_Stop = 0x00131B78; // type:func
+ADXT_GetStat = 0x00131C38; // type:func
+ADXT_SetOutVol = 0x001324F8; // type:func
+ADXT_SetSvrFreq = 0x001325F8; // type:func
+ADXT_SetReloadSct = 0x001326B8; // type:func
+ADXT_Pause = 0x00132B90; // type:func
+ADXPS2_SetupHstFs = 0x00131078; // type:func
+ADXPS2_SetupDvdFs = 0x00130DC8; // type:func
+ADXPS2_LoadFileListHst = 0x00131168; // type:func
+ADXPS2_LoadFileListDvd = 0x00130ED0; // type:func
+mwPlyInitSfdFx = 0x0015E3E0; // type:func
+sceCdReadClock = 0x00101DC0; // type:func
+strrchr = 0x0010B4F8; // type:func
+memcpy = 0x00107B50; // type:func
