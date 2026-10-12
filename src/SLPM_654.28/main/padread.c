@@ -401,3 +401,28 @@ s32 func_001A5600(s32 port) {
     return 1;
 }
 #endif
+
+void func_001A53A0(u8 v) {
+    D_0023BAE0 = v;
+}
+
+void func_001A1300(u8 v) {
+    func_001A53A0(v);
+}
+
+u8 func_001A12A0(void) {
+    return D_0023BAAC;
+}
+
+/* Boot: wait while a controller is still being identified; then how many known ones are in. */
+s32 func_001AFB10(void) {
+    u8 i;
+
+    for (i = 0; i < 1; i++) {
+        if (D_0023BAB8[i].status == 2) {
+            return -1;
+        }
+    }
+    func_001A1300(1);
+    return (s8)func_001A12A0();
+}

@@ -11,7 +11,8 @@ typedef struct Task {
     void (*fn)(struct Task *);  /* 0x04 */
     u8 step;                    /* 0x08: the task's own state machine */
     u8 sub;                     /* 0x09 */
-    u8 unkA[0x14 - 0xA];
+    u8 count;                   /* 0x0A */
+    u8 unkB[0x14 - 0xB];
     void (*onKill)(void);       /* 0x14: called when the slot is cleared */
     u8 unk18[0x20 - 0x18];
 } Task;

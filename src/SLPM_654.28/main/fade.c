@@ -53,8 +53,8 @@ typedef struct {
     u8 pad8[4];
     u32 color;      /* 0x0C */
     s16 step;       /* 0x10 */
-    u8 pad12[2];
-    u8 *target;     /* 0x14: target alpha at +0xD */
+    s16 frames;     /* 0x12 */
+    u8 *target;     /* 0x14: a FadeArea */
 } AlphaFade;
 
 extern AlphaFade D_002F8820;
@@ -145,11 +145,16 @@ void func_001BAAB0(void) {
 }
 
 typedef struct {
-    u8 pad0[4];
+    u8 unk0;
+    u8 colorIndex;  /* 0x01 */
+    u8 pad2[2];
     s16 x;          /* 0x04 */
     s16 y;
     s16 w;
     s16 h;
+    u8 from;        /* 0x0C: alpha */
+    u8 to;          /* 0x0D */
+    s16 frames;     /* 0x0E */
 } FadeArea;
 
 /* The frame's screen effects: the fade to black, then the coloured fade over its area. */
@@ -173,4 +178,44 @@ void func_001BA6C0(void) {
         r.color = f->color;
         func_001AAE10(&r);
     }
+}
+
+extern FadeArea D_002172A0[];
+extern u32 D_00239FA8[2];       /* fade colours */
+
+#ifdef NON_MATCHING   /* first draft */
+/* Start coloured fade `id` (1-based, D_002172A0). */
+void func_001BA7A0(s16 id) {
+    AlphaFade *f;
+    FadeArea *a;
+
+    f = &D_002F8820;
+    D_002F8820.active = id;
+    a = &D_002172A0[id - 1];
+    D_002F8820.target = (u8 *)a;
+    if (a->to < a->from) {
+        f->mode = 1;
+        f->step = a->from - a->to;
+    } else {
+        f->mode = 2;
+        f->step = a->to - a->from;
+    }
+    f->frames = a->frames;
+    f->step = f->step / f->frames;
+    if (f->mode == 1) {
+        f->step = -f->step;
+    }
+    f->color = ((a->from & 0xFF) << 24) | (D_00239FA8[a->colorIndex] & 0xFFFFFF);
+}
+#endif
+
+void func_001BA940(void);
+
+void func_001BA870(void) {
+    D_002F8820.state = 0;
+    D_002F8820.active = 0;
+    D_002F8820.mode = 0;
+    D_002F8820.target = NULL;
+    D_002F8820.frames = 0;
+    func_001BA940();
 }

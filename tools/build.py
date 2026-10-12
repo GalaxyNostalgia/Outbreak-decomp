@@ -95,6 +95,7 @@ def c_addr_syms(label):
 # function's table (which the data asm still holds, with the same values) so the code refers to it there.
 JUMP_TABLES = {}
 JT_PLACED = []
+STRINGS = {}       # func -> (obj, section, size): its string literals
 
 
 def compile_sources(label, o, b):
@@ -135,6 +136,8 @@ def compile_sources(label, o, b):
                 out[name[6:]] = (obj, name, size)
             elif name.startswith(".rodata."):
                 JUMP_TABLES[name[8:]] = (obj, name, size)
+            elif name.startswith(".data."):
+                STRINGS[name[6:]] = (obj, name, size)
             elif name in (".data", ".rodata", ".sdata", ".bss", ".sbss") and size:
                 sys.exit(f"[{label}] {rel}: C data ({name}) isn't supported yet; keep data in asm")
     return out
@@ -178,6 +181,17 @@ def splice(text_s, vram, cfuncs, b):
                 # several tables: MW puts them in one section, in the same order as the original's
                 jobj, jsec, _ = JUMP_TABLES[name]
                 JT_PLACED.append((jobj, jsec, min(int(a_, 16) for _, a_ in jt)))
+            if name in STRINGS:
+                # a function's string literals: MW puts them in a .data section of their own,
+                # which the original has right before the function's jump tables (if any)
+                sobj, ssec, ssize = STRINGS[name]
+                refs = sorted(int(a_, 16) for a_ in re.findall(r"%hi\(D_([0-9A-F]{8})\)", t))
+                jt = [int(a_, 16) for a_ in re.findall(r"%hi\(jtbl_([0-9A-F]{8})\)", t)]
+                if jt:
+                    refs = [r_ for r_ in refs if min(jt) - ssize - 0x10 <= r_ < min(jt)]
+                if not refs:
+                    sys.exit(f"{name}: can't tell where its string literals go")
+                JT_PLACED.append((sobj, ssec, refs[0]))
             for lab, la in re.findall(r"(?m)^[jgd]label (\w+)\n(?:.*\n)*?\s*/\* [0-9A-F]+ ([0-9A-F]{8})", t):
                 if lab != name:
                     abs_syms.append((lab, int(la, 16)))
@@ -224,6 +238,7 @@ def build_target(label, cfgp, quiet=False):
     # Phase 2: C functions from src/<ELF>/<target>/ replace their asm, pinned at the same address
     JUMP_TABLES.clear()
     JT_PLACED.clear()
+    STRINGS.clear()
     cfuncs = compile_sources(label, o, b)
     abs_syms, n_c, c_bytes = [], 0, 0
     if cfuncs:
@@ -272,7 +287,7 @@ def build_target(label, cfgp, quiet=False):
             at = f"{bvram:#x} " if bvram is not None else ""
             ld.append(f"    .{name}_bss {at}(NOLOAD) : {{ {objmap[s].relative_to(ROOT)}({sec}); }}")
     for jobj, jsec, ja in JT_PLACED:
-        ld.append(f"    .jt_{jsec[8:]} {ja:#x} (NOLOAD) : {{ {jobj.relative_to(ROOT)}({jsec}); }}")
+        ld.append(f"    .jt{jsec.replace('.', '_')} {ja:#x} (NOLOAD) : {{ {jobj.relative_to(ROOT)}({jsec}); }}")
     ld += ["    /DISCARD/ : { *(.reginfo) *(.MIPS.abiflags) *(.pdr) *(.gnu.attributes) *(.comment) *(.mdebug*)"
            " *(.mwcats*) *(.rel.mwcats*) *(.rel.pdr) *(.note*) }",
            "}"] + [f"{lab} = {la:#x};" for lab, la in abs_syms] + c_addr_syms(label) + [""]

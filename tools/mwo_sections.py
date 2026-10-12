@@ -43,17 +43,21 @@ def rename(src, dst):
                 if d[off] >> 4 == 13:
                     d[off] = (2 << 4) | (d[off] & 0xF)
 
-    # a function's .rodata (its switch jump tables) comes right before its .text
+    # a function's .rodata (its switch jump tables) comes right before its .text, and its
+    # string literals (.data) right before that
     for i, s in enumerate(shdrs):
-        if name(s[0]) == ".rodata":
-            nxt = next((j for j in range(i + 1, e_shnum) if name(shdrs[j][0]) == ".text"), None)
-            if nxt in owner:
-                owner[i] = owner[nxt]
+        n = name(s[0])
+        if n in (".rodata", ".data"):
+            j = i + 1
+            while j < e_shnum and name(shdrs[j][0]) in (".rodata", ".rel.rodata", ".rel.data"):
+                j += 1
+            if j < e_shnum and name(shdrs[j][0]) == ".text" and j in owner:
+                owner[i] = owner[j]
     new = bytearray(names)
     for i, s in enumerate(shdrs):
         n = name(s[0])
-        target = i if n in (".text", ".rodata") else \
-            (s[7] if n in (".rel.text", ".rel.rodata") and s[1] == SHT_REL else None)
+        target = i if n in (".text", ".rodata", ".data") else \
+            (s[7] if n in (".rel.text", ".rel.rodata", ".rel.data") and s[1] == SHT_REL else None)
         if target is not None and target in owner:
             s[0] = len(new)
             new += f"{n}.{owner[target]}".encode() + b"\0"
