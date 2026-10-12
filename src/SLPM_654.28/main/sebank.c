@@ -346,3 +346,45 @@ extern char D_002385E8[];   /* "common" */
 void func_001D6CC0(void) {
     func_001D6EF0(D_002385E8, 0);
 }
+
+s32 func_001A7190(u32 core, u32 mode, s16 depth, u8 delay, u8 feedback);
+
+s32 func_001AC220(u32 core, u32 mode, s32 depth, s32 delay, s32 feedback) {
+    return func_001A7190(core, mode, depth, delay, feedback);
+}
+
+extern char D_002385F0[];   /* "start" */
+extern char D_002385F8[];   /* "download" */
+extern char D_00238608[];   /* "result" */
+extern char D_00238610[];   /* "shop" */
+
+/* The sound bank and reverb of a front-end screen. */
+void func_001D6D10(s32 screen) {
+    char name[0x80];
+    s32 depth;
+
+    switch (screen) {
+    case 0:
+        sprintf(name, D_002385F0);
+        depth = 0x2000;
+        break;
+    case 1:
+        sprintf(name, D_002385F8);
+        depth = 0x2500;
+        break;
+    case 2:
+        sprintf(name, D_00238608);
+        depth = 0x2500;
+        break;
+    case 3:
+        sprintf(name, D_00238610);
+        depth = 0x2500;
+        break;
+    }
+    func_001D6EF0(name, 0xC);
+    func_001AC220(1, 4, depth, 0, 0);
+}
+
+void func_001D6CD0(void) {
+    func_001D6D10(0);
+}

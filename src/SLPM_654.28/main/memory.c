@@ -114,3 +114,72 @@ void func_0018D730(void) {
     func_001A0340();
     func_0018BAE0();
 }
+
+/* DMA packet groups kept in movable memory: after the memory is compacted their chains'
+   NEXT addresses are moved along. */
+typedef struct {
+    s32 unk0;
+    s32 used;           /* 0x04 */
+    u8 unk8[0x14];
+    s32 mem;            /* 0x1C: memory handle */
+    u32 base;           /* 0x20: where it was */
+    u32 heads;          /* 0x24: offset of the chain headers ({u16 quadwords - 1, ..., u32 start}) */
+    s32 unk28;
+    u32 starts;         /* 0x2C: offset of the chains' start offsets */
+    s32 unk30;
+    u32 count;          /* 0x34 */
+    u8 unk38[0x180 - 0x38];
+} FlPacketGroup;
+
+extern FlPacketGroup *D_0023BA2C;
+
+#ifdef NON_MATCHING   /* first draft */
+void func_0018BB50(FlPacketGroup *g) {
+    u32 old = g->base;
+    u32 base = func_0018D720(g->mem);
+    u32 *start;
+    u8 *head;
+    u32 i;
+    u32 chain;
+    u32 *tag;
+    u32 t;
+
+    g->base = base;
+    start = (u32 *)(base + g->starts);
+    head = (u8 *)(base + g->heads);
+    for (i = 0; i < g->count; i++) {
+        chain = base + *start;
+        ((u32 *)head)[1] = chain;
+        tag = (u32 *)chain;
+        head += (*(u16 *)head + 1) * 16;
+        do {
+            t = *tag;
+            switch (t & 0x70000000) {
+            case 0x10000000:            /* cnt */
+                tag = (u32 *)((u8 *)tag + ((t & 0xFFFF) + 1) * 16);
+                break;
+            case 0x20000000:            /* next */
+                tag[1] = tag[1] - old + base;
+                tag = (u32 *)tag[1];
+                break;
+            case 0x60000000:            /* ret */
+                chain = 0;
+                break;
+            }
+        } while (chain != 0);
+        start++;
+    }
+}
+#endif
+
+void func_0018BAE0(void) {
+    s32 i;
+
+    for (i = 0; i < 0x280; i++) {
+        FlPacketGroup *g = &D_0023BA2C[i];
+
+        if (g->used != 0 && g->mem != 0) {
+            func_0018BB50(g);
+        }
+    }
+}

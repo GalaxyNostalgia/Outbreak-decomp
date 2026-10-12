@@ -2,6 +2,7 @@
 #include "options.h"
 #include "task.h"
 #include "sce.h"
+#include "ps2mem.h"
 
 /* Screen fades. */
 
@@ -335,3 +336,49 @@ void func_001B9A60(Task *t) {
         break;
     }
 }
+
+/* Drawing the fades. */
+
+extern Rect2D D_002F884C;
+s32 func_001B6980(s32 slot);
+s32 func_001AAE10(Rect2D *r);
+void func_001AE430(s32 a, s32 b);
+void func_001AE9C0(s32 cmd, u32 arg);
+void func_001B9DA0(void);
+
+void func_001B9CC0(void) {
+    if (func_001B6980(0x58) != 0) {
+        return;
+    }
+    if (D_00306590.unk0 != 0 && *(s8 *)PS2_RAM(0x48BF88) != 0 && (D_002F884C.color & 0xFF000000)) {
+        func_001AE9C0(0x6C, 0);
+        func_001AE430(4, 5);
+        func_001AE9C0(0x5E, 0x32);
+        func_001AAE10(&D_002F884C);
+    }
+    if (D_002F8860.mode != 0) {
+        func_001AE9C0(0x6C, 0);
+        func_001AE430(4, 5);
+        func_001AE9C0(0x5E, 0x32);
+        func_001AAE10((Rect2D *)&D_002F8860.x0);
+        func_001AAE10((Rect2D *)&D_002F8860.bx0);
+    }
+    func_001B9DA0();
+}
+
+#ifdef NON_MATCHING   /* first draft */
+void func_001B9DA0(void) {
+    u32 a;
+
+    if (func_001B6980(0x58) == 0 && D_002F8890.wait != 0) {
+        a = 255.0f * D_002F8890.level;
+        if (a != 0) {
+            func_001AE9C0(0x6C, 0);
+            *(u32 *)&D_002F8890.pad1C = (*(u32 *)D_002F8890.pad8 & 0xFFFFFF) | ((a & 0xFF) << 24);
+            func_001AE430(4, 5);
+            func_001AE9C0(0x5E, 0x32);
+            func_001AAE10((Rect2D *)&D_002F8890.x);
+        }
+    }
+}
+#endif

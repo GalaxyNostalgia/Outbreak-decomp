@@ -132,3 +132,51 @@ s32 func_001A0170(u8 mode, u32 c) {
     return 0;
 }
 #endif
+
+/* A textured rectangle (the current texture) in 640x448 screen coordinates. */
+typedef struct {
+    s16 x, y, w, h;
+    u32 color;      /* 0xAARRGGBB */
+    s16 u0, v0, u1, v1;
+} Sprite2D;
+
+extern u32 D_00216410[];    /* textured sprite packet: tags, PRIM, RGBAQ, UV, XYZ2, UV, XYZ2 */
+
+#ifdef NON_MATCHING   /* first draft, like func_001AAE10 */
+s32 func_001AAB10(Sprite2D *s) {
+    s32 ox;
+    s32 oy;
+    s32 x;
+    s32 y;
+    s32 w;
+    s32 h;
+    f32 sx;
+    u32 c;
+
+    if (D_00281DB0.unk3F4 == 0) {
+        ox = (0x1000 - D_00281DB0.width) / 2;
+        oy = (0x1000 - D_00281DB0.dispHeight) / 2;
+        y = s->y * 16;
+        sx = D_00281DB0.width / 640.0f;
+        x = 16.0f * (s->x * sx);
+        w = 16.0f * (s->w * sx);
+        h = s->h * 16;
+        if (D_00281DB0.field == 0) {
+            y >>= 1;
+            h >>= 1;
+        }
+        x += ox * 16;
+        y += oy * 16;
+        func_00189618((u128 *)D_00216410, (u128 *)PS2_SPR(0x70000000), 3);
+        c = func_001982C0(s->color, 0);
+        *(u64 *)PS2_SPR(0x70000028) = ((u64)((c >> 16) & 0xFF) | ((u64)((c >> 8) & 0xFF) << 8) |
+                                       ((u64)(c & 0xFF) << 16) | ((u64)((c >> 24) & 0xFF) << 24)) | ((u64)1 << 32);
+        *(u64 *)PS2_SPR(0x70000030) = (s64)(s->u0 * 16 + 8) | ((s64)(s->v0 * 16 + 8) << 16);
+        *(u64 *)PS2_SPR(0x70000038) = ((u64)(u32)D_00281DB0.zMax << 32) | ((s64)x | ((s64)y << 16));
+        *(u64 *)PS2_SPR(0x70000040) = (s64)(s->u1 * 16 + 8) | ((s64)(s->v1 * 16 + 8) << 16);
+        *(u64 *)PS2_SPR(0x70000048) = ((u64)(u32)D_00281DB0.zMax << 32) | ((s64)(x + w) | ((s64)(y + h) << 16));
+        func_001937B0((u32 *)PS2_SPR(0x70000000));
+    }
+    return 1;
+}
+#endif

@@ -902,3 +902,171 @@ s32 func_0019CF50(PixFormat *fmt, s32 handle) {
     }
     return 1;
 }
+
+void func_0019E1A0(FlVramNode *e);
+
+#ifdef NON_MATCHING   /* only used by the non-matching func_0019E730 */
+static s32 in_handles(FlVramNode *node, s32 *handles, s32 n) {
+    s32 i;
+    s32 h;
+    u32 c;
+
+    for (i = 0; i < n; i++) {
+        h = handles[i];
+        if ((h & 0xFFFF) != 0 && &D_0027AAC0[(h & 0xFFFF) - 1] == node->tex) {
+            return 1;
+        }
+        c = (u32)(h & 0xFFFF0000) >> 16;
+        if (c != 0 && &D_002772C0[c - 1] == node->tex) {
+            return 1;
+        }
+    }
+    return 0;
+}
+#endif
+
+#define EVICTABLE(pass, node) ((pass) != 0 || (node)->owner == 1 || (node)->owner == 4)
+
+/* Where t can go by throwing out other textures (none of handles): first only ones kept in
+   main memory anyway, then any. Returns the node to take over (1: room at the end, -1: none). */
+#ifdef NON_MATCHING   /* first draft */
+FlVramNode *func_0019E730(FlTexture *t, s32 *handles, s32 n) {
+    FlVramNode *node;
+    FlVramNode *prev;
+    FlVramNode *q;
+    s32 pass = 0;
+    s32 a;
+    s32 start;
+
+again:
+    node = D_0023BA6C;
+    if (node == NULL) {
+        return NULL;
+    }
+    for (;;) {
+        prev = node;
+        if (EVICTABLE(pass, node) && !in_handles(node, handles, n)) {
+            a = t->align - 1;
+            start = ~a & (node->addr + a);
+            if (node->addr == start) {
+                q = node->next;
+                for (;;) {
+                    if (q == NULL) {
+                        if ((u32)(0x4000 - start) >= (u32)t->blocks) {
+                            return node;
+                        }
+                        break;
+                    }
+                    if ((u32)(q->addr - start) >= (u32)t->blocks) {
+                        return node;
+                    }
+                    prev = q;
+                    if (!EVICTABLE(pass, q) || in_handles(q, handles, n)) {
+                        break;
+                    }
+                    q = q->next;
+                }
+            }
+        }
+        node = prev->next;
+        if (node == NULL) {
+            if (0x4000 - (prev->addr + prev->size) >= t->blocks) {
+                return (FlVramNode *)1;
+            }
+            if (pass == 0) {
+                pass++;
+                goto again;
+            }
+            return (FlVramNode *)-1;
+        }
+    }
+}
+#endif
+
+#ifdef NON_MATCHING   /* first draft */
+/* Gives t the VRAM at node, throwing out what's there and after it as far as needed. */
+s32 func_0019E3B0(FlVramNode *node, FlTexture *t) {
+    if (node == NULL) {
+        node = func_0019E140();
+        if (node == NULL) {
+            return 0;
+        }
+        func_0019E220(NULL, node);
+        node->addr = D_00281DF8;
+    } else {
+        while (node->next != NULL && node->next->addr - node->addr < t->blocks) {
+            func_0019E1A0(node->next);
+        }
+    }
+    if (node->tex != NULL) {
+        node->tex->inVram = 0;
+        node->tex->owner = 4;
+    }
+    t->vram = node->addr;
+    t->inVram = 1;
+    node->tex = t;
+    node->flags = t->flags;
+    node->owner = t->owner;
+    node->size = t->blocks;
+    node->align = t->align;
+    return 1;
+}
+#endif
+
+/* Makes the textures and palettes of n handles resident in VRAM (uploading what isn't).
+   Returns how many were uploaded. */
+#ifdef NON_MATCHING   /* first draft */
+s32 func_0019CD70(s32 n, s32 *handles) {
+    FlTexture *last = NULL;
+    FlTexture *t;
+    FlTexture *pal;
+    FlVramNode *at;
+    u32 tex, c;
+    s32 count = 0;
+    s32 i, k;
+    u128 *p;
+
+    for (i = 0; i < n; i++) {
+        tex = handles[i] & 0xFFFF;
+        c = (u32)(handles[i] & 0xFFFF0000) >> 16;
+        pal = &D_002772C0[c - 1];
+        for (k = 0; k < 2; k++) {
+            if (k == 0) {
+                if (tex == 0 || tex >= 0x100) {
+                    continue;
+                }
+                t = &D_0027AAC0[tex - 1];
+            } else {
+                if (c == 0 || c >= 0x100) {
+                    continue;
+                }
+                t = pal;
+            }
+            if (!t->inVram) {
+                at = func_0019E660(t->blocks, t->align);
+                if (at != (FlVramNode *)-1) {
+                    func_0019E2B0(at, t);
+                } else {
+                    do {
+                        at = func_0019E730(t, handles, n);
+                    } while (at == (FlVramNode *)-1);
+                    func_0019E3B0(at, t);
+                }
+                func_0019C4A0(t);
+                last = t;
+                count++;
+            }
+        }
+    }
+    if (last != NULL) {
+        p = (u128 *)func_0018D850(func_0018C370(0), 0x10);
+        func_0018C7C0(p, 1);
+        func_0018CA60(0, (u32)p & 0x0FFFFFFF, (u32 *)p, &D_00281AF0);
+    }
+    return count;
+}
+#endif
+
+s32 func_0019CD60(s32 n, s32 *handles) {
+    return func_0019CD70(n, handles);
+}

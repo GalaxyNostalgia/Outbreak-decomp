@@ -339,3 +339,62 @@ s32 func_001D99C0(void) {
     return D_0023BCA8;
 }
 #endif
+
+#ifdef NON_MATCHING   /* the id is computed later in the original */
+/* Releases textures first..first+n-1. */
+void func_001D0300(s32 first, s32 n) {
+    TexSlot *t;
+    s32 i, j;
+    s32 id;
+
+    for (i = 0; i < n; i++) {
+        id = first + i;
+        for (j = 0, t = D_00321590; j < 0x100; j++, t++) {
+            if (t->tex != 0 && t->id == id) {
+                func_001CFD60(t);
+                break;
+            }
+        }
+    }
+}
+#endif
+
+void func_0018D730(void);
+
+/* The logos' textures. */
+void func_001D53D0(void) {
+    func_001D0300(1, 3);
+    func_0018D730();
+}
+
+/* Boot task end. */
+void func_001BB200(void) {
+    func_001D53D0();
+}
+
+/* The title's textures (six pictures in demo_com.tex), their handles to tex[]. */
+extern s32 D_00218E80[6];   /* offsets in the file */
+extern s32 D_00218EA0[6];   /* texture ids */
+
+void func_001D5400(s32 *tex) {
+    char name[0x100];
+    u32 out;
+    u32 buf;
+    s32 i;
+
+    buf = (u32)D_003065DC[0];
+    out = buf + 0x100000;
+    strcpy(name, "data\\rom\\scene\\pit_tex\\demo_com.tex");
+    if (func_001CFBB0(name, (void *)buf, 1, 0) != 0) {
+        func_001AE810((u16 *)buf, (u16 *)out);
+        for (i = 0; i < 6; i++) {
+            func_001CFE20(D_00218EA0[i], out + D_00218E80[i]);
+            *tex++ = func_001D04D0(D_00218EA0[i]);
+        }
+    }
+}
+
+void func_001D54D0(void) {
+    func_001D0300(1, 6);
+    func_0018D730();
+}

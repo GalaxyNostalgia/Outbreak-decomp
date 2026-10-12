@@ -210,3 +210,6 @@ run:
         func_001BA570();
     }
 }
+
+void func_001B69B0(void) {
+}

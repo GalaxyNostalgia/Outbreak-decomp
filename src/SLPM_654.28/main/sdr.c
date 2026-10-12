@@ -646,3 +646,32 @@ s32 func_001A7540(u32 cmd, s32 arg) {
     }
     return func_001A74E0(0);
 }
+
+extern char D_00223FA0[];   /* "SDR: SdrSetRev: Error: core invalid.\n" */
+extern char D_00223FD0[];   /* "SDR: SdrSetRev: Error: mode invalid.\n" */
+extern char D_00224000[];   /* "SDR: SdrSetRev: Warning: sndque overflow!\n" */
+
+/* SdrSetRev: reverb of an SPU2 core. */
+s32 func_001A7190(u32 core, u32 mode, s16 depth, u8 delay, u8 feedback) {
+    SdrSlot *s;
+
+    if (core > 2) {
+        printf(D_00223FA0);
+        return -3;
+    }
+    if (mode >= 10) {
+        printf(D_00223FD0);
+        return -2;
+    }
+    s = &D_00292DC0[D_00292DB0[0]];
+    if (s->id >= 0) {
+        printf(D_00224000);
+        return -1;
+    }
+    mode |= (core + 1) << 6;
+    s->id = 0x44000000 | ((u32)((mode << 16) | (depth & 0xFFFF)) & 0xFFFFFF);
+    ((u8 *)&s->a)[0] = delay;
+    ((u8 *)&s->a)[1] = feedback;
+    D_00292DB0[0] = (D_00292DB0[0] + 1) % 32;
+    return 0;
+}
