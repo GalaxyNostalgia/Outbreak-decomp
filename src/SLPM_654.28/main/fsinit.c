@@ -1,5 +1,6 @@
 #include "cri.h"
 #include "sce.h"
+#include "fs.h"
 
 /* File system start-up: CRI ADX's file system on the DVD (or the host/HDD), the disc's file
    list, and the AFS partitions. The game's data lives in three big AFS archives on the disc,
@@ -13,17 +14,6 @@ typedef struct {
     s32 bufSize;
 } FsListParam;
 
-typedef struct {
-    s32 kind;          /* 0x00 */
-    s32 unk4;
-    void *ptinfo;      /* 0x08 */
-    const char **names;/* 0x0C */
-    s32 unk10;
-    s32 size;          /* 0x14 */
-    s32 unk18;
-    s32 unk1C;
-    s32 ptid;          /* 0x20 */
-} RoomPart;            /* 0x24 bytes */
 
 void ADXPS2_SetupThrd(void *tprm);
 void ADXPS2_SetupHstFs(void *prm);
@@ -161,8 +151,6 @@ extern u8 D_002958B0[];          /* partition 10: NETBIO00.DAT */
 extern u8 D_00295760[];          /* partition 13: NETBIO01.DAT */
 extern u8 D_00295620[];          /* partition 14: NETBIO02.DAT */
 extern RoomPart D_002955D0[2];
-extern RoomPart *D_0023BAFC;
-extern RoomPart *D_0023BB00;
 void func_001A9450(void);
 
 void func_001A8BD0(void) {
@@ -340,10 +328,10 @@ void func_001A9450(void) {
         }
     }
     D_0023BAFC->ptinfo = D_00306618[0];
-    D_0023BAFC->unk1C = 0;
+    D_0023BAFC->room = 0;
     D_0023BAFC->names = D_002147F0;
-    D_0023BAFC->unk18 = 0;
-    D_0023BAFC->size = 0x540;
+    D_0023BAFC->base = 0;
+    D_0023BAFC->count = 0x540;
     func_001A90B0(D_0022ECD0, D_0023BAFC, 0x6000);
     func_001AA690();
     func_001AA5A0();

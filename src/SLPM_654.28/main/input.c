@@ -1,40 +1,9 @@
 #include "common.h"
 #include "libpad2.h"
+#include "pad.h"
 
 /* Controllers. */
 
-typedef struct {
-    u8 unk0;
-    u8 unk1;
-    u16 buttons;        /* active low */
-    u8 unk4[0x1C];
-} PadData;              /* 0x20 */
-
-typedef struct {
-    u8 state;           /* 0 none, 1 socket open, 2 connected */
-    u8 unk1;
-    u8 port;
-    u8 slot;
-    u8 unk4;
-    u8 unk5;
-    u8 socket;
-    u8 unk7;
-    void *buffer;       /* the library's DMA buffer for this socket */
-    u8 unkC[0xC];
-} PadPort;              /* 0x18 */
-
-typedef struct {
-    u8 unk0[4];
-    u8 port;
-    u8 slot;
-    u8 unk6[0x1E];
-} PadInfo;              /* 0x24 */
-
-extern PadData D_00292D00;      /* "nothing pressed" */
-extern PadData D_00292D20[1];
-extern PadData D_00292D40[1];
-extern PadPort D_00292D60[2];
-extern PadInfo D_00292D80[1];
 extern u8 D_00292B80[];         /* socket buffer */
 extern s32 D_00239F08;          /* which controllers to open: -1 port 1 only, 0 every port of a multitap... */
 extern u64 D_00239F10;
@@ -74,7 +43,7 @@ void func_001A5B60(s32 port, s32 slot, PadPort *pp) {
     pp->socket = socket;
     if (socket >= 0) {
         pp->state = 1;
-        pp->unk1 = 0;
+        pp->tries = 0;
         pp->port = port;
         pp->slot = slot;
     }
@@ -91,15 +60,15 @@ s32 func_001A51A0(void) {
         return 0;
     }
     func_001A54F0();
-    D_00292D00.unk0 = 0xFF;
+    D_00292D00.status = 0xFF;
     D_00292D00.buttons = 0xFFFF;
     neutral = D_00292D00;
     D_00292D20[0] = neutral;
     D_00292D60[0].state = 0;
-    D_00292D60[0].unk1 = 0;
+    D_00292D60[0].tries = 0;
     D_00292D60[0].port = 0;
     D_00292D60[0].slot = 0;
-    D_00292D60[0].unk5 = 0;
+    D_00292D60[0].vibrate = 0;
     D_00292D60[0].buffer = D_00292B80;
     if (D_00239F08 == -1) {
         func_001A5B60(0, 0, &D_00292D60[0]);

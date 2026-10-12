@@ -35,7 +35,7 @@ typedef struct {
 } SdrSlot;
 
 extern s32 D_00292DA8[];
-extern s32 D_00292DB0[];
+extern volatile s32 D_00292DB0[];   /* queue write index (reloaded on every use) */
 extern s32 D_00292DB8[];
 extern SdrSlot D_00292DC0[32];
 
@@ -187,7 +187,6 @@ extern char D_00223D90[];   /* "SDR: SdrSeMasterVol: Warning: sndque overflow!\n
 extern char D_00223DC0[];   /* "SDR: SdrMasterVol: Warning: sndque overflow!\n" */
 extern char D_00223F30[];   /* "SDR: SdrAllMute: Warning: sndque overflow!\n" */
 
-#ifdef NON_MATCHING   /* reads the write index once; the original reloads it after the store */
 /* SdrSeMasterVol */
 s32 func_001A6B30(u16 vol) {
     SdrSlot *s = &D_00292DC0[D_00292DB0[0]];
@@ -200,9 +199,7 @@ s32 func_001A6B30(u16 vol) {
     D_00292DB0[0] = (D_00292DB0[0] + 1) % 32;
     return 0;
 }
-#endif
 
-#ifdef NON_MATCHING   /* reads the write index once; the original reloads it after the store */
 /* SdrMasterVol */
 s32 func_001A6BD0(u8 ch, u16 vol) {
     SdrSlot *s = &D_00292DC0[D_00292DB0[0]];
@@ -215,9 +212,7 @@ s32 func_001A6BD0(u8 ch, u16 vol) {
     D_00292DB0[0] = (D_00292DB0[0] + 1) % 32;
     return 0;
 }
-#endif
 
-#ifdef NON_MATCHING   /* reads the write index once; the original reloads it after the store */
 /* SdrAllMute */
 s32 func_001A7050(s32 mute) {
     SdrSlot *s = &D_00292DC0[D_00292DB0[0]];
@@ -230,11 +225,9 @@ s32 func_001A7050(s32 mute) {
     D_00292DB0[0] = (D_00292DB0[0] + 1) % 32;
     return 0;
 }
-#endif
 
 extern char D_00223F60[];   /* "SDR: SdrSetOutputMode?: Warning: sndque overflow!\n" */
 
-#ifdef NON_MATCHING   /* reads the write index once; the original reloads it after the store */
 /* stereo (1) / mono (0) output */
 s32 func_001A70F0(s32 stereo) {
     SdrSlot *s = &D_00292DC0[D_00292DB0[0]];
@@ -247,7 +240,6 @@ s32 func_001A70F0(s32 stereo) {
     D_00292DB0[0] = (D_00292DB0[0] + 1) % 32;
     return 0;
 }
-#endif
 
 /* Sending: each frame the queued commands are packed into a byte stream (D_00293000, ended by 0xFF)
    and sent to the driver in one RPC. */
@@ -537,4 +529,120 @@ s32 func_001A7280(s32 nowait) {
 
 s32 func_001AB9C0(s32 nowait) {
     return func_001A7280(nowait);
+}
+
+extern char D_00223ED0[];   /* "SDR: SdrPortClr: Warning: sndque overflow!\n" */
+
+/* SdrPortClr */
+s32 func_001A6FB0(s32 port) {
+    SdrSlot *s = &D_00292DC0[D_00292DB0[0]];
+
+    if (s->id >= 0) {
+        printf(D_00223ED0, s);
+        return -1;
+    }
+    s->id = 0x4A000000 | ((u32)((port & 0xFF) << 16) & 0xFFFFFF);
+    D_00292DB0[0] = (D_00292DB0[0] + 1) % 32;
+    return 0;
+}
+
+#ifdef NON_MATCHING   /* first draft */
+/* Three transfers (0x4F): the driver reads each block from EE memory. */
+void func_001A6C70(u32 a0, s32 n0, u32 a1, s32 n1, u32 a2, s32 n2) {
+    SdrSlot *s;
+
+    n0 = (n0 + 15) & ~15;
+    s = &D_00292DC0[D_00292DB0[0]];
+    s->id = 0x4F000000 | ((u32)(n0 >> 4) & 0xFFFFFF);
+    s->a = a0 | (n0 >> 20);
+    D_00292DB0[0] = (D_00292DB0[0] + 1) % 32;
+    n1 = (n1 + 15) & ~15;
+    s = &D_00292DC0[D_00292DB0[0]];
+    s->id = 0x4F000000 | ((u32)(n1 >> 4) & 0xFFFFFF);
+    s->a = a1 | (n1 >> 20);
+    D_00292DB0[0] = (D_00292DB0[0] + 1) % 32;
+    n2 = (n2 + 15) & ~15;
+    s = &D_00292DC0[D_00292DB0[0]];
+    s->id = 0x4F000000 | ((u32)(n2 >> 4) & 0xFFFFFF);
+    s->a = a2 | (n2 >> 20);
+    D_00292DB0[0] = (D_00292DB0[0] + 1) % 32;
+}
+#endif
+
+extern char D_00223DF0[];   /* bank number error */
+extern char D_00223E20[];   /* alignment error */
+extern char D_00223E70[];   /* size error */
+extern char D_00223EA0[];   /* "sndque overflow" */
+
+#ifdef NON_MATCHING   /* first draft */
+/* SdrTransBank: send sound bank `bank` (header, wave table, waves; each 16-byte aligned). */
+s32 func_001A6DA0(u32 bank, u32 a0, s32 n0, u32 a1, s32 n1, u32 a2, s32 n2) {
+    s32 i;
+    s32 n;
+
+    if (bank >= 0x1000) {
+        printf(D_00223DF0);
+        return -2;
+    }
+    if ((a2 | (a0 | a1)) & 0xF) {
+        printf(D_00223E20);
+        return -3;
+    }
+    if (n0 >= 0x1FFFF1 || n1 >= 0x1FFFF1 || n2 >= 0x1FFFF1) {
+        printf(D_00223E70);
+        return -4;
+    }
+    for (i = D_00292DB0[0], n = 4; n > 0; n--) {
+        if (D_00292DC0[i].id >= 0) {
+            printf(D_00223EA0);
+            return -1;
+        }
+        i = (i + 1) % 32;
+    }
+    D_00292DC0[D_00292DB0[0]].id = 0x4D000000 | ((u32)(bank << 8) & 0xFFFFFF);
+    D_00292DB0[0] = (D_00292DB0[0] + 1) % 32;
+    func_001A6C70(a0, n0, a1, n1, a2, n2);
+    return 0;
+}
+#endif
+
+/* Has the last send finished? (nowait: 1 if it hasn't) */
+s32 func_001A73E0(s32 nowait) {
+    if (nowait != 0) {
+        if (PollSema(D_00239F18) < 0) {
+            return 1;
+        }
+    } else {
+        WaitSema(D_00239F18);
+    }
+    SignalSema(D_00239F18);
+    return 0;
+}
+
+/* The driver state asked for with SdrGetStateSend */
+s32 func_001A74E0(s32 nowait) {
+    s32 v;
+
+    if (nowait != 0) {
+        if (PollSema(D_00239F1C) < 0) {
+            return -1;
+        }
+    } else {
+        WaitSema(D_00239F1C);
+    }
+    v = D_00292FC0[0];
+    SignalSema(D_00239F1C);
+    return v;
+}
+
+s32 func_001A7440(u32 cmd, s32 arg);
+
+/* Ask for a state value and read it */
+s32 func_001A7540(u32 cmd, s32 arg) {
+    s32 r = func_001A7440(cmd, arg);
+
+    if (r < 0) {
+        return r;
+    }
+    return func_001A74E0(0);
 }

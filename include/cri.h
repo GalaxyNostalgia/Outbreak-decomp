@@ -24,6 +24,7 @@ void ADXF_LoadPtFromAfsNw(s32 ptid, s32 afs_ptid, s32 fid, void *ptinfo);
 s32 ADXF_GetPtStat(s32 ptid);          /* 3: loaded */
 typedef void *ADXF;
 ADXF ADXF_Open(const char *fname, void *atr);
+ADXF ADXF_OpenAfs(s32 ptid, s32 fid);
 void ADXF_Close(ADXF adxf);
 s32 ADXF_ReadNw(ADXF adxf, s32 nsct, void *buf);
 s32 ADXF_GetFsizeSct(ADXF adxf);

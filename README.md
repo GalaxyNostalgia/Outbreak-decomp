@@ -16,7 +16,7 @@ Japanese releases), aiming for a native PC version built from the same source th
 | `f2` | Biohazard Outbreak File 2 | SLPM-65692 (VER 1.03) | `SLPM_656.92` + 9 overlays (`BIN/*.DAT`) | 10/10 targets rebuild byte-identical from asm |
 | `f1en` / `f2en` | same, with the English fan patch v2.1 | your patched image in `orig/<ELF>/english/` | the 4 binaries per game the patch changes | 8/8 targets rebuild byte-identical from asm |
 
-Decompiled so far (File 1): 199 functions byte-identical in the PS2 build, plus 45 written but not matching yet (`NON_MATCHING`, used by the PC build): `main()`, boot, IOP/HDD setup, memory managers, the DMA queue, GS/display setup, the sound driver link and command packing, the file system and AFS partitions, the task system, overlay loading, the frame loop, the render-state dispatcher, fades. File 2 not started.
+Decompiled so far (File 1): 238 functions byte-identical in the PS2 build, plus 77 written but not matching yet (`NON_MATCHING`, used by the PC build): `main()`, boot, IOP/HDD setup, memory managers, the DMA queue, GS/display setup, the sound driver link and command packing, the file system and AFS partitions, the task system, overlay loading, the frame loop, the render-state dispatcher, fades, controllers, the text renderer, file and sound-bank loading. File 2 not started.
 
 About half of File 2's code is shared with File 1 and only needs decompiling once. What's in the binaries:
 [docs/LAYOUT.md](docs/LAYOUT.md).

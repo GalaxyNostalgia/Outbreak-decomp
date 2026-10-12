@@ -55,7 +55,13 @@ typedef struct {
     u8 unk3D;
     u8 unk3E;
     u8 adxBusy;         /* 0x3F: an ADX stream is reading */
-    u8 unk40[0xB5 - 0x40];
+    u8 unk40[0x54 - 0x40];
+    s32 fontTbp;        /* 0x54: GS page for the font's glyphs */
+    u8 unk58[0x8C - 0x58];
+    u8 *roomBuf;        /* 0x8C */
+    u8 unk90[0xA0 - 0x90];
+    u8 *fontBuf;        /* 0xA0: where the font file is loaded */
+    u8 unkA4[0xB5 - 0xA4];
     u8 unkB5;
 } Options;
 

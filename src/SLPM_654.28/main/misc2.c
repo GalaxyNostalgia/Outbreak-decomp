@@ -1,4 +1,5 @@
 #include "system.h"
+#include "drawlist.h"
 
 extern s32 D_0023BB80;      /* drawing open */
 s32 func_001957B0(void);
@@ -28,15 +29,12 @@ s32 func_001957C0(void) {
     return 1;
 }
 
-extern void *D_00239F80;
-extern u8 D_0029CD80[];
-extern u8 D_0029CCD0[];
 
 void func_001B4390(s32 alt) {
     if (alt == 0) {
-        D_00239F80 = D_0029CD80;
+        D_00239F80 = &D_0029CD80;
     } else {
-        D_00239F80 = D_0029CCD0;
+        D_00239F80 = &D_0029CCD0;
     }
 }
 
