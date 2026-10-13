@@ -33,3 +33,12 @@ char *func_001C02A0(s32 file, s32 item) {
     func_001BFFB0(p, D_00308F30);
     return D_00308F30;
 }
+
+extern char *D_002180F0[90];        /* the extra characters' names */
+
+char *func_001C0180(s32 n) {
+    if (n < 0 || n >= 90) {
+        return NULL;
+    }
+    return D_002180F0[n];
+}

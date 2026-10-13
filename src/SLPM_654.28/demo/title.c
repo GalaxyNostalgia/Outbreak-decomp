@@ -1158,7 +1158,7 @@ typedef struct {
     s8 state;           /* 0x04 */
     s8 sel;             /* 0x05: yes/no */
     s8 sub;             /* 0x06 */
-    u8 unk7;
+    s8 unk7;            /* 0x07 */
     u16 held;           /* 0x08 */
     u16 pressed;        /* 0x0A */
     u16 nav;            /* 0x0C: pressed or repeating */
@@ -1189,7 +1189,23 @@ typedef struct {
     s32 tex[0x1B];      /* 0x8F4: select.tex pictures */
     u8 unk960[0x974 - 0x960];
     UiElem elems[283];  /* 0x974 */
-    u8 unk590C[0x7944 - 0x590C];
+    u8 unk590C[0x7574 - 0x590C];
+    s32 extraCount;     /* 0x7574: extra characters unlocked */
+    s32 extras[0x80];   /* 0x7578 */
+    u8 unk7778[0x77A0 - 0x7778];
+    s32 wheel[9];       /* 0x77A0: the characters' places */
+    f32 cfx[9];         /* 0x77C4: the wheel's turn */
+    f32 ctx[9];         /* 0x77E8 */
+    s32 cangle[9];      /* 0x780C */
+    s32 cspeed[9];      /* 0x7830 */
+    f32 cdx[9];         /* 0x7854 */
+    s32 frames;         /* 0x7878 */
+    s32 costume[8][3];  /* 0x787C: costumes available, per character */
+    s32 costumes[8];    /* 0x78DC */
+    s32 anim[8];        /* 0x78FC: the difficulty/scenario screens' pictures: 1 coming in, 2 going out */
+    f32 open[8];        /* 0x791C: how far each is in, 0..1 */
+    s32 blink2;         /* 0x793C */
+    s32 back;           /* 0x7940: came back from the next step */
     s8 items[35][64];   /* 0x7944 */
     u8 unk8204[0x8290 - 0x8204];
     s32 itemCount[35];  /* 0x8290 */
@@ -1206,7 +1222,8 @@ typedef struct {
     s32 movieStep;      /* 0x855C */
     s32 idle;           /* 0x8560 */
     s32 moviePlaying;   /* 0x8564: background movie (2: stopped for the restart) */
-    u8 unk8568[4];
+    s16 blink;          /* 0x8568 */
+    u8 unk856A[2];
     s32 saveTex;        /* 0x856C: save.tm2 */
 } SelectWork;           /* 0x8570 */
 
@@ -2314,3 +2331,1540 @@ void func_00548A00(SelectWork *s, UiElem *e, s32 n) {
     }
 }
 #endif
+
+/* --- select step 9: the character (and costume) --- */
+
+extern u8 *D_00558300[];        /* per save file: the character/costume pairs */
+extern u8 D_00358F00[];         /* SUBMAIN: the extra characters, 12 bytes each */
+void func_005442F0(SelectWork *s);
+void func_00544330(SelectWork *s);
+void func_00544540(SelectWork *s);
+void func_00544570(SelectWork *s);
+void func_00544FA0(UiElem *e, s32 n);
+void func_00545290(TitleWork *w, SelectWork *s);
+void func_00545350(TitleWork *w, SelectWork *s);
+void func_00545530(TitleWork *w, SelectWork *s);
+void func_00545780(TitleWork *w, SelectWork *s);
+void func_00545840(UiElem *e, s32 n);
+void func_00546500(TitleWork *w, SelectWork *s);
+
+/* Hides the arrows and the characters' highlights. */
+void func_00545A70(SelectWork *s) {
+    s32 i;
+
+    s->elems[151].anim = 0;
+    s->elems[152].anim = 0;
+    s->elems[151].visible = 0;
+    s->elems[152].visible = 0;
+    for (i = 0; i < 8; i++) {
+        s->elems[128 + i].anim = 0;
+        s->elems[128 + i].visible = 0;
+    }
+}
+
+#ifdef NON_MATCHING   /* first draft from m2c */
+void func_00545AB0(TitleWork *w, SelectWork *s) {
+    s32 n;
+    s32 i;
+    s32 j;
+    s32 k;
+    s32 v;
+    u8 c;
+    u8 *pair;
+
+    if (--s->blink < 0) {
+        s->blink += 0x20;
+    }
+    s->frames++;
+    switch (s->sel) {
+    case 0:
+        D_002F88B0[4] = 1;
+        s->unk24 = 0;
+        if (s->back != 0) {
+            func_00545A70(s);
+            for (i = 9; i < 0x38; i++) {
+                s->elems[128 + i].visible = 1;
+            }
+            *(s16 *)(D_002F88B0 + 0x10) = 0;
+            D_002F88B0[5] = 0;
+            s->back = 0;
+            s->timer2 = 1;
+            s->sel++;
+            s->frames = 0;
+        } else {
+            s->extraCount = 0;
+            for (i = 0; i < 0x80; i++) {
+                if (((s32 *)(D_00301D60 + 0xC))[i >> 5] & (1 << (i & 0x1F))) {
+                    s->extras[s->extraCount] = i;
+                    s->extraCount++;
+                }
+            }
+            for (i = 0; i < 8; i++) {
+                s->costumes[i] = 0;
+                s->costume[i][0] = 1;
+                for (j = 0; j < 2; j++) {
+                    if (D_00301D60[i + 4] & (1 << j)) {
+                        s->costume[i][j + 1] = 1;
+                    } else {
+                        s->costume[i][j + 1] = 0;
+                    }
+                }
+                for (k = 0; k < 3; k++) {
+                    if (s->costume[i][k] != 0) {
+                        s->costumes[i]++;
+                    }
+                }
+            }
+            for (i = 0; i < 0x38; i++) {
+                func_00544FA0(&s->elems[128 + i], i);
+            }
+            w->unkC = 0;
+            w->unkD[0] = 0;
+            func_00545290(w, s);
+            func_00545780(w, s);
+            s->timer2 = 0x14;
+            func_001BA7A0(8);
+            s->sel++;
+            s->frames = 0;
+            func_00348DA0();
+        }
+        break;
+    case 1:
+        if (s->timer2 != 0) {
+            s->timer2--;
+        } else if (s->pressed & 0x200) {
+            s->sel = 6;
+            func_00544570(s);
+            func_001B6EF0(2);
+        } else {
+            n = (s->extraCount == 0) ? 8 : 9;
+            c = w->unkC;
+            if (s->nav & 4) {
+                c++;
+                if (n - 1 < c) {
+                    c = 0;
+                }
+                s->sub = 0;
+            } else if (s->nav & 8) {
+                c--;
+                if ((s8)c < 0) {
+                    c = n - 1;
+                }
+                s->sub = 1;
+            }
+            if (c != w->unkC) {
+                func_00545A70(s);
+                func_001B6EF0(5);
+                s->unk7 = 0;
+                func_00545350(w, s);
+                s->timer = 8;
+                s->sel++;
+                s->frames = 0;
+            } else {
+                if (w->unkC == 8) {
+                    v = s->extraCount;
+                } else {
+                    v = s->costumes[w->unkC];
+                }
+                if (w->unkC == 8 || v != 1) {
+                    if (s->nav & 1) {
+                        if (w->unkD[0] != 0) {
+                            w->unkD[0]--;
+                        } else {
+                            w->unkD[0] = v - 1;
+                        }
+                        func_001B6EF0(2);
+                    }
+                    if (s->nav & 2) {
+                        if (w->unkD[0] != v - 1) {
+                            w->unkD[0]++;
+                        } else {
+                            w->unkD[0] = 0;
+                        }
+                        func_001B6EF0(2);
+                    }
+                }
+                if (s->pressed & 0x10) {
+                    func_00545A70(s);
+                    func_001B6EF0(1);
+                    s->unk24 = 1;
+                    s->sel = 4;
+                    s->timer2 = 0x14;
+                    func_001BA7A0(7);
+                } else if (s->pressed & 0x20) {
+                    func_00545A70(s);
+                    func_001B6EF0(w->unkC + 8);
+                    s->sel = 3;
+                    func_001BA7A0(4);
+                    s->timer2 = 8;
+                } else if (s->sel == 1) {
+                    func_00545840(&s->elems[151], 0x17);
+                    func_00545840(&s->elems[152], 0x18);
+                    s->elems[151].visible = 1;
+                    s->elems[152].visible = 1;
+                    for (i = 0; i < 8; i++) {
+                        func_00545840(&s->elems[128 + i], i);
+                        s->elems[128 + i].visible = 1;
+                    }
+                }
+            }
+        }
+        break;
+    case 2:
+        n = 8;
+        if (s->extraCount != 0) {
+            n = 9;
+        }
+        if (--s->timer == 0) {
+            if (s->sub == 0) {
+                v = w->unkC - 1;
+                if (v < 0) {
+                    v += n;
+                }
+                w->unkC = v;
+                for (i = 0; i < n; i++) {
+                    if (n - 1 < ++s->wheel[i]) {
+                        s->wheel[i] = 0;
+                    }
+                }
+            } else {
+                v = w->unkC + 1;
+                if (v >= n) {
+                    v = 0;
+                }
+                w->unkC = v;
+                for (i = 0; i < n; i++) {
+                    if (--s->wheel[i] < 0) {
+                        s->wheel[i] += n;
+                    }
+                }
+            }
+            w->unkD[0] = 0;
+            s->sel--;
+        } else {
+            func_00545530(w, s);
+        }
+        break;
+    case 3:
+        if (--s->timer2 == 0) {
+            if (s->unk24 == 1) {
+                s->timer2 = 0x14;
+                func_001BA7A0(7);
+                s->sel++;
+            } else {
+                s->timer2 = 1;
+                s->sel = 5;
+            }
+        } else if (s->unk24 != 1) {
+            for (i = 0; i < 0x80; i++) {
+                if (i != 0x16 && i != 0x15 && i != 0x14 && i != 0x13 && i != 0x12) {
+                    s->elems[128 + i].visible = 0;
+                } else {
+                    s->elems[128 + i].visible = 1;
+                }
+            }
+        }
+        break;
+    case 4:
+        if (--s->timer2 == 0) {
+            v = 1;
+            if (s->unk24 == 1) {
+            } else if (func_001B6980(0xE) != 0) {
+                v = 1;
+            } else {
+                func_00349E20();
+                v = 10;
+            }
+            s->timer2 = v;
+            s->sel++;
+            return;
+        }
+        break;
+    case 5:
+        if (--s->timer2 == 0) {
+            if (s->unk24 == 1) {
+                func_005442F0(s);
+                return;
+            }
+            if (w->unkC == 8) {
+                D_002F88B0[8] = D_00358F00[s->extras[w->unkD[0]] * 12 + 2];
+                D_002F88B0[0xC] = 0;
+                *(s16 *)(D_002F88B0 + 0x10) = *(s16 *)(D_00358F00 + s->extras[w->unkD[0]] * 12) + 1;
+            } else {
+                k = 0;
+                D_002F88B0[8] = w->unkC;
+                for (j = 0; j < 3; j++) {
+                    if (s->costume[w->unkC][j] != 0) {
+                        if (k == w->unkD[0]) {
+                            break;
+                        }
+                        k++;
+                    }
+                }
+                D_002F88B0[0xC] = j;
+            }
+            D_002F88B0[5] = 0;
+            for (i = 0; i < 4; i++) {
+                D_002F88B0[0x18 + i] = 0;
+                D_002F88B0[0x1A + i] = 0;
+                ((s16 *)(D_002F88B0 + 0x1C))[i] = 0;
+            }
+            D_002F88B0[5] = 2;
+            pair = D_00558300[D_002F88B0[6]] + D_002F88B0[8] * 2;
+            D_002F88B0[0x18] = pair[0];
+            D_002F88B0[0x19] = pair[1];
+            func_00546500(w, s);
+            func_00544330(s);
+            return;
+        }
+        return;
+    case 6:
+        if (s->pressed & 0x200) {
+            s->sel = 1;
+            func_00544540(s);
+            func_001B6EF0(2);
+        } else if (s->nav & 1) {
+            if (s->scroll > 0) {
+                s->scroll--;
+                func_001B6EF0(2);
+            }
+        } else if (s->nav & 2) {
+            if (s->scroll + 12 < s->itemCount[s->cur]) {
+                s->scroll++;
+                func_001B6EF0(2);
+            }
+        }
+        break;
+    }
+    func_00546500(w, s);
+}
+#endif
+
+
+void func_005442F0(SelectWork *s) {
+    s->state = 8;
+    s->sel = 0;
+    s->sub = 0;
+}
+
+void func_00544330(SelectWork *s) {
+    s->state = 10;
+    s->sel = 0;
+    s->sub = 0;
+}
+
+#ifdef NON_MATCHING   /* first draft from m2c */
+/* The character's item list off, and on. */
+void func_00544540(SelectWork *s) {
+    s32 i;
+
+    for (i = 0x38; i < 0x5D; i++) {
+        s->elems[i + 128].visible = 0;
+    }
+}
+#endif
+
+#ifdef NON_MATCHING   /* first draft from m2c */
+void func_00544570(SelectWork *s) {
+    s32 i;
+
+    for (i = 0x38; i < 0x5D; i++) {
+        s->elems[i + 128].visible = 1;
+    }
+    for (i = 0x4D; i < 0x52; i++) {
+        if (i - 0x4D == s->file[s->cur]) {
+            s->elems[i + 128].visible = 1;
+        } else {
+            s->elems[i + 128].visible = 0;
+        }
+    }
+    s->elems[189].bh = s->unk831C[s->file[s->cur]];
+    s->scroll = 0;
+}
+#endif
+
+extern s16 D_005594F0[][2];     /* the character wheel's places */
+
+#ifdef NON_MATCHING   /* first draft from m2c */
+/* The character screen's pictures: which are shown at first, and where. */
+void func_00544FA0(UiElem *e, s32 n) {
+    switch (n) {
+    case 0x12:
+    case 0x13:
+    case 0x14:
+    case 0x15:
+    case 0x16:
+    case 0x19:
+    case 0x1A:
+    case 0x1B:
+    case 0x1C:
+    case 0x1D:
+    case 0x1E:
+    case 0x1F:
+    case 0x20:
+    case 0x21:
+    case 0x22:
+    case 0x23:
+    case 0x24:
+    case 0x25:
+    case 0x26:
+    case 0x27:
+    case 0x28:
+    case 0x29:
+    case 0x2A:
+    case 0x2B:
+    case 0x2C:
+    case 0x2D:
+    case 0x2E:
+    case 0x2F:
+    case 0x30:
+    case 0x31:
+    case 0x32:
+    case 0x33:
+    case 0x34:
+    case 0x35:
+    case 0x36:
+    case 0x37:
+    case 0x5D:
+    case 0x5E:
+    case 0x5F:
+    case 0x60:
+        e->visible = 1;
+        break;
+    case 0x17:
+    case 0x18:
+        e->bw = 0x1E;
+        e->bh = 0x1E;
+        break;
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    case 6:
+    case 7:
+    case 8:
+        e->visible = 0;
+        e->bx = D_005594F0[2][0];
+        e->by = D_005594F0[2][1];
+        break;
+    case 9:
+    case 10:
+    case 11:
+    case 12:
+    case 13:
+    case 14:
+    case 15:
+    case 16:
+    case 17:
+        e->visible = 1;
+        e->bx = D_005594F0[n - 9][0];
+        e->by = D_005594F0[n - 9][1];
+        break;
+    default:
+        e->visible = 0;
+        break;
+    }
+}
+#endif
+
+extern s32 D_00558B28;
+
+#ifdef NON_MATCHING   /* first draft from m2c */
+/* Puts the characters' portraits on the wheel, the chosen one in the middle. */
+void func_00545290(TitleWork *w, SelectWork *s) {
+    UiElem *e;
+    UiDef *d;
+    s32 end = 0x11;
+    s32 n;
+    s32 t;
+    s32 i;
+
+    if (s->extraCount != 0) {
+        end = 0x12;
+        n = 9;
+    } else {
+        n = 8;
+    }
+    t = w->unkC - 2;
+    if (t < 0) {
+        t += n;
+    }
+    e = &s->elems[137];
+    for (i = 9; i < end; i++) {
+        d = &D_005589C0[t + 9];
+        if (d->page == 0xFF) {
+            break;
+        }
+        t++;
+        e->u0 = d->u0;
+        e->v0 = d->v0;
+        e++;
+        if (t >= n) {
+            t = 0;
+        }
+        s->wheel[i - 9] = i - 9;
+    }
+    s->elems[146].page = D_00558B28;
+}
+#endif
+
+#ifdef NON_MATCHING   /* first draft from m2c */
+/* The character wheel at rest, the first character in front. */
+void func_00545780(TitleWork *w, SelectWork *s) {
+    s32 last = 7;
+    s32 n;
+    s32 i;
+    u8 t;
+
+    if (s->extraCount != 0) {
+        last = 8;
+        n = 9;
+    } else {
+        n = 8;
+    }
+    w->unkC = 0;
+    w->unkD[0] = 0;
+    for (i = 0; i < n; i++) {
+        s->wheel[i] = i - w->unkC;
+        if (s->wheel[i] < 0) {
+            s->wheel[i] += n;
+        }
+    }
+    t = w->unkC;
+    for (i = 0; i < n; i++) {
+        s->elems[137 + t].bx = D_005594F0[i][0];
+        t++;
+        if (last < t) {
+            t = 0;
+        }
+    }
+}
+#endif
+
+/* The character wheel's arrows (pictures 0x17, 0x18): fade in, hold, fade out. */
+void func_00545840(UiElem *e, s32 n) {
+    if (n == 0x17 || n == 0x18) {
+        switch (e->anim) {
+        case 0:
+            e->visible = 1;
+            e->alpha = 0;
+            e->phase = 0;
+            e->anim++;
+            break;
+        case 1:
+            e->alpha = 255.0f * func_00191B60(D_00239CB8 * (f32)(u16)e->phase / 65536.0f);
+            if (e->alpha >= 0xFF) {
+                e->alpha = 0xFF;
+                e->timer = 0x10;
+                e->phase = 0x4000;
+                e->anim++;
+            } else {
+                e->phase = (e->phase + 0x400) & 0xFFFF;
+            }
+            break;
+        case 2:
+            if (--e->timer == 0) {
+                e->anim++;
+            }
+            break;
+        case 3:
+            e->alpha = 255.0f * func_00191B60(D_00239CB8 * (f32)(u16)e->phase / 65536.0f);
+            if (e->alpha <= 0) {
+                e->alpha = 0;
+                e->phase = 0;
+                e->anim = 1;
+            } else {
+                e->phase = (e->phase + 0x400) & 0xFFFF;
+            }
+            break;
+        }
+        e->color = (e->alpha << 24) | 0xFFFFFF;
+    }
+}
+
+#ifdef NON_MATCHING   /* first draft from m2c */
+/* Starts a turn of the character wheel (sub 0: to the right). */
+void func_00545350(TitleWork *w, SelectWork *s) {
+    s32 last = 7;
+    s32 n;
+    s32 i;
+    s32 from;
+    s32 to;
+    f32 d;
+    f32 right = 0x28A;
+
+    if (s->extraCount != 0) {
+        last = 8;
+        n = 9;
+    } else {
+        n = 8;
+    }
+    for (i = 0; i < n; i++) {
+        from = s->wheel[i];
+        if (s->sub == 0) {
+            to = from + 1;
+            if (last < to) {
+                to = 0;
+            }
+        } else {
+            to = from - 1;
+            if (to < 0) {
+                to = last;
+            }
+        }
+        s->cfx[i] = D_005594F0[from][0];
+        s->ctx[i] = D_005594F0[to][0];
+        s->cangle[i] = 0;
+        if (s->sub == 0) {
+            if (s->wheel[i] == last) {
+                s->unk7 = 1;
+                d = (right + s->elems[137 + i].w - s->cfx[i]) + (s->ctx[i] + s->elems[137 + i].w);
+            } else {
+                d = s->ctx[i] - s->cfx[i];
+            }
+            s->cdx[i] = 2.0f * (d / 8.0f);
+        } else {
+            if (s->wheel[i] == 0) {
+                s->unk7 = 1;
+                d = s->cfx[i] + ((right - s->ctx[i]) + s->elems[137 + i].w);
+            } else {
+                d = s->cfx[i] - s->ctx[i];
+            }
+            s->cdx[i] = -1.0f * (2.0f * (d / 8.0f));
+        }
+        s->cspeed[i] = 0x1000;
+    }
+    s->elems[151].visible = 0;
+    s->elems[152].visible = 0;
+}
+#endif
+
+#ifdef NON_MATCHING   /* first draft from m2c */
+/* One frame of the character wheel's turn. */
+void func_00545530(TitleWork *w, SelectWork *s) {
+    UiElem *e;
+    s32 last;
+    s32 n;
+    s32 i;
+
+    if (s->extraCount != 0) {
+        last = 8;
+        n = 9;
+    } else {
+        last = 7;
+        n = 8;
+    }
+    for (i = 0; i < n; i++) {
+        e = &s->elems[137 + i];
+        s->cangle[i] = (s->cangle[i] + s->cspeed[i]) & 0x7FFF;
+        s->cfx[i] += s->cdx[i] * func_00191B60(D_00239CB8 * (f32)(u16)s->cangle[i] / 65536.0f);
+        if (s->sub == 0) {
+            if (s->wheel[i] == last && (f32)0x28A <= s->cfx[i]) {
+                s->cfx[i] = -1.0f * (f32)e->w;
+                s->unk7 = 0;
+            }
+            if (s->unk7 == 0 && !(s->cfx[i] < s->ctx[i])) {
+                s->cfx[i] = s->ctx[i];
+                s->cdx[i] = 0.0f;
+                s->cspeed[i] = 0;
+            }
+        } else {
+            if (s->wheel[i] == 0 && !(-1.0f * (f32)e->w < s->cfx[i])) {
+                s->cfx[i] = 0x28A;
+                s->unk7 = 0;
+            }
+            if (s->unk7 == 0 && s->cfx[i] <= s->ctx[i]) {
+                s->cfx[i] = s->ctx[i];
+                s->cdx[i] = 0.0f;
+                s->cspeed[i] = 0;
+            }
+        }
+        e->bx = s->cfx[i];
+    }
+}
+#endif
+
+extern s16 D_00559520[5];       /* the costume arrows' places */
+extern s16 D_0055952A[5];
+extern s16 D_005583F0[5][3];    /* the profile lines: x, y, font size */
+extern char *D_00558330[];      /* profile text, five lines per character */
+extern char *D_00558318[];      /* costume names */
+extern s16 D_0023A438[2];       /* where the costume name goes */
+char *func_001C0180(s32 n);     /* an extra character's name */
+s32 strlen(const char *s);
+
+#ifdef NON_MATCHING   /* first draft from m2c */
+/* Draws the character screen (or the item list, sel 6). */
+void func_00546500(TitleWork *w, SelectWork *s) {
+    char buf[0x40];
+    UiElem *e;
+    s16 *pos;
+    s32 many;
+    s32 n;
+    s32 i;
+    s32 j;
+    s32 k;
+    s32 x;
+    s32 y;
+    s32 size;
+
+    if (s->sel == 6) {
+        s->elems[189].visible = 1;
+        s->elems[189].bh = s->unk831C[s->file[s->cur]];
+        e = &s->elems[189];
+        if (s->elems[189].bh != 0) {
+            e->by = s->unk8362[s->file[s->cur]] * s->scroll + 0x9A;
+            func_00548A00(s, e, 1);
+        }
+        s->elems[189].visible = 0;
+        e = &s->elems[184];
+        for (i = 0x38; i < 0x5D; i++, e++) {
+            if (i < 0x54 || i >= 0x5C) {
+                func_00548A00(s, e, 1);
+            }
+        }
+        e = &s->elems[212];
+        for (i = 0; i < 8; i++, e++) {
+            e->color = s->unk8438[s->cur][i] != 0 ? -1 : 0xFF404040;
+            func_00548A00(s, e, 1);
+        }
+        func_001B4340(-2);
+        func_001B4370(0);
+        func_001B4380(0x80808080);
+        if (s->itemCount[s->cur] == 0) {
+            func_001B4300(0x14);
+            func_001B4320(0x90, 0xEA);
+            func_001B43C0((u8 *)D_00560720);
+        } else {
+            func_001B4300(0x14);
+            for (i = s->scroll, y = 0x90; i < s->itemCount[s->cur] && i - s->scroll < 12; i++, y += 0x14) {
+                func_001B4320(0x90, y);
+                func_001B43C0((u8 *)func_001C02A0(s->cur, s->items[s->cur][i]));
+            }
+            func_001B4320(0x1F4, 0x6E);
+            sprintf(buf, D_00560740, s->unk83AC[s->cur]);
+            func_001B43C0((u8 *)buf);
+        }
+        return;
+    }
+    many = 0;
+    for (i = 0; i < 9; i++) {
+        if (s->costumes[i] >= 2) {
+            many = 1;
+            break;
+        }
+    }
+    pos = many == 0 ? D_00559520 : D_0055952A;
+    e = &s->elems[153];
+    for (i = 0; i < 5; i++, e++, pos++) {
+        if (*pos == 0) {
+            e->visible = 0;
+        } else {
+            e->bx = *pos;
+        }
+    }
+    if (s->unk24 != 1 && s->sel >= 3) {
+        e = &s->elems[146];
+        if (w->unkC != 8) {
+            e->page = D_00558B28;
+            e->page += w->unkC;
+            e->visible = 1;
+        } else {
+            e->visible = 0;
+        }
+        func_00548A00(s, e, 1);
+        func_00548A00(s, &s->elems[147], 1);
+        func_00548A00(s, &s->elems[148], 1);
+        func_00548A00(s, &s->elems[149], 1);
+        func_00548A00(s, &s->elems[150], 1);
+        return;
+    }
+    n = 8;
+    if (s->extraCount != 0) {
+        n = 9;
+    }
+    e = &s->elems[146];
+    if (w->unkC != 8) {
+        e->page = D_00558B28;
+        e->page += w->unkC;
+        e->visible = 1;
+    } else {
+        e->visible = 0;
+    }
+    for (i = 0; i < n; i++) {
+        s->elems[128 + i].visible = 0;
+    }
+    e = &s->elems[137];
+    for (i = 0; i < n; i++, e++) {
+        k = i - 2;
+        if (s->sel != 2) {
+            if (k < 0) {
+                k += n;
+            }
+            if (k == w->unkC) {
+                e->color = -1;
+                s->elems[128 + w->unkC].visible = 1;
+                continue;
+            }
+        }
+        e->color = 0xFF808080;
+    }
+    func_00548A00(s, &s->elems[128], 0x36);
+    func_001B4340(-2);
+    func_001B4370(0);
+    for (i = 0; i < 5; i++) {
+        x = D_005583F0[i][0];
+        y = D_005583F0[i][1];
+        size = D_005583F0[i][2];
+        func_001B4300(size);
+        if (w->unkC == 8) {
+            if (i != 0) {
+                func_001B4380(0x80000000);
+                func_001B4320(x + 2, y + 2);
+                func_001B43C0((u8 *)D_00558330[i + w->unkC * 5]);
+                func_001B4380(0x80808080);
+                func_001B4320(x, y);
+                func_001B43C0((u8 *)D_00558330[i + w->unkC * 5]);
+            } else {
+                func_001B4380(0x80000000);
+                func_001B4320(x + 2, y + 2);
+                func_001B43C0((u8 *)func_001C0180(s->extras[w->unkD[0]]));
+                func_001B4380(0x80808080);
+                func_001B4320(x, y);
+                func_001B43C0((u8 *)func_001C0180(s->extras[w->unkD[0]]));
+            }
+        } else {
+            func_001B4380(0x80000000);
+            func_001B4320(x + 2, y + 2);
+            func_001B43C0((u8 *)D_00558330[i + w->unkC * 5]);
+            func_001B4380(0x80808080);
+            func_001B4320(x, y);
+            func_001B43C0((u8 *)D_00558330[i + w->unkC * 5]);
+        }
+    }
+    s->elems[221].visible = 1;
+    s->elems[224].visible = 1;
+    func_00548A00(s, &s->elems[221], 1);
+    s->elems[224].v0 = s->blink;
+    func_00548A00(s, &s->elems[224], 1);
+    s->elems[222].visible = 1;
+    func_00548A00(s, &s->elems[222], 1);
+    func_001AE9C0(0x6C, 0);
+    if (s->sel != 2) {
+        if (w->unkC == 8) {
+            if (s->extraCount != 0) {
+                if (s->extraCount >= 2) {
+                    func_00548A00(s, &s->elems[182], 2);
+                }
+                y = D_0023A438[1];
+                strcpy(buf, func_001C0180(s->extras[w->unkD[0]]));
+                x = (0x48 - (s32)strlen(buf) * 9) / 2;
+                func_001B4320(x + 0xB0, y);
+                func_001B4300(0x12);
+                func_001B43C0((u8 *)buf);
+            }
+        } else if (s->costumes[w->unkC] >= 2) {
+            func_00548A00(s, &s->elems[182], 2);
+            func_001B4320(D_0023A438[0], D_0023A438[1]);
+            func_001B4300(0x12);
+            k = 0;
+            for (j = 0; j < 3; j++) {
+                if (s->costume[w->unkC][j] != 0) {
+                    if (k == w->unkD[0]) {
+                        break;
+                    }
+                    k++;
+                }
+            }
+            func_001B43C0((u8 *)D_00558318[j]);
+        }
+    }
+}
+#endif
+
+/* --- select step 10: the difficulty --- */
+
+extern char *D_005595F0[];      /* debug menu texts */
+extern char D_00560810[], D_00560828[], D_00560830[], D_00560848[], D_00560850[], D_00560860[],
+    D_00560868[], D_00560870[], D_00560880[], D_00560890[], D_00560898[], D_005608A0[], D_005608D0[],
+    D_005608E0[];
+void func_00544350(SelectWork *s);
+void func_00546D40(TitleWork *w, SelectWork *s);
+void func_00547290(TitleWork *w);
+
+#ifdef NON_MATCHING   /* first draft from m2c */
+void func_00547340(TitleWork *w, SelectWork *s) {
+    char buf[0x40];
+    s32 y;
+    s32 x;
+    s32 i;
+    s32 n;
+    s16 v;
+
+    if (func_001B6980(0x52) != 0) {
+        /* debug: set the players up by hand */
+        y = 0x20;
+        func_001B4340(-2);
+        func_001B4370(0);
+        func_001B4380(0x80808080);
+        func_001B4300(0x14);
+        func_001B4320(0x20, 0x20);
+        func_001B43C0((u8 *)D_00560810);
+        switch (s->sel) {
+        case 0:
+            D_002F88B0[5] = 0;
+            w->unkC = 0;
+            w->unkD[0] = 0;
+            s->sel++;
+            return;
+        case 1:
+            func_001B4320(0x40, 0x60);
+            func_001B4380(0x80008000);
+            func_001B43C0((u8 *)D_00560828);
+            func_001B4380(0x80808080);
+            func_001B43C0((u8 *)D_00560830);
+            func_001B4320(0x40, 0x74);
+            func_001B4380(0x80808000);
+            func_001B43C0((u8 *)D_00560848);
+            func_001B4380(0x80808080);
+            func_001B43C0((u8 *)D_00560850);
+            if (s->pressed & 0x200) {
+                D_002F88B0[5] = 2;
+                s->sel++;
+                return;
+            }
+            if (s->pressed & 0x10) {
+                s->sel = 3;
+                return;
+            }
+            return;
+        case 2:
+            if (s->pressed & 0x10) {
+                func_00544310(s);
+                return;
+            }
+            if (w->pressed & 0xC) {
+                w->unkD[0] ^= 1;
+            }
+            if (w->pressed & 0x400) {
+                w->unkC = (w->unkC + 1) & 3;
+            }
+            if (w->pressed & 0x800) {
+                w->unkC = (w->unkC - 1) & 3;
+            }
+            switch (w->unkC) {
+            case 0:
+                if (s->nav & 1) {
+                    D_002F88B0[0x18 + w->unkD[0]] = (D_002F88B0[0x18 + w->unkD[0]] + 1) & 7;
+                }
+                if (s->nav & 2) {
+                    D_002F88B0[0x18 + w->unkD[0]] = (D_002F88B0[0x18 + w->unkD[0]] - 1) & 7;
+                }
+                break;
+            case 1:
+                n = (D_002F88B0[0x18 + w->unkD[0]] >= 5) ? 3 : 2;
+                if (s->nav & 2) {
+                    if (D_002F88B0[0x1A + w->unkD[0]] != 0) {
+                        D_002F88B0[0x1A + w->unkD[0]]--;
+                    } else {
+                        D_002F88B0[0x1A + w->unkD[0]] = n - 1;
+                    }
+                }
+                if (s->nav & 1) {
+                    D_002F88B0[0x1A + w->unkD[0]]++;
+                    if (D_002F88B0[0x1A + w->unkD[0]] == n) {
+                        D_002F88B0[0x1A + w->unkD[0]] = 0;
+                    }
+                }
+                break;
+            case 2:
+                func_00547290(w);
+                break;
+            case 3:
+                if (s->pressed & 0x20) {
+                    s->sel++;
+                    return;
+                }
+                break;
+            }
+            for (i = 0; i < 2; i++) {
+                x = i * 0x78 + 0x40;
+                func_001B4380(0x80008080);
+                func_001B4320(x, 0x40);
+                func_001B43C0((u8 *)D_005595F0[i]);
+                func_001B4320(x, 0x54);
+                func_001B4380((w->unkC == 0 && w->unkD[0] == i) ? 0x80000080 : 0x80808080);
+                func_001B43C0((u8 *)D_005595F0[D_002F88B0[0x18 + i] + 2]);
+                func_001B4320(x, 0x68);
+                func_001B4380((w->unkC == 1 && w->unkD[0] == i) ? 0x80000080 : 0x80808080);
+                sprintf(buf, D_00560860, D_002F88B0[0x1A + i]);
+                func_001B43C0((u8 *)buf);
+                y = 0x7C;
+                func_001B4320(x, 0x7C);
+                func_001B4380((w->unkC == 2 && w->unkD[0] == i) ? 0x80000080 : 0x80808080);
+                v = ((s16 *)(D_002F88B0 + 0x1C))[i];
+                if (v == 0) {
+                    strcpy(buf, D_00560868);
+                } else {
+                    sprintf(buf, D_00560860, v - 1);
+                }
+                func_001B43C0((u8 *)buf);
+                if (i == 0) {
+                    y = 0x90;
+                    func_001B4320(x, 0x90);
+                    func_001B4380(w->unkC == 3 ? 0x80000080 : 0x80808080);
+                    func_001B43C0((u8 *)D_00560870);
+                    func_001B4380(0x80808080);
+                    func_001B43C0((u8 *)D_00560880);
+                    func_001B4380(0x80000080);
+                    func_001B43C0((u8 *)D_00560890);
+                    func_001B4380(0x80808080);
+                    func_001B43C0((u8 *)D_00560898);
+                }
+            }
+            func_001B4300(0x10);
+            func_001B4320(0x40, y + 0x50);
+            func_001B4380(0x80808000);
+            func_001B43C0((u8 *)D_005608A0);
+            func_001B43C0((u8 *)D_005608D0);
+            func_001B4300(0x14);
+            func_001B4320(0x28, w->unkC * 0x14 + 0x54);
+            func_001B4380(0x80008000);
+            func_001B43C0((u8 *)D_005608E0);
+            return;
+        case 3:
+            func_00544350(s);
+            return;
+        }
+        return;
+    }
+    switch (s->sel) {
+    case 0:
+        s->unk24 = 0;
+        for (i = 0; i < 8; i++) {
+            s->elems[256 + i].visible = 1;
+        }
+        for (i = 0; i < 5; i++) {
+            s->anim[i] = 0;
+            s->open[i] = 0;
+        }
+        if (s->back != 0) {
+            if (!(D_00301D7F[0] & 4)) {
+                s->back = 1;
+                func_00544310(s);
+                func_00546D40(w, s);
+                return;
+            }
+            s->back = 0;
+            if (D_002F88B0[5] != 0) {
+                w->unkD[1] = 0;
+            } else {
+                w->unkD[1] = 1;
+            }
+        } else {
+            w->unkD[1] = 0;
+        }
+        if (!(D_00301D7F[0] & 4)) {
+            D_002F88B0[5] = 2;
+            func_00544350(s);
+        } else {
+            s->anim[0] = 1;
+            s->timer2 = 3;
+            s->sel++;
+        }
+        break;
+    case 1:
+        if (--s->timer2 == 0) {
+            s->anim[3] = 1;
+            s->timer2 = 3;
+            s->sel++;
+        }
+        break;
+    case 2:
+        if (--s->timer2 == 0) {
+            s->anim[1] = 1;
+            s->anim[2] = 1;
+            s->anim[4] = 1;
+            s->sel++;
+        }
+        break;
+    case 3:
+        if ((s->nav & 1) && w->unkD[1] != 0) {
+            w->unkD[1]--;
+            func_001B6EF0(2);
+        } else if ((s->nav & 2) && w->unkD[1] == 0) {
+            w->unkD[1]++;
+            func_001B6EF0(2);
+        } else if (s->pressed & 0x20) {
+            func_001B6EF0(4);
+            s->anim[4] = 2;
+            s->anim[1] = 2;
+            s->anim[2] = 2;
+            s->timer2 = 3;
+            s->sel++;
+        } else if (s->pressed & 0x10) {
+            func_001B6EF0(1);
+            s->unk24 = 1;
+            s->anim[4] = 2;
+            s->anim[1] = 2;
+            s->anim[2] = 2;
+            s->timer2 = 3;
+            s->sel++;
+        }
+        break;
+    case 4:
+        if (--s->timer2 == 0) {
+            s->anim[3] = 2;
+            s->timer2 = 3;
+            s->sel++;
+        }
+        break;
+    case 5:
+        if (--s->timer2 == 0) {
+            s->anim[0] = 2;
+            s->timer2 = 3;
+            s->sel++;
+        }
+        break;
+    case 6:
+        if (--s->timer2 == 0) {
+            if (s->unk24 != 0) {
+                s->back = 1;
+                func_00544310(s);
+            } else {
+                if (w->unkD[1] == 0) {
+                    D_002F88B0[5] = 2;
+                } else {
+                    D_002F88B0[5] = 0;
+                }
+                func_00544350(s);
+            }
+        }
+        break;
+    }
+    func_00546D40(w, s);
+}
+#endif
+
+
+void func_00544350(SelectWork *s) {
+    s->state = 11;
+    s->sel = 0;
+    s->sub = 0;
+}
+
+/* --- select step 11: the scenario --- */
+
+extern char *D_00559630[];      /* debug: scenario names */
+extern char D_00560930[], D_00560940[], D_00560950[], D_00560970[];
+void func_00547CF0(TitleWork *w, SelectWork *s);
+
+/* Leaves the select screen with the choices made. */
+#define SELECT_ANIM_OUT(s, w, a, next)  \
+    do {                                \
+        (s)->anim[a] = 2;               \
+        (s)->anim[2] = 2;               \
+        (s)->anim[1] = 2;               \
+        (s)->timer2 = 3;                \
+        (s)->sel = (next);              \
+    } while (0)
+
+#ifdef NON_MATCHING   /* first draft from m2c */
+void func_005482F0(TitleWork *w, SelectWork *s) {
+    s32 i;
+
+    if (func_001B6980(0x52) != 0) {
+        func_001B4340(-2);
+        func_001B4370(0);
+        func_001B4380(0x80808080);
+        func_001B4300(0x14);
+        func_001B4320(0x20, 0x20);
+        func_001B43C0((u8 *)D_00560930);
+        switch (s->sel) {
+        case 0:
+            w->unkC = D_002F88B0[2];
+            s->sel++;
+            break;
+        case 1:
+            if (!(w->pressed & 2)) {
+                if (w->pressed & 8) {
+                    w->unkC = (w->unkC + 1) & 3;
+                }
+                if (w->pressed & 4) {
+                    w->unkC = (w->unkC - 1) & 3;
+                }
+            }
+            if (w->pressed & 0x10) {
+                func_00544330(s);
+                return;
+            }
+            if (w->pressed & 0x20) {
+                s->sel = 3;
+            }
+            break;
+        case 3:
+            D_002F88B0[2] = w->unkC;
+            func_001B9140(3);
+            func_00542F70(w);
+            w->unk70 = 1;
+            return;
+        }
+        func_001B4320(0x48, 0x5C);
+        func_001B4380(s->sel == 1 ? 0x80000080 : 0x80808080);
+        func_001B43C0((u8 *)D_00560940);
+        func_001B4380(0x80008080);
+        func_001B43C0((u8 *)D_00559630[w->unkC]);
+        func_001B4300(0x10);
+        func_001B4320(0x40, 0xAC);
+        func_001B4380(0x80808000);
+        func_001B43C0((u8 *)D_00560950);
+        func_001B43C0((u8 *)D_00560970);
+        return;
+    }
+    switch (s->sel) {
+    case 0:
+        s->unk24 = 0;
+        w->unkD[1] = 1;
+        w->unkD[2] = 2;
+        if (D_00301D7F[4] & 4) {
+            w->unkD[2]++;
+        }
+        if (D_00301D7F[4] & 8) {
+            w->unkD[2]++;
+        }
+        for (i = 0; i < 8; i++) {
+            s->elems[256 + i].visible = 1;
+        }
+        for (i = 0; i < 8; i++) {
+            s->anim[i] = 0;
+            s->open[i] = 0;
+        }
+        s->anim[0] = 1;
+        s->timer2 = 3;
+        s->sel++;
+        break;
+    case 1:
+        if (--s->timer2 == 0) {
+            s->anim[3] = 1;
+            s->timer2 = 3;
+            s->sel++;
+        }
+        break;
+    case 2:
+        if (--s->timer2 == 0) {
+            s->anim[4] = 1;
+            s->anim[1] = 1;
+            s->anim[2] = 1;
+            s->timer2 = 3;
+            s->sel++;
+            if (w->unkD[2] < 3) {
+                s->sel = 5;
+            }
+        }
+        break;
+    case 3:
+        if (--s->timer2 == 0) {
+            s->anim[5] = 1;
+            s->timer2 = 3;
+            s->sel++;
+            if (w->unkD[2] < 4) {
+                s->sel = 5;
+            }
+        }
+        break;
+    case 4:
+        if (--s->timer2 == 0) {
+            s->anim[6] = 1;
+            s->sel++;
+        }
+        break;
+    case 5:
+        if ((s->nav & 1) && w->unkD[1] != 0) {
+            w->unkD[1]--;
+            func_001B6EF0(2);
+        } else if ((s->nav & 2) && w->unkD[1] != w->unkD[2] - 1) {
+            w->unkD[1]++;
+            func_001B6EF0(2);
+        } else if (s->pressed & 0x20) {
+            func_001B6EF0(4);
+            func_001AD680(0, 0, 0x1C);
+            if (w->unkD[2] == 3) {
+                SELECT_ANIM_OUT(s, w, 5, 7);
+            } else if (w->unkD[2] == 2) {
+                SELECT_ANIM_OUT(s, w, 4, 8);
+            } else {
+                SELECT_ANIM_OUT(s, w, 6, s->sel + 1);
+            }
+        } else if (s->pressed & 0x10) {
+            func_001B6EF0(1);
+            s->unk24 = 1;
+            if (w->unkD[2] == 3) {
+                SELECT_ANIM_OUT(s, w, 5, 7);
+            } else if (w->unkD[2] == 2) {
+                SELECT_ANIM_OUT(s, w, 4, 8);
+            } else {
+                SELECT_ANIM_OUT(s, w, 6, s->sel + 1);
+            }
+        }
+        break;
+    case 6:
+        if (--s->timer2 == 0) {
+            s->anim[5] = 2;
+            s->timer2 = 3;
+            s->sel++;
+        }
+        break;
+    case 7:
+        if (--s->timer2 == 0) {
+            s->anim[4] = 2;
+            s->timer2 = 3;
+            s->sel++;
+        }
+        break;
+    case 8:
+        if (--s->timer2 == 0) {
+            s->anim[3] = 2;
+            s->timer2 = 3;
+            s->sel++;
+        }
+        break;
+    case 9:
+        if (--s->timer2 == 0) {
+            s->anim[0] = 2;
+            s->timer2 = 3;
+            s->sel++;
+        }
+        break;
+    case 10:
+        if (--s->timer2 == 0) {
+            if (s->unk24 != 0) {
+                s->back = 1;
+                func_00544330(s);
+            } else {
+                D_002F88B0[2] = w->unkD[1];
+                s->timer2 = 0x14;
+                func_001BA7A0(7);
+                s->sel++;
+            }
+        }
+        break;
+    case 11:
+        if (--s->timer2 == 0) {
+            func_00349E20();
+            s->timer2 = 5;
+            s->sel++;
+        }
+        break;
+    case 12:
+        if (--s->timer2 == 0) {
+            func_001B9140(3);
+            func_001BA870();
+            func_00542F70(w);
+            w->unk70 = 1;
+            return;
+        }
+        break;
+    }
+    func_00547CF0(w, s);
+}
+#endif
+
+extern f32 D_00239CBC;          /* 0.2: how fast the pictures come in */
+extern char *D_0023A440[2];     /* the difficulty names */
+extern char *D_00559620[];      /* the scenario names */
+
+/* Moves n of the pictures in or out. */
+#define SELECT_OPEN(s, n)                                   \
+    do {                                                    \
+        s32 i_;                                             \
+        for (i_ = 0; i_ < (n); i_++) {                      \
+            if ((s)->anim[i_] == 1 && (s)->open[i_] < 1.0f) {   \
+                (s)->open[i_] += D_00239CBC;                \
+                if (!((s)->open[i_] < 1.0f)) {              \
+                    (s)->open[i_] = 1.0f;                   \
+                }                                           \
+            }                                               \
+            if ((s)->anim[i_] == 2 && !((s)->open[i_] <= 0.0f)) {   \
+                (s)->open[i_] -= D_00239CBC;                \
+                if ((s)->open[i_] <= 0.0f) {                \
+                    (s)->open[i_] = 0.0f;                   \
+                }                                           \
+            }                                               \
+        }                                                   \
+    } while (0)
+
+#ifdef NON_MATCHING   /* first draft from m2c */
+/* Draws the difficulty screen. */
+void func_00546D40(TitleWork *w, SelectWork *s) {
+    UiElem tmp;
+    UiElem *e;
+    s32 i;
+    s32 x;
+
+    SELECT_OPEN(s, 5);
+    if (--s->blink2 < 0) {
+        s->blink2 += 0x20;
+    }
+    e = &s->elems[256];
+    for (i = 0; i < 5; i++, e++) {
+        if ((*(s16 *)(D_002F88B0 + 0x10) == 0 || i != 0) && e->visible != 0) {
+            if (i == 0) {
+                tmp = *e;
+                tmp.page += D_002F88B0[8];
+                func_00548A00(s, &tmp, 1);
+            } else {
+                func_00548A00(s, e, 1);
+            }
+        }
+    }
+    for (; i < 8; i++, e++) {
+        if (e->visible != 0) {
+            tmp = *e;
+            if (i - 5 == 1 || i - 5 == 2) {
+                tmp.color = ((u32)(255.0f * s->open[i - 5]) << 24) | 0xFFFFFF;
+            } else {
+                tmp.bw = (f32)tmp.bw * s->open[i - 5];
+            }
+            func_00548A00(s, &tmp, 1);
+        }
+    }
+    if (s->sel == 3) {
+        tmp = s->elems[264];
+        tmp.visible = 1;
+        tmp.by = (w->unkD[1] == 0 ? s->elems[266].by : s->elems[268].by) + 4;
+        tmp.color = 0xFF804000;
+        tmp.b = 1;
+        tmp.u0 = s->blink2;
+        func_00548A00(s, &tmp, 1);
+    }
+    tmp = s->elems[266];
+    tmp.visible = 1;
+    tmp.bw = (f32)tmp.bw * s->open[3];
+    func_00548A00(s, &tmp, 1);
+    tmp = s->elems[268];
+    tmp.visible = 1;
+    tmp.bw = (f32)tmp.bw * s->open[4];
+    func_00548A00(s, &tmp, 1);
+    if (s->sel == 3) {
+        tmp = s->elems[265];
+        tmp.visible = 1;
+        tmp.by = w->unkD[1] == 0 ? s->elems[266].by : s->elems[268].by;
+        func_00548A00(s, &tmp, 1);
+    }
+    if (s->sel == 3) {
+        func_001B4340(-2);
+        func_001B4370(0);
+        func_001B4300(0x18);
+        func_001B4380(0x80808080);
+        x = (0x100 - (s32)strlen(D_0023A440[0]) * 12) / 2;
+        func_001B4320(x + 0x38, 0xB6);
+        func_001B43C0((u8 *)D_0023A440[0]);
+        x = (0x100 - (s32)strlen(D_0023A440[1]) * 12) / 2;
+        func_001B4320(x + 0x38, 0xE6);
+        func_001B43C0((u8 *)D_0023A440[1]);
+    }
+}
+#endif
+
+#ifdef NON_MATCHING   /* first draft from m2c */
+/* Draws the scenario screen. */
+void func_00547CF0(TitleWork *w, SelectWork *s) {
+    UiElem tmp;
+    UiElem *e;
+    s32 i;
+    s32 x;
+    s32 y;
+
+    SELECT_OPEN(s, 8);
+    if (--s->blink2 < 0) {
+        s->blink2 += 0x20;
+    }
+    e = &s->elems[256];
+    for (i = 0; i < 5; i++, e++) {
+        if ((*(s16 *)(D_002F88B0 + 0x10) == 0 || i != 0) && e->visible != 0) {
+            if (i == 0) {
+                tmp = *e;
+                tmp.page += D_002F88B0[8];
+                func_00548A00(s, &tmp, 1);
+            } else {
+                func_00548A00(s, e, 1);
+            }
+        }
+    }
+    e = &s->elems[270];
+    for (i = 0; i < 3; i++, e++) {
+        tmp = *e;
+        tmp.visible = 1;
+        if (i == 1 || i == 2) {
+            tmp.color = ((u32)(255.0f * s->open[i]) << 24) | 0xFFFFFF;
+        } else {
+            tmp.bw = (f32)tmp.bw * s->open[i];
+        }
+        func_00548A00(s, &tmp, 1);
+    }
+    if (s->sel == 5) {
+        tmp = s->elems[264];
+        tmp.visible = 1;
+        tmp.by = s->elems[275 + w->unkD[1] * 2].by + 4;
+        tmp.color = 0xFF804000;
+        tmp.b = 1;
+        tmp.u0 = s->blink2;
+        func_00548A00(s, &tmp, 1);
+    }
+    for (i = 0; i < 4; i++) {
+        tmp = s->elems[275 + i * 2];
+        tmp.visible = 1;
+        tmp.bw = (f32)tmp.bw * s->open[3 + i];
+        func_00548A00(s, &tmp, 1);
+    }
+    if (s->sel == 5) {
+        tmp = s->elems[265];
+        tmp.visible = 1;
+        tmp.by = s->elems[275 + w->unkD[1] * 2].by;
+        func_00548A00(s, &tmp, 1);
+    }
+    if (s->sel == 5) {
+        func_001B4340(-2);
+        func_001B4370(0);
+        func_001B4300(0x18);
+        func_001B4380(0x80808080);
+        for (i = 0, y = 0xB0; i < w->unkD[2]; i++, y += 0x30) {
+            x = (0x100 - (s32)strlen(D_00559620[i]) * 12) / 2;
+            func_001B4320(x + 0x38, y + 6);
+            func_001B43C0((u8 *)D_00559620[i]);
+        }
+    }
+}
+#endif
+
+
+extern s16 D_0023BB98;
+extern u8 D_003065C2[];         /* (Options) */
+void func_001B6880(void);       /* start the game (single player) */
+void func_001B68E0(void);       /* start the game (network) */
+
+/* The title is done: free its textures and start what was chosen. */
+void func_00540B10(TitleWork *w) {
+    switch (w->unk64) {
+    case 0:
+        D_002F88D1[0] = w->unk68;
+        func_001D54D0();
+        func_001AEC00();
+        D_0023BB98 = 0;
+        D_003065C2[0] = 0;
+        func_001B6880();
+        break;
+    case 1:
+        func_001D54D0();
+        func_001AEC00();
+        D_003065C2[0] = 1;
+        D_0023BB98 = 0;
+        func_001B68E0();
+        break;
+    default:
+        func_005403B0(w);
+        break;
+    }
+}

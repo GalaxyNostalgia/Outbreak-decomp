@@ -229,3 +229,5 @@ ADXT_IsReadyPlayStart = 0x00132B60; // type:func
 ADXT_StartAfs = 0x001331D0; // type:func
 mwPlyStartAfsLp = 0x00162608; // type:func
 D_00239CB8 = 0x00239CB8; // size:0x4
+D_0023A438 = 0x0023A438; // size:0x4
+D_0023A440 = 0x0023A440; // size:0x8

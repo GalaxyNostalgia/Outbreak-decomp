@@ -399,6 +399,12 @@ void func_001D54D0(void) {
     func_0018D730();
 }
 
+/* Frees the n textures loaded from select.tex. */
+void func_001D55D0(s32 n) {
+    func_001D0300(0x4200, n);
+    func_0018D730();
+}
+
 extern s32 D_0023A0C4;      /* texture id base for the next loads */
 
 void func_001D0440(s32 base) {
