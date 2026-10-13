@@ -503,7 +503,7 @@ void func_00577060(EnemySet *e, s16 i, u8 *timer);
 void func_0062CB30(Thing *t);
 void func_00346B90(Thing *t);
 
-/* Once a frame: the enemy sets' timers (a tick every 5 changes of unk32), then each thing's
+/* Once a frame: the enemy sets' timers (a tick every 5 seconds of play), then each thing's
    update. */
 void func_006897A0(void);
 #ifdef NON_MATCHING   /* first draft */
@@ -524,9 +524,9 @@ void func_006897A0(void) {
         D_0023BF84[i] = 0;
     }
     pool = D_003FFCA0;
-    if (D_0048BF60.unk32 != D_0023BD80) {
+    if (D_0048BF60.timeS != D_0023BD80) {
         D_0023A434--;
-        D_0023BD80 = D_0048BF60.unk32;
+        D_0023BD80 = D_0048BF60.timeS;
         if (D_0023A434 <= 0) {
             tick = 1;
             D_0023A434 = 5;

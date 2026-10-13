@@ -209,3 +209,59 @@ void func_006AB4E0(s32 which) {
     D_0023BFB4 = func_006A5BA0(which, -1);
 }
 #endif
+
+/* The map screen. */
+void func_001AECB0(void (*fn)(void));
+void func_006B7020(void);
+
+void func_006AC8A0(void) {
+    func_001AECB0(func_006B7020);
+    FIELD(&D_0048BF60, s8, 0xB0) = 0;
+    FIELD(&D_0048BF60, s8, 0xB1) = 0;
+}
+
+typedef struct {
+    u8 unk0[4];
+    u8 open;            /* 0x04: 1 the map, 2 ... */
+} MapScreen;
+
+extern MapScreen D_00720BE0;
+extern s8 D_00723F94;
+extern u8 *D_0023BFBC;
+extern u8 D_00476DD0[][0x10E0];
+void func_0064E360(void *p, s32 a, u8 b);
+void func_006B9910(void);
+void func_001B6EB0(void);
+void func_006B9610(void);
+void func_006A5A10(s32 a);
+
+/* Closes the map screen. */
+void func_006AE930(void);
+#ifdef NON_MATCHING   /* first draft */
+void func_006AE930(void) {
+    u8 *p = D_00476DD0[D_0048BF60.unk1D];
+
+    FIELD(p, u32, 0xBA0) &= ~0x8000;
+    switch (D_00720BE0.open) {
+    case 0:
+        return;
+    case 1:
+        if (D_0023BFBC[0x310D] != 0) {
+            func_0064E360(p, 2, p[0xC7A]);
+        }
+        D_00723F94 = 0;
+        func_006B9910();
+        func_001B6EB0();
+        FIELD(&D_0048BF60, s8, 0xB0) = 0;
+        break;
+    case 2:
+        func_001B6EB0();
+        break;
+    }
+    D_00720BE0.open = 0;
+    func_006B9610();
+    FIELD(&D_0048BF60, s8, 0x1E) = 0;
+    func_006A5A10(0);
+    func_006AC8A0();
+}
+#endif

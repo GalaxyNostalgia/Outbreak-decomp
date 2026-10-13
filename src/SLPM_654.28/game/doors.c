@@ -20,7 +20,7 @@ typedef struct {
     s8 unk1C;           /* 0x1C */
     s8 unk1D;
     s8 unk1E;
-    u8 unk1F[3];        /* 0x1F: (unk1F[1] 7: ...) */
+    s8 unk1F[3];        /* 0x1F: width, the floor it is on (7: any), depth */
     u8 unk22;           /* 0x22 */
     u8 unk23;
     s32 flags;          /* 0x24 */
@@ -38,7 +38,7 @@ typedef struct {
 
 typedef struct {
     u8 unk0[0x10];
-    u8 color[3];        /* 0x10 */
+    s8 size[3];         /* 0x10: width, floor, depth */
     u8 unk13;
 } ObjModelInfo;
 
@@ -50,9 +50,9 @@ typedef struct {
     s8 d;
     u8 e;
     u8 f;
-    u8 color[3];        /* 0x07 */
+    s8 size[3];         /* 0x07 */
     u8 pad[2];
-    s32 flags;          /* 0x0C: 4: its own color, type 0x1F */
+    s32 flags;          /* 0x0C: 4: its own size (type 0x1F) */
 } RoomObjSpot;
 
 extern RoomObj D_00395720[0x20];
@@ -127,9 +127,9 @@ RoomObj *func_0067AE00(RoomObjSpot *s) {
     o->unk1A = s->f & 0xF;
     o->flags = s->flags | 1;
     if (s->flags & 4) {
-        memcpy(o->unk1F, s->color, 3);
+        memcpy(o->unk1F, s->size, 3);
     } else {
-        memcpy(o->unk1F, D_006EF480[D_00716000[type].model].color, 3);
+        memcpy(o->unk1F, D_006EF480[D_00716000[type].model].size, 3);
     }
     if (D_00716000[type].unk1 == 0) {
         o->unk1F[1] = 7;
@@ -256,3 +256,66 @@ void func_0067B1F0(void) {
         }
     }
 }
+
+extern u8 D_00711080[4][0x480]; /* per floor: the walkable grid, 96 x 96 bits (0: blocked) */
+extern s8 D_0023AE60[4];        /* the floors */
+extern u8 D_003967B0[8][4];
+void func_0067C1A0(void);
+s8 *func_0067B020(RoomObj *o);
+s8 func_0067D8B0(s8 x, s8 y);
+void *memset(void *p, s32 c, u32 n);
+
+/* Once a frame: the grid the room's solid objects block, per floor. */
+void func_0067C6E0(void);
+#ifdef NON_MATCHING   /* first draft */
+void func_0067C6E0(void) {
+    RoomObj *o;
+    u32 *grid;
+    s8 *r;
+    s32 k;
+    s32 i;
+    s32 x;
+    s32 y;
+    s32 x1;
+    s32 y1;
+    s32 j;
+    u8 *e;
+
+    if (D_0023BF50 == 0) {
+        return;
+    }
+    func_0067C1A0();
+    for (k = 1; k < 4; k++) {
+        grid = (u32 *)D_00711080[k];
+        memset(grid, 0xFF, 0x480);
+        for (i = 0, o = D_00395720; i < 0x20; i++, o++) {
+            if (o->active == 0 || !(o->flags & 1) || (u8)o->unk1 != D_00306590.unk1C ||
+                D_00716000[o->type].unk1 <= 0 || o->unk1F[1] != D_0023AE60[k]) {
+                continue;
+            }
+            if (o->flags & 4) {
+                x = o->unk18;
+                y = o->unk19;
+                x1 = x + o->unk1F[0];
+                y1 = y + o->unk1F[2];
+            } else {
+                r = func_0067B020(o);
+                x = o->unk18 + r[0];
+                x1 = o->unk18 + r[2];
+                y = o->unk19 + r[1];
+                y1 = o->unk19 + r[3];
+            }
+            for (; x < x1; x++) {
+                for (j = y; j < y1; j++) {
+                    grid[x * 3 + (j >> 5)] &= ~(1 << (j & 0x1F));
+                }
+            }
+        }
+    }
+    for (i = 0, e = D_003967B0[0]; i < 8; i++, e += 4) {
+        if (e[0] != 0) {
+            e[3] = func_0067D8B0(e[1], e[2]);
+        }
+    }
+}
+#endif

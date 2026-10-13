@@ -21,12 +21,15 @@ typedef struct {
     s8 unk20[7];        /* 0x20: (indexed by unk27) the player-id table to use */
     s8 unk27;           /* 0x27 */
     s8 unk28;           /* 0x28 */
-    u8 unk29;           /* 0x29 */
+    s8 unk29;           /* 0x29 */
     u8 unk2A;
     s8 unk2B;           /* 0x2B: the characters are set up already */
-    u8 unk2C[0x32 - 0x2C];
-    u8 unk32;           /* 0x32: (changes) ticks the enemy sets' timers */
-    u8 unk33[2];
+    u8 unk2C[0x30 - 0x2C];
+    u8 timeH;           /* 0x30: play time (hours, minutes, seconds, frames) */
+    u8 timeM;           /* 0x31 */
+    u8 timeS;           /* 0x32 */
+    u8 timeF;           /* 0x33 */
+    u8 unk34;
     u8 unk35;           /* 0x35 */
     s8 unk36;           /* 0x36 */
     u8 unk37;           /* 0x37 */

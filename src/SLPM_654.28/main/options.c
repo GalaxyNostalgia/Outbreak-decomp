@@ -538,6 +538,23 @@ void func_001AF1C0(u8 player) {
     }
 }
 
+void func_00820AA0(void);     /* SINGLE.BIN */
+void func_008229C0(void);     /* NETAQ.BIN */
+
+void func_001AEE30(void) {
+    switch (func_001AF500()) {
+    case 0:
+        func_00820AA0();
+        break;
+    case 1:
+        func_008229C0();
+        break;
+    case 2:
+    case 3:
+        break;
+    }
+}
+
 void func_0012BC38(void);    /* CRI ADX: run the server */
 
 #ifdef NON_MATCHING   /* first draft: one instruction short, fade-end test scheduled differently */

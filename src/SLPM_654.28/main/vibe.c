@@ -125,3 +125,7 @@ void func_001B8E00(s32 port, s32 n) {
 void func_001B9060(s32 n) {
     func_001B8E00(0, n);
 }
+
+void func_001B8F00(void) {
+    func_001B8EB0(0);
+}

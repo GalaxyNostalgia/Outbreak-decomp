@@ -81,6 +81,7 @@ typedef struct {
     s16 count;
 } LockMsg;
 
+void func_0064E600(s32 i, s32 take, s16 value);
 #ifdef NON_MATCHING   /* the message's stack slot and store order differ */
 void func_0064E600(s32 i, s32 take, s16 value) {
     LockMsg m;
@@ -151,6 +152,7 @@ typedef struct {
     s16 d;
 } OwnerMsg;
 
+void func_0064E940(s8 a, s8 b, s8 c, s16 d);
 #ifdef NON_MATCHING   /* first draft */
 /* Online: tells the others about a thing's holder. */
 void func_0064E940(s8 a, s8 b, s8 c, s16 d) {
@@ -184,6 +186,7 @@ extern u32 D_0023BE14;              /* players */
 s32 func_001AF110(s32 i);
 void func_0064BFC0(u16 a, u8 b, s32 c);
 
+void func_0064EB50(void);
 #ifdef NON_MATCHING   /* first draft */
 /* Online: drops what players who left were holding. */
 void func_0064EB50(void) {
@@ -243,6 +246,71 @@ void func_0064E9F0(void) {
             D_0048AC10.owner[i] = 0xFF;
             D_0048AC10.unk240[i] = -1;
             func_0064E940(D_0048AC10.owner[i], 0xFF, 0, -1);
+        }
+    }
+}
+#endif
+
+extern u8 D_0048BFF8[4];        /* our effects as last seen */
+extern u8 D_0048BFFC[4];
+extern DrawObjFull D_00476DD0[];
+void func_0064C620(DrawObjFull *p, s32 what);
+void func_00107B50(void *dst, const void *src, s32 n);
+
+/* Once a frame: tells (func_0064C620) when our character's effects change. */
+void func_0064FE20(void);
+#ifdef NON_MATCHING   /* first draft */
+void func_0064FE20(void) {
+    DrawObjFull *p = &D_00476DD0[D_0048BF60.unk1D];
+    u8 *a;
+    u8 *b;
+    s32 i;
+
+    if (p->active == 0) {
+        return;
+    }
+    for (i = 0, a = p->unkC84, b = D_0048BFF8; i < 4; i++, a++, b++) {
+        if (*a != *b) {
+            if (FIELD(&D_0048BF60, u8, 0xA0) == 0) {
+                func_0064C620(p, 0xC);
+                func_00107B50(D_0048BFF8, p->unkC84, 4);
+            }
+            break;
+        }
+    }
+    if (p->unkB98 == 6) {
+        for (i = 0, a = &p->unkC88[1], b = D_0048BFFC; i < 4; i++, a++, b++) {
+            if (*a != *b) {
+                if (FIELD(&D_0048BF60, u8, 0xA0) == 0) {
+                    func_0064C620(p, 0xF);
+                    func_00107B50(D_0048BFFC, &p->unkC88[1], 4);
+                }
+                break;
+            }
+        }
+    }
+    FIELD(&D_0048BF60, u8, 0xA0) = 0;
+}
+#endif
+
+s32 func_001AF0A0(void);
+void func_0064FDD0(u8 player);
+
+/* (Online) tells the others we are leaving the game. */
+void func_00650050(void);
+#ifdef NON_MATCHING   /* first draft */
+void func_00650050(void) {
+    struct {
+        u8 type;
+        u8 len;
+    } m;
+
+    if (func_001AF510() == 1) {
+        func_0064FDD0(D_0048BF60.unk1D);
+        if (func_001AF0A0() == 0) {
+            m.type = 5;
+            m.len = 4;
+            func_001AF000(5, (NetMsg *)&m, 0, 4);
         }
     }
 }

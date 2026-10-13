@@ -43,3 +43,26 @@ s16 func_003426E0(s16 id) {
     }
     return -1;
 }
+
+/* A sound requested for the next frame (D_00320A42: 1 asked, 2 played). */
+extern u8 D_00320A42[];
+extern u16 D_00320A44[];
+void func_001CF620(u16 id);
+
+void func_00341A70(void) {
+    if (D_00320A42[0] == 1) {
+        func_001CF620(D_00320A44[0]);
+        D_00320A42[0] = 2;
+    }
+}
+
+void func_001AEC00(void);
+void func_001AEC40(void (*fn)(void));
+void func_001B3920(void);
+void func_00341AF0(void);
+
+void func_00341B20(void) {
+    func_001AEC00();
+    func_001AEC40(func_00341AF0);
+    func_001B3920();
+}

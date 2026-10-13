@@ -649,3 +649,9 @@ extern char D_00238628[];   /* "s01_npc00" */
 void func_001D6E20(s32 unused) {
     func_001D6EF0(D_00238628, 0xD);
 }
+
+void func_001A6F20(void);
+
+void func_001AC210(void) {
+    func_001A6F20();
+}

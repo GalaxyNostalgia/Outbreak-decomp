@@ -62,6 +62,7 @@ typedef struct {
 
 extern AlphaFade D_002F8820;
 
+void func_001BA570(void);
 #ifdef NON_MATCHING   /* loads the target pointer before the colour; the original the other way round */
 void func_001BA570(void) {
     AlphaFade *f = &D_002F8820;
@@ -216,6 +217,7 @@ void func_001BA6C0(void) {
 extern FadeArea D_002172A0[];
 extern u32 D_00239FA8[2];       /* fade colours */
 
+void func_001BA7A0(s16 id);
 #ifdef NON_MATCHING   /* first draft */
 /* Start coloured fade `id` (1-based, D_002172A0). */
 void func_001BA7A0(s16 id) {
@@ -268,6 +270,7 @@ extern Letterbox D_002F8860;
 
 void func_001BA060(s32 top, s32 bottom);
 
+void func_001B9ED0(Task *t);
 #ifdef NON_MATCHING   /* first draft */
 void func_001B9ED0(Task *t) {
     if (t->step == 0) {
@@ -321,7 +324,7 @@ void func_001BA060(s32 top, s32 bottom) {
 typedef struct {
     u8 mode;            /* 0x00: 1 rising, 2 falling, 0x63 done */
     s32 wait;           /* 0x04 */
-    u8 pad8[4];
+    u32 color;          /* 0x08 */
     f32 level;          /* 0x0C */
     f32 step;           /* 0x10 */
     s16 x, y, w, h;     /* 0x14 */
@@ -367,6 +370,24 @@ void func_001B9A60(Task *t) {
     }
 }
 
+/* Fades the screen out to color over frames (fewer at double speed). */
+s32 func_001B9C30(s16 frames, u32 color) {
+    LevelFade *f = &D_002F8890;
+
+    if (D_002F8890.mode != 2 && D_002F8890.mode != 1) {
+        f->level = 1.0f;
+    }
+    f->color = color;
+    frames = frames >> D_00306590.unkC;
+    if (frames == 0) {
+        frames = 1;
+    }
+    f->step = -1.0f / frames;
+    D_002F8890.mode = 2;
+    D_002F8890.wait = 2;
+    return 1;
+}
+
 void func_001B9E90(void) {
     D_002F8890.mode = 0;
     D_002F8890.wait = 0;
@@ -409,7 +430,7 @@ void func_001B9DA0(void) {
         a = 255.0f * D_002F8890.level;
         if (a != 0) {
             func_001AE9C0(0x6C, 0);
-            *(u32 *)&D_002F8890.pad1C = (*(u32 *)D_002F8890.pad8 & 0xFFFFFF) | ((a & 0xFF) << 24);
+            *(u32 *)&D_002F8890.pad1C = (D_002F8890.color & 0xFFFFFF) | ((a & 0xFF) << 24);
             func_001AE430(4, 5);
             func_001AE9C0(0x5E, 0x32);
             func_001AAE10((Rect2D *)&D_002F8890.x);

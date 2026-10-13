@@ -757,7 +757,7 @@ void func_005BAC20(void) {
     D_00306590.unk3E = 0;
 }
 
-void func_001B9C30(s32 a, u32 color);
+s32 func_001B9C30(s16 frames, u32 color);
 void func_00341AB0(void);
 void func_001B2C90(void);
 void func_00345480(void);

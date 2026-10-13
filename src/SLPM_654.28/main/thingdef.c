@@ -86,3 +86,15 @@ s32 func_001B7D60(void) {
     return 0;
 }
 #endif
+
+/* Once a frame: the room's sounds. */
+void func_001B7F70(void) {
+    RoomSound *s;
+    s32 i;
+
+    for (s = D_003938F0, i = 0; i < 4; i++, s++) {
+        if (s->active != 0) {
+            ((void (*)(RoomSound *))s->fn)(s);
+        }
+    }
+}
