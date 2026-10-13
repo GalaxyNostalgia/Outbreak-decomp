@@ -1,6 +1,7 @@
 #include "common.h"
 #include "options.h"
 #include "script.h"
+#include "game.h"
 
 /* GAME.BIN: the room script (r%03d.evb): its header is 0x20 offsets, made pointers when it is
    loaded; entries 0x10-0x17 are tables of offsets ending with 0. */
@@ -48,8 +49,8 @@ void func_0065A370(void) {
     }
     D_0048BE70.pc[0] = (u32 *)buf[D_0048BE70.entry[0]];
     D_0048BE70.pc[4] = (u32 *)buf[D_0048BE70.entry[4]];
-    D_0048BE70.base[0] = (u32)buf;
-    D_0048BE70.base[4] = (u32)buf;
+    D_0048BE70.base[0] = (u32 **)buf;
+    D_0048BE70.base[4] = (u32 **)buf;
     func_005A7450();
     func_0065A520(buf);
 }
@@ -204,4 +205,152 @@ void func_0065A960(void) {
     D_0048BE70.entry[0] = 0;
     D_0048BE70.pc[0] = ((u32 **)D_00306590.script)[D_0048BE70.entry[0]];
     func_0065A770(0);
+}
+
+void func_0065A9A0(void) {
+    D_0048BE70.entry[0] = 1;
+    D_0048BE70.pc[0] = ((u32 **)D_00306590.script)[D_0048BE70.entry[0]];
+    func_0065A770(0);
+}
+
+void func_005403E0(s32 id, s32 arg);
+void func_005405F0(s32 id, s32 arg, s32 arg2);
+
+#ifdef NON_MATCHING   /* the else branch's andi is hoisted into the delay slot */
+/* The script's delayed sounds. */
+void func_0065A8C0(s32 arg) {
+    s32 i;
+
+    for (i = 0; i < 8; i++) {
+        if (D_0048BE70.unkA8[i] > 0) {
+            D_0048BE70.unkA8[i]--;
+            if (D_0048BE70.unkA8[i] == 0) {
+                if (D_0048BE70.unkB8[i] & 0x8000) {
+                    func_005405F0(D_0048BE70.unkB8[i] & 0x7FFF, 1, 0);
+                } else {
+                    func_005403E0(D_0048BE70.unkB8[i] & 0x7FFF, 1);
+                }
+            }
+        }
+    }
+}
+#endif
+
+/* Each frame: the delayed sounds, thread 0, func_005A7630, thread 1. After 2.5 hours the game
+   is over. */
+void func_005A7630(void);
+void func_00551D40(void);
+void func_00635780(s32 arg);
+
+void func_0065A9E0(s32 arg) {
+    if (D_0048BF60.unk18 >= 540000) {
+        arg = 1;
+        if (D_0048BF60.unkA7 == 0) {
+            func_00635780(1);
+            return;
+        }
+    }
+    func_0065A8C0(arg);
+    func_0065A770(0);
+    func_005A7630();
+    func_0065A770(1);
+    func_00551D40();
+}
+
+/* Skips n instructions. */
+u32 *func_0065AA60(u32 *pc, u32 n) {
+    u32 i;
+
+    for (i = 0; i < n; i++) {
+        pc += SCRIPT_LEN(*pc);
+    }
+    return pc;
+}
+
+/* 1 when the instruction opens an if-block (the opcodes in D_006E3640, ending with -1). */
+extern s32 D_006E3640[];
+
+s32 func_0065AAA0(u32 insn) {
+    s32 i;
+    s32 v;
+
+    for (i = 0; (v = D_006E3640[i]) != -1; i++) {
+        if ((insn & 0xFFFFFF) == v) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+void func_0065AAF0(void);
+#ifdef NON_MATCHING   /* one more instruction: the 0xE4 test's scheduling */
+/* A false if: skips to the matching else (0xE4, run what follows) or endif (0xE5). */
+void func_0065AAF0(void) {
+    s32 depth;
+    u32 insn;
+    u32 op;
+
+    depth = D_0048BE70.unk78[(u8)D_0048BE70.cur];
+    for (;;) {
+        insn = *D_0048BE70.pc[(u8)D_0048BE70.cur];
+        D_0048BE70.pc[(u8)D_0048BE70.cur] += SCRIPT_LEN(insn);
+        insn = *D_0048BE70.pc[(u8)D_0048BE70.cur];
+        D_0048BE70.unk78[(u8)D_0048BE70.cur] += func_0065AAA0(insn);
+        op = insn & 0xFFFFFF;
+        if (op == 0xE4) {
+            if (depth == D_0048BE70.unk78[(u8)D_0048BE70.cur]) {
+                D_0048BE70.pc[(u8)D_0048BE70.cur] += SCRIPT_LEN(*D_0048BE70.pc[(u8)D_0048BE70.cur]);
+                return;
+            }
+        }
+        if (op == 0xE5) {
+            if (depth == D_0048BE70.unk78[(u8)D_0048BE70.cur]) {
+                D_0048BE70.unk78[(u8)D_0048BE70.cur]--;
+                D_0048BE70.pc[(u8)D_0048BE70.cur] += SCRIPT_LEN(*D_0048BE70.pc[(u8)D_0048BE70.cur]);
+                return;
+            }
+            D_0048BE70.unk78[(u8)D_0048BE70.cur]--;
+        }
+        if (op == 0xA) {
+            D_0048BE70.unk78[(u8)D_0048BE70.cur] = 0;
+            return;
+        }
+        if (op == 0xD) {
+            D_0048BE70.unk78[(u8)D_0048BE70.cur] = 0;
+            return;
+        }
+    }
+}
+#endif
+
+/* At an else: skips to the matching endif. */
+void func_0065ACF0(void) {
+    s32 depth;
+    u32 insn;
+    u32 op;
+
+    depth = D_0048BE70.unk78[(u8)D_0048BE70.cur];
+    for (;;) {
+        insn = *D_0048BE70.pc[(u8)D_0048BE70.cur];
+        D_0048BE70.pc[(u8)D_0048BE70.cur] += SCRIPT_LEN(insn);
+        insn = *D_0048BE70.pc[(u8)D_0048BE70.cur];
+        D_0048BE70.unk78[(u8)D_0048BE70.cur] += func_0065AAA0(insn);
+        op = insn & 0xFFFFFF;
+        if (op == 0xE5) {
+            if (depth == D_0048BE70.unk78[(u8)D_0048BE70.cur]) {
+                D_0048BE70.unk78[(u8)D_0048BE70.cur]--;
+                D_0048BE70.pc[(u8)D_0048BE70.cur] += SCRIPT_LEN(*D_0048BE70.pc[(u8)D_0048BE70.cur]);
+                return;
+            }
+            D_0048BE70.unk78[(u8)D_0048BE70.cur]--;
+        }
+        if (op == 0xA) {
+            D_0048BE70.unk78[(u8)D_0048BE70.cur] = 0;
+            return;
+        }
+        if (op == 0xD) {
+            D_0048BE70.unk78[(u8)D_0048BE70.cur] = 0;
+            return;
+        }
+    }
 }

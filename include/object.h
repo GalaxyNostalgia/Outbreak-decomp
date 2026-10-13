@@ -27,7 +27,9 @@ typedef struct DrawObjFull {
     u8 unk175;
     u8 unk176[0x198 - 0x176];
     s8 drawn;           /* 0x198 */
-    u8 unk199[0x200 - 0x199];
+    u8 unk199[0x1E2 - 0x199];
+    u16 unk1E2;         /* 0x1E2: the player's id (Options.unk1C is ours) */
+    u8 unk1E4[0x200 - 0x1E4];
     u8 unk200[0x41];    /* 0x200 */
     u8 unk241;
     u8 unk242[0x54D - 0x242];
@@ -41,7 +43,10 @@ typedef struct DrawObjFull {
     u8 unkBB6[0xBBA - 0xBB6];
     u16 unkBBA;         /* 0xBBA */
     u8 costume;         /* 0xBBC */
-    u8 unkBBD[0xCCC - 0xBBD];
+    u8 unkBBD[0xC84 - 0xBBD];
+    u8 unkC84[4];       /* 0xC84: effects on the character (script ops 0x39, 0x3A) */
+    u8 unkC88[0x20];    /* 0xC88: (effects 400-420) */
+    u8 unkCA8[0xCCC - 0xCA8];
     u8 color[4];        /* 0xCCC: r, g, b, a */
     u8 unkCD0[0xCE8 - 0xCD0];
     u32 unkCE8;         /* 0xCE8 */

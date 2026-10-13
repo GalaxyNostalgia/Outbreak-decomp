@@ -13,7 +13,9 @@ typedef struct {
     s16 timer;          /* 0x08 */
     s16 unkA;           /* 0x0A */
     s16 unkC;           /* 0x0C */
-    u8 unkE[0x1D - 0xE];
+    u8 unkE[0x18 - 0xE];
+    s32 unk18;          /* 0x18: frames played (the game ends at 540000, 2.5 hours) */
+    u8 unk1C;
     u8 unk1D;           /* 0x1D: our player number */
     u8 unk1E[0x28 - 0x1E];
     s8 unk28;           /* 0x28 */
@@ -29,7 +31,9 @@ typedef struct {
     u8 unk60[2];
     s8 unk62;           /* 0x62: offline */
     s8 unk63;           /* 0x63 */
-    u8 unk64[0xBA - 0x64];
+    u8 unk64[0xA7 - 0x64];
+    s8 unkA7;           /* 0xA7 */
+    u8 unkA8[0xBA - 0xA8];
     u8 unkBA;           /* 0xBA: (game start byte 2) */
     u8 unkBB;
     s8 unkBC;           /* 0xBC */
