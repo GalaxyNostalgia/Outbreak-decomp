@@ -30,4 +30,8 @@ typedef struct Vec3 {
     f32 x, y, z;
 } Vec3;
 
+typedef struct Mat44 {
+    f32 m[4][4];
+} Mat44;
+
 #endif

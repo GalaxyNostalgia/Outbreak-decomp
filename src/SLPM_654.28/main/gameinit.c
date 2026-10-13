@@ -68,6 +68,29 @@ u32 func_001AE950(u32 size) {
     return func_0018D660(size);
 }
 
+void func_0018D6A0(u32 *mark);
+
+/* Gives back everything taken since a mark (and the marks inside it). */
+void func_001AEA90(u32 *mark) {
+    s32 i = 0;
+    HeapMark *m = D_0029B100;
+
+    for (; i < 8; i++, m++) {
+        if (m->mark == mark) {
+            break;
+        }
+    }
+    if (i == 8) {
+        while (1) {
+        }
+    }
+    func_0018D6A0(mark);
+    for (; i < 8; i++, m++) {
+        m->mark = NULL;
+        m->size = 0;
+    }
+}
+
 void func_001AEB40(void) {
 }
 

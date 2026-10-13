@@ -60,3 +60,19 @@ f32 func_00191BD0(f32 x) {
 
     return modff(x, &ip);
 }
+
+extern f32 D_00239C94;          /* pi */
+extern f32 D_00239C98;          /* -2 pi */
+
+f32 func_00191950(u32 a);
+#ifdef NON_MATCHING   /* float registers differ */
+/* A 16-bit angle (0x10000 = a full turn) in radians, -pi..pi */
+f32 func_00191950(u32 a) {
+    f32 r = D_00239C94 * (0.0054931640625f * a) / 180.0f;
+
+    if (!(r <= D_00239C94)) {
+        r += D_00239C98;
+    }
+    return r;
+}
+#endif

@@ -337,6 +337,11 @@ void func_001B9A60(Task *t) {
     }
 }
 
+void func_001B9E90(void) {
+    D_002F8890.mode = 0;
+    D_002F8890.wait = 0;
+}
+
 /* Drawing the fades. */
 
 extern Rect2D D_002F884C;

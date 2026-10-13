@@ -5,6 +5,7 @@
    streams the game keeps for music and sound effects. */
 
 #include "options.h"
+#include "game.h"
 
 extern s8 D_00306390[0x10];        /* options as saved */
 extern s8 D_00231B30[0x10];        /* default saved options */
@@ -401,6 +402,73 @@ s32 func_001AD700(s32 n) {
 
 s32 func_001AF500(void) {
     return D_00306590.online;
+}
+
+/* 1 offline (SINGLE.BIN), 0 online */
+s32 func_001AF4D0(void) {
+    return func_001AF500() == 0;
+}
+
+void func_008201D0(s32 a);    /* SINGLE.BIN */
+void func_00821B50(s32 a);    /* NETAQ.BIN */
+void func_00820200(void);     /* SINGLE.BIN */
+void func_00821D60(void);     /* NETAQ.BIN */
+void func_00820820(void);     /* SINGLE.BIN */
+void func_00822760(void);     /* NETAQ.BIN */
+
+/* Hands a call to the loaded game mode's overlay. */
+void func_001AEDC0(s32 a) {
+    switch (func_001AF500()) {
+    case 0:
+        func_008201D0(a);
+        break;
+    case 1:
+        func_00821B50(a);
+        break;
+    case 2:
+    case 3:
+        break;
+    }
+}
+
+/* Once a frame: the game mode overlay's work. */
+void func_001AEEA0(void) {
+    if (D_00306590.unk3A == 0) {
+        return;
+    }
+    switch (func_001AF500()) {
+    case 0:
+        if (D_0048BF60.unkC4 == 0) {
+            func_00820200();
+        }
+        break;
+    case 1:
+        func_00821D60();
+        break;
+    case 2:
+    case 3:
+        break;
+    }
+}
+
+/* Once a frame, after the game's work: the game mode overlay's. */
+void func_001AEF80(void) {
+    if (D_00306590.unk3A == 0) {
+        return;
+    }
+    switch (func_001AF500()) {
+    case 0:
+        if (D_0048BF60.unkC4 == 0) {
+            func_00820820();
+        }
+        break;
+    case 1:
+        func_00822760();
+        break;
+    case 2:
+    case 3:
+        break;
+    }
 }
 
 void func_0012BC38(void);    /* CRI ADX: run the server */

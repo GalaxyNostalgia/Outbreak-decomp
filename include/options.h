@@ -21,7 +21,7 @@ typedef struct {
     u8 unkC;
     u8 unkD;
     u8 unkE;
-    u8 unkF;
+    s8 unkF;            /* 0x0F: narrower screen (0x200 wide) */
     u8 unk10[5];
     u8 unk15;           /* 0x15: 1 runs SUBMAIN's func_349EC0 each frame */
     u8 unk16;           /* 0x16 */
@@ -55,9 +55,13 @@ typedef struct {
     u8 unk3D;
     u8 unk3E;
     u8 adxBusy;         /* 0x3F: an ADX stream is reading */
-    u8 unk40[0x54 - 0x40];
+    u8 unk40[0x4C - 0x40];
+    s32 unk4C;          /* 0x4C: a big work area (in game: +0x2CF000 is the frame's scratch) */
+    u8 unk50[0x54 - 0x50];
     s32 fontTbp;        /* 0x54: GS page for the font's glyphs */
-    u8 unk58[0x8C - 0x58];
+    u8 unk58[0x84 - 0x58];
+    u8 *unk84;          /* 0x84: 0xA8 entries of 0x70 bytes */
+    u8 unk88[0x8C - 0x88];
     u8 *roomBuf;        /* 0x8C */
     u8 unk90[0xA0 - 0x90];
     u8 *fontBuf;        /* 0xA0: where the font file is loaded */

@@ -2,6 +2,7 @@
 #include "sce.h"
 #include "drawlist.h"
 #include "options.h"
+#include "game.h"
 
 /* Text: a font file (DATA\ROM\FONT\*), glyphs uploaded to GS memory as they're used, one sprite per
    character. Strings are Shift-JIS with two tags: <c n> picks a colour, <p n> centres the line. */
@@ -271,10 +272,10 @@ typedef struct {
     s16 used;           /* 0x00 */
     s16 x;
     s16 y;
-    s16 pad6;
+    s16 timer;          /* 0x06: frames left */
     u8 size;            /* 0x08 */
-    u8 unk9;
-    u8 color;           /* 0x0A */
+    s8 fade;            /* 0x09: 1 fading in, 2 fading out at the end */
+    u8 color;           /* 0x0A: alpha */
     u8 prio;            /* 0x0B */
     u8 text[0x80];      /* 0x0C */
 } TextLine;             /* 0x8C */
@@ -340,6 +341,73 @@ void func_001B3400(void) {
         } while (i < 32);
     }
 }
+
+s32 func_001A8AD0(s32 id, s32 slot);
+void func_001B3960(s32 a);
+void func_006AE930(void);           /* GAME.BIN */
+
+void func_001B2D00(void);
+#ifdef NON_MATCHING   /* an argument register is set one slot later */
+/* Once a frame: the lines' timers and fades. */
+void func_001B2D00(void) {
+    TextLine *l;
+    s32 i;
+    s32 busy;
+    s32 a;
+
+    if (D_0048BF60.unkC4 != 0) {
+        return;
+    }
+    if (D_00306590.unk0 != 0) {
+        D_0048BF60.unkBC = 1;
+    }
+    if (D_00306590.unk2B == 0) {
+        func_001B3960(2);
+        func_001AECB0(func_001B3400);
+        return;
+    }
+    busy = func_001A8AD0(2, 0);
+    l = D_002F7440.line;
+    for (i = 0; i < 32; i++, l++) {
+        if (l->used == 0) {
+            continue;
+        }
+        l->timer--;
+        if (l->timer == 0) {
+            l->used = 0;
+            continue;
+        }
+        if (busy != 0 && D_00306590.unk0 != 0 && l->prio == 0) {
+            func_006AE930();
+            D_0048BF60.unkBC = 0;
+        }
+        switch (l->fade) {
+        case 0:
+            break;
+        case 1:
+            if (l->color < 100) {
+                l->color += 5;
+            } else {
+                l->color += 3;
+            }
+            if (l->color >= 0x80) {
+                l->color = 0x80;
+                l->fade = 2;
+            }
+            break;
+        case 2:
+            if (l->timer < 0x1F && l->color != 0) {
+                a = l->color - 4;
+                if (a < 0) {
+                    a = 0;
+                }
+                l->color = a;
+            }
+            break;
+        }
+    }
+}
+#endif
 
 #define SJIS_LEAD(c) (((c) >= 0x80 && (c) < 0xA0) || ((c) >= 0xE0 && (c) < 0x100))
 
