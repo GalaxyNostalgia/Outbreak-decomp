@@ -22,7 +22,9 @@ typedef struct {
     s8 unk27;           /* 0x27 */
     s8 unk28;           /* 0x28 */
     u8 unk29;           /* 0x29 */
-    u8 unk2A[0x36 - 0x2A];
+    u8 unk2A;
+    s8 unk2B;           /* 0x2B: the characters are set up already */
+    u8 unk2C[0x36 - 0x2C];
     s8 unk36;           /* 0x36 */
     u8 unk37[0x3A - 0x37];
     s8 unk3A;           /* 0x3A */
@@ -43,7 +45,8 @@ typedef struct {
     u8 unkBA;           /* 0xBA: (game start byte 2) */
     u8 unkBB;
     s8 unkBC;           /* 0xBC */
-    u8 unkBD[2];
+    u8 unkBD;
+    u8 unkBE;           /* 0xBE: enemy set entries (D_0071A030) */
     s8 unkBF;           /* 0xBF: characters in the game */
     u8 unkC0[0xC4 - 0xC0];
     u8 unkC4;           /* 0xC4: the offline overlay's per-frame work is paused */

@@ -1,5 +1,6 @@
 #include "common.h"
 #include "object.h"
+#include "enemy.h"
 
 /* GAME.BIN: drawing the enemies. */
 
@@ -34,19 +35,7 @@ void func_00651720(void) {
 
 /* Drawing the things (0xD90-byte objects: doors, items in the room...). */
 
-typedef struct {
-    u8 unk0[0xC];
-    s8 unkC;            /* passed to func_005902F0 */
-    u8 unkD[3];
-} ThingDef;
-
-typedef struct {
-    ThingDef *defs;     /* by unk54D */
-    u32 unk4;
-} ThingKind;
-
 extern DrawObjFull *D_0023BDF4;     /* things in use */
-extern ThingKind D_00357500[];      /* (SUBMAIN.BIN) by kind */
 extern u8 D_0048AEA2[];
 
 void func_00688010(void) {

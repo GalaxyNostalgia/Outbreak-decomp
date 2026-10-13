@@ -64,7 +64,8 @@ typedef struct {
     u8 unk58[0x60 - 0x58];
     u8 *unk60;          /* 0x60: (the same work memory as unk4C) */
     u8 *script;         /* 0x64: the room script buffer (r%03d.evb) */
-    u8 unk68[0x7C - 0x68];
+    u8 unk68[0x78 - 0x68];
+    u8 *speech;         /* 0x78: the room's speech data (sp/spm files) */
     s32 *message;       /* 0x7C: the room's messages (r%03d.bin) */
     u8 unk80[0x84 - 0x80];
     u8 *unk84;          /* 0x84: 0xA8 entries of 0x70 bytes */

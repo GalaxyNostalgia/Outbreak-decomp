@@ -12,6 +12,7 @@ extern s8 D_0023BB28;
 s32 func_001AF500(void);
 u16 func_001ADEF0(s32 which);
 
+void func_005BA5A0(void);
 #ifdef NON_MATCHING   /* first draft */
 void func_005BA5A0(void) {
     Options *opt = &D_00306590;
@@ -95,6 +96,7 @@ typedef struct {
     u8 unkDC8[0x10E0 - 0xDC8];
 } PlayerDB0;
 
+void func_00685280(void);
 #ifdef NON_MATCHING   /* first draft */
 void func_00685280(void) {
     s32 i;
@@ -102,6 +104,42 @@ void func_00685280(void) {
     PlayerDB0 *p;
 
     memset(&D_007194C0, 0, sizeof(D_007194C0));
+    func_00685470();
+    for (i = 0x1F; i >= 0; i--) {
+        D_007194C0.unkE4[i] = -1;
+    }
+    for (i = 0; i < 0x3E8; i++) {
+        D_00717B20[i].a = -1;
+        D_00717B20[i].b = 0;
+    }
+    D_0023BF74 = 0;
+    D_0023BF70 = 0;
+    for (n = 0; n < D_0023BE14; n++) {
+        p = &((PlayerDB0 *)D_00476DD0)[n];
+        p->unkDB4 = 0;
+        p->unkDB8 = 0;
+        p->unkDBC = 0;
+        p->unkDBE = 0;
+        p->unkDC0 = 0;
+        p->unkDC1 = 0;
+        p->unkDC2 = 0;
+        p->unkDC4 = 0;
+        p->unkDC5 = 0;
+        p->unkDC6 = 0;
+        p->unkDC7 = 0;
+        p->unkDB0 = 0;
+    }
+}
+#endif
+
+/* The same without clearing D_007194C0. */
+void func_00685380(void);
+#ifdef NON_MATCHING   /* like func_00685280 */
+void func_00685380(void) {
+    s32 i;
+    u32 n;
+    PlayerDB0 *p;
+
     func_00685470();
     for (i = 0x1F; i >= 0; i--) {
         D_007194C0.unkE4[i] = -1;
@@ -454,6 +492,7 @@ void func_00688640(void) {
 extern u16 D_0048B9B0[2];
 extern u16 D_0048B7B0[2][0x80];
 
+u16 func_00577730(s8 type, s16 room);
 #ifdef NON_MATCHING   /* first draft */
 u16 func_00577730(s8 type, s16 room) {
     s8 i;
@@ -491,6 +530,7 @@ s8 *func_006A1ED0(EnemySlot *s) {
     return list;
 }
 
+s8 func_006A1F80(s8 room, s8 *list);
 #ifdef NON_MATCHING   /* first draft */
 s8 func_006A1F80(s8 room, s8 *list) {
     s8 i;

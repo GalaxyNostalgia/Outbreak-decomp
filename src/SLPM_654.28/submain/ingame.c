@@ -658,3 +658,13 @@ void func_001CF590(void);
 void func_003419D0(void) {
     func_001CF590();
 }
+
+f32 func_00191BF0(f32 x);
+
+/* sqrt that's 0 for 0. */
+f32 func_00341860(f32 x) {
+    if (x == 0.0f) {
+        return 0.0f;
+    }
+    return func_00191BF0(x);
+}

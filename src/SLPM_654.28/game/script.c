@@ -166,6 +166,7 @@ extern ScriptOp D_006E3870[];
 s32 func_001AF4D0(void);
 void func_006CCEE0(s8 t);
 
+void func_0065A770(s8 t);
 #ifdef NON_MATCHING   /* first draft */
 void func_0065A770(s8 t) {
     u32 insn;
@@ -216,6 +217,7 @@ void func_0065A9A0(void) {
 void func_005403E0(s32 id, s32 arg);
 void func_005405F0(s32 id, s32 arg, s32 arg2);
 
+void func_0065A8C0(s32 arg);
 #ifdef NON_MATCHING   /* the else branch's andi is hoisted into the delay slot */
 /* The script's delayed sounds. */
 void func_0065A8C0(s32 arg) {
@@ -369,3 +371,29 @@ void func_0065A620(void) {
     D_0048BE70.wait[3] = 0;
     D_0048BE70.wait[5] = 0;
 }
+
+/* The scene variant: the script's table 0x18 (offsets, ending with -1) entry D_0048AEA5, at
+   Options.unk1C; -1 when there's none. */
+extern u8 D_0048AEA5[];
+
+s32 func_00685060(void);
+#ifdef NON_MATCHING   /* first draft */
+s32 func_00685060(void) {
+    u8 *script = D_00306590.script;
+    s32 *table = ((s32 **)script)[0x18];
+    s32 n = 0;
+    u8 i;
+
+    if (table == NULL) {
+        return -1;
+    }
+    while (table[n] != -1) {
+        n++;
+    }
+    i = D_0048AEA5[0];
+    if (n < i) {
+        return -1;
+    }
+    return script[table[i] + D_00306590.unk1C];
+}
+#endif

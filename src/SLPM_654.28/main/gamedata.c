@@ -316,6 +316,10 @@ void func_001B0BE0(u16 *anims, s32 first, s32 n) {
     }
 }
 
+void func_001B0C50(u16 *anims) {
+    func_001B0BE0(anims, 0, 0x640);
+}
+
 extern MotionRange D_00216910[];
 
 void func_001B0CC0(MotionSet *set, u8 mode) {
@@ -341,4 +345,9 @@ void func_001B0D50(u8 mode) {
 void func_001B0E90(void) {
     func_001B0D50(0);
     D_0048BF60.unk3F = 0;
+}
+
+void func_001B0EC0(void) {
+    func_001B0D50(1);
+    func_001B0D50(2);
 }

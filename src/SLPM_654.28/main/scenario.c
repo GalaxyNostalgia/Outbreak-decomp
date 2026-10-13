@@ -408,3 +408,79 @@ void func_001D5200(void) {
     sprintf(name, D_00238550, D_00306590.unk1A);
     func_001D0020(name, tex, 0x10001);
 }
+
+/* The room's speech data for the scene variant func_00685060 picks: per character (and a shared
+   one, slot 4) sp%02d%02d%02d.bin and spm...bin. */
+#include "object.h"
+
+extern char D_00238760[];   /* "data/rom/scene/spk/r%03d/sp%02d%02d%02d.bin" */
+extern char D_00238790[];   /* "sp%02d%02d%02d.bin" */
+extern char D_002387B0[];   /* "data/rom/scene/spk/r%03d/sp%02d%02d08.bin" */
+extern char D_002387E0[];   /* "sp%02d%02d08.bin" */
+extern char D_00238800[];   /* "data/rom/scene/spk/r%03d/spm%02d%02d%02d.bin" */
+extern char D_00238830[];   /* "spm%02d%02d%02d.bin" */
+extern char D_00238850[];   /* "data/rom/scene/spk/r%03d/spm%02d%02d08.bin" */
+extern char D_00238880[];   /* "spm%02d%02d08.bin" */
+extern u32 D_0023BE14;
+extern DrawObjFull D_00476DD0[];
+extern u8 D_0048AEA4[];
+s32 func_00685060(void);
+void func_00685380(void);
+void func_00684FC0(u8 *data, s32 kind, s32 slot);
+
+void func_001D7320(void);
+#ifdef NON_MATCHING   /* first draft */
+void func_001D7320(void) {
+    char name[0x80];
+    s32 v = func_00685060();
+    u8 *buf;
+    s32 i;
+
+    if (D_0048AEA4[0] == v) {
+        return;
+    }
+    func_00685380();
+    if (v < 0) {
+        return;
+    }
+    for (i = 0, buf = D_00306590.speech + 0x6000; i < (s32)D_0023BE14; i++, buf += 0x12800) {
+        if (D_00306590.unk17 == 0) {
+            sprintf(name, D_00238760, D_00306590.unk1A, D_00306590.unk1A, v, D_00476DD0[i].unkB98);
+        } else {
+            sprintf(name, D_00238790, D_00306590.unk1A, v, D_00476DD0[i].unkB98);
+        }
+        if (func_001CFBB0(name, buf, 0x10001, 0) > 0) {
+            func_00684FC0(buf, 0, i);
+        }
+    }
+    buf = D_00306590.speech + 0x6000;
+    if (D_00306590.unk17 == 0) {
+        sprintf(name, D_002387B0, D_00306590.unk1A, D_00306590.unk1A, v);
+    } else {
+        sprintf(name, D_002387E0, D_00306590.unk1A, v);
+    }
+    if (func_001CFBB0(name, buf + 0x4A000, 0x10001, 0) > 0) {
+        func_00684FC0(buf + 0x4A000, 0, 4);
+    }
+    for (i = 0, buf = D_00306590.speech + 0x5C000; i < (s32)D_0023BE14; i++, buf += 0x5C00) {
+        if (D_00306590.unk17 == 0) {
+            sprintf(name, D_00238800, D_00306590.unk1A, D_00306590.unk1A, v, D_00476DD0[i].unkB98);
+        } else {
+            sprintf(name, D_00238830, D_00306590.unk1A, v, D_00476DD0[i].unkB98);
+        }
+        if (func_001CFBB0(name, buf, 0x10001, 0) > 0) {
+            func_00684FC0(buf, 1, i);
+        }
+    }
+    buf = D_00306590.speech + 0x5C000;
+    if (D_00306590.unk17 == 0) {
+        sprintf(name, D_00238850, D_00306590.unk1A, D_00306590.unk1A, v);
+    } else {
+        sprintf(name, D_00238880, D_00306590.unk1A, v);
+    }
+    if (func_001CFBB0(name, buf + 0x17000, 0x10001, 0) > 0) {
+        func_00684FC0(buf + 0x17000, 1, 4);
+    }
+    D_0048AEA4[0] = v;
+}
+#endif

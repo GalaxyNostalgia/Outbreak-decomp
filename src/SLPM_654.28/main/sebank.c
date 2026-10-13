@@ -12,6 +12,7 @@ s32 FlushCache(s32 op);
 
 /* Look a file name up in a partition's name table (stored XORed with 0xFF). Leading ROM\, RDT\ or
    EDIT\ is dropped and \ / . - become _. */
+s32 func_001AA320(char **table, s32 n, const char *name);
 #ifdef NON_MATCHING   /* first draft */
 s32 func_001AA320(char **table, s32 n, const char *name) {
     char tmp[0x100];
@@ -113,6 +114,7 @@ typedef struct {
 extern SeBankLoader D_00295B40;
 extern char D_00231AF8[];   /* "%s.snd" */
 
+s32 func_001ACA30(SeBankLoader *q);
 #ifdef NON_MATCHING   /* first draft */
 /* Take the next request */
 s32 func_001ACA30(SeBankLoader *q) {
@@ -155,6 +157,7 @@ extern SeInfo D_00295C50[14][128];
 s32 func_001A6DA0(u32 bank, u32 a0, s32 n0, u32 a1, s32 n1, u32 a2, s32 n2);
 s32 func_001A7280(s32 nowait);
 
+s32 func_001AC250(u8 *snd, u32 slot);
 #ifdef NON_MATCHING   /* first draft */
 /* Send a loaded .snd file to the driver as bank `slot`; keeps its sound table for the game. */
 s32 func_001AC250(u8 *snd, u32 slot) {
@@ -199,6 +202,7 @@ s32 func_001AC250(u8 *snd, u32 slot) {
 s32 func_001A73E0(s32 nowait);
 s32 func_001A7540(u32 cmd, s32 arg);
 
+void func_001ACA80(void);
 #ifdef NON_MATCHING   /* first draft */
 /* Once a frame: work on the bank queue. */
 void func_001ACA80(void) {
@@ -514,3 +518,127 @@ void func_001B6EF0(s32 id) {
 void func_001B6F00(s32 id) {
     func_001B7A50(12, id, 0);
 }
+
+/* The enemy sound bank: pieces (sequences and waves) added one by one, then merged and sent as
+   one bank. */
+typedef struct {
+    s32 count;          /* pieces */
+    u8 *seqs[4];        /* each piece's sequences */
+    s32 seqSize;        /* sequence bytes so far */
+    s32 waveSize;       /* wave bytes so far */
+    u8 *seqBase;        /* where the sequences go */
+    u8 *waveBase;       /* where the waves go */
+} SeMerge;
+
+extern SeMerge D_00295B10;
+extern char D_00231AE8[];   /* "SND DATA OVER!" */
+s32 func_001BCA40(s32 n, u8 **seqs, u8 *out);
+void func_001B2870(const char *fmt, ...);
+void func_001AAA60(void);
+void func_001AAAB0(void);
+
+s32 func_001AC4C0(u8 *data, u8 *work, u32 slot);
+
+/* Merges the pieces into work and sends them as bank slot (waiting until the driver has it). */
+s32 func_001AC3F0(u8 *data, u8 *work, u32 slot) {
+    s32 r;
+
+    func_001A7540(0x8000000C, 1);
+    if ((r = func_001AC4C0(data, work, slot)) < 0) {
+        return r;
+    }
+    func_001AAA60();
+    while (func_001A73E0(1) > 0) {
+        sceGsSyncV(0);
+    }
+    while (func_001A7540(0x8000000C, 1) > 0) {
+        sceGsSyncV(0);
+    }
+    func_001AAAB0();
+    return r;
+}
+
+#ifdef NON_MATCHING   /* first draft */
+s32 func_001AC4C0(u8 *data, u8 *work, u32 slot) {
+    u8 *snd;
+    SeInfo *dst;
+    SeInfo *d0;
+    u8 *src;
+    s32 i;
+    s32 n;
+    s32 r;
+
+    if (slot >= 0x10) {
+        return -1;
+    }
+    snd = D_003065DC[0];
+    d0 = dst = D_00295C50[slot];
+    src = snd + *(s32 *)(snd + 0x20) + 0x10;
+    memset(dst, 0, sizeof(D_00295C50[0]));
+    for (i = 0; i < 0x80 && (u32)i < (*(u32 *)(snd + 0x24) - 0x10) >> 4; i++) {
+        dst->b0 = src[0];
+        dst->b5 = src[9];
+        dst->b8 = src[6] & 0x7F;
+        dst->b9 = (src[6] & 0x80) != 0;
+        dst->b4 = src[8];
+        dst->b6 = src[0xC];
+        dst->b7 = src[0xD];
+        dst->bB = src[0xF];
+        src += 0x10;
+        dst++;
+    }
+    memset(work, 0, 0x40000);
+    n = func_001BCA40(D_00295B10.count, D_00295B10.seqs, work);
+    if (*(s32 *)(snd + 0x1C) + (n + D_00295B10.waveSize) > 0xBFFE0) {
+        func_001B2870(D_00231AE8, n, D_00295B10.waveSize, *(s32 *)(snd + 0x1C));
+    }
+    r = func_001A6DA0(slot, (u32)work, n, (u32)D_00295B10.waveBase, D_00295B10.waveSize,
+                      (u32)(snd + *(s32 *)(snd + 0x18)), *(s32 *)(snd + 0x1C));
+    if (r < 0) {
+        memset(d0, 0, sizeof(D_00295C50[0]));
+        return r;
+    }
+    FlushCache(0);
+    func_001A7280(1);
+    return 0;
+}
+#endif
+
+/* The bank's table and its first piece's waves: {.., 0x18 table offset, 0x1C size, 0x20 info
+   offset, 0x24 info size} with the table and the waves after a 0x40-byte header. */
+void func_001AC6B0(u8 *src, s32 size, s32 size2) {
+    u8 *snd = D_003065DC[0];
+    u8 *p;
+
+    memset(snd, 0, 0x40);
+    *(s32 *)(snd + 0x18) = 0x40;
+    *(s32 *)(snd + 0x1C) = size;
+    memcpy(snd + 0x40, src, size);
+    p = (u8 *)((u32)(snd + 0x40) + size + 0x3F & ~0x3F);
+    *(s32 *)(snd + 0x20) = p - snd;
+    *(s32 *)(snd + 0x24) = size2;
+    memcpy(p, src + size, size2);
+}
+
+void func_001AC750(u8 *seqs, u8 *waves) {
+    D_00295B10.seqBase = seqs;
+    D_00295B10.waveBase = waves;
+    D_00295B10.count = 0;
+    D_00295B10.seqSize = 0;
+    D_00295B10.waveSize = 0;
+}
+
+/* Adds a piece (.snd: sequences at +8, waves at +0x10). */
+void func_001AC780(u8 *snd);
+#ifdef NON_MATCHING   /* first draft */
+void func_001AC780(u8 *snd) {
+    u8 *seq = D_00295B10.seqBase + D_00295B10.seqSize;
+
+    memcpy(seq, snd + *(s32 *)(snd + 8), *(s32 *)(snd + 0xC));
+    D_00295B10.seqs[D_00295B10.count] = seq;
+    memcpy(D_00295B10.waveBase + D_00295B10.waveSize, snd + *(s32 *)(snd + 0x10), *(s32 *)(snd + 0x14));
+    D_00295B10.seqSize += *(s32 *)(snd + 0xC);
+    D_00295B10.count++;
+    D_00295B10.waveSize += *(s32 *)(snd + 0x14);
+}
+#endif

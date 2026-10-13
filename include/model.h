@@ -11,7 +11,7 @@ typedef struct {
     u16 ids[0x400];     /* 0x008: nids entries of D_004BDA90 / D_004BEEF0 */
     u8 *buf;            /* 0x808: nparts entries of 0x98 bytes (word 0: a packet group) */
     s32 unk80C;         /* 0x80C: a memory handle */
-    u8 unk810[2];
+    u16 unk810;
     u16 nparts;         /* 0x812 */
     u16 nids;           /* 0x814 */
     u16 nblocks;        /* 0x816 */

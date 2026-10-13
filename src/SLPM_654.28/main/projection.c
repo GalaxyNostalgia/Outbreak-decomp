@@ -177,3 +177,10 @@ void func_0018FA40(Mat44 *m, f32 x, f32 y, f32 z) {
     m->m[3][1] += y;
     m->m[3][2] += z;
 }
+
+/* Sets the translation row. */
+void func_0018FA30(f32 x, f32 y, f32 z, f32 *m) {
+    m[12] = x;
+    m[13] = y;
+    m[14] = z;
+}

@@ -2,6 +2,7 @@
 #include "options.h"
 #include "game.h"
 #include "motion.h"
+#include "object.h"
 
 /* Loading motion files: a list of 20 groups {count, offset of count motion offsets}; each motion
    is decoded (func_001A1540) into a memory handle the first time and its offset slot is replaced
@@ -152,6 +153,36 @@ void func_001D4C40(void) {
 }
 #endif
 
+extern char D_00238380[];   /* "data\\rom\\motion\\player\\pc_%03d.bin" */
+extern char D_002383B0[];   /* "data\\rom\\motion\\player\\pl%02d_pc_%03d.bin" */
+extern DrawObjFull D_00476DD0[];
+extern MotionSet D_004A8180[8];
+
+/* A player motion set: the shared one, then each character's own. */
+void func_001D4CD0(u16 id) {
+    char name[0x80];
+    s32 size;
+    u8 *buf = (u8 *)D_00306590.unk4C;
+    s32 i;
+    char *n;
+    u8 *kind;
+    DrawObjFull *obj;
+
+    sprintf(name, D_00238380, id);
+    n = name;
+    size = func_001CFBB0(n, buf, 0x20001, 0);
+    func_001D4B90((s32 *)buf, size, 1);
+    for (i = 0; i < 8; i++) {
+        obj = &D_00476DD0[i];
+        if (obj->active != 0) {
+            kind = &obj->unkB98;
+            sprintf(name, D_002383B0, *kind);
+            size = func_001CFBB0(n, buf, 0x20001, size);
+            func_001D4B00((u16 *)buf, &D_004A8180[*kind], size, 1);
+        }
+    }
+}
+
 extern char D_002383E0[];   /* "data\\rom\\motion\\rn%02d_tbl.bin" */
 extern MotionSet D_004948D0;
 
@@ -170,3 +201,26 @@ void func_001D4E10(u8 room) {
 void func_001D6680(MotionTmp *tmp, u8 *work, s32 *src) {
     func_001A1540(tmp, work, src);
 }
+
+void func_001AC150(s32 a);
+void func_001B6A40(void);
+s32 func_001B6A50(u8 *types);
+void func_001AC3F0(void *a, void *b, s32 c);
+
+/* Loads the code of the room's enemy types. */
+void func_001D6E70(u8 *types);
+#ifdef NON_MATCHING   /* first draft */
+void func_001D6E70(u8 *types) {
+    u8 *buf = (u8 *)D_00306590.unk4C;
+    s32 r;
+
+    func_001AC150(0xC);
+    func_001B6A40();
+    do {
+        r = func_001B6A50(types);
+    } while (r == 0);
+    if (r >= 0) {
+        func_001AC3F0(buf, (u8 *)D_00306590.unk4C + 0x4000, 0xC);
+    }
+}
+#endif
