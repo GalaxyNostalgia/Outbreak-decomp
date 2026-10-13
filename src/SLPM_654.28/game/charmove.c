@@ -259,3 +259,94 @@ void func_005516D0(DrawObjFull *o) {
     }
 }
 #endif
+
+void func_00340210(s32 rx, s32 ry, s32 rz, f32 *m);
+void func_00633D80(DrawObjFull *o);
+
+/* The character's world matrix (at 0x50) from its angles and position, its facing (0xA8), and
+   the frame's pushes (0xD8 in its own frame, 0xE4 in the world's) applied. */
+void func_0062CB30(DrawObjFull *o);
+#ifdef NON_MATCHING   /* first draft */
+void func_0062CB30(DrawObjFull *o) {
+    f32 r[16];
+    f32 z[4];
+    f32 d[4];
+    f32 *m = (f32 *)((u8 *)o + 0x50);
+
+    func_0018F7C0(m);
+    func_0018F7C0(r);
+    func_00340310(0, o->unk92, 0, (Mat44 *)r);
+    z[2] = 1.0f;
+    z[0] = 0.0f;
+    z[1] = 0.0f;
+    func_001913A0((f32 *)&o->unkA8, z, r);
+    func_00340210(o->unk90, o->unk92, o->unk94, m);
+    func_001913A0(d, o->unkD8, m);
+    o->unk38[0] += d[0] + o->unkE4[0];
+    o->unk38[1] += d[1] + o->unkE4[1];
+    o->unk38[2] += d[2] + o->unkE4[2];
+    o->unkD8[2] = 0.0f;
+    o->unkD8[1] = 0.0f;
+    o->unkD8[0] = 0.0f;
+    o->unkE4[2] = 0.0f;
+    o->unkE4[1] = 0.0f;
+    o->unkE4[0] = 0.0f;
+    func_00633D80(o);
+    m[12] = o->unk38[0];
+    m[13] = o->unk38[1];
+    m[14] = o->unk38[2];
+}
+#endif
+
+void func_0062E950(void);
+void func_006359D0(DrawObjFull *o);
+void func_00636CF0(DrawObjFull *o);
+void func_00636D50(DrawObjFull *o);
+
+/* (Offline) a player not in our scenario: kept still. */
+void func_00637B40(DrawObjFull *o) {
+    o->unkBA4 |= 0x100;
+    func_0062E950();
+    func_006359D0(o);
+    func_00636CF0(o);
+    func_00636D50(o);
+    func_00637C60(o);
+}
+
+s32 func_0062CDE0(u8 item);
+void func_0062CF10(DrawObjFull *o, u8 item);
+s8 func_00582220(u8 item, DrawObjFull *o);
+void func_001B7310(DrawObjFull *o, s32 a);
+
+/* The item in hand's per-frame work (bit 31 of unkBA0 asked for it). */
+void func_0062D2C0(DrawObjFull *o);
+#ifdef NON_MATCHING   /* first draft */
+void func_0062D2C0(DrawObjFull *o) {
+    u8 item = o->unkC7C;
+
+    o->unkBA0 &= 0x7FFFFFFF;
+    if (item == 0) {
+        return;
+    }
+    if (o->type == 0 && o->kind == D_0048BF60.unk1D) {
+        if (func_0062CDE0(item) != 0) {
+            func_0062CF10(o, item);
+        }
+        return;
+    }
+    if (o->type == 1) {
+        switch (func_00582220(item, o)) {
+        case 0:
+            func_001B7310(o, 1);
+            return;
+        case 1:
+            if (func_0062CDE0(item) != 0) {
+                func_0062CF10(o, item);
+            }
+            break;
+        }
+        return;
+    }
+    func_0062CF10(o, item);
+}
+#endif
