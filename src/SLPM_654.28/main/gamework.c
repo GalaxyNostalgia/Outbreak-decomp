@@ -1,32 +1,8 @@
 #include "common.h"
 #include "options.h"
+#include "model.h"
 
-/* The game's work memory: one block taken from the heap when a game starts, cut into slots. */
 
-typedef struct {
-    u32 mark[2];        /* heap mark the block is taken under */
-    s16 count;          /* 0x08: entries of 0x98 bytes at unk10 */
-    s16 unkA;
-    s16 unkC;
-    u8 unkE[2];
-    u8 *unk10;          /* 0x10: count * 0x98 bytes */
-    u32 unk14;          /* 0x14: the slots below, 0x2B680 bytes */
-    u8 unk18[0x33C - 0x18];
-} GameWork;
-
-/* 16 slots of 0x1468 bytes, each with a 0x1300-byte buffer after them */
-typedef struct {
-    u8 *unk0;           /* -> unk820 */
-    u8 *unk4;           /* -> unkA20 */
-    u8 unk8[0x808 - 8];
-    u8 *buf;            /* 0x808 */
-    u8 unk80C[0x818 - 0x80C];
-    u8 *unk818;         /* -> unkC20 */
-    u8 unk81C[4];
-    u8 unk820[0x200];
-    u8 unkA20[0x200];
-    u8 unkC20[0x1468 - 0xC20];
-} Slot1468;
 
 typedef struct {
     u8 unk0;
@@ -108,7 +84,6 @@ void func_001D1750(GameWork *w) {
 }
 #endif
 
-extern GameWork D_0029B140;
 void func_001AE9E0(u32 *mark);
 u32 func_001AE950(u32 size);
 void func_001AEA90(u32 *mark);
@@ -133,8 +108,61 @@ void func_001B1910(s32 count) {
     w->unk10 = p;
     w->unk14 = (u32)(p + n);
     w->count = count;
-    w->unkA = 0;
-    w->unkC = 0;
+    w->used = 0;
+    w->nbufs = 0;
     func_001D1750(w);
     D_00306590.unk10[3] = 1;
 }
+
+void func_001B2870(const char *fmt, ...);     /* debug print, empty */
+extern char D_00231C80[];
+extern char D_00231CA0[];
+
+/* A free part buffer of count entries handed out before (to owner). */
+u8 *func_001B1A40(s16 count, u8 owner) {
+    GameWork *w = &D_0029B140;
+    s32 i;
+
+    if (D_0029B140.nbufs == 0) {
+        return NULL;
+    }
+    for (i = 0; i < w->nbufs; i++) {
+        if (w->owner[i] == 0 && w->counts[i] == count) {
+            w->owner[i] = owner + 1;
+            return w->bufs[i];
+        }
+    }
+    return NULL;
+}
+
+u8 *func_001B1AD0(s32 count, s32 owner);
+#ifdef NON_MATCHING   /* registers/scheduling of the stores */
+/* A part buffer of count entries for owner. */
+u8 *func_001B1AD0(s32 count, s32 owner) {
+    GameWork *w;
+    u8 *p;
+    s32 n;
+
+    if (D_00306590.unk10[3] == 0) {
+        func_001B2870(D_00231C80);
+    }
+    if ((p = func_001B1A40(count, owner)) != NULL) {
+        return p;
+    }
+    w = &D_0029B140;
+    if (D_0029B140.nbufs == 100) {
+        func_001B2870(D_00231CA0);
+    }
+    if (w->count - w->used < count) {
+        func_001B2870(D_00231CA0);
+    }
+    n = w->nbufs;
+    p = w->unk10 + w->used * 0x98;
+    w->bufs[n] = p;
+    w->counts[n] = count;
+    w->owner[n] = (u8)owner + 1;
+    w->used += (s16)count;
+    w->nbufs++;
+    return p;
+}
+#endif

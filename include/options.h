@@ -25,7 +25,7 @@ typedef struct {
     u8 unk10[5];
     u8 unk15;           /* 0x15: 1 runs SUBMAIN's func_349EC0 each frame */
     u8 unk16;           /* 0x16 */
-    s8 unk17;           /* 0x17: files come from the hard disk */
+    s8 unk17;           /* 0x17: 1 (always, set in func_001AB900): files come from the AFS archives by name; 0: loose files under data/rom (development) */
     u8 unk18;
     u8 unk19;
     u16 unk1A;          /* 0x1A: the room (r%03d files) */

@@ -219,3 +219,138 @@ s32 func_001CFBB0(const char *name, void *buf, s32 flags, s32 byNumber) {
     return 0;
 }
 #endif
+
+/* A character's model file (the release: *.NBD in ROMDATA.AFS): its textures (LZ packed, ids
+   0x1000 + 8 * kind, 0x1100 for the high detail), model, motion and what it holds. */
+#include "object.h"
+#include "model.h"
+
+typedef struct {
+    s32 unk0;
+    s32 tex;            /* 0x04: offset of the textures ({size, LZ data}...) */
+    s32 unk8;
+    s32 ntex;           /* 0x0C */
+    s32 unk10;
+    s32 model;          /* 0x14 */
+    s32 unk18[3];
+    s32 motion;         /* 0x24 */
+    s32 unk28[7];
+    s32 unk44;          /* 0x44: 0x1324 bytes for D_0023BCD0 */
+    s32 unk48[3];
+    s32 held;           /* 0x54: the held item's model */
+    s32 unk58[10];
+} NbdHeader;
+
+extern u8 *D_003065DC;          /* (Options.unk4C) work memory */
+extern u8 *D_00306640;          /* (Options) */
+extern u8 *D_0023BCD0;
+extern char D_0022ED60[];   /* "%sPL\\HP%02d.NBD" */
+extern char D_0022ED70[];   /* "COMMON\\" */
+extern char D_0022ED80[];   /* "%sNPC\\N%02d.NBD" */
+extern char D_0022ED90[];   /* "%sNPC\\N%d.NBD" */
+extern char D_0022EDA0[];   /* "%sPL\\P%02d_%02d.NBD" */
+extern char D_0022EDC0[];   /* "%sPL\\EP%02d_%02d.NBD" */
+extern Slot1468 D_0047F4D0[];
+extern u8 D_003BB520[][0x824];
+void func_001AE810(void *src, void *dst);
+s32 func_001D0250(u32 tim, s32 id);
+void func_001D0440(s32 base);
+void func_0018D730(void);
+void func_0018D630(void *dst, void *src, s32 size);
+void func_001D35E0(DrawObjFull *obj, u8 kind, u8 costume);
+void func_001D3770(DrawObjFull *obj, u8 kind);
+s32 func_001D2720(Slot1468 *m, s32 mode, void *model, void *motion, s32 a);
+void func_00638C00(DrawObjFull *obj, u8 kind);
+
+void func_001A9A10(s32 slot, DrawObjFull *obj);
+#ifdef NON_MATCHING   /* first draft */
+void func_001A9A10(s32 slot, DrawObjFull *obj) {
+    char name[0x100];
+    NbdHeader hdr;
+    u8 *buf;
+    u8 *p;
+    u8 *out;
+    s32 id;
+    s32 i;
+    s32 size;
+    s32 n;
+    u8 *held;
+
+    if (obj->kind >= 0x14) {
+        ((Slot1468 *)obj->model)->unk1460 = NULL;
+        ((Slot1468 *)obj->model)->unk1464 = NULL;
+    }
+    buf = D_003065DC;
+    if (obj->unkBB4 != 0) {
+        if (obj->unk54D == 1) {
+            sprintf(name, D_0022ED60, D_0022ED70, obj->unkB98);
+        } else {
+            n = obj->unkBB4 - 1;
+            if (n < 10) {
+                sprintf(name, D_0022ED80, D_0022ED70, n);
+            } else {
+                sprintf(name, D_0022ED90, D_0022ED70, n);
+            }
+        }
+    } else {
+        switch (obj->unk54D) {
+        case 1:
+            sprintf(name, D_0022ED60, D_0022ED70, obj->unkB98);
+            break;
+        case 0:
+            sprintf(name, D_0022EDA0, D_0022ED70, obj->unkB98, obj->costume);
+            break;
+        default:
+            sprintf(name, D_0022EDC0, D_0022ED70, obj->unkB98, obj->costume);
+            break;
+        }
+    }
+    if (func_001A9780(name, buf) <= 0) {
+        return;
+    }
+    memcpy(&hdr, buf, sizeof(hdr));
+    if (obj->unk54D == 1) {
+        id = slot * 8 + 0x1100;
+    } else {
+        id = slot * 8 + 0x1000;
+    }
+    func_001D0440(id);
+    if (hdr.tex == 0) {
+        return;
+    }
+    p = buf + hdr.tex;
+    out = D_003065DC + 0x180000;
+    for (i = 0; i < hdr.ntex; i++) {
+        size = *(s32 *)p;
+        func_001AE810(p + 4, out);
+        func_001D0250((u32)out, id);
+        id++;
+        p = p + 4 + size;
+    }
+    func_0018D730();
+    if (hdr.model == 0 || hdr.motion == 0) {
+        return;
+    }
+    func_001D35E0(obj, obj->unkB98, obj->costume);
+    func_001D2720(&D_0047F4D0[obj->kind], 2, buf + hdr.model, buf + hdr.motion, 0);
+    func_0018D730();
+    func_00638C00(obj, obj->unkB98);
+    if (obj->unkBB4 != 0) {
+        return;
+    }
+    D_0023BCD0 = D_00306640;
+    if (D_0023BCD0 != NULL && hdr.unk44 != 0) {
+        p = D_0023BCD0 + obj->kind * 0x1324;
+        func_0018D630(p, buf + hdr.unk44, 0x1324);
+        ((Slot1468 *)obj->model)->unk1460 = p;
+        ((Slot1468 *)obj->model)->unk1464 = p + 0x74;
+    }
+    if (obj->unk54D == 1 && hdr.held != 0) {
+        func_001D3770(obj, obj->unkB98);
+        held = D_003BB520[obj->kind];
+        if (held[0] == 1) {
+            func_001D2720((Slot1468 *)(held + 4), 2, buf + hdr.held, NULL, 0);
+        }
+    }
+}
+#endif

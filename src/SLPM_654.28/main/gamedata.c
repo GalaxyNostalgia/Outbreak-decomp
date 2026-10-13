@@ -132,3 +132,169 @@ void func_001B1DE0(void) {
     memset(D_0048B9C0, 0, 4);
     memset(D_0048A810, 0xFF, sizeof(D_0048A810));
 }
+
+/* Freeing a model. */
+#include "model.h"
+
+extern s32 D_0053AA10[0x2BC];   /* packet groups in use (-1: free) */
+extern s32 D_0053A910[0x40];    /* memory handles in use (-1: free) */
+extern s32 D_004BDCF0[0x480];   /* blocks that aren't the pool's */
+
+void func_001B0120(s32 group) {
+    s32 *p = D_0053AA10;
+    s32 i;
+
+    for (i = 0; i < 0x2BC; i++, p++) {
+        if (*p == group) {
+            *p = -1;
+        }
+    }
+}
+
+void func_001B01F0(s32 handle) {
+    s32 *p = D_0053A910;
+    s32 i;
+
+    for (i = 0; i < 0x40; i++, p++) {
+        if (*p == handle) {
+            *p = -1;
+        }
+    }
+}
+
+static s32 func_001B0370(u8 *block) {
+    s32 *p = D_004BDCF0;
+    s32 i;
+
+    for (i = 0; i < 0x480; i++, p++) {
+        if (*p == (s32)block) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+/* Gives a block back to the pool. */
+void func_001B03B0(u8 *block) {
+    if (func_001B0370(block) != 1) {
+        D_0023BE24++;
+        *--D_0023BE20 = block;
+        memset(block, 0, 0x190);
+    }
+}
+
+void func_001B0A70(Slot1468 *m) {
+    u32 *p;
+    s32 i;
+    u32 *q;
+    s32 k;
+
+    for (i = 0, p = m->unk0; i < m->nblocks; i++, p++) {
+        func_001B03B0((u8 *)*p);
+        *p = 0;
+    }
+    m->unk0 = NULL;
+    q = m->unk4;
+    if (q != NULL && m->unk81C != 1) {
+        for (k = 0; k < m->nblocks; k++, q++) {
+            if (*q != 0) {
+                func_001B03B0((u8 *)*q);
+            }
+            *q = 0;
+        }
+    }
+    m->unk4 = NULL;
+    m->nblocks = 0;
+}
+
+void func_001B0B30(Slot1468 *m) {
+    s32 i;
+
+    for (i = 0; i < m->nids; i++) {
+        D_004BDA90[m->ids[i]] = 0;
+        memset((u8 *)D_004BEEF0 + m->ids[i] * 0x4C, 0, 0x4C);
+        m->ids[i] = 0;
+    }
+    m->nids = 0;
+}
+
+
+void func_001B1BF0(u8 *buf) {
+    GameWork *w = &D_0029B140;
+    s32 i;
+
+    for (i = 0; i < 100; i++) {
+        if (w->bufs[i] == buf) {
+            break;
+        }
+    }
+    if (i != 100) {
+        if (w->counts[i] != 0) {
+            memset(w->bufs[i], 0, w->counts[i] * 0x98);
+            w->owner[i] = 0;
+        }
+    }
+}
+
+s32 func_0018BF70(u32 n);
+s32 func_00191F50(s32 handle);
+
+void func_001B0450(Slot1468 *m) {
+    s32 i;
+    s32 g;
+    s32 off;
+
+    if (m->buf == NULL) {
+        return;
+    }
+    for (i = 0; i < m->nparts; i++) {
+        off = i * 0x98;
+        g = *(s32 *)(m->buf + off);
+        if (g != -1 && g != 0) {
+            func_0018BF70(g);
+            func_001B0120(*(s32 *)(m->buf + off));
+            *(s32 *)(m->buf + off) = 0;
+        }
+    }
+    func_001B0B30(m);
+    func_001B0A70(m);
+    if (m->unk80C != 0) {
+        func_00191F50(m->unk80C);
+        func_001B01F0(m->unk80C);
+        m->unk80C = 0;
+    }
+    func_001B1BF0(m->buf);
+    m->buf = NULL;
+    m->nparts = 0;
+}
+
+void func_001B08C0(Slot1468 *m) {
+    s32 i;
+    s32 g;
+    s32 off;
+
+    if (m->buf == NULL) {
+        return;
+    }
+    for (i = 0; i < m->nparts; i++) {
+        off = i * 0x98;
+        g = *(s32 *)(m->buf + off);
+        if (g != -1 && g != 0) {
+            func_0018BF70(g);
+            func_001B0120(*(s32 *)(m->buf + off));
+            *(s32 *)(m->buf + off) = 0;
+        }
+    }
+    func_001B0B30(m);
+    func_001B1BF0(m->buf);
+    m->buf = NULL;
+    m->nparts = 0;
+}
+
+/* What a character holds: frees its model when there's one. */
+void func_001B1320(s8 *held) {
+    if (*held != 0) {
+        func_001B08C0((Slot1468 *)(held + 4));
+    }
+    *held = 0;
+}

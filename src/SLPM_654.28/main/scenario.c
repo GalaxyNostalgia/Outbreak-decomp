@@ -48,6 +48,12 @@ void func_001AA600(s32 scenario) {
 extern char D_00231A08[];   /* "vo001%02d.afs" */
 s32 func_001AA5C0(const char *name);
 
+typedef struct {
+    u8 data[0x10C0];
+} VoicePt;
+
+extern VoicePt *D_00306638;     /* (Options.voice) */
+
 s32 func_001AA720(s32 player, s32 kind);
 #ifdef NON_MATCHING   /* player * 0x10C0 is a mult in the original */
 s32 func_001AA720(s32 player, s32 kind) {
@@ -61,7 +67,7 @@ s32 func_001AA720(s32 player, s32 kind) {
         return 0;
     }
     pt = player + 5;
-    ADXF_LoadPtFromAfsNw(pt, 3, fid, D_00306590.voice + player * 0x10C0);
+    ADXF_LoadPtFromAfsNw(pt, 3, fid, &D_00306638[player]);
     while (ADXF_GetPtStat(pt) != 3) {
     }
     return 1;
@@ -81,7 +87,7 @@ void func_001AA640(void) {
 void func_0065A370(void);
 void func_0065A2B0(void);
 
-/* The scenario's room script, from the disc or the hard disk. */
+/* The room script, from loose files or (the release) the AFS archives. */
 void func_001D6FC0(void) {
     char name[0x80];
     Options *opt = &D_00306590;

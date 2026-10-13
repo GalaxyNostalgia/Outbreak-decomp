@@ -879,7 +879,7 @@ void func_001D1010(u32 arg, s32 id) {
 }
 #endif
 
-/* The room's textures (from the disc only). */
+/* The room's textures (only with loose files; the release has them in its models). */
 void func_001D5640(void) {
     if (D_00306590.unk17 == 0) {
         func_001D1010(D_00306590.unk1A, 0x2000);
@@ -888,4 +888,22 @@ void func_001D5640(void) {
 
 void func_001D56A0(void) {
     func_001D1010(0, 0x2500);
+}
+
+/* Registers the TIM2 picture at tim as texture id (-1: the current base), or adds a reference
+   when it is loaded. */
+s32 func_001D0250(u32 tim, s32 id) {
+    TexSlot *t;
+
+    if (id == -1) {
+        id = D_0023A0C4;
+        if (id == -1) {
+            return 0;
+        }
+    }
+    if ((t = func_001CFDC0(id)) != NULL) {
+        return t->tex;
+    }
+    t = func_001CFE20(id, tim);
+    return t->tex;
 }

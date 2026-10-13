@@ -120,7 +120,9 @@ void func_0018D730(void) {
 typedef struct {
     s32 unk0;
     s32 used;           /* 0x04 */
-    u8 unk8[0x14];
+    u8 unk8[0xC];
+    s32 unk14;          /* 0x14: a memory handle */
+    u8 unk18[4];
     s32 mem;            /* 0x1C: memory handle */
     u32 base;           /* 0x20: where it was */
     u32 heads;          /* 0x24: offset of the chain headers ({u16 quadwords - 1, ..., u32 start}) */
@@ -132,6 +134,7 @@ typedef struct {
 } FlPacketGroup;
 
 extern FlPacketGroup *D_0023BA2C;
+extern s32 D_0023BA28;          /* groups in use */
 
 #ifdef NON_MATCHING   /* first draft */
 void func_0018BB50(FlPacketGroup *g) {
@@ -182,4 +185,35 @@ void func_0018BAE0(void) {
             func_0018BB50(g);
         }
     }
+}
+
+/* Frees packet group n (1-based). */
+s32 func_0018BF70(u32 n) {
+    FlPacketGroup *g = &D_0023BA2C[n - 1];
+
+    if (n == 0) {
+        return 0;
+    }
+    if (n > 0x280) {
+        return 0;
+    }
+    if (g->used == 0) {
+        return 0;
+    }
+    func_0018D150();
+    g->used = 0;
+    if (g->unk14 != 0) {
+        func_0018D710(g->unk14);
+    }
+    if (g->mem != 0) {
+        func_0018D710(g->mem);
+    }
+    func_0018D600(g, 0, sizeof(FlPacketGroup));
+    D_0023BA28--;
+    return 1;
+}
+
+s32 func_00191F50(s32 handle) {
+    func_0018D710(handle);
+    return 1;
 }
