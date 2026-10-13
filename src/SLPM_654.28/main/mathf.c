@@ -1,0 +1,62 @@
+#include "common.h"
+
+/* The game's float maths: wrappers around the C library's and around VU0 routines (vu0math). */
+
+f32 acosf(f32 x);
+f32 atanf(f32 x);
+f32 atan2f(f32 y, f32 x);
+f32 floorf(f32 x);
+f32 modff(f32 x, f32 *ip);
+f32 func_0018EDB0(f32 x);                   /* sin on VU0 */
+f32 func_0018EED0(f32 x);                   /* cos on VU0 */
+void func_0018EFC0(f32 *out, f32 x);        /* sin and cos on VU0 */
+f32 func_00191BF0(f32 x);                   /* sqrt on VU0 */
+
+f32 func_00191AD0(f32 x) {
+    return acosf(x);
+}
+
+f32 func_00191B40(f32 x);
+
+/* asin */
+f32 func_00191AE0(f32 x) {
+    return func_00191B40(x / func_00191BF0(1.0f + -x * x));
+}
+
+f32 func_00191B40(f32 x) {
+    return atanf(x);
+}
+
+f32 func_00191B50(f32 y, f32 x) {
+    return atan2f(y, x);
+}
+
+f32 func_00191B60(f32 x) {
+    return func_0018EDB0(x);
+}
+
+f32 func_00191B70(f32 x) {
+    return func_0018EED0(x);
+}
+
+void func_00191B80(f32 *s, f32 *c, f32 x);
+#ifdef NON_MATCHING   /* the original keeps s and c in a2/t1 across the VU0 call */
+void func_00191B80(f32 *s, f32 *c, f32 x) {
+    f32 v[4];
+
+    func_0018EFC0(v, x);
+    *s = v[0];
+    *c = v[1];
+}
+#endif
+
+f32 func_00191BC0(f32 x) {
+    return floorf(x);
+}
+
+/* the fractional part */
+f32 func_00191BD0(f32 x) {
+    f32 ip;
+
+    return modff(x, &ip);
+}

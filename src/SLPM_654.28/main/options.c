@@ -107,7 +107,8 @@ void func_001B6D70(s32 sound) {
 typedef struct {
     s8 active;     /* 0x00 */
     s8 nch;        /* 0x01 */
-    s16 pad;
+    s8 wait;       /* 0x02: started paused, waiting for the go */
+    s8 started;    /* 0x03 */
     s32 vol;       /* 0x04 */
     s32 target;    /* 0x08 */
     f32 speed;     /* 0x0C: volume fade per frame */
@@ -296,6 +297,107 @@ s32 func_001ACEA0(void) {
     return 0;
 }
 #endif
+
+s32 func_001AA5C0(const char *name);
+s32 func_001B6980(s32 slot);
+
+/* Sets stream n's volume now (vol 0-127, scaled by its set volume), stopping any fade. */
+s32 func_001AD260(s32 n, s32 vol) {
+    s32 v;
+
+    v = (s32)(((f32)vol / 127.0f) * (f32)D_0029B060[n].target) & 0x7F;
+    ADXT_SetOutVol(D_0029B0B8[n], D_00216570[v] / 10);
+    D_0029B060[n].vol = v;
+    D_0029B060[n].fvol = v;
+    D_0029B060[n].speed = 0.0f;
+    return 0;
+}
+
+/* The next start of stream n waits for func_001AD9D0. */
+void func_001AD960(s32 n) {
+    D_0029B060[n].wait = 1;
+    ADXT_SetWaitPlayStart(D_0029B0B8[n], D_0029B060[n].wait);
+    D_0029B060[n].started = 0;
+}
+
+/* Lets stream n play, at its set volume. */
+void func_001AD9D0(s32 n) {
+    D_0029B060[n].wait = 0;
+    ADXT_SetWaitPlayStart(D_0029B0B8[n], D_0029B060[n].wait);
+    func_001AD260(n, D_0029B060[n].target);
+    D_0029B060[n].started = 0;
+}
+
+/* Starts an ADX file on stream n, paused until func_001ADC30: by name from partition 3, or
+   (byId) file `file` of partition ptid (0 if negative). */
+void func_001ADA60(s32 n, s32 byId, s32 file, s32 ptid) {
+    s32 fid;
+    ADXT *h;
+
+    if (byId == 0) {
+        fid = func_001AA5C0((const char *)file);
+        if (fid < 0) {
+            return;
+        }
+    }
+    h = &D_0029B0B8[n];
+    if (*h != NULL && func_001B6980(0xE) == 0) {
+        func_001AD260(n, D_0029B060[n].target);
+        func_001AD960(n);
+        if (byId == 1) {
+            if (ptid < 0) {
+                ADXT_StartAfs(*h, 0, file);
+            } else {
+                ADXT_StartAfs(*h, ptid, file);
+            }
+        } else {
+            ADXT_StartAfs(*h, 3, fid);
+        }
+        D_0029B060[n].started = 1;
+        ADXT_Pause(*h, 0);
+    }
+}
+
+/* Whether stream n is ready to start (1 when there's nothing to wait for). */
+s32 func_001ADBA0(s32 n) {
+    if (func_001B6980(0xE) != 0) {
+        return 1;
+    }
+    if (D_0029B0B8[n] == NULL) {
+        return 1;
+    }
+    if (D_0029B060[n].started == 0) {
+        return 1;
+    }
+    return ADXT_IsReadyPlayStart(D_0029B0B8[n]);
+}
+
+/* Starts stream n playing. */
+void func_001ADC30(s32 n) {
+    if (func_001B6980(0xE) == 0 && D_0029B0B8[n] != NULL) {
+        func_001AD9D0(n);
+    }
+}
+
+void func_001AD680(s32 n, s32 limit, s32 frames);
+#ifdef NON_MATCHING   /* the original computes n * 0x18 once */
+/* Fades stream n's volume to limit (at most its set volume) over the given frames. */
+void func_001AD680(s32 n, s32 limit, s32 frames) {
+    if (D_0029B060[n].target < limit) {
+        limit = D_0029B060[n].target;
+    }
+    D_0029B060[n].speed = ((f32)limit - D_0029B060[n].fvol) / (f32)frames;
+    D_0029B060[n].limit = limit;
+}
+#endif
+
+/* Whether stream n is fading. */
+s32 func_001AD700(s32 n) {
+    if (D_0029B060[n].speed == 0.0f) {
+        return 0;
+    }
+    return 1;
+}
 
 s32 func_001AF500(void) {
     return D_00306590.online;

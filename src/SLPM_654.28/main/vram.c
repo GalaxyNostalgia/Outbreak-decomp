@@ -64,3 +64,21 @@ u32 func_0019BF60(u32 size) {
     D_00281DB0.vramNext += blocks;
     return b->addr;
 }
+
+/* Frees the block at addr: blocks are a stack, so the allocator goes back to it. */
+void func_0019C020(u32 addr) {
+    s32 i;
+    VramBlock *b;
+
+    for (b = D_0027E2C0, i = 0; i < 0x200; b++, i++) {
+        if (*(s16 *)&b->addr == (u16)addr) {
+            break;
+        }
+    }
+    if (i != 6) {
+        func_0019E4B0();
+        func_0018D600(b, 0, sizeof(VramBlock));
+        D_0023BA60--;
+        D_00281DB0.vramNext = (u16)addr;
+    }
+}

@@ -85,6 +85,11 @@ s32 func_001AA320(char **table, s32 n, const char *name) {
 
 extern char *D_00215CF0[];  /* partition 3's names */
 
+/* (the movie player's copy) */
+s32 func_001AA5C0(const char *name) {
+    return func_001AA320(D_00215CF0, 420, name);
+}
+
 s32 func_001AA5E0(const char *name) {
     return func_001AA320(D_00215CF0, 420, name);
 }

@@ -246,6 +246,26 @@ void func_001AEC40(void (*fn)(void)) {
     }
 }
 
+/* Removes a per-frame callback. */
+void func_001AECB0(void (*fn)(void)) {
+    s32 i;
+
+    for (i = 0; i < D_0023BB30; i++) {
+        if (D_0029B0D0[i] == fn) {
+            D_0029B0D0[i] = NULL;
+            break;
+        }
+    }
+    if (i >= D_0023BB30) {
+        return;
+    }
+    for (; i < D_0023BB30 - 1; i++) {
+        D_0029B0D0[i] = D_0029B0D0[i + 1];
+    }
+    D_0029B0D0[i] = NULL;
+    D_0023BB30--;
+}
+
 /* Debug text lines */
 typedef struct {
     s16 used;           /* 0x00 */

@@ -22,7 +22,9 @@ typedef unsigned __int128 u128;
 #define U128_ZERO 0
 #endif
 
+#ifndef NULL
 #define NULL 0
+#endif
 
 typedef struct Vec3 {
     f32 x, y, z;

@@ -4,67 +4,11 @@
 #include "ps2mem.h"
 #include "libgraph.h"
 #include "libdma.h"
+#include "cri.h"
 
 /* SUBMAIN.BIN: the game's movie player on CRI Sofdec. Movies come from the AFS archives; each
    decoded frame (RGBA, 16x16 macroblocks one after another) is uploaded to GS memory and drawn
    as a sprite. */
-
-/* Sofdec */
-typedef struct MwPly MwPly;
-typedef struct {
-    u8 unk0[0x14];
-    void (*destroy)(MwPly *ply);        /* 0x14 */
-    void *unk18;
-    void (*stop)(MwPly *ply);           /* 0x1C */
-    s32 (*getStat)(MwPly *ply);         /* 0x20: 0 stop, 1 prep, 2 playing, 3 end, 4 error */
-    void (*getTime)(MwPly *ply, s32 *time, s32 *tunit); /* 0x24 */
-} MwPlyVtbl;
-
-struct MwPly {
-    MwPlyVtbl *vtbl;
-};
-
-typedef struct {
-    s32 ftype;          /* 0x00: 3 */
-    s32 maxBps;         /* 0x04 */
-    s32 maxWidth;       /* 0x08 */
-    s32 maxHeight;      /* 0x0C */
-    s32 nfrmPool;       /* 0x10 */
-    s32 unk14;          /* 0x14: 2 */
-    u32 work;           /* 0x18 */
-    u32 workSize;       /* 0x1C */
-    s32 unk20;          /* 0x20: 0x11 */
-    u8 unk24[0xC];
-} MwsfdCrePrm;
-
-typedef struct {
-    u32 bufadr;         /* 0x00: the picture */
-    s32 frmid;
-    s32 width;          /* 0x08 */
-    s32 height;         /* 0x0C */
-    u8 unk10[0x10];
-    s32 frmno;          /* 0x20 */
-    u8 unk24[0x4C - 0x24];
-} MwsfdFrmObj;
-
-typedef struct {
-    s32 dropFrm;
-    s32 skipDec;
-    s32 skipDisp;
-    s32 unkC;
-    s32 unk10;
-    u8 unk14[0x20 - 0x14];
-} MwsfdPlyInf;
-
-u32 mwPlyCalcWorkCprmSfd(MwsfdCrePrm *cprm);
-MwPly *mwPlyCreateSofdec(MwsfdCrePrm *cprm);                    /* mwPlyCreateSofdec */
-void mwPlyGetCurFrm(MwPly *ply, MwsfdFrmObj *frm);           /* mwPlyGetCurFrm */
-void mwPlyRelCurFrm(MwPly *ply, MwsfdFrmObj *frm);           /* mwPlyRelCurFrm */
-void mwPlyStartAfs(MwPly *ply, s32 ptid, s32 fid);          /* mwPlyStartAfs */
-void mwPlyGetPlyInf(MwPly *ply, MwsfdPlyInf *inf);           /* mwPlyGetPlyInf */
-void mwPlyStartSeamless(MwPly *ply);                             /* mwPlyStartSeamless */
-void mwPlySetLpFlg(MwPly *ply, s32 flag);                   /* mwPlySetLpFlg */
-void mwPlyEntryAfs(MwPly *ply, s32 ptid, s32 fid);          /* mwPlyEntryAfs */
 
 /* The player */
 typedef struct {
@@ -130,7 +74,7 @@ s32 func_001AA5C0(const char *name);
 s32 func_001B6980(s32 slot);
 void func_001B9140(s32 a);
 u32 func_0019BF60(u32 size);
-void func_0019C020(u16 addr);
+void func_0019C020(u32 addr);
 s32 func_001937B0(u32 *pkt);
 s32 func_0018D0E0(void);
 void func_001B2600(s32 a, s32 line, s32 color, const char *s);

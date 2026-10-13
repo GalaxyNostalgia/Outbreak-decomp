@@ -33,7 +33,8 @@ typedef struct {
     s32 unk70;          /* 0x70 */
     u8 unk74[0x20C - 0x74];
     s32 unk20C;         /* 0x20C */
-    u8 unk210[0x224 - 0x210];
+    s32 demo;           /* 0x210: attract movie to play next */
+    u8 unk214[0x224 - 0x214];
 } TitleWork;
 
 extern TitleWork *D_0023BE34;
@@ -179,6 +180,15 @@ void func_00540340(TitleWork *w) {
         func_005412A0(w);
         break;
     }
+}
+
+void func_00540C40(TitleWork *w) {
+    w->sub = 0;
+    w->step = 0;
+    w->unk3 = 0;
+    w->unk8 = 0;
+    w->unkA = 0;
+    w->unk60 = 0;
 }
 
 void func_00540C60(TitleWork *w) {
@@ -430,3 +440,99 @@ void func_00540F30(TitleWork *w) {
         break;
     }
 }
+
+void func_001ADA60(s32 stream, s32 a, const char *name, s32 b);   /* play an ADX file */
+void func_001ADC30(s32 stream);                                     /* stop an ADX stream */
+void func_0034AFB0(s32 which);  /* SUBMAIN: an attract movie */
+extern char D_0055FC70[];       /* "demo/battle.adx" */
+extern char D_0055FC80[];       /* "demo/hint.adx" */
+
+#ifdef NON_MATCHING   /* argument order of the ADX calls, registers in step 3 */
+/* Sub 1: attract mode, the two demo movies in turn (each with its own sound). */
+void func_005412A0(TitleWork *w) {
+    switch (w->step) {
+    case 0:
+        w->step++;
+        if (func_001B6980(0xE) != 0) {
+            w->unk8 = 1;
+        } else {
+            w->unk8 = 0x96;
+            func_0034AFB0(w->demo);
+            if (w->demo == 0) {
+                func_001ADA60(1, 0, D_0055FC70, 0);
+            } else {
+                func_001ADA60(1, 0, D_0055FC80, 0);
+            }
+        }
+        w->demo ^= 1;
+        func_001BA7A0(8);
+        break;
+    case 1:
+        w->unk8--;
+        if (func_001B6980(0xE) != 0) {
+            if (w->unk8 <= 0) {
+                w->unk8 = 0x3C0;
+                w->step++;
+            }
+        } else if (func_0034A290() == 2 || w->unk8 <= 0) {
+            if (w->demo == 1) {
+                w->unk8 = 0x20A;
+            } else {
+                w->unk8 = 0x45F;
+            }
+            func_001ADC30(1);
+            w->step++;
+        }
+        func_001BA7A0(8);
+        break;
+    case 2:
+        if (w->skip != 0) {
+            if (w->unk8 > 0x14) {
+                w->unk8 = 0x14;
+                func_001AD680(1, 0, 0x14);
+                func_001BA7A0(7);
+            } else if (w->unk8 < 2) {
+                w->unk8 = 1;
+            }
+            w->step = 4;
+            break;
+        }
+        if (w->unk8 <= 1 || func_00540CB0(w) == 0) {
+            if (--w->unk8 <= 0) {
+                func_005411F0(w);
+                w->step++;
+            } else if (w->unk8 == 0x14) {
+                func_001AD680(1, 0, 0x14);
+                func_001BA7A0(7);
+            }
+        }
+        break;
+    case 3:
+        if (--w->unk8 <= 0) {
+            func_001BA870();
+            if (w->skip == 1) {
+                func_00540C60(w);
+            } else if (w->demo == 0) {
+                func_00540C40(w);
+            } else {
+                func_00540C60(w);
+            }
+        }
+        break;
+    case 4:
+        if (--w->unk8 <= 0) {
+            func_001AD470();
+            func_005411F0(w);
+            w->unk8 = 2;
+            w->step++;
+        }
+        break;
+    case 5:
+        if (--w->unk8 <= 0) {
+            func_001BA870();
+            func_00540C60(w);
+        }
+        break;
+    }
+}
+#endif
