@@ -642,3 +642,10 @@ void func_001AC780(u8 *snd) {
     D_00295B10.waveSize += *(s32 *)(snd + 0x14);
 }
 #endif
+
+extern char D_00238628[];   /* "s01_npc00" */
+
+/* The NPC voice bank. */
+void func_001D6E20(s32 unused) {
+    func_001D6EF0(D_00238628, 0xD);
+}

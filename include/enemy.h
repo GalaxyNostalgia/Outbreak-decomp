@@ -153,6 +153,14 @@ typedef struct {
     u32 flags[0x10];    /* 0xFB0 */
 } SceneEnemies;
 
+/* The NPC models a scenario loads (0xFFFF: none). */
+typedef struct {
+    u16 model;
+    u16 unk2;
+} NpcModel;
+
+extern NpcModel D_0048A010[][4];    /* per scenario */
+
 extern RoomEnemyKinds D_0048A810;
 extern SceneEnemies D_0048AC10;
 

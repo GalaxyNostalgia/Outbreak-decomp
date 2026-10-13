@@ -50,7 +50,9 @@ typedef struct Thing {
     u8 pad548[0x54D - 0x548];
     u8 unk54D; /* 0x54D */
     u8 unk54E; /* 0x54E */
-    u8 pad54F[0x553 - 0x54F];
+    u8 pad54F[0x551 - 0x54F];
+    u8 unk551; /* 0x551: the bone others look at */
+    u8 unk552;
     u8 shadow; /* 0x553 */
     u8 unk554; /* 0x554 */
     u8 pad555[0xAA8 - 0x555];

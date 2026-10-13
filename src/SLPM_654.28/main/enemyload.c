@@ -472,7 +472,7 @@ s32 func_001D2260(Slot1468 *owner, u16 id, u16 texId, u32 flags, s32 shared) {
 #endif
 
 /* The same, held by the scenario when it is for no object. */
-void func_001D24C0(Slot1468 *owner, u16 id, u16 texId, u32 flags, s32 shared) {
+void func_001D24C0(Slot1468 *owner, u16 id, u16 texId, u32 flags, s32 shared, s32 unused) {
     if (owner == NULL) {
         flags |= 0x80000000;
     }
@@ -883,3 +883,26 @@ void func_001D2DC0(void) {
     }
 }
 #endif
+
+
+/* The scenario's NPC models (texture ids 0x1400..). */
+void func_001D33D0(void) {
+    NpcModel *m;
+    s32 i;
+    u16 id;
+    u16 b;
+
+    func_001D0440(0x1400);
+    func_001D3560();
+    for (i = 0, m = D_0048A010[D_00306590.unk1C]; i < 4; i++) {
+        id = m->model;
+        b = m->unk2;
+        m++;
+        if (id == 0xFFFF && b == 0) {
+            continue;
+        }
+        if (id != 0xFFFF) {
+            func_001D24C0(NULL, id, id, 3, 0, -1);
+        }
+    }
+}
