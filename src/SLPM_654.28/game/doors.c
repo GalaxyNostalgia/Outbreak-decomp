@@ -16,7 +16,7 @@ typedef struct {
     s8 unk18;
     s8 unk19;
     s8 unk1A;           /* 0x1A */
-    u8 unk1B;
+    s8 unk1B;           /* 0x1B: characters on it */
     s8 unk1C;           /* 0x1C */
     s8 unk1D;
     s8 unk1E;
@@ -319,3 +319,78 @@ void func_0067C6E0(void) {
     }
 }
 #endif
+
+/* A character moved from the object (area) prev onto now: their counts. */
+void func_0067D7C0(s8 now, s8 prev);
+#ifdef NON_MATCHING   /* first draft */
+void func_0067D7C0(s8 now, s8 prev) {
+    RoomObj *o;
+
+    if (now == prev) {
+        return;
+    }
+    if (now >= 0) {
+        o = &D_00395720[now & 0x1F];
+        if (o != NULL) {
+            if (o->active == 0) {
+                return;
+            }
+            if (o->unk1B < D_00716000[o->type].unk1) {
+                o->unk1B++;
+            }
+        }
+    }
+    if (prev >= 0) {
+        o = &D_00395720[prev & 0x1F];
+        if (o != NULL) {
+            if (o->active == 0) {
+                return;
+            }
+            if (o->unk1B > 0) {
+                o->unk1B--;
+            }
+        }
+    }
+}
+#endif
+
+s32 func_0067E490(s32 *xy);
+s8 func_0067D8B0(s8 x, s8 y);
+
+/* The object (area) under pos, when pos is on top of one. */
+s32 func_0067DA50(s8 *out, f32 *pos);
+#ifdef NON_MATCHING   /* first draft */
+s32 func_0067DA50(s8 *out, f32 *pos) {
+    s32 xy[2];
+    s32 r = 0;
+    s8 i;
+
+    if (pos == NULL) {
+        return 0;
+    }
+    if (pos[1] - FIELD(D_00395EA0, f32, 4) < 50.0f) {
+        return 0;
+    }
+    if (func_0067E490(xy) != 0) {
+        i = func_0067D8B0(xy[0], xy[1]);
+        *out = i;
+        if (i >= 0) {
+            r = 1;
+        }
+    }
+    return r;
+}
+#endif
+
+/* How high the object (area) i lifts who stands on it. */
+f32 func_0067DAF0(u8 i) {
+    RoomObj *o = &D_00395720[i & 0x1F];
+
+    if (o->active == 0) {
+        return 0.0f;
+    }
+    if (o->flags & 4) {
+        return 0.0f;
+    }
+    return 50.0f * o->unk1F[1];
+}

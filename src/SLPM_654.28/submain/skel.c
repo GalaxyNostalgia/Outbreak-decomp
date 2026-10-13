@@ -94,3 +94,8 @@ void func_00346990(void) {
         }
     }
 }
+
+/* The character's point at 0x1AC through its matrix, into 0x1CC. */
+void func_00346B90(DrawObjFull *o) {
+    func_001913A0((f32 *)((u8 *)o + 0x1CC), o->unk1AC, (f32 *)((u8 *)o + 0x50));
+}

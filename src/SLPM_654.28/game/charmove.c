@@ -1,0 +1,261 @@
+#include "common.h"
+#include "options.h"
+#include "game.h"
+#include "object.h"
+
+/* Character odds and ends run each frame. */
+
+/* The point at 0x1AC: last frame's kept, then moved towards its target over unkCB2 frames. */
+void func_0062CD00(DrawObjFull *o);
+#ifdef NON_MATCHING   /* first draft */
+void func_0062CD00(DrawObjFull *o) {
+    f32 *t;
+
+    o->unk1BC[0] = o->unk1AC[0];
+    o->unk1BC[1] = o->unk1AC[1];
+    o->unk1C4[0] = o->unk1B4[0];
+    o->unk1C4[1] = o->unk1B4[1];
+    if (FIELD(o, u8, 0xCB2) == 0) {
+        return;
+    }
+    if (--FIELD(o, u8, 0xCB2) != 0) {
+        o->unk1AC[0] += FIELD(o, f32, 0xCC8);
+        o->unk1AC[1] += FIELD(o, f32, 0xCCC);
+        o->unk1B4[0] += FIELD(o, f32, 0xCD0);
+        return;
+    }
+    t = (f32 *)o->unkCB8;
+    o->unk1AC[0] = t[0];
+    o->unk1AC[1] = t[1];
+    o->unk1B4[0] = t[2];
+    o->unk1B4[1] = t[3];
+}
+#endif
+
+s32 func_001AF4D0(void);
+void func_005A9CC0(DrawObjFull *o, s32 a, s32 b);
+
+void func_0062CC50(DrawObjFull *o);
+#ifdef NON_MATCHING   /* first draft */
+void func_0062CC50(DrawObjFull *o) {
+    if (D_0048BF60.unk28 == 1 || (o->unk54A & 4)) {
+        return;
+    }
+    if (func_001AF4D0() == 0 && o->type == 0 && o->kind != D_0048BF60.unk1D) {
+        func_005A9CC0(o, 1, 0);
+        return;
+    }
+    if (o->type == 1) {
+        func_005A9CC0(o, 1, 0);
+        return;
+    }
+    func_005A9CC0(o, 1, 3);
+}
+#endif
+
+extern f32 D_00239E18;          /* 2 pi */
+
+/* The head's turn (from the skeleton's head bone) as angles. */
+void func_0062F930(DrawObjFull *o) {
+    u8 *m = (u8 *)o->model;
+
+    FIELD(o, s16, 0xBD8) = 0.5f + 65536.0f * FIELD(FIELD(m, u8 *, 0x874), f32, 0x110) / D_00239E18;
+    FIELD(o, s16, 0xBDA) = 0.5f + 65536.0f * FIELD(FIELD(m, u8 *, 0x874), f32, 0x114) / D_00239E18;
+    FIELD(o, s16, 0xBD6) = 0;
+    FIELD(o, s16, 0xBD4) = 0;
+    o->unkBD1[0] = 0;
+    FIELD(o, s16, 0xBD2) = 0;
+    FIELD(o, s16, 0xC30) = 0;
+    FIELD(o, s32, 0xBE0) = 0;
+}
+
+void func_00633C10(DrawObjFull *o, s32 flags);
+void func_00633C60(DrawObjFull *o, s32 flags);
+
+void func_00633BC0(DrawObjFull *o);
+#ifdef NON_MATCHING   /* first draft */
+void func_00633BC0(DrawObjFull *o) {
+    s32 f = o->unkBA4;
+
+    if (f & 0x4000) {
+        func_00633C10(o, f);
+        return;
+    }
+    if (f & 0x8000) {
+        func_00633C60(o, f);
+    }
+}
+#endif
+
+#include "vu0.h"
+void func_00340310(s32 rx, s32 ry, s32 rz, Mat44 *m);
+
+/* Moves a character by its velocity (0x4E4, in its own frame: through its rotation and its
+   x/z scale, times its speed factor). */
+void func_0062CA30(DrawObjFull *o);
+#ifdef NON_MATCHING   /* first draft */
+void func_0062CA30(DrawObjFull *o) {
+    f32 s[16];
+    f32 m[16];
+    f32 v[4];
+
+    func_0018F7C0(m);
+    func_00340310(o->unk90, o->unk92, o->unk94, (Mat44 *)m);
+    if (!(o->unk54A & 8)) {
+        func_0018F830(o->unkB4[0], 1.0f, o->unkB4[2], s);
+        func_00190CD0(m, s);
+    }
+    o->unk54A &= ~8;
+    func_001913A0(v, (f32 *)o->unk4E4, m);
+    v[0] *= o->unkF0;
+    v[1] *= o->unkF0;
+    v[2] *= o->unkF0;
+    o->unk38[0] += v[0];
+    o->unk38[1] += v[1];
+    o->unk38[2] += v[2];
+}
+#endif
+
+void func_005C5A90(DrawObjFull *o, s32 a);
+void func_00635920(DrawObjFull *o);
+
+void func_00637C60(DrawObjFull *o) {
+    s32 f;
+
+    if ((o->unkBA4 & 0x80) && (o->unkBA0 & 0x1A0)) {
+        o->unkBA0 |= 0x1160;
+    }
+    if (o->unk1E2 != D_00306590.unk1C) {
+        return;
+    }
+    f = o->unkBA0;
+    if (!(f & 0x40)) {
+        return;
+    }
+    if (f & 0x1000) {
+        o->visible = 0;
+        return;
+    }
+    o->visible = 1;
+    if (o->act[0] != 4 || o->act[1] != 1) {
+        func_005C5A90(o, 0);
+        o->unk54F = 0xA0;
+        o->act[0] = 4;
+        o->act[1] = 1;
+        o->act[2] = 0;
+        o->act[3] = 0;
+        func_00635920(o);
+    }
+}
+
+/* The character's expression (its face's motion table, by kind or NPC model). */
+extern u8 D_0023ABA0[];         /* per character kind */
+extern u8 D_0023ABA8[];         /* (the zombie forms) */
+extern u8 D_006DB4FF[];         /* per NPC model (from 1) */
+extern u8 D_006DB500[];
+extern u8 D_006DB5E0[];
+extern void *D_006DB880[];
+void func_005E9CF0(void *bones, void *face, u8 n);
+
+void func_005E9220(DrawObjFull *o);
+#ifdef NON_MATCHING   /* first draft */
+void func_005E9220(DrawObjFull *o) {
+    u8 n;
+
+    if (o->active == 0 || o->visible == 0 || (o->unk54A & 0x40)) {
+        return;
+    }
+    switch (o->type) {
+    case 0:
+        if (o->unkBB4 == 0) {
+            if (o->unk54D == 1) {
+                n = D_0023ABA8[o->unkB98];
+            } else if (o->costume == 0) {
+                n = D_0023ABA0[o->unkB98];
+            } else {
+                return;
+            }
+        } else {
+            n = D_006DB4FF[o->unkBB4];
+        }
+        break;
+    case 1:
+        if (o->unk54D == 1) {
+            n = D_006DB5E0[o->unkBB4];
+        } else {
+            n = D_006DB500[o->unkBB4];
+        }
+        break;
+    default:
+        return;
+    }
+    if (n != 0xFF) {
+        func_005E9CF0((u8 *)o->model + 0x820, D_006DB880[n], n);
+    }
+}
+#endif
+
+/* The room's trigger zones (a list, next at 0x28). */
+typedef struct Zone {
+    u8 unk0[0x20];
+    s32 top;            /* 0x20 */
+    s32 bottom;         /* 0x24 */
+    struct Zone *next;  /* 0x28 */
+    u8 unk2C[4];
+    u8 kind;            /* 0x30 */
+    u8 unk31[3];
+    void *who;          /* 0x34: who stepped in */
+    u8 unk38[8];
+    s32 *def;           /* 0x40: def[0x10] its switch (D_00470090 + 0x4730) */
+} Zone;
+
+extern Zone *D_0023BD90;
+extern s16 D_0023BD88;
+extern u8 D_00470090[0x6D40];
+s32 func_00340940(Zone *z, s32 *xz, s32 n);
+void func_005910F0(Zone *z, s32 hit);
+
+/* The floor switches (zones of kind 0x85 whose switch is armed) a character steps on. */
+void func_005516D0(DrawObjFull *o);
+#ifdef NON_MATCHING   /* first draft */
+void func_005516D0(DrawObjFull *o) {
+    s32 xz[2];
+    Zone *z;
+    f32 top;
+    f32 y;
+    s32 hit;
+
+    if (D_0023BD88 == 0x80) {
+        return;
+    }
+    z = D_0023BD90;
+    xz[0] = o->unk38[0];
+    xz[1] = o->unk38[2];
+    for (; z != NULL; z = z->next) {
+        if (z->kind != 0x85) {
+            continue;
+        }
+        if (D_00470090[0x4731 + z->def[0x10] * 0x60] != 2 || func_00340940(z, xz, 4) != 1) {
+            continue;
+        }
+        top = z->top;
+        y = o->unk38[1];
+        hit = 0;
+        if (!(top <= y)) {
+            if (top <= y + 200.0f) {
+                hit = 1;
+            }
+        } else if (top < y) {
+            if (!(z->bottom < y)) {
+                hit = 1;
+            }
+        } else {
+            hit = 1;
+        }
+        if (hit) {
+            z->who = o;
+            func_005910F0(z, hit);
+        }
+    }
+}
+#endif
