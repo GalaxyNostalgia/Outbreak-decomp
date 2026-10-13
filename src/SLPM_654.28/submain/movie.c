@@ -116,6 +116,13 @@ void func_003478F0(void) {
     }
 }
 
+s32 func_0019E4B0(void);
+
+/* Drops the textures cached in GS memory. */
+void func_00348DA0(void) {
+    func_0019E4B0();
+}
+
 /* GS memory for a w x h movie. */
 void func_00348DB0(s32 w, s32 h) {
     if (func_001B6980(0xE) == 0) {
@@ -612,6 +619,66 @@ void func_0034A7E0(void) {
         mwPlyEntryAfs(D_0023BC70->ply, 3, fid2);
         mwPlySetLpFlg(D_0023BC70->ply, 0);
         mwPlyStartSeamless(D_0023BC70->ply);
+    }
+}
+#endif
+
+void func_0034A970(void);
+#ifdef NON_MATCHING   /* first draft (like func_0034A7E0) */
+/* The menu background: part 2 of the title movie, looping. */
+void func_0034A970(void) {
+    s32 fid;
+
+    if (func_001B6980(0xE) == 0) {
+        D_0023BC70 = &D_003209B0;
+        D_003065CC[0] = 2;
+        if (D_0023BC70->ply == NULL) {
+            func_003498B0(0x200, 0x1C0);
+            if (D_0023BC70->ply == NULL) {
+                D_003065CC[0] = 0;
+                return;
+            }
+        }
+        if (D_003065CD[0] == 0) {
+            fid = func_001AA5C0(D_0035BBE0);
+        } else {
+            fid = func_001AA5C0(D_0035BC20);
+        }
+        if (fid == -1) {
+            func_00349E20();
+            return;
+        }
+        mwPlyEntryAfs(D_0023BC70->ply, 3, fid);
+        mwPlySetLpFlg(D_0023BC70->ply, 1);
+        mwPlyStartSeamless(D_0023BC70->ply);
+    }
+}
+#endif
+
+extern char D_0035BB48[];        /* "PS2select.sfd" */
+
+void func_0034A3D0(void);
+#ifdef NON_MATCHING   /* first draft (like func_0034A7E0) */
+/* The select screen's background movie, looping. */
+void func_0034A3D0(void) {
+    s32 fid;
+
+    if (func_001B6980(0xE) == 0) {
+        D_0023BC70 = &D_003209B0;
+        D_003065CC[0] = 2;
+        if (D_0023BC70->ply == NULL) {
+            func_003498B0(0x200, 0x1A0);
+            if (D_0023BC70->ply == NULL) {
+                D_003065CC[0] = 0;
+                return;
+            }
+        }
+        fid = func_001AA5C0(D_0035BB48);
+        if (fid == -1) {
+            func_00349E20();
+            return;
+        }
+        mwPlyStartAfsLp(D_0023BC70->ply, 3, fid);
     }
 }
 #endif

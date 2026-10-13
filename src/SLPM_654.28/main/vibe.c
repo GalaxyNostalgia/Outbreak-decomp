@@ -107,3 +107,21 @@ void func_001B8D00(Task *t) {
         break;
     }
 }
+
+extern VibStep *D_00217220[9];  /* the patterns */
+
+/* Start vibration pattern n (when vibration is on and the pad has a motor). */
+void func_001B8E00(s32 port, s32 n) {
+    Vibration *v = &D_002F87D0;
+
+    if (D_00306590.vibration != 0 && v->enabled != 0 && n < 9) {
+        v->pattern = D_00217220[n];
+        v->step = 0;
+        v->timer = 1;
+        v->playing = 1;
+    }
+}
+
+void func_001B9060(s32 n) {
+    func_001B8E00(0, n);
+}

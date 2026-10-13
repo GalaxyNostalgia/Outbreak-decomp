@@ -42,7 +42,7 @@ typedef struct {
     u8 unk2C;           /* below 6 */
     s8 adjustX;         /* 0x2D: screen position, -10..10 */
     s8 adjustY;         /* 0x2E */
-    u8 unk2F;           /* 0/1 */
+    u8 vibration;       /* 0x2F: 0/1 */
     u8 brightness;      /* 0x30: 0x38..0xA4, default 0x80 */
     u8 unk31;
     u8 online;          /* 0x32: 1 online (loads NETAQ.BIN), 0 offline (SINGLE.BIN) */

@@ -187,6 +187,69 @@ extern char D_00223D90[];   /* "SDR: SdrSeMasterVol: Warning: sndque overflow!\n
 extern char D_00223DC0[];   /* "SDR: SdrMasterVol: Warning: sndque overflow!\n" */
 extern char D_00223F30[];   /* "SDR: SdrAllMute: Warning: sndque overflow!\n" */
 
+extern char D_00223D00[];   /* "SDR: SdrSeReq: Warning: sndque overflow!\n" */
+extern char D_00223D30[];   /* "SDR: SdrSeCancel: Warning: sndque overflow!\n" */
+
+/* A sound effect request in the queue: opcode bits 0-2 say which of volume, pan and pitch are given. */
+typedef struct {
+    s32 id;
+    s8 vol;             /* 0x04 */
+    s8 pan;
+    s16 pitch;          /* 0x06 */
+    s8 flag;            /* 0x08 */
+} SdrSeSlot;
+
+s32 func_001A67B0(u32 key, s8 vol, s8 pan, s16 pitch, s8 flag);
+#ifdef NON_MATCHING   /* first draft: the original addresses each field from its own symbol */
+/* SdrSeReq: play sound key (bank << 16 | sound << 8 | ...); negative vol, pan or pitch: the bank's. */
+s32 func_001A67B0(u32 key, s8 vol, s8 pan, s16 pitch, s8 flag) {
+    s32 w = D_00292DB0[0];
+
+    if (D_00292DC0[w].id >= 0) {
+        printf(D_00223D00);
+        return -1;
+    }
+    D_00292DC0[w].id = ((s8)((vol >= 0) | ((pan >= 0) << 1) | ((pitch >= 0) << 2)) << 24) | ((key << 8) >> 8);
+    ((SdrSeSlot *)D_00292DC0)[w].vol = vol;
+    ((SdrSeSlot *)D_00292DC0)[w].pan = pan;
+    ((SdrSeSlot *)D_00292DC0)[w].pitch = pitch;
+    ((SdrSeSlot *)D_00292DC0)[w].flag = flag;
+    D_00292DB0[0] = (D_00292DB0[0] + 1) % 32;
+    return 0;
+}
+#endif
+
+s32 func_001A68D0(u32 key);
+#ifdef NON_MATCHING   /* first draft: loop shape */
+/* SdrSeCancel: drop queued requests for the sound and queue a stop (opcode 8), once. */
+s32 func_001A68D0(u32 key) {
+    s32 i = D_00292DB8[0];
+    s32 w = D_00292DB0[0];
+    SdrSlot *s;
+
+    while ((s = &D_00292DC0[i])->id >= 0) {
+        if ((s->id & 0x7F7F7F) == (key & 0x7F7F7F)) {
+            if ((s->id >> 24) == 8) {
+                return 0;
+            }
+            s->id = 0x7F000000;
+        }
+        i = (i + 1) % 32;
+        if (i == w) {
+            break;
+        }
+    }
+    s = &D_00292DC0[w];
+    if (s->id >= 0) {
+        printf(D_00223D30);
+        return -1;
+    }
+    s->id = ((key << 8) >> 8) | 0x08000000;
+    D_00292DB0[0] = (D_00292DB0[0] + 1) % 32;
+    return 0;
+}
+#endif
+
 /* SdrSeMasterVol */
 s32 func_001A6B30(u16 vol) {
     SdrSlot *s = &D_00292DC0[D_00292DB0[0]];

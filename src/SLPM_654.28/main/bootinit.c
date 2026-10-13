@@ -398,3 +398,41 @@ void func_001D54D0(void) {
     func_001D0300(1, 6);
     func_0018D730();
 }
+
+extern s32 D_0023A0C4;      /* texture id base for the next loads */
+
+void func_001D0440(s32 base) {
+    D_0023A0C4 = base;
+}
+
+extern char D_00238560[];   /* "data\rom\scene\pit_tex\select.tex" */
+
+/* Loads select.tex (LZ packed) and registers n of its pictures, at the given offsets, as
+   textures 0x4200 + i; their handles go to tex. */
+void func_001D5500(s32 *offsets, s32 *tex, s32 n) {
+    u32 out;
+    u32 buf;
+    s32 i;
+
+    func_001D0440(0x4200);
+    buf = (u32)D_003065DC[0];
+    out = buf + 0x100000;
+    if (func_001CFBB0(D_00238560, (void *)buf, 1, 0) != 0) {
+        func_001AE810((u16 *)buf, (u16 *)out);
+        for (i = 0; i < n; i++) {
+            func_001CFE20(i + 0x4200, out + *offsets);
+            *tex = func_001D04D0(i + 0x4200);
+            offsets++;
+            tex++;
+        }
+    }
+}
+
+extern u32 D_00306650[];    /* (Options) the event list */
+extern char D_00238190[];   /* "data\rom\scene\item_msg\evelist.dat" */
+
+/* Loads the event list to addr. */
+s32 func_001D3500(u32 addr) {
+    D_00306650[0] = addr;
+    return func_001CFBB0(D_00238190, (void *)addr, 1, 0);
+}

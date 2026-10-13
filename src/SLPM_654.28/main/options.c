@@ -16,7 +16,7 @@ void func_001AE0A0(void) {
     if (o->unk2C >= 6) {
         o->unk2C = 0;
     }
-    o->unk2F &= 1;
+    o->vibration &= 1;
     o->sound &= 1;
     if (o->bgmVol >= 8) {
         o->bgmVol = 7;
@@ -193,7 +193,7 @@ void func_001B9240(void) {
     D_00306590.bgmVol = D_00306390[1];
     D_00306590.seVol = D_00306390[2];
     D_00306590.unk2C = D_00306390[3];
-    D_00306590.unk2F = D_00306390[4];
+    D_00306590.vibration = D_00306390[4];
     D_00306590.adjustX = D_00306390[6];
     D_00306590.adjustY = D_00306390[7];
     D_00306590.brightness = D_00306390[5];
@@ -452,3 +452,92 @@ void func_001AD740(void) {
     func_0012BC38();
 }
 #endif
+
+extern u16 D_0023BBA0;      /* random seed (game) */
+extern u16 D_0023BB9C;      /* random seed (sounds, effects) */
+extern u8 D_0023BB28;
+
+/* Random numbers: 0 the game seed as is, 1 and 3 the next number from each generator
+   (x * 176 mod 65363), 2 a byte the game keeps. */
+u16 func_001ADEF0(s32 which) {
+    u32 x;
+
+    switch (which) {
+    case 0:
+        return D_0023BBA0;
+    case 1:
+        x = D_0023BB9C;
+        if (x == 0) {
+            x = 1;
+        }
+        x = (x * 176) % 0xFF53u;
+        D_0023BB9C = x;
+        return x;
+    case 2:
+        return D_0023BB28;
+    case 3:
+        x = D_0023BBA0;
+        if (x == 0) {
+            x = 1;
+        }
+        x = (x * 176) % 0xFF53u;
+        D_0023BBA0 = x;
+        return x;
+    }
+    return 0;
+}
+
+extern s32 D_0048BFB4[];    /* the music on each stream */
+s32 func_001ACCC0(s32 n, s32 fid, s32 ptid);
+s32 func_001AD570(s32 n, s32 what);
+void func_001AD1E0(s32 n);
+
+s32 func_001B87F0(s32 n, s32 bgm, s32 c);
+#ifdef NON_MATCHING   /* branch operand order */
+/* Plays music `bgm` on stream n; if it's already playing (paused), fades it back in. */
+s32 func_001B87F0(s32 n, s32 bgm, s32 c) {
+    s32 r;
+
+    if (D_0048BFB4[n] != bgm) {
+        D_0048BFB4[n] = bgm;
+        func_001ACCC0(n, bgm, c);
+        return 0;
+    }
+    if (func_001AD570(n, 4) != 0) {
+        r = func_001AD570(n, 0);
+        if (r == 0 || r == 5) {
+            func_001ACCC0(n, bgm, c);
+        } else {
+            func_001AD1E0(n);
+            func_001AD680(n, 0x7F, 0x3C);
+            return 1;
+        }
+    } else {
+        func_001ACCC0(n, bgm, c);
+    }
+    return 0;
+}
+#endif
+
+/* Starts file `fid` of partition ptid (0 if negative) on stream n at its set volume. */
+s32 func_001ACCC0(s32 n, s32 fid, s32 ptid) {
+    ADXT *h;
+
+    if (func_001B6980(0xE) != 0) {
+        return 0;
+    }
+    if (func_001B6980(0xA) != 0 && n == 0) {
+        return 0;
+    }
+    func_001AD260(n, D_0029B060[n].target);
+    if (ptid < 0) {
+        h = &D_0029B0B8[n];
+        ADXT_StartAfs(*h, 0, fid);
+    } else {
+        h = &D_0029B0B8[n];
+        ADXT_StartAfs(*h, ptid, fid);
+    }
+    ADXT_Pause(*h, 0);
+    D_0029B060[n].active = 0;
+    return 0;
+}

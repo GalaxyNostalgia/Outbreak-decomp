@@ -408,6 +408,112 @@ s32 func_001C37F0(HddWork *w);
 void func_001C3BB0(void);
 void func_001C3BC0(void);
 
+extern u8 D_002F88D2;
+
+#ifdef NON_MATCHING   /* first draft from m2c */
+/* Save-data screen, mode 6 (from the select screen): load the save from slot 1. */
+s32 func_001C1BF0(HddWork *w) {
+    s32 r;
+
+    switch (w->step) {
+    case 0:
+        w->step++;
+        w->msg = 8;
+        D_002F88D2 = 0;
+        func_001BEA60(w->unk24, w->buf1, 1);
+        w->unk10 = 0x3C;
+    case 1:
+        switch (r = func_001BF5B0()) {
+        case -0xFE:
+        case -0xFD:
+            w->msg = 7;
+            return 0;
+        case -0x100:
+            w->msg = 9;
+            w->step = 0x63;
+            w->error = 1;
+            break;
+        case -1:
+            break;
+        case -0xFB:
+            w->msg = 9;
+            w->step = 0x63;
+            w->error = 1;
+            break;
+        case 0:
+            func_001BE830(w->unk24, w->buf2);
+            w->step++;
+            w->msg = 0x26;
+            func_001BF5E0();
+            break;
+        default:
+            w->error = r & 0xFF;
+            switch (w->error) {
+            case 4:
+            case 2:
+            case 1:
+            case 3:
+                return 0;
+            }
+            break;
+        }
+        break;
+    case 2:
+        switch (r = func_001BF5B0()) {
+        case 0:
+            if (func_001C37F0(w) == 0) {
+                w->msg = 0x1A;
+                return 0;
+            }
+            D_00306646[0] = 0;
+            w->msg = 0x34;
+            w->error = 5;
+            w->error = 1;
+            w->step = 0x63;
+        case -1:
+            w->unk14 = D_0023BA18;
+            break;
+        case -0x100:
+            w->msg = 0x34;
+            w->error = 1;
+            w->step = 0x63;
+            w->unk14 = D_0023BA18;
+            break;
+        default:
+            w->step = 0x63;
+            w->error = r & 0xFF;
+            switch (w->error) {
+            case 4:
+                w->msg = 0x17;
+                break;
+            case 3:
+                w->msg = 7;
+                break;
+            case 2:
+                w->msg = 6;
+                break;
+            case 1:
+                w->msg = 5;
+                break;
+            }
+            w->unk14 = D_0023BA18;
+            break;
+        }
+        break;
+    case 0x63:
+        if (w->pressed & 0xFFF0) {
+            D_00306646[0] = 0;
+            func_001C3BB0();
+            return 0;
+        }
+        break;
+    }
+    func_001C3150(w);
+    func_001C33F0(w);
+    return 1;
+}
+#endif
+
 s32 func_001C0FD0(HddWork *w) {
     s32 r;
 

@@ -393,3 +393,124 @@ void func_001D6D10(s32 screen) {
 void func_001D6CD0(void) {
     func_001D6D10(0);
 }
+
+extern u8 D_00295C34[];     /* banks that are always there (no loading) */
+u16 func_001ADEF0(s32 which);   /* random numbers */
+s32 func_001A67B0(u32 key, s8 vol, s8 pan, s16 pitch, s8 flag);
+s32 func_001A68D0(u32 key);
+
+/* Plays sound `id` of sound effect bank `bank`, then the sounds chained after it. vol (scaled from
+   the table's, -1: as is) and pan (-1: the table's) apply to all of them; pitch and volume get the
+   table's random spread. */
+s32 func_001ABAA0(s32 bank, s32 id, s32 unused, u32 vol, s32 pan, s32 unused2, s32 flag);
+#ifdef NON_MATCHING   /* first draft: block order */
+s32 func_001ABAA0(s32 bank, s32 id, s32 unused, u32 vol, s32 pan, s32 unused2, s32 flag) {
+    SeInfo *tbl = D_00295C50[bank];
+    SeInfo *e = &tbl[id];
+    u32 key;
+    s32 sign;
+    s32 pitch;
+    s32 v;
+
+    if (D_00295C34[bank] == 0) {
+        key = (bank & 0x7F) << 16;
+    } else if (D_00295B40.slotState[bank] == 2) {
+        key = (bank & 0x7F) << 16;
+    } else {
+        return -1;
+    }
+    for (;;) {
+        if ((u32)id >= 0x80) {
+            return 0;
+        }
+        if (e->b0 == 0) {
+            if (e->b5 != 0xFF || pan == -1) {
+                pan = e->b5;
+            }
+            if (e->b7 != 0) {
+                sign = 1;
+                if (!(func_001ADEF0(1) & 1)) {
+                    sign = -1;
+                }
+                pitch = (e->h2 + 0x2000 + (func_001ADEF0(1) % e->b7) * sign * 32) & 0x3FFF;
+            } else {
+                pitch = (e->h2 + 0x2000) & 0x3FFF;
+            }
+            sign = 1;
+            if (!(func_001ADEF0(1) & 1)) {
+                sign = -1;
+            }
+            if (e->b6 != 0) {
+                v = e->b4 + (func_001ADEF0(1) % e->b6) * sign;
+            } else {
+                v = e->b4;
+            }
+            if (v < 0) {
+                v = 0;
+            } else if (v >= 0x80) {
+                v = 0x7F;
+            }
+            if (vol == (u32)-1) {
+                vol = v;
+            } else {
+                vol = (f32)v * ((f32)vol / 128.0f);
+            }
+            if (func_001A67B0(key | ((id & 0x7F) << 8) | ((e->b9 & 1) << 7) | (e->b8 & 0x7F), vol, pan, pitch,
+                              flag) < 0) {
+                return 0;
+            }
+        } else if (e->b0 == 1) {
+            if (func_001A68D0(key | ((id & 0x7F) << 8) | ((e->b9 & 1) << 7) | (e->b8 & 0x7F)) < 0) {
+                return 0;
+            }
+        } else {
+            return 0;
+        }
+        if (e->bB == 0xFF || e->bB == id) {
+            return 0;
+        }
+        id = e->bB;
+        e = &tbl[id];
+    }
+}
+#endif
+
+
+/* Play a sound effect (the table's volume and pan). */
+s32 func_001B7A50(s32 bank, s32 id, s32 unused) {
+    return func_001ABAA0(bank, id, unused, -1, -1, -1, 0);
+}
+
+void func_001B6E80(s32 id, s32 bank) {
+    func_001B7A50(bank, id, 0);
+}
+
+/* The menu sounds (bank 0) */
+void func_001B6EA0(void) {
+    func_001B7A50(0, 0, 0);
+}
+
+void func_001B6EB0(void) {
+    func_001B7A50(0, 1, 0);
+}
+
+void func_001B6EC0(void) {
+    func_001B7A50(0, 2, 0);
+}
+
+void func_001B6ED0(void) {
+    func_001B7A50(0, 3, 0);
+}
+
+void func_001B6EE0(void) {
+    func_001B7A50(0, 4, 0);
+}
+
+/* Bank 12 */
+void func_001B6EF0(s32 id) {
+    func_001B7A50(12, id, 0);
+}
+
+void func_001B6F00(s32 id) {
+    func_001B7A50(12, id, 0);
+}

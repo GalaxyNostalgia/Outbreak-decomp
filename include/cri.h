@@ -89,5 +89,6 @@ void mwPlyGetPlyInf(MwPly *ply, MwsfdPlyInf *inf);
 void mwPlyStartSeamless(MwPly *ply);
 void mwPlySetLpFlg(MwPly *ply, s32 flag);
 void mwPlyEntryAfs(MwPly *ply, s32 ptid, s32 fid);
+void mwPlyStartAfsLp(MwPly *ply, s32 ptid, s32 fid);
 
 #endif
