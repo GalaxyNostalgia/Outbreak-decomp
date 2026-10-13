@@ -16,12 +16,15 @@ typedef struct {
     s8 unk18;
     s8 unk19;
     s8 unk1A;           /* 0x1A */
-    u8 unk1B[0x1F - 0x1B];
+    u8 unk1B;
+    s8 unk1C;           /* 0x1C */
+    s8 unk1D;
+    s8 unk1E;
     u8 unk1F[3];        /* 0x1F: (unk1F[1] 7: ...) */
     u8 unk22;           /* 0x22 */
     u8 unk23;
     s32 flags;          /* 0x24 */
-    u8 unk28[0x3C - 0x28];
+    s32 unk28[5];       /* 0x28 */
 } RoomObj;
 
 typedef struct {
@@ -220,3 +223,36 @@ void func_0067B420(u16 room) {
     }
 }
 #endif
+
+extern s8 D_0023BF50;           /* objects are on */
+extern s8 D_0023BF4C;           /* objects placed */
+void func_005E8600(void);
+void func_0067B7A0(RoomObj *o);
+void func_0067CB00(RoomObj *o);
+
+/* The room's objects when the room starts. */
+void func_0067B1F0(void) {
+    s32 i;
+    RoomObj *o;
+
+    func_005E8600();
+    for (i = 0, o = D_00395720; i < 0x20; i++, o++) {
+        if (o->active == 0) {
+            continue;
+        }
+        o->unk28[0] = 0;
+        o->unk28[1] = 0;
+        o->unk28[2] = 0;
+        o->unk28[3] = 0;
+        o->unk28[4] = 0;
+        o->flags &= ~2;
+        o->unk1C = 0;
+        o->unk1D = 0;
+        o->unk1E = 0;
+        if (D_0023BF50 != 0 && (o->flags & 1) && (u8)o->unk1 == D_00306590.unk1C) {
+            func_0067B7A0(o);
+            func_0067CB00(o);
+            D_0023BF4C++;
+        }
+    }
+}

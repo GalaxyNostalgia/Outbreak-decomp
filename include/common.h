@@ -22,6 +22,9 @@ typedef unsigned __int128 u128;
 #define U128_ZERO 0
 #endif
 
+/* A field not named in its struct yet (first drafts; grep for FIELD to name them). */
+#define FIELD(p, type, off) (*(type *)((u8 *)(p) + (off)))
+
 #ifndef NULL
 #define NULL 0
 #endif

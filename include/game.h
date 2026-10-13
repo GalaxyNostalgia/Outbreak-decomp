@@ -24,9 +24,13 @@ typedef struct {
     u8 unk29;           /* 0x29 */
     u8 unk2A;
     s8 unk2B;           /* 0x2B: the characters are set up already */
-    u8 unk2C[0x36 - 0x2C];
+    u8 unk2C[0x32 - 0x2C];
+    u8 unk32;           /* 0x32: (changes) ticks the enemy sets' timers */
+    u8 unk33[2];
+    u8 unk35;           /* 0x35 */
     s8 unk36;           /* 0x36 */
-    u8 unk37[0x3A - 0x37];
+    u8 unk37;           /* 0x37 */
+    u8 unk38[0x3A - 0x38];
     s8 unk3A;           /* 0x3A */
     u8 unk3B;           /* 0x3B */
     s8 unk3C;           /* 0x3C: a movie is playing */
@@ -37,7 +41,7 @@ typedef struct {
     u8 unk60[2];
     s8 unk62;           /* 0x62: offline */
     s8 unk63;           /* 0x63 */
-    s8 unk64;           /* 0x64: a room is being set up */
+    u8 unk64;           /* 0x64: a room is being set up */
     u8 unk65[0xA1 - 0x65];
     u8 unkA1[6];        /* 0xA1: per player, its voice bank (character kind + 1; 0: none) */
     s8 unkA7;           /* 0xA7 */

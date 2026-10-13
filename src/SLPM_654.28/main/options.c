@@ -513,6 +513,31 @@ void func_001AEF80(void) {
     }
 }
 
+void func_00820F30(void);     /* NETAQ.BIN */
+void func_00821950(u8 player, s32 a, s32 b);  /* SINGLE.BIN */
+void func_00821130(u8 player, s32 a, s32 b);  /* NETAQ.BIN */
+
+void func_001AF190(void) {
+    if (func_001AF500() == 1) {
+        func_00820F30();
+    }
+}
+
+/* A player is in the room now. */
+void func_001AF1C0(u8 player) {
+    switch (func_001AF500()) {
+    case 0:
+        func_00821950(player, 0, 0);
+        break;
+    case 1:
+        func_00821130(player, 0, 0);
+        break;
+    case 2:
+    case 3:
+        break;
+    }
+}
+
 void func_0012BC38(void);    /* CRI ADX: run the server */
 
 #ifdef NON_MATCHING   /* first draft: one instruction short, fade-end test scheduled differently */

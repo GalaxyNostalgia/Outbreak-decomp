@@ -386,3 +386,33 @@ void func_00562100(void) {
     }
 }
 #endif
+
+void func_00560880(void);
+void *func_00560E80(u16 id, s32 a);
+void func_00561270(ItemSlot *e);
+
+/* The room's item things again (from the slots), and the items lying in this scenario. */
+void func_00561570(void) {
+    s32 i;
+    ItemSlot *e;
+    u8 *o;
+
+    func_00560880();
+    for (i = 0, e = D_003967D0; i < 0x100; i++, e++) {
+        if (e->active == 0) {
+            continue;
+        }
+        e->obj = NULL;
+        if (e->flags & 0x20000) {
+            e->obj = func_00560E80(e->unk6, 0);
+            if ((o = e->obj) != NULL) {
+                *(s32 *)(o + 0x23C) = e->flags;
+                ((u8 *)e->obj)[0x240] = (u8)e->index;
+            }
+        }
+        e->unk20 = 0;
+        if ((e->flags & 1) && (u16)e->owner == 0 && D_00306590.unk1C == (u8)e->unk1) {
+            func_00561270(e);
+        }
+    }
+}

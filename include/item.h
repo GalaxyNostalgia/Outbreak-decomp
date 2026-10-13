@@ -7,7 +7,7 @@
 typedef struct {
     s8 active;          /* 0x00 */
     s8 unk1;            /* 0x01 */
-    s8 index;           /* 0x02: its slot */
+    u8 index;           /* 0x02: its slot */
     s8 unk3;            /* 0x03 */
     u16 place;          /* 0x04 */
     u16 unk6;           /* 0x06: the item id */
@@ -15,7 +15,8 @@ typedef struct {
     u16 unk14;          /* 0x14 */
     u16 unk16;          /* 0x16 */
     s32 flags;          /* 0x18 */
-    u8 unk1C[0x24 - 0x1C];
+    void *obj;          /* 0x1C: its thing in the room (flag 0x20000) */
+    s32 unk20;          /* 0x20 */
     s16 unk24;          /* 0x24: count */
     u8 unk26[2];
     s16 owner;          /* 0x28: (character + 1) */

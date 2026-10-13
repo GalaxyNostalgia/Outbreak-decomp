@@ -491,3 +491,73 @@ void func_00578850(Thing *t) {
     }
 }
 #endif
+
+extern s8 D_0023BF7C;
+extern u8 D_0023BF84[4];
+extern u8 D_0023BD80;
+extern s8 D_0023A434;
+extern u8 D_00386310[0x100];   /* per enemy set: a timer (0xFF: off) */
+void func_0060F2B0(void);
+void func_0060F2C0(void);
+void func_00577060(EnemySet *e, s16 i, u8 *timer);
+void func_0062CB30(Thing *t);
+void func_00346B90(Thing *t);
+
+/* Once a frame: the enemy sets' timers (a tick every 5 changes of unk32), then each thing's
+   update. */
+void func_006897A0(void);
+#ifdef NON_MATCHING   /* first draft */
+void func_006897A0(void) {
+    ObjD90 *pool;
+    Thing *t;
+    s8 tick = 0;
+    s16 i;
+
+    func_0060F2B0();
+    func_0060F2C0();
+    if (D_00306590.unkC != 0) {
+        D_0023BF7C = 2;
+    } else {
+        D_0023BF7C = 1;
+    }
+    for (i = 0; i < 4; i++) {
+        D_0023BF84[i] = 0;
+    }
+    pool = D_003FFCA0;
+    if (D_0048BF60.unk32 != D_0023BD80) {
+        D_0023A434--;
+        D_0023BD80 = D_0048BF60.unk32;
+        if (D_0023A434 <= 0) {
+            tick = 1;
+            D_0023A434 = 5;
+        }
+    }
+    if (pool != NULL) {
+        for (i = 0; i < 0x100; i++) {
+            u8 *c = &D_00386310[i];
+
+            if (*c != 0xFF && tick) {
+                (*c)--;
+                if (*c == 0) {
+                    *c = 0xFF;
+                    func_00577060(&D_0071A030[i], i, c);
+                }
+            }
+        }
+    }
+    for (t = D_0023BDF4; t != NULL; t = t->next) {
+        if (t->active != 0) {
+            D_0071A030[t->set].unk45 &= ~0x10;
+            ((void (*)(Thing *, u8))t->update)(t, t->set);
+            if (!(t->unkC94 & 4)) {
+                func_0062CB30(t);
+            }
+            if (t->unkC8B == 0) {
+                t->unkC8B = 1;
+                func_00346B90(t);
+            }
+        }
+        t->unkC98 = 0;
+    }
+}
+#endif

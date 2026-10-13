@@ -20,7 +20,9 @@ typedef struct {
     u8 kind;            /* 0x003 */ \
     u8 unk4[2]; \
     u8 unk6;            /* 0x006 */ \
-    u8 unk7[0x14 - 7]; \
+    u8 unk7; \
+    u8 act[4];          /* 0x008: action, its step and sub-steps */ \
+    u8 unkC[0x14 - 0xC]; \
     void *update;       /* 0x014 */ \
     void (*draw)(struct T *o); /* 0x018 */ \
     struct T *next; /* 0x01C: next in its pool's list */ \
@@ -30,7 +32,9 @@ typedef struct {
     u8 unk31[3]; \
     ObjModel *model;    /* 0x034 */ \
     f32 unk38[3];       /* 0x038: position */ \
-    u8 unk44[0x90 - 0x44]; \
+    u8 unk44[0x80 - 0x44]; \
+    f32 unk80[3];       /* 0x080: the position last frame */ \
+    u8 unk8C[0x90 - 0x8C]; \
     s16 unk90;          /* 0x090 */ \
     s16 unk92;          /* 0x092: heading */ \
     s16 unk94;          /* 0x094 */ \
@@ -62,23 +66,36 @@ typedef struct {
     u8 unk1E4[0x200 - 0x1E4]; \
     u8 unk200[0x41];    /* 0x200 */ \
     u8 unk241; \
-    u8 unk242[0x514 - 0x242]; \
+    u8 unk242[0x4E4 - 0x242]; \
+    s32 unk4E4[3];      /* 0x4E4 */ \
+    u8 unk4F0[0x514 - 0x4F0]; \
     void *motions[3];   /* 0x514: shared, player and own MotionSets */ \
-    u8 unk520[4]; \
+    s16 unk520;         /* 0x520 */ \
+    u8 unk522[2]; \
     s8 unk524;          /* 0x524 */ \
     u8 unk525[0x544 - 0x525]; \
     s16 unk544;         /* 0x544: health */ \
     s16 unk546;         /* 0x546: maximum health */ \
-    u8 unk548[0x54D - 0x548]; \
+    s16 unk548;         /* 0x548 */ \
+    u16 unk54A;         /* 0x54A */ \
+    u8 unk54C; \
     u8 unk54D;          /* 0x54D */ \
-    u8 unk54E[0x553 - 0x54E]; \
+    u8 unk54E;          /* 0x54E */ \
+    u8 unk54F;          /* 0x54F */ \
+    u8 unk550[0x553 - 0x550]; \
     u8 unk553;          /* 0x553: casts a shadow */ \
     u8 unk554[0xAA8 - 0x554]; \
     f32 unkAA8;         /* 0xAA8 */ \
     u8 unkAAC[4]; \
     s32 unkAB0;         /* 0xAB0 */ \
-    u8 unkAB4[0xAEC - 0xAB4]; \
-    u8 unkAEC[0xB98 - 0xAEC]; \
+    u8 unkAB4[4]; \
+    u8 unkAB8;          /* 0xAB8 */ \
+    u8 unkAB9[0xAD4 - 0xAB9]; \
+    u8 unkAD4;          /* 0xAD4 */ \
+    u8 unkAD5[0xAEC - 0xAD5]; \
+    u8 unkAEC[0xB90 - 0xAEC]; \
+    s32 unkB90;         /* 0xB90 */ \
+    u8 unkB94[4]; \
     u8 unkB98;          /* 0xB98: the character */ \
     s8 unkB99;          /* 0xB99: uses the shared motions */ \
     u8 unkB9A;          /* 0xB9A */ \
@@ -98,9 +115,14 @@ typedef struct {
     u8 unkBBD[3]; \
     f32 unkBC0;         /* 0xBC0 */ \
     f32 unkBC4;         /* 0xBC4 */ \
-    u8 unkBC8[0xC7C - 0xBC8]; \
+    u8 unkBC8[8]; \
+    u8 unkBD0;          /* 0xBD0 */ \
+    u8 unkBD1[0xC64 - 0xBD1]; \
+    u8 unkC64;          /* 0xC64 */ \
+    u8 unkC65[0xC7C - 0xC65]; \
     u8 unkC7C;          /* 0xC7C: the item in hand (0xFF: none) */ \
-    u8 unkC7D[0xC84 - 0xC7D]; \
+    u8 unkC7D;          /* 0xC7D */ \
+    u8 unkC7E[0xC84 - 0xC7E]; \
     u8 unkC84[4];       /* 0xC84: effects on the character (script ops 0x39, 0x3A) */ \
     u8 unkC88[0x20];    /* 0xC88: (effects 400-420) */ \
     s16 unkCA8;         /* 0xCA8 */ \
@@ -117,7 +139,9 @@ typedef struct {
     u8 unkD10[0xD28 - 0xD10]; \
     s32 unkD28;         /* 0xD28 */ \
     s32 unkD2C;         /* 0xD2C */ \
-    u8 unkD30[0xD90 - 0xD30]; \
+    u8 unkD30[2]; \
+    u8 unkD32;          /* 0xD32 */ \
+    u8 unkD33[0xD90 - 0xD33]; \
     s16 unkD90;         /* 0xD90 */ \
     u8 unkD92[2]; \
     f32 unkD94[3];      /* 0xD94: the start position */ \

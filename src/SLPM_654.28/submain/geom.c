@@ -21,3 +21,25 @@ s16 func_00346C50(const f32 *a, const f32 *b) {
     return func_001918C0(func_00191B50(d[0], d[2]));
 }
 #endif
+
+/* The effect models loaded. */
+typedef struct {
+    u8 unk0[0x820];
+    s16 count;          /* 0x820 */
+    s16 unk822;
+    s16 ids[1];         /* 0x824 */
+} EffectModels;
+
+extern EffectModels D_00389750;
+
+/* Which loaded effect model id is (-1: none). */
+s16 func_003426E0(s16 id) {
+    s32 i;
+
+    for (i = 0; i < D_00389750.count; i++) {
+        if (id == D_00389750.ids[i]) {
+            return i;
+        }
+    }
+    return -1;
+}

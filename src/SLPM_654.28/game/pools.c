@@ -230,26 +230,7 @@ void func_006AC300(void) {
     D_00720790[0] = 0;
 }
 
-/* 0xA8 objects in two lists (by unk7) plus a free list. In a list, next/prev link them; in the
-   free list, prev is the next free one. */
-typedef struct Obj250L {
-    s8 unk0;
-    s8 unk1;
-    u8 unk2[5];
-    u8 list;
-    u8 unk8[0x1C - 8];
-    struct Obj250L *next;
-    struct Obj250L *prev;
-    u8 unk24[0x2C - 0x24];
-    DrawObjFull *owner;  /* 0x2C: drawn only when its owner was */
-    u8 unk30[0x38 - 0x30];
-    Vec3 pos;           /* 0x38 */
-    u8 unk44[0x1F0 - 0x44];
-    Mat44 *mtx;         /* 0x1F0: follows this matrix (pos is then an offset) */
-    u8 unk1F4[0x200 - 0x1F4];
-    u32 flags;          /* 0x200 */
-    u8 unk204[0x250 - 0x204];
-} Obj250L;
+#include "effect.h"
 
 extern Obj250L D_003CE5B0[0xA8];
 extern Obj250L D_003E67E0;

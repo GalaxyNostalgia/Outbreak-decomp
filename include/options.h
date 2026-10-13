@@ -29,7 +29,7 @@ typedef struct {
     u8 unk18;
     u8 unk19;
     u16 unk1A;          /* 0x1A: the room (r%03d files) */
-    u16 unk1C;
+    u16 unk1C;          /* 0x1C: the scenario's room variant (r%03d%02d%02d) */
     u16 unk1E;
     u16 unk20;
     u16 unk22;
@@ -61,8 +61,9 @@ typedef struct {
     s32 unk4C;          /* 0x4C: a big work area (in game: +0x2CF000 is the frame's scratch) */
     u8 unk50[0x54 - 0x50];
     s32 fontTbp;        /* 0x54: GS page for the font's glyphs */
-    u8 unk58[0x60 - 0x58];
-    u8 *unk60;          /* 0x60: (the same work memory as unk4C) */
+    u8 unk58[0x5C - 0x58];
+    s32 rdtSize;        /* 0x5C: the room's .rdt file */
+    u8 *unk60;          /* 0x60: (the same work memory as unk4C; the room's .rdt) */
     u8 *script;         /* 0x64: the room script buffer (r%03d.evb) */
     u8 unk68[0x78 - 0x68];
     u8 *speech;         /* 0x78: the room's speech data (sp/spm files) */

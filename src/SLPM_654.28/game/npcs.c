@@ -416,3 +416,141 @@ s32 func_00651EF0(void) {
     return 0;
 }
 #endif
+
+extern DrawObjFull D_00476DD0[];
+void func_005516D0(Npc *n);
+void func_0062D2C0(Npc *n);
+void func_00634670(Npc *n);
+void func_005E9390(Npc *n);
+
+/* The NPCs in our scenario when the room starts. */
+void func_00651660(void) {
+    Npc *n = D_0023BE04;
+
+    while (n != NULL) {
+        if (n->active == 0) {
+            continue;
+        }
+        if (n->unk1E2 != D_00476DD0[D_0048BF60.unk1D].unk1E2) {
+            n = n->next;
+            continue;
+        }
+        func_005516D0(n);
+        n->unkBA4 &= ~0x80;
+        if (n->unkBA0 & 0x80000000) {
+            func_0062D2C0(n);
+        }
+        func_00634670(n);
+        func_005E9390(n);
+        n = n->next;
+    }
+}
+
+void func_005E9220(Npc *n);
+void func_00346B90(void *o);
+void func_00652910(Npc *n);
+void func_005ABBE0(f32 r, f32 *pos, void *o, s32 a);
+s32 func_0058DC10(Npc *n);
+void func_0062CB30(void *o);
+void func_0062CA30(void *o);
+void func_0062CD00(void *o);
+void func_0062CC50(void *o);
+s32 func_0067DA50(s8 *area, f32 *pos);
+void func_0067D7C0(s8 area, s8 prev);
+f32 func_0067DAF0(u8 area);
+
+/* Once a frame: the NPCs (only those in our scenario do anything). */
+void func_00651340(void);
+#ifdef NON_MATCHING   /* first draft */
+void func_00651340(void) {
+    NpcRecord *r;
+    Npc *n = D_0023BE04;
+    s8 area;
+
+    while (n != NULL) {
+        if (n->active == 0) {
+            continue;
+        }
+        if (n->unk1E2 != D_00476DD0[D_0048BF60.unk1D].unk1E2) {
+            n->visible = 0;
+            n = n->next;
+            continue;
+        }
+        func_005E9220(n);
+        FIELD(n, s32, 0x190) = 0x1FFFF;
+        FIELD(n, s32, 0x194) = 0;
+        FIELD(n, s8, 0xC82) = 0;
+        FIELD(n, s16, 0xD92) = 0;
+        FIELD(n, s8, 0xB9E) = 0;
+        n->unk54A = 0;
+        FIELD(n, s16, 0xBDC) = 0;
+        FIELD(n, s16, 0xBDE) = 0;
+        n->unkBA0 &= 0xDDBDFFFF;
+        n->unkBA4 &= ~0x40;
+        n->unk553 = 1;
+        if (n->unk31[1] == 0xFF) {
+            n->unk31[1] = 0;
+        }
+        r = &D_003614F0[n->slot];
+        if (!(r->flags2 & 1)) {
+            n->unk54A |= 1;
+        }
+        if (!(r->flags2 & 2)) {
+            n->unk54A |= 4;
+        }
+        if (r->flags2 & 8) {
+            n->unkBA0 |= 0x400000;
+        }
+        if (r->flags2 & 0x10) {
+            n->unk31[1] = 0xFF;
+        }
+        FIELD(n, f32, 0x44) = n->unk38[0];
+        FIELD(n, f32, 0x48) = n->unk38[1];
+        FIELD(n, f32, 0x4C) = n->unk38[2];
+        FIELD(n, s16, 0xA0) = n->unk90;
+        FIELD(n, s16, 0xA2) = n->unk92;
+        FIELD(n, s16, 0xA4) = n->unk94;
+        FIELD(n, s16, 0xA6) = FIELD(n, s16, 0x96);
+        func_00346B90(n);
+        if (n->update != NULL) {
+            ((void (*)(Npc *))n->update)(n);
+        } else {
+            func_00652910(n);
+        }
+        func_005ABBE0(50.0f, n->unk38, n, 1);
+        if (func_0058DC10(n) != 0) {
+            func_0062CB30(n);
+            n->unk54A |= 4;
+        } else {
+            func_0062CA30(n);
+            func_0062CB30(n);
+        }
+        func_0062CD00(n);
+        func_0062CC50(n);
+        if (n->unkBA4 & 0x08000000) {
+            n->unkBA4 &= ~0x08000000;
+            func_00346B90(n);
+        }
+        if (func_0067DA50(&area, n->unk38) != 0) {
+            n->unkBA0 |= 0x4000;
+            if (FIELD(n, u8, 0xCB0) != area) {
+                func_0067D7C0(area, FIELD(n, s8, 0xCB0));
+                FIELD(n, u8, 0xCB0) = area;
+            }
+            FIELD(n, f32, 0x170) += func_0067DAF0(FIELD(n, u8, 0xCB0));
+            n->unk54A |= 1;
+        } else {
+            if ((n->unkBA0 & 0x4000) && !(n->unk54A & 2)) {
+                func_0067D7C0(-1, FIELD(n, s8, 0xCB0));
+                FIELD(n, u8, 0xCB0) = 0;
+            }
+            n->unkBA0 &= ~0x4000;
+        }
+        FIELD(n, s8, 0x102A) = 0;
+        FIELD(n, s8, 0x1112) = 0;
+        FIELD(n, s8, 0x1113) = 0;
+        FIELD(n, s8, 0xC53) = 0;
+        n = n->next;
+    }
+}
+#endif
