@@ -354,3 +354,18 @@ void func_0065ACF0(void) {
         }
     }
 }
+
+/* Threads 1-3 and 5 start on the built-in idle scripts. */
+extern u32 D_006E34F0[];
+
+void func_0065A620(void) {
+    D_0048BE70.wait[1] = 0;
+    D_0048BE70.wait[2] = 0;
+    D_0048BE70.pc[1] = D_006E34F0;
+    D_0048BE70.pc[5] = (u32 *)D_0023AD18;
+    D_00306590.unk29 = 1;
+    D_0048BE70.pc[2] = D_006E34F0;
+    D_0048BE70.pc[3] = D_006E34F0;
+    D_0048BE70.wait[3] = 0;
+    D_0048BE70.wait[5] = 0;
+}

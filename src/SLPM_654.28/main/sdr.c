@@ -181,6 +181,19 @@ void func_001AC860(void) {
     }
 }
 
+/* Closes the streamed file (unk104) and clears the stream state. */
+extern s32 D_00295C44[];
+s32 ADXF_Close(s32 adxf);
+
+void func_001AC9F0(void) {
+    u8 *p = D_00295B40;
+
+    if (D_00295C44[0] != 0) {
+        ADXF_Close(*(s32 *)(p + 0x104));
+    }
+    func_001AC860();
+}
+
 /* Sound command queue: 32 slots, a slot is free while its first word is negative. A command word
    is (opcode << 24) | 24-bit argument. */
 extern char D_00223D90[];   /* "SDR: SdrSeMasterVol: Warning: sndque overflow!\n" */

@@ -440,3 +440,99 @@ void func_001A9DA0(const char *name, Slot1468 *m, s32 id, u32 flags) {
     }
 }
 #endif
+
+/* Reads file fid of the partition into buf. */
+void func_001A9380(RoomPart *pt, s32 fid, void *buf) {
+    s32 online = func_001A8AD0(7, 1);
+
+    while ((D_0023BB04 = ADXF_OpenAfs(pt->ptid, fid)) == NULL) {
+    }
+    ADXF_ReadNw(D_0023BB04, ADXF_GetFsizeSct(D_0023BB04), buf);
+    while (ADXF_GetStat(D_0023BB04) != 3) {
+        if (online == 1) {
+            func_001AEF20();
+        }
+    }
+    ADXF_Close(D_0023BB04);
+    D_0023BB04 = NULL;
+}
+
+/* The room's geometry (R%03d%02d%02d.NBD): its textures (files of the room's archive, ids
+   0x1800 + 0x80 * the double buffer), model (D_004700F0) and its object model (D_0038E774,
+   textures 0x2100 + 0x30 * the buffer). */
+typedef struct {
+    s32 unk0;
+    s32 tex;            /* 0x04: {count, count file ids} */
+    s32 unk8[3];
+    s32 model;          /* 0x14 */
+    s32 unk18[3];
+    s32 motion;         /* 0x24 */
+    s32 unk28[3];
+    s32 objModel;       /* 0x34 */
+    s32 unk38[3];
+    s32 objMotion;      /* 0x44 */
+    s32 unk48[2];
+} RoomNbdHeader;
+
+extern char D_0022ED40[];   /* "R%03d%02d%02d.NBD" */
+extern u8 D_0023BE2C;           /* the room texture buffer in use (0/1) */
+extern Slot1468 D_004700F0;     /* (Room + 0x60) */
+extern u8 D_00470090[];         /* Room */
+extern Slot1468 D_0038E774;
+void func_001AE9C0(s32 cmd, u32 arg);
+u8 *func_001B1AD0(s32 count, s32 owner);
+
+void func_001A97A0(u8 room, u8 a, u8 b);
+#ifdef NON_MATCHING   /* first draft */
+void func_001A97A0(u8 room, u8 a, u8 b) {
+    char name[0x100];
+    RoomNbdHeader hdr;
+    u8 *buf = D_003065DC;
+    u8 *packed;
+    u8 *out;
+    s32 *list;
+    s32 n;
+    s32 id;
+    s32 i;
+
+    sprintf(name, D_0022ED40, room, a, b);
+    if (func_001A96E0(name, buf) <= 0) {
+        return;
+    }
+    memcpy(&hdr, buf, sizeof(hdr));
+    packed = D_003065DC + 0x180000;
+    D_0023BE2C ^= 1;
+    out = packed + 0xC0000;
+    list = (s32 *)(buf + hdr.tex);
+    n = *list++;
+    id = (D_0023BE2C << 7) + 0x1800;
+    for (i = 0; i < n; i++) {
+        func_001A9380(D_0023BB00, *list++, packed);
+        func_001AE810(packed, out);
+        func_001D0250((u32)out, id);
+        id++;
+    }
+    func_0018D730();
+    func_001D0440((D_0023BE2C << 7) + 0x1800);
+    D_004700F0.buf = func_001B1AD0(0x80, 6);
+    D_004700F0.unk818 = NULL;
+    func_001D2720(&D_004700F0, 2, buf + hdr.model, buf + hdr.motion, 0);
+    func_0018D730();
+    for (i = 0; i < D_004700F0.nparts; i++) {
+        D_00470090[0x8A0 + i] = 1;
+    }
+    if (hdr.objModel != 0) {
+        func_001D0440(D_0023BE2C * 0x30 + 0x2100);
+        func_001AE9C0(0x15, 0);
+        func_001AE9C0(1, 0);
+        func_001AE9C0(0x12, 0);
+        func_001AE9C0(0x62, 0);
+        func_001AE9C0(0xC, 0);
+        func_001AE9C0(0x66, 1);
+        func_001AE9C0(2, 0);
+        D_0038E774.buf = func_001B1AD0(0x400, 7);
+        D_0038E774.unk818 = NULL;
+        func_001D2720(&D_0038E774, 2, buf + hdr.objModel, buf + hdr.objMotion, 0);
+    }
+}
+#endif

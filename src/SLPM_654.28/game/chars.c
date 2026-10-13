@@ -11,7 +11,10 @@ void func_001D0440(s32 base);
 /* The characters' models: D_0070E4D0's slots say which kind (and detail) each slot has. */
 
 typedef struct {
-    u8 unk0[4];
+    u8 room;            /* 0x00: the room (and its two sub-numbers) loaded */
+    u8 sub1;
+    u8 sub2;
+    u8 unk3;
     struct {
         u8 kind;        /* 0xFF: none */
         u8 high;
@@ -127,3 +130,41 @@ void func_00639100(DrawObjFull *obj) {
         }
     }
 }
+
+/* The room's geometry, when it isn't the one loaded. */
+extern u8 D_004700F0[];
+extern u8 D_0038E774[];
+void func_001B08C0(void *m);
+void func_001D5110(u8 room, u8 a, u8 b);
+void func_001D3C30(u8 room, u8 a, u8 b);
+void func_001D3E40(u8 room, u8 a, u8 b);
+void func_001A97A0(u8 room, u8 a, u8 b);
+void func_001D56F0(u8 room, u8 a, u8 b);
+
+void func_005BB2D0(u8 room, u8 a, u8 b);
+#ifdef NON_MATCHING   /* first draft */
+void func_005BB2D0(u8 room, u8 a, u8 b) {
+    if (D_0070E4D0.room != room || D_0070E4D0.sub1 != a || D_0070E4D0.sub2 != b) {
+        func_001B08C0(D_004700F0);
+        func_001B08C0(D_0038E774);
+        func_001D0300(0x1800, 0x800);
+        func_0018D730();
+        D_0070E4D0.room = room;
+        D_0070E4D0.sub1 = a;
+        D_0070E4D0.sub2 = b;
+        if (D_00306590.unk17 == 0) {
+            func_001D5110(room, a, b);
+            func_0018D730();
+            func_001D3C30(room, a, b);
+            func_0018D730();
+            func_001D3E40(room, a, b);
+            func_0018D730();
+        } else {
+            func_001A97A0(room, a, b);
+            func_001D3E40(room, a, b);
+            func_0018D730();
+        }
+        func_001D56F0(room, a, b);
+    }
+}
+#endif

@@ -243,3 +243,196 @@ void func_001D3D30(u8 room) {
 }
 #endif
 
+
+/* The room's geometry: loose files (textures first, buffered 0/1). */
+extern u8 D_0023BE2C;           /* the room texture buffer in use (0/1) */
+extern Slot1468 D_004700F0;     /* (Room + 0x60) */
+extern u8 D_00470090[];         /* Room */
+extern Slot1468 D_0038E774;
+void func_001A97A0(u8 room, u8 a, u8 b);
+
+void func_001D5110(u8 room, u8 a, u8 b) {
+    u8 old;
+
+    if (D_00306590.unk17 == 0) {
+        old = D_0023BE2C;
+        D_0023BE2C = old ^ 1;
+        func_001D1010((room << 16) | (a << 8) | b, (D_0023BE2C << 7) + 0x1800);
+    }
+}
+
+void func_001D3C30(u8 room, u8 a, u8 b);
+#ifdef NON_MATCHING   /* first draft */
+void func_001D3C30(u8 room, u8 a, u8 b) {
+    s32 i;
+
+    if (D_00306590.unk17 != 0) {
+        func_001A97A0(D_00306590.unk1A, D_00306590.unk1C, D_00306590.unk1E);
+        return;
+    }
+    func_001D0440((D_0023BE2C << 7) + 0x1800);
+    D_004700F0.buf = func_001B1AD0(0x80, 6);
+    D_004700F0.unk818 = NULL;
+    func_001D1310((room << 16) | (a << 8) | b, -1, &D_004700F0, 2);
+    for (i = 0; i < D_004700F0.nparts; i++) {
+        D_00470090[0x8A0 + i] = 1;
+    }
+}
+#endif
+
+/* The room's effects (e%03d%02d%02d.bin): {n1, n1 * 8 bytes} {n2, n2 * 12} {n3, n3 * 0x30} and
+   the rest for func_0055FB60; the object model (D_0038E774) draws them. */
+typedef struct {
+    u8 unk0[0x18];
+    Slot1468 *model;    /* 0x18 */
+    u8 unk1C[4];
+    s32 n1;             /* 0x20 */
+    s32 n3;             /* 0x24 */
+    s32 n2;             /* 0x28 */
+} RoomEffects;
+
+extern RoomEffects D_0036397C;
+extern Slot1468 *D_00363994;    /* (D_0036397C.model) */
+extern u8 D_00363910[];
+extern u8 D_003632F0[];
+extern u8 D_00363310[];
+extern u8 D_0037B9B0[];
+extern char *D_0023A0F8;
+extern char D_00238230[];   /* "%sr%03d\\e%03d%02d%02d.bin" */
+extern char D_00238250[];   /* "e%03d%02d%02d.bin" */
+extern char D_00238270[];   /* "ROOM EFFECT OVER!! (num %d)" */
+extern char D_00238290[];   /* "ROOM EFFECT OVER!! (size %x)" */
+extern char D_002382B0[];   /* "    ARE U OK?" */
+extern char D_002382C0[];   /* "   PUSH START" */
+extern s16 D_0023BB98;          /* debug checks */
+extern u32 D_003064D0[];        /* (pad 1: buttons) */
+s32 func_001A96E0(const char *name, void *buf);
+void func_001AF820(void);
+void func_001AE8E0(s32 a);
+void func_001B26D0(s32 x, s32 y, s32 color, s32 a, const char *fmt, ...);
+void func_001B9140(s32 a);
+void func_0055FB60(void *data, RoomEffects *fx, u8 *out);
+
+void func_001D3E40(u8 room, u8 a, u8 b);
+#ifdef NON_MATCHING   /* first draft */
+void func_001D3E40(u8 room, u8 a, u8 b) {
+    char name[0x100];
+    s32 *p;
+    u32 size;
+    s32 n1;
+    s32 n3;
+
+    func_001D0440(D_0023BE2C * 0x30 + 0x2100);
+    func_001AE9C0(0x15, 0);
+    func_001AE9C0(1, 0);
+    func_001AE9C0(0x12, 0);
+    func_001AE9C0(0x62, 0);
+    func_001AE9C0(0xC, 0);
+    func_001AE9C0(0x66, 1);
+    func_001AE9C0(2, 0);
+    if (D_00306590.unk17 == 0) {
+        D_0038E774.buf = func_001B1AD0(0x400, 7);
+        D_0038E774.unk818 = NULL;
+        func_001D1310((room << 16) | (a << 8) | b, -1, &D_0038E774, 2);
+    }
+    D_00363994 = &D_0038E774;
+    D_0036397C.model = &D_0038E774;
+    D_0036397C.n1 = 0;
+    p = (s32 *)(D_003065DC + 0x200000);
+    D_0036397C.n3 = 0;
+    D_0036397C.n2 = 0;
+    memset(name, 0, sizeof(name));
+    if (D_00306590.unk17 == 0) {
+        sprintf(name, D_00238230, D_0023A0F8, D_00306590.unk1A, D_00306590.unk1A, D_00306590.unk1C,
+                D_00306590.unk1E);
+        size = func_001CFBB0(name, p, 1, 0);
+    } else {
+        sprintf(name, D_00238250, D_00306590.unk1A, D_00306590.unk1C, D_00306590.unk1E);
+        size = func_001A96E0(name, p);
+    }
+    if (size == 0) {
+        return;
+    }
+    n1 = *p++;
+    memcpy(D_00363910, p, n1 * 8);
+    p = (s32 *)((u8 *)p + ((n1 * 8) & ~3));
+    D_0036397C.n2 = *p++;
+    memcpy(D_003632F0, p, D_0036397C.n2 * 12);
+    p = (s32 *)((u8 *)p + ((D_0036397C.n2 * 12) & ~3));
+    n3 = *p++;
+    if (D_0023BB98 != 0) {
+        if (n3 > 0x20 || size > 0x8000) {
+            while (!(D_003064D0[0] & 0x8000)) {
+                func_001AF820();
+                func_001AE8E0(1);
+                if (n3 > 0x20) {
+                    func_001B26D0(0xD, 0xA, 2, -1, D_00238270, n3);
+                } else {
+                    func_001B26D0(0xD, 0xA, 2, -1, D_00238290, size);
+                }
+                func_001B26D0(0xD, 0xB, 2, -1, D_002382B0);
+                func_001B26D0(0xD, 0xD, 2, -1, D_002382C0);
+                func_001B9140(1);
+            }
+        }
+        func_001AE8E0(0);
+    }
+    memcpy(D_00363310, p, n3 * 0x30);
+    func_0055FB60((u8 *)p + ((n3 * 0x30) & ~3), &D_0036397C, D_0037B9B0);
+    D_0036397C.n1 = n1;
+    D_0036397C.n3 = n3;
+}
+#endif
+
+/* The room's hit data (w%03d%02d%02d.bin walls, g... ground); 1 and 2 say which loaded. */
+extern char D_002380C0[];   /* "%03d%02d%02d.bin" */
+extern char D_002380E0[];   /* "DATA\\ROM\\MODEL\\ST_HIT\\r%03d\\w%s" */
+extern char D_00238100[];   /* "w%s" */
+extern char D_00238110[];   /* "DATA\\ROM\\MODEL\\ST_HIT\\r%03d\\g%s" */
+extern char D_00238130[];   /* "g%s" */
+extern u8 *D_003065FC;          /* (Options) */
+void func_005E4E00(u8 *walls);
+void func_005E4F30(u8 *ground);
+
+s32 func_001D15D0(u8 room, u8 a, u8 b);
+#ifdef NON_MATCHING   /* first draft */
+s32 func_001D15D0(u8 room, u8 a, u8 b) {
+    char id[0x100];
+    char name[0x100];
+    s32 r = 0;
+    u8 *buf = D_003065FC;
+    u32 off = 0;
+    s32 n;
+
+    sprintf(id, D_002380C0, room, a, b);
+    if (D_00306590.unk17 == 0) {
+        sprintf(name, D_002380E0, room, id);
+        n = func_001CFBB0(name, buf, 1, 0);
+    } else {
+        sprintf(name, D_00238100, id);
+        n = func_001A96E0(name, buf);
+    }
+    if (n > 0) {
+        off = (n + 0x3F) & ~0x3F;
+        func_005E4E00(buf);
+        r = 1;
+    }
+    buf += off;
+    if (D_00306590.unk17 == 0) {
+        sprintf(name, D_00238110, room, id);
+        n = func_001CFBB0(name, buf, 1, 0);
+    } else {
+        sprintf(name, D_00238130, id);
+        n = func_001A96E0(name, buf);
+    }
+    if (n > 0) {
+        func_005E4F30(buf);
+        r += 2;
+    }
+    return r;
+}
+#endif
+
+void func_001D56F0(u8 room, u8 a, u8 b) {
+    func_001D15D0(room, a, b);
+}
