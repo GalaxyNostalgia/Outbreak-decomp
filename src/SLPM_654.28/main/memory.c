@@ -217,3 +217,34 @@ s32 func_00191F50(s32 handle) {
     func_0018D710(handle);
     return 1;
 }
+
+/* A copy of a decoded motion (tmp->data, data->size bytes) in movable memory; its handle. */
+typedef struct {
+    u8 unk0[0x18];
+    u32 size;           /* 0x18 */
+} MotionData;
+
+typedef struct {
+    u8 unk0[0x14];
+    MotionData *data;   /* 0x14 */
+} MotionTmp;
+
+s32 func_0018D6D0(u32 size, s32 unused);
+
+s32 func_00191ED0(MotionTmp *tmp) {
+    MotionData *d = tmp->data;
+    s32 h = func_0018D6D0(d->size, 4);
+    u32 *dst = (u32 *)func_0018D720(h);
+    u32 i;
+    u32 *src = (u32 *)d;
+
+    for (i = 0; i < d->size >> 2; i++) {
+        *dst++ = *src++;
+    }
+    return h;
+}
+
+s32 func_00191F70(s32 handle) {
+    func_0018D710(handle);
+    return 1;
+}

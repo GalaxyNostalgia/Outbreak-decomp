@@ -354,3 +354,89 @@ void func_001A9A10(s32 slot, DrawObjFull *obj) {
     }
 }
 #endif
+
+/* A model file (*.NBD) by name (from the room's archive with 0x10000 in flags, else COMMON\ in
+   ROMDATA.AFS), or with no name the one texture id's list names; textures from id on. */
+extern char D_0022EDD8[];   /* ".NBD" */
+extern char D_0022EDE0[];   /* "%s.NBD" */
+extern char D_0022EDE8[];   /* "%s%s.NBD" */
+s32 func_001D0450(void);
+char *func_001D0960(s32 id, u32 arg, s32 kind, s32 alt);
+s32 func_001A96E0(const char *name, void *buf);
+char *strcpy(char *dst, const char *src);
+char *strcat(char *dst, const char *src);
+char *strrchr(const char *s, s32 c);
+
+void func_001A9DA0(const char *name, Slot1468 *m, s32 id, u32 flags);
+#ifdef NON_MATCHING   /* first draft */
+void func_001A9DA0(const char *name, Slot1468 *m, s32 id, u32 flags) {
+    char path[0x100];
+    NbdHeader hdr;
+    u8 *buf = D_003065DC;
+    u8 *p;
+    u8 *out;
+    char *s;
+    s32 size;
+    s32 n;
+    s32 i;
+
+    if (name != NULL) {
+        if (id == -1) {
+            return;
+        }
+        if (flags & 0x10000) {
+            sprintf(path, D_0022EDE0, name, name);
+            n = func_001A96E0(path, buf);
+        } else {
+            sprintf(path, D_0022EDE8, D_0022ED70, name);
+            n = func_001A9780(path, buf);
+        }
+        if (n <= 0) {
+            return;
+        }
+    } else {
+        n = id;
+        id = func_001D0450();
+        if (id == -1) {
+            return;
+        }
+        s = func_001D0960(id, n, 0, 0);
+        if (s == NULL || strlen(s) == 0) {
+            return;
+        }
+        s = strrchr(s, '\\\\');
+        if (s == NULL) {
+            return;
+        }
+        strcpy(path, s + 1);
+        s = strrchr(path, '.');
+        if (s != NULL) {
+            *s = 0;
+        }
+        strcat(path, D_0022EDD8);
+        path[0x10] = 0;
+        if (func_001A96E0(path, buf) <= 0) {
+            return;
+        }
+    }
+    memcpy(&hdr, buf, 0x30);
+    func_001D0440(id);
+    if (hdr.tex == 0) {
+        return;
+    }
+    p = buf + hdr.tex;
+    out = D_003065DC + 0x180000;
+    for (i = 0; i < hdr.ntex; i++) {
+        size = *(s32 *)p;
+        func_001AE810(p + 4, out);
+        func_001D0250((u32)out, id);
+        id++;
+        p = p + 4 + size;
+    }
+    func_0018D730();
+    if (hdr.model != 0 && hdr.motion != 0) {
+        func_001D2720(m, flags & 0x7FFFFFFF, buf + hdr.model, buf + hdr.motion, 0);
+        func_0018D730();
+    }
+}
+#endif

@@ -907,3 +907,7 @@ s32 func_001D0250(u32 tim, s32 id) {
     t = func_001CFE20(id, tim);
     return t->tex;
 }
+
+s32 func_001D0450(void) {
+    return D_0023A0C4;
+}

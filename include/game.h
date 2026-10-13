@@ -28,7 +28,9 @@ typedef struct {
     s8 unk3A;           /* 0x3A */
     u8 unk3B;           /* 0x3B */
     s8 unk3C;           /* 0x3C: a movie is playing */
-    u8 unk3D[0x54 - 0x3D];
+    u8 unk3D[2];
+    u8 unk3F;           /* 0x3F: the player motions are loaded */
+    u8 unk40[0x54 - 0x40];
     s32 bgm[3];         /* 0x54: the music on each ADX stream (main's options.c) */
     u8 unk60[2];
     s8 unk62;           /* 0x62: offline */

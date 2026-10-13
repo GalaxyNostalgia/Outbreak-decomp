@@ -166,3 +166,11 @@ u8 *func_001B1AD0(s32 count, s32 owner) {
     return p;
 }
 #endif
+
+extern s16 D_0048B9B8[];
+extern s16 D_0048B9BA[];
+
+void func_001B1D40(void) {
+    D_0048B9B8[0] = 0;
+    D_0048B9BA[0] = 0;
+}

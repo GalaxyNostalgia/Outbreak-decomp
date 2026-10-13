@@ -134,3 +134,112 @@ s32 func_001D2720(Slot1468 *m, s32 mode, void *model, void *motion, s32 a) {
     func_001D11E0(D_0023A0C4, m, motion);
     return 3;
 }
+
+/* Left empty in the release. */
+void func_001D4E00(u8 kind) {
+}
+
+/* The room's effects model (ef%02d, textures 0x2000) and its effect table (efdata%02d.bin). */
+typedef struct {
+    u8 unk0[0x18];
+    Slot1468 *model;    /* 0x18 */
+    u8 *unk1C;          /* 0x1C: -> unk460 */
+    s32 unk20;
+    s32 unk24;
+    u8 unk28[0x60 - 0x28];
+    u8 data[0x400];     /* 0x60 */
+    u8 unk460[4];
+} EffectData;
+
+extern EffectData D_00363950;
+extern Slot1468 D_00389750;
+extern Slot1468 D_0039A3D0;
+extern char D_002382D0[];   /* "ef%02d" */
+extern char D_002382E0[];   /* "data\\rom\\etc\\efdata%02d.bin" */
+extern char D_00238300[];   /* "efdata%02d.bin" */
+extern char D_00238218[];   /* "objS%02d" */
+extern u8 *D_003065DC;
+void func_001A9DA0(const char *name, Slot1468 *m, s32 id, u32 flags);
+s32 func_001CFBB0(const char *name, void *buf, s32 flags, s32 unused);
+s32 sprintf(char *dst, const char *fmt, ...);
+void *memset(void *p, s32 c, u32 n);
+void *memcpy(void *dst, const void *src, u32 n);
+
+void func_001D41F0(void);
+void func_001D3D30(u8 room);
+#ifdef NON_MATCHING   /* first draft */
+void func_001D41F0(void) {
+    char name[0x100];
+    u8 *buf;
+    s32 n;
+
+    func_001D0440(0x2000);
+    func_001AE9C0(0x15, 2);
+    func_001AE9C0(1, 0);
+    func_001AE9C0(0x12, 0);
+    func_001AE9C0(0x62, 1);
+    func_001AE9C0(0xC, 0);
+    func_001AE9C0(0x66, 0);
+    func_001AE9C0(2, 0);
+    func_001AE9C0(0x12, 0);
+    func_001AE9C0(0, 0);
+    D_00389750.buf = func_001B1AD0(0x400, 4);
+    D_00389750.unk818 = NULL;
+    if (D_00306590.unk17 == 0) {
+        func_001D1310(D_00306590.unk1A, -1, &D_00389750, 2);
+    } else {
+        memset(name, 0, 0x20);
+        sprintf(name, D_002382D0, D_00306590.unk1A);
+        func_001A9DA0(name, &D_00389750, 0x2000, 0x10002);
+    }
+    D_00363950.unk20 = 0;
+    D_00363950.unk24 = 0;
+    D_00363950.model = &D_00389750;
+    buf = D_003065DC + 0x2FF000;
+    memset(name, 0, 0x20);
+    sprintf(name, D_002382E0, D_00306590.unk1A);
+    if (D_00306590.unk17 != 0) {
+        sprintf(name, D_00238300, D_00306590.unk1A);
+    }
+    n = func_001CFBB0(name, buf, 0x10001, 0);
+    if (n != 0) {
+        memcpy(D_00363950.data, buf, n);
+        D_00363950.unk1C = D_00363950.unk460;
+    }
+}
+#endif
+
+/* The room's "ST" textures (loose files only). */
+void func_001D5600(u16 room) {
+    if (D_00306590.unk17 == 0) {
+        func_001D1010(room << 16, 0x2A00);
+    }
+}
+
+/* The room's object model (objS%02d, textures 0x2A00). */
+void func_001D3D30(u8 room);
+#ifdef NON_MATCHING   /* first draft */
+void func_001D3D30(u8 room) {
+    char name[0x100];
+    Slot1468 *m = &D_0039A3D0;
+
+    func_001D0440(0x2A00);
+    func_001AE9C0(0x15, 2);
+    func_001AE9C0(1, 0x800);
+    func_001AE9C0(0x12, 0x8000);
+    func_001AE9C0(0xC, 0);
+    func_001AE9C0(0x66, 1);
+    func_001AE9C0(0x62, 1);
+    func_001AE9C0(0, 0x20);
+    func_001AE9C0(2, 0);
+    m->buf = func_001B1AD0(0x240, 8);
+    m->unk818 = NULL;
+    if (D_00306590.unk17 == 0) {
+        func_001D1310(room << 16, -1, m, 3);
+        return;
+    }
+    sprintf(name, D_00238218, room);
+    func_001A9DA0(name, m, 0x2A00, 0x10003);
+}
+#endif
+

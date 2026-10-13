@@ -298,3 +298,47 @@ void func_001B1320(s8 *held) {
     }
     *held = 0;
 }
+
+/* Motion sets: per character D_004A8180[8], the player's D_004B9AF0 and the shared D_004B7BA0. */
+#include "motion.h"
+
+s32 func_00191F70(s32 handle);
+
+/* Frees anims first..first+n-1. */
+void func_001B0BE0(u16 *anims, s32 first, s32 n) {
+    s32 end = first + n;
+
+    for (; first < end; first++) {
+        if (anims[first] != 0) {
+            func_00191F70(anims[first]);
+            anims[first] = 0;
+        }
+    }
+}
+
+extern MotionRange D_00216910[];
+
+void func_001B0CC0(MotionSet *set, u8 mode) {
+    memset(&set->index[D_00216910[mode].index], 0, D_00216910[mode].nindex * 2);
+    func_001B0BE0(set->anims, D_00216910[mode].anim, D_00216910[mode].nanim);
+}
+
+void func_001B0D50(u8 mode) {
+    MotionSet *set;
+    s32 i;
+
+    func_001B0CC0((MotionSet *)D_004B9AF0, mode);
+    func_001B0CC0((MotionSet *)D_004B7BA0, mode);
+    for (i = 0; i < 8; i++) {
+        set = (MotionSet *)D_004A8180[i];
+        func_001B0CC0(set, mode);
+        if (mode == 1) {
+            func_001B0CC0(set, 0);
+        }
+    }
+}
+
+void func_001B0E90(void) {
+    func_001B0D50(0);
+    D_0048BF60.unk3F = 0;
+}
