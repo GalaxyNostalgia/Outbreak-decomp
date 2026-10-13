@@ -471,3 +471,195 @@ void func_005D2A90(void) {
     }
 }
 #endif
+
+/* After the event: the pools are reset and each character gets its player's id (offline, all of
+   them get ours); Options.unk1E is the table entry for our id. */
+#include "object.h"
+
+extern s16 D_0023BB98;
+typedef struct {
+    u8 unk0[0x280];
+    u8 players[4][3];   /* 0x280: (byte 1) the player's id */
+} ScenePlayers;
+
+extern ScenePlayers D_0048AC10;
+extern u8 D_0048AEB0[];
+extern DrawObjFull D_00476DD0[];
+
+void func_005D2F00(void) {
+    s32 i;
+    u8 id;
+
+    func_005A74C0();
+    func_006200C0();
+    func_005BA9D0();
+    if (D_0023BB98 == 0) {
+        id = D_0048AC10.players[D_0048BF60.unk1D][1];
+        if (id != 0) {
+            D_00306590.unk1C = id;
+            for (i = 3; i >= 0; i--) {
+                D_00476DD0[i].unk1E2 = D_0048AC10.players[i][1];
+            }
+        } else {
+            for (i = 3; i >= 0; i--) {
+                D_00476DD0[i].unk1E2 = D_00306590.unk1C;
+            }
+        }
+    }
+    D_00306590.unk1E = D_0048AEB0[D_00306590.unk1C];
+}
+
+/* After an event: everything in the room is set up again (the characters, the scenario's
+   tables, the script's routine 1, the enemies...). */
+void func_001AB8E0(void);
+void func_001B8AC0(s32 player, u8 kind);
+void func_001AE8E0(s32 a);
+void func_005BB840(void);
+void func_005BA7D0(void);
+void func_005BA810(void);
+void func_001D6BA0(DrawObjFull *obj);
+void func_001D6DD0(DrawObjFull *obj);
+void func_001AFBB0(void);
+void func_00639180(void);
+void func_00561870(void);
+void func_0067B2C0(void);
+void func_001D7720(void);
+void func_00688640(void);
+void func_001D6FC0(void);
+void func_0065A9A0(void);
+void func_001D7090(void);
+void func_00574B40(void);
+void func_001D7150(void);
+void func_001D76A0(void);
+void func_001D7B10(void);
+void func_001D0300(s32 a, s32 b);
+void func_001D5200(void);
+void func_0018D730(void);
+void func_006AB120(void);
+void func_006B9A00(void);
+void func_0060DE80(void);
+
+void func_005BA9D0(void) {
+    s32 i;
+    DrawObjFull *obj;
+
+    D_00306590.unk10[2] = 2;
+    func_001AB8E0();
+    for (i = 0, obj = D_00476DD0; i < (s32)D_0023BE14; i++, obj++) {
+        func_001B8AC0(i, obj->unkB98);
+    }
+    func_001AE8E0(0);
+    func_005BB840();
+    for (i = 0, obj = D_00476DD0; i < (s32)D_0023BE14; i++, obj++) {
+        obj->kind = i;
+    }
+    func_005BA7D0();
+    func_005BA810();
+    for (i = 0, obj = D_00476DD0; i < (s32)D_0023BE14; i++, obj++) {
+        func_001D6BA0(obj);
+        func_001D6DD0(obj);
+    }
+    func_001AFBB0();
+    func_00639180();
+    func_00561870();
+    func_0067B2C0();
+    func_001D7720();
+    func_00688640();
+    func_001D6FC0();
+    func_0065A9A0();
+    func_001D7090();
+    func_00574B40();
+    func_001D7150();
+    func_001D76A0();
+    func_001D7B10();
+    func_001D0300(0x2600, 2);
+    func_001D5200();
+    func_0018D730();
+    func_006AB120();
+    func_006B9A00();
+    func_0060DE80();
+    func_001AB8E0();
+    D_00306590.unk10[2] = 0;
+    D_00306590.unk3E = 0;
+}
+
+void func_001AF710(void);
+
+void func_005BB840(void) {
+    if (D_00306590.unk3E == 0) {
+        func_001AF710();
+        D_00306590.unk3E = 1;
+    }
+}
+
+void func_001D5640(void);
+void func_001D56A0(void);
+
+void func_005BA7D0(void) {
+    func_0018D730();
+    func_001D5640();
+    func_001D56A0();
+    func_0018D730();
+}
+
+/* The characters' player ids (offline, from the tables at D_006D8630) and the room's data. */
+extern u8 *D_006D8630[];
+extern u8 D_002F88D0[];
+s32 func_001AF510(void);
+void func_005BB5A0(s32 i, DrawObjFull *obj);
+s32 func_00347340(DrawObjFull *obj, s32 a, u8 kind);
+void func_00347580(DrawObjFull *obj, u8 kind);
+void func_001D4C40(void);
+void func_001D4E10(u8 room);
+void func_001D41F0(void);
+void func_001D5600(u16 room);
+void func_001D3D30(u8 room);
+
+#ifdef NON_MATCHING   /* first draft: register allocation and the ids sum's order */
+void func_005BA810(void) {
+    s32 mode = D_0048BF60.unk20[D_0048BF60.unk27];
+    u8 *ids;
+    DrawObjFull *obj;
+    s32 i;
+
+    if (func_001AF510() == 0) {
+        ids = D_006D8630[mode] + 1;
+    }
+    for (i = 0, obj = D_00476DD0; i < (s32)D_0023BE14; i++, obj++) {
+        func_005BB5A0(i, obj);
+        if (D_00306590.unk17 == 0 && func_00347340(obj, 0, obj->unkB98) != 0) {
+            func_00347580(obj, obj->kind);
+        }
+        if (func_001AF510() == 1) {
+            func_001AF500();
+            if (mode == 3) {
+                ids = D_006D8630[mode] + (D_00476DD0[i].unkB98 & 1) * 4 + 1;
+            } else {
+                ids = D_006D8630[mode] + i * 4 + 1;
+            }
+        }
+        if (D_002F88D0[0] == 0) {
+            obj->unk1E2 = *ids;
+        }
+    }
+    func_0018D730();
+    func_001D4C40();
+    func_001D4E10(D_00306590.unk1A);
+    func_0018D730();
+    func_001D41F0();
+    func_0018D730();
+    func_001D5600(D_00306590.unk1A);
+    func_001D3D30(D_00306590.unk1A);
+    func_0018D730();
+}
+#endif
+
+void func_00639100(DrawObjFull *obj);
+
+void func_00639180(void) {
+    u32 i;
+
+    for (i = 0; i < D_0023BE14; i++) {
+        func_00639100(&D_00476DD0[i]);
+    }
+}

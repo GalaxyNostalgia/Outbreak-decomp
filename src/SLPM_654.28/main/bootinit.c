@@ -123,6 +123,7 @@ struct TexSlot {
 };
 
 extern TexSlot D_00321590[0x100];
+TexSlot *func_001CFE20(s32 id, u32 addr);
 extern u8 D_0023BE2C;
 
 /* Texture ids 0x2100-0x23FF are per player (0x30 each) and map to 0x1800 + 0x80 per player. */
@@ -188,6 +189,20 @@ void func_001CFD60(TexSlot *t) {
             memset(t, 0, sizeof(TexSlot));
         }
     }
+}
+
+/* The loaded texture with this id, with one more reference; NULL when it isn't loaded. */
+static TexSlot *func_001CFDC0(s32 id) {
+    TexSlot *t = D_00321590;
+    s32 i;
+
+    for (i = 0; i < 0x100; i++, t++) {
+        if (t->tex != 0 && t->id == id) {
+            t->refs++;
+            return t;
+        }
+    }
+    return NULL;
 }
 
 s32 func_0018D8C0(void *tim, u32 owner);
@@ -441,4 +456,436 @@ extern char D_00238190[];   /* "data\rom\scene\item_msg\evelist.dat" */
 s32 func_001D3500(u32 addr) {
     D_00306650[0] = addr;
     return func_001CFBB0(D_00238190, (void *)addr, 1, 0);
+}
+
+/* A movie texture (w x h, from SUBMAIN's func_0034A380) as texture id. */
+s32 func_0034A380(s32 a);
+
+TexSlot *func_001CFF80(s32 id, s16 w, s16 h) {
+    TexSlot *t = func_001CFD10();
+
+    if (t == NULL) {
+        return NULL;
+    }
+    t->tex = func_0034A380(0);
+    if (t->tex != 0) {
+        t->id = id;
+        t->w = w;
+        t->h = h;
+        t->bpp = 4;
+        t->refs = 1;
+        return t;
+    }
+    func_001CFD60(t);
+    return NULL;
+}
+
+/* Loads a texture file as texture id (-1: the current base id) and returns its handle; when
+   it's loaded already it only gets another reference. mode (low 16 bits): 0 a TIM2 file, 1 the
+   same LZ packed (with 0x10000 in mode), 2 a TIM2 already in memory (name is its address), 3
+   and 4 a file whose id is its word 2 (these return the id). */
+extern u8 *D_0023BC7C;      /* the load buffer */
+
+#ifdef NON_MATCHING   /* the last if's loads are scheduled differently */
+s32 func_001D0020(const char *name, s32 id, s32 mode) {
+    TexSlot *t;
+    s32 *hdr;
+
+    if (mode < 3) {
+        if (id == -1) {
+            id = D_0023A0C4;
+            if (id == -1) {
+                return 0;
+            }
+        }
+        if ((t = func_001CFDC0(id)) != NULL) {
+            return t->tex;
+        }
+    }
+    switch (mode & 0xFFFF) {
+    case 0:
+        if (func_001CFBB0(name, D_0023BC7C, mode, 0) > 0) {
+            t = func_001CFE20(id, (u32)D_0023BC7C);
+        }
+        break;
+    case 1:
+        if (mode & 0x10000) {
+            if (func_001CFBB0(name, D_0023BC7C + 0x100000, mode, 0) <= 0) {
+                break;
+            }
+            func_001AE810((u16 *)(D_0023BC7C + 0x100000), (u16 *)D_0023BC7C);
+        } else if (func_001CFBB0(name, D_0023BC7C, mode, 0) <= 0) {
+            break;
+        }
+        t = func_001CFE20(id, (u32)D_0023BC7C);
+        break;
+    case 2:
+        t = func_001CFE20(id, (u32)name);
+        break;
+    case 3:
+        t = NULL;
+        if (func_001CFBB0(name, D_0023BC7C, mode, 0) > 0) {
+            hdr = (s32 *)D_0023BC7C + 2;
+            if ((t = func_001CFDC0(*hdr)) == NULL) {
+                t = func_001CFE20(*hdr, (u32)D_0023BC7C);
+            }
+        }
+        break;
+    case 4:
+        if (func_001CFBB0(name, D_0023BC7C, mode, 0) > 0) {
+            hdr = (s32 *)D_0023BC7C + 2;
+            if ((t = func_001CFDC0(*hdr)) == NULL) {
+                t = func_001CFE20(*hdr, (u32)D_0023BC7C);
+            }
+        }
+        break;
+    }
+    if (t == NULL) {
+        return 0;
+    }
+    if (mode >= 3) {
+        return t->id;
+    }
+    return t->tex;
+}
+#endif
+
+/* Texture file names, by texture id range (see func_001D0960); kind 0 is a texture (DATA\ROM\TEX\
+   ... .TEX), 1 a model (DATA\ROM\MODEL\...). */
+extern char *D_0023A0C8[2];
+extern char D_00320A50[];   /* the name */
+extern char D_00237F50[];   /* "%s%s%02d" */
+extern char D_00237F60[];   /* "%s%s%03d" */
+extern char D_00237F70[];   /* ".TEX" */
+extern char D_00237F78[];   /* "%s%s%02d_%02d" */
+extern char D_00237F88[];   /* "%s%s%03d_%02d" */
+extern char D_00237FA0[];   /* "%sST\R%03d\R%03d%02d%02d" */
+extern char D_00237FC0[];   /* "%sST\R%03d\E%03d%02d%02d" */
+extern char D_00237FE0[];   /* "%sEFFECT\ef%02d" */
+extern char D_00237FF0[];   /* "%sEFFECT\def%02d" */
+
+char *func_001D05C0(s32 kind, s32 n, const char *prefix) {
+    if (n < 100) {
+        sprintf(D_00320A50, D_00237F50, D_0023A0C8[kind], prefix, n);
+    } else {
+        sprintf(D_00320A50, D_00237F60, D_0023A0C8[kind], prefix, n);
+    }
+    if (kind == 0) {
+        strcat(D_00320A50, D_00237F70);
+    }
+    return D_00320A50;
+}
+
+char *func_001D0660(s32 kind, s32 n, s32 sub, const char *prefix) {
+    if (n & 0x8000) {
+        if ((n & ~0x8000) < 100) {
+            sprintf(D_00320A50, D_00237F50, D_0023A0C8[kind], prefix, n & 0x7FFF);
+        } else {
+            sprintf(D_00320A50, D_00237F60, D_0023A0C8[kind], prefix, n & 0x7FFF);
+        }
+    } else if (n < 100) {
+        sprintf(D_00320A50, D_00237F78, D_0023A0C8[kind], prefix, n, sub);
+    } else {
+        sprintf(D_00320A50, D_00237F88, D_0023A0C8[kind], prefix, n, sub);
+    }
+    if (kind == 0) {
+        strcat(D_00320A50, D_00237F70);
+    }
+    return D_00320A50;
+}
+
+/* The room's own textures. */
+char *func_001D0780(s32 kind) {
+    sprintf(D_00320A50, D_00237FA0, D_0023A0C8[kind], D_00306590.unk1A, D_00306590.unk1A,
+            D_00306590.unk1C, D_00306590.unk1E);
+    if (kind == 0) {
+        strcat(D_00320A50, D_00237F70);
+    }
+    return D_00320A50;
+}
+
+char *func_001D0800(s32 room, u32 n, s32 kind) {
+    sprintf(D_00320A50, D_00237FC0, D_0023A0C8[kind], room, room, (n >> 8) & 0xFF, n & 0xFF);
+    if (kind == 0) {
+        strcat(D_00320A50, D_00237F70);
+    }
+    return D_00320A50;
+}
+
+char *func_001D0880(s32 n, s32 kind) {
+    sprintf(D_00320A50, D_00237FE0, D_0023A0C8[kind], n);
+    if (kind == 0) {
+        strcat(D_00320A50, D_00237F70);
+    }
+    return D_00320A50;
+}
+
+char *func_001D08F0(s32 n, s32 kind) {
+    sprintf(D_00320A50, D_00237FF0, D_0023A0C8[kind], n);
+    if (kind == 0) {
+        strcat(D_00320A50, D_00237F70);
+    }
+    return D_00320A50;
+}
+
+extern char D_00238008[];   /* "NPC\LOW\N" */
+extern char D_00238018[];   /* "NPC\N" */
+extern char D_00238020[];   /* "PL\LOW\P" */
+extern char D_00238030[];   /* "PL\P" */
+extern char D_00238038[];   /* "PL\EP" */
+extern char D_00238040[];   /* "PL\HIGH\HP" */
+extern char D_00238050[];   /* "PL\HP" */
+extern char D_00238058[];   /* "NPC\HIGH\HN" */
+extern char D_00238068[];   /* "NPC\HN" */
+extern char *D_0023A080[1];
+extern char *D_0023A084[1];
+extern char *D_0023A088[1];
+extern char *D_0023A08C[1];
+extern char *D_0023A090[1];
+extern char *D_0023A094[1];
+extern char *D_0023A098[1];
+extern char *D_0023A09C[1];
+extern char *D_0023A0A0[1];
+extern char *D_0023A0A4[1];
+extern char *D_0023A0A8[1];
+extern char *D_0023A0AC[1];
+extern char *D_0023A0B0[1];
+extern char *D_0023A0B4[1];
+extern char *D_0023A0B8[1];
+extern char *D_0023A0BC[1];
+extern char *D_0023A0C0[1];
+extern char *D_002187F0[];
+extern char *D_00218A30[];
+extern char *D_00218AB0[];
+extern char *D_00218D20[];
+extern char D_00320B50[][0x40];
+extern char D_00320F50[][0x40];
+
+/* The file name for texture id (kind 0) or model (kind 1); arg is the id's argument (low 16
+   bits a number, high 16 bits a sub-number). */
+#ifdef NON_MATCHING   /* first draft: the range tests are laid out differently */
+char *func_001D0960(s32 id, u32 arg, s32 kind, s32 alt) {
+    u32 sub = (arg & 0xFFFF0000) >> 16;
+
+    if (id >= 0x100 && id < 0xFF0) {
+        if (kind == 0) {
+            return D_0023A09C[arg & 0xFFFF];
+        }
+        return D_0023A0C0[arg & 0xFFFF];
+    }
+    if (id >= 0x1000 && id < 0x1100) {
+        if (arg & 0x8000) {
+            if (kind == 0) {
+                return func_001D0660(kind, arg & 0xFFFF, sub, D_00238008);
+            }
+            return func_001D0660(kind, arg & 0xFFFF, sub, D_00238018);
+        }
+        if (kind == 0) {
+            return func_001D0660(kind, arg & 0xFFFF, sub, D_00238020);
+        }
+        if (alt == 0) {
+            return func_001D0660(kind, arg & 0xFFFF, sub, D_00238030);
+        }
+        return func_001D0660(kind, arg & 0xFFFF, sub, D_00238038);
+    }
+    if (id >= 0x1100 && id < 0x1200) {
+        if (kind == 0) {
+            return func_001D05C0(kind, arg & 0xFFFF, D_00238040);
+        }
+        return func_001D05C0(kind, arg & 0xFFFF, D_00238050);
+    }
+    if (id >= 0x1200 && id < 0x1300) {
+        if (kind == 0) {
+            return D_002187F0[arg & 0xFFFF];
+        }
+        return D_00218AB0[arg & 0xFFFF];
+    }
+    if (id >= 0x1300 && id < 0x1400) {
+        if (kind == 0) {
+            return D_00218A30[arg & 0xFFFF];
+        }
+        return D_00218D20[arg & 0xFFFF];
+    }
+    if (id >= 0x1400 && id < 0x1600) {
+        if (kind == 0) {
+            return func_001D05C0(kind, arg & 0xFFFF, D_00238008);
+        }
+        return func_001D05C0(kind, arg & 0xFFFF, D_00238018);
+    }
+    if (id >= 0x1600 && id < 0x1800) {
+        if (kind == 0) {
+            return func_001D05C0(kind, arg & 0xFFFF, D_00238058);
+        }
+        return func_001D05C0(kind, arg & 0xFFFF, D_00238068);
+    }
+    if (id >= 0x1800 && id < 0x2000) {
+        return func_001D0780(kind);
+    }
+    if (id >= 0x2100 && id < 0x2400) {
+        return func_001D0800(sub, arg & 0xFFFF, kind);
+    }
+    if (id >= 0x2000 && id < 0x2100) {
+        return func_001D0880(arg & 0xFFFF, kind);
+    }
+    if (id >= 0x2400 && id < 0x2500) {
+        return func_001D08F0(arg & 0xFFFF, kind);
+    }
+    if (id >= 0x2A00 && id < 0x3000) {
+        if (kind == 0) {
+            switch (sub) {
+            case 0:
+            case 1:
+                return D_0023A080[arg & 0xFFFF];
+            case 2:
+                return D_0023A084[arg & 0xFFFF];
+            case 24:
+                return D_0023A088[arg & 0xFFFF];
+            case 26:
+                return D_0023A08C[arg & 0xFFFF];
+            case 28:
+                return D_0023A090[arg & 0xFFFF];
+            case 35:
+                return D_0023A094[arg & 0xFFFF];
+            case 41:
+                return D_0023A098[arg & 0xFFFF];
+            default:
+                return D_0023A088[arg & 0xFFFF];
+            }
+        }
+        switch (sub) {
+        case 0:
+        case 1:
+            return D_0023A0A4[arg & 0xFFFF];
+        case 2:
+            return D_0023A0A8[arg & 0xFFFF];
+        case 24:
+            return D_0023A0AC[arg & 0xFFFF];
+        case 26:
+            return D_0023A0B0[arg & 0xFFFF];
+        case 28:
+            return D_0023A0B4[arg & 0xFFFF];
+        case 35:
+            return D_0023A0B8[arg & 0xFFFF];
+        case 41:
+            return D_0023A0BC[arg & 0xFFFF];
+        default:
+            return D_0023A0AC[arg & 0xFFFF];
+        }
+    }
+    if (id >= 0x3000 && id < 0x3100) {
+        if (kind == 0) {
+            return D_00320F50[arg & 0xFFFF];
+        }
+        return D_00320B50[arg & 0xFFFF];
+    }
+    if (id >= 0x2500 && id < 0x2510) {
+        return D_0023A0A0[arg & 0xFFFF];
+    }
+    return NULL;
+}
+#endif
+
+/* Movie textures: 0x40 for MOVIE64.TM2, 0x80 for MOVIE128.TM2, else -1. */
+extern char D_00238070[];   /* "MOVIE64.TM2" */
+extern char D_00238080[];   /* "MOVIE128.TM2" */
+
+s32 func_001D0FA0(const char *path) {
+    char name[0x100];
+
+    strcpy(name, strrchr(path, '\\') + 1);
+    strupr(name);
+    if (strcmp(name, D_00238070) == 0) {
+        return 0x40;
+    }
+    if (strcmp(name, D_00238080) == 0) {
+        return 0x80;
+    }
+    return -1;
+}
+
+/* Loads the textures a list file names (one per line, from func_001D0960(id, arg)) as ids
+   id, id + 1, ...; movie textures become placeholders. */
+extern char D_00238090[];   /* ".tm2" */
+
+#ifdef NON_MATCHING   /* first draft */
+void func_001D1010(u32 arg, s32 id) {
+    char dir[0x100];
+    char path[0x100];
+    char line[0x100];
+    char *list;
+    char *p;
+    char *s;
+    char *q;
+    s32 size;
+    s32 pos;
+    s32 movie;
+
+    if (id == -1) {
+        id = D_0023A0C4;
+        if (id == -1) {
+            return;
+        }
+    }
+    list = func_001D0960(id, arg, 0, 0);
+    if (list == NULL || strlen(list) == 0) {
+        return;
+    }
+    strcpy(dir, list);
+    strrchr(dir, '\\')[1] = 0;
+    s = (char *)D_0023BC7C;
+    size = func_001CFBB0(list, s, 1, 0);
+    pos = 0;
+    if (size == 0) {
+        return;
+    }
+    for (;;) {
+        strcpy(path, dir);
+        p = line;
+        for (;;) {
+            if (*s == '\n' || *s == 0) {
+                break;
+            }
+            pos++;
+            *p++ = *s++;
+            if (pos >= size) {
+                return;
+            }
+        }
+        *p = 0;
+        s++;
+        pos++;
+        q = strrchr(line, '.');
+        if (q != NULL || (q = strrchr(line, ',')) != NULL) {
+            *q = 0;
+        }
+        if (strlen(line) == 0) {
+            return;
+        }
+        q = strrchr(line, '/');
+        if (q != NULL) {
+            strcat(path, q + 1);
+        } else {
+            strcat(path, line);
+        }
+        strcat(path, D_00238090);
+        movie = func_001D0FA0(path);
+        if (movie < 0) {
+            func_001D0020(path, id, 1);
+        } else {
+            func_001CFF80(0xFF0, movie, movie);
+        }
+        id++;
+    }
+}
+#endif
+
+/* The room's textures (from the disc only). */
+void func_001D5640(void) {
+    if (D_00306590.unk17 == 0) {
+        func_001D1010(D_00306590.unk1A, 0x2000);
+    }
+}
+
+void func_001D56A0(void) {
+    func_001D1010(0, 0x2500);
 }

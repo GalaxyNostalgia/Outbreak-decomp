@@ -28,7 +28,7 @@ typedef struct {
     s8 unk17;           /* 0x17: files come from the hard disk */
     u8 unk18;
     u8 unk19;
-    u16 unk1A;
+    u16 unk1A;          /* 0x1A: the room (r%03d files) */
     u16 unk1C;
     u16 unk1E;
     u16 unk20;
@@ -52,7 +52,7 @@ typedef struct {
     u8 unk3A;
     s8 unk3B;           /* 0x3B: 1 or 2 while a game runs */
     u8 unk3C;
-    u8 unk3D;
+    u8 unk3D;           /* 0x3D: the "u" message files (r%03du.bin, English patch?) */
     u8 unk3E;
     u8 adxBusy;         /* 0x3F: an ADX stream is reading */
     u8 unk40[5];
@@ -63,13 +63,20 @@ typedef struct {
     s32 fontTbp;        /* 0x54: GS page for the font's glyphs */
     u8 unk58[0x64 - 0x58];
     u8 *script;         /* 0x64: the room script buffer (r%03d.evb) */
-    u8 unk68[0x84 - 0x68];
+    u8 unk68[0x7C - 0x68];
+    s32 *message;       /* 0x7C: the room's messages (r%03d.bin) */
+    u8 unk80[0x84 - 0x80];
     u8 *unk84;          /* 0x84: 0xA8 entries of 0x70 bytes */
     u8 unk88[0x8C - 0x88];
     u8 *roomBuf;        /* 0x8C */
-    u8 unk90[0xA0 - 0x90];
+    u8 unk90[0x98 - 0x90];
+    u8 *door;           /* 0x98: the room's door%03d.dat (0x4000 bytes) */
+    u8 unk9C[0xA0 - 0x9C];
     u8 *fontBuf;        /* 0xA0: where the font file is loaded */
-    u8 unkA4[0xB5 - 0xA4];
+    u8 *rtp;            /* 0xA4: the room's r%02d.rtp */
+    u8 *voice;          /* 0xA8: the players' voice partitions (0x10C0 bytes each) */
+    s8 *emSet;          /* 0xAC: the room's enemy placements (r%02d.epp) */
+    u8 unkB0[0xB5 - 0xB0];
     u8 unkB5;
 } Options;
 

@@ -519,3 +519,123 @@ void func_00689DF0(EnemySlot *s) {
     s->unk40 = r;
 }
 #endif
+
+/* The room's items, then (offline, with the start option's bit 0) the ones left alone get
+   unk24 = 1. */
+typedef struct {
+    s8 unk0;
+    u8 unk1[5];
+    u16 unk6;           /* 0x06 */
+    u8 unk8[0x24 - 8];
+    s16 unk24;          /* 0x24 */
+    u8 unk26[0x3C - 0x26];
+} Unk3967D0;
+
+extern Unk3967D0 D_003967D0[0x100];
+void func_00561640(void);
+void func_00561970(u16 room);
+void func_00561B60(u16 room);
+void func_00561CE0(u16 room);
+void func_00562100(void);
+s32 func_00583EA0(u8 i, s32 mask);
+s32 func_001AF4D0(void);
+
+void func_00561870(void) {
+    u16 room = D_00306590.unk1A;
+    s32 i;
+    Unk3967D0 *e;
+
+    func_00561640();
+    if (func_001AF4D0() == 1) {
+        func_00561B60(room);
+    } else {
+        func_00561970(room);
+    }
+    func_00561CE0(room);
+    if (func_001AF4D0() == 1 && (D_0048BF60.unkC6 & 1)) {
+        for (i = 0, e = D_003967D0; i < 0x100; i++, e++) {
+            if (e->unk0 != 0 && e->unk6 != 0x20 && func_00583EA0(i, 1) != 0
+                && func_00583EA0(i, 0x6000) != 0 && e->unk24 <= 0) {
+                e->unk24 = 1;
+            }
+        }
+    }
+    func_00562100();
+}
+
+/* Ten message strings (D_006D5F20's ids) copied out, at most 38 characters each. */
+extern u16 D_006D5F20[10];
+extern char *D_0070E280[10];
+extern char D_0070E2B0[10][0x28];
+char *func_001C0020(u16 id);
+u32 strlen(const char *s);
+
+void func_00574B40(void) {
+    s32 n;
+    s32 i;
+    char *src;
+    s32 j;
+    char *dst;
+
+    for (i = 0; i < 10; i++) {
+        src = func_001C0020(D_006D5F20[i]);
+        n = strlen(src);
+        if (n >= 0x27) {
+            n = 0x26;
+        }
+        dst = D_0070E2B0[i];
+        D_0070E280[i] = dst;
+        for (j = 0; j < n; j++) {
+            *dst++ = *src++;
+        }
+        *dst = 0;
+    }
+}
+
+/* The room's doors (door%03d.dat). */
+typedef struct {
+    u8 *buf;            /* 0x00 */
+    u8 *unk4;           /* 0x04 */
+    u8 *unk8;           /* 0x08: the file's body (after a 0x10 header) */
+    s32 unkC;           /* 0x0C */
+    s32 unk10;
+    s32 size;           /* 0x14 */
+    u8 *end;            /* 0x18: 0x80 bytes cleared after the file */
+} DoorData;
+
+extern DoorData D_00720990;
+extern char D_0070DA80[];   /* "data\rom\scene\item_msg\door%03d.dat" */
+extern char D_0070DAA8[];   /* "door%03d.dat" */
+s32 func_001CFBB0(const char *name, void *buf, s32 flags, s32 unused);
+s32 func_001A96E0(const char *name, void *buf);
+
+void func_006AB120(void);
+#ifdef NON_MATCHING   /* the d->buf load is scheduled before the branch join */
+void func_006AB120(void) {
+    char name[0x100];
+    DoorData *d;
+    u8 *buf;
+
+    if (D_00306590.door == NULL) {
+        return;
+    }
+    memset(D_00306590.door, 0, 0x4000);
+    memset(&D_00720990, 0, sizeof(D_00720990));
+    D_00720990.buf = D_00306590.door;
+    d = &D_00720990;
+    if (D_00306590.unk17 == 0) {
+        sprintf(name, D_0070DA80, D_00306590.unk1A);
+        d->size = func_001CFBB0(name, D_00720990.buf, 1, 0);
+    } else {
+        sprintf(name, D_0070DAA8, D_00306590.unk1A);
+        d->size = func_001A96E0(name, D_00720990.buf);
+    }
+    buf = d->buf;
+    d->unk4 = ((u8 **)buf)[0];
+    d->unkC = ((s32 *)buf)[1];
+    d->unk8 = buf + 0x10;
+    d->unk4 = (u8 *)((u32)d->unk4 + (u32)d->unk8);
+    d->end = d->buf + d->size;
+    memset(d->end, 0, 0x80);
+}
+#endif

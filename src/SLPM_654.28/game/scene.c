@@ -1,4 +1,5 @@
 #include "common.h"
+#include "options.h"
 #include "scene.h"
 
 /* GAME.BIN: the scene's lights, fog and camera defaults. */
@@ -302,4 +303,20 @@ void func_00681440(void) {
     func_00681340((Vec3 *)&l.w[1], (Vec3 *)&D_00305FA0.b[0].w[1], &D_00305FA0.unk304);
     func_00681340((Vec3 *)&l.w[9], (Vec3 *)&D_00305FA0.b[0].w[9], &D_00305FA0.unk304);
     func_001AE9C0(0x5A, (u32)&l);
+}
+
+extern s8 D_007160F9[];
+extern s8 D_007160FA[];
+extern s8 D_007160FC[];
+void func_0067ACB0(void);
+void func_0067B310(void);
+void func_0067B420(u16 room);
+
+void func_0067B2C0(void) {
+    func_0067ACB0();
+    func_0067B420(D_00306590.unk1A);
+    D_007160FA[0] = 0;
+    D_007160F9[0] = 4;
+    D_007160FC[0] = 0;
+    func_0067B310();
 }

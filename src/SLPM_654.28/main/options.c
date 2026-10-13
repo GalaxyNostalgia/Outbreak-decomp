@@ -670,3 +670,44 @@ void func_001ADDF0(void) {
         ADXT_StartAfs(D_0029B0B8[0], 3, fid);
     }
 }
+
+/* Player p's voice archive (the name it builds is left unused). */
+extern char D_00231FB0[];   /* "vo001%02d.afs" */
+s32 func_001AA720(s32 player, s32 kind);
+
+void func_001B8AC0(s32 player, s32 kind) {
+    char name[0x100];
+
+    if (player < 5) {
+        sprintf(name, D_00231FB0, kind);
+        if (func_001AA720(player, kind) != 0) {
+            D_0048BF60.unkA1[player] = kind + 1;
+            return;
+        }
+        D_0048BF60.unkA1[player] = 0;
+    }
+}
+
+/* Each character in the game is handed its pad. */
+#include "object.h"
+
+extern s8 D_0023BB90;
+extern DrawObjFull D_00476DD0[];
+s32 func_001A12B0(s32 pad);
+void func_001AFB90(DrawObjFull *obj, s8 pad);
+
+void func_001AFBB0(void) {
+    s8 pad;
+    s8 n;
+    DrawObjFull *obj;
+
+    for (pad = 0, n = 0; pad < D_0023BB90; pad++) {
+        if (func_001A12B0(pad) == 1) {
+            obj = &D_00476DD0[n];
+            if (obj->active != 0) {
+                n++;
+                func_001AFB90(obj, pad);
+            }
+        }
+    }
+}

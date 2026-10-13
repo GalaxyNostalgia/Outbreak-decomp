@@ -637,3 +637,12 @@ void func_00620740(void) {
     func_006208B0();
     func_00620A30();
 }
+
+extern u8 D_00724030[0x200];
+
+void func_006B9A00(void) {
+    memset(D_00724030, 0, sizeof(D_00724030));
+}
+
+void func_0060DE80(void) {
+}

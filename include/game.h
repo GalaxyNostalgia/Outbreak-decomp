@@ -17,7 +17,9 @@ typedef struct {
     s32 unk18;          /* 0x18: frames played (the game ends at 540000, 2.5 hours) */
     u8 unk1C;
     u8 unk1D;           /* 0x1D: our player number */
-    u8 unk1E[0x28 - 0x1E];
+    u8 unk1E[0x20 - 0x1E];
+    s8 unk20[7];        /* 0x20: (indexed by unk27) the player-id table to use */
+    s8 unk27;           /* 0x27 */
     s8 unk28;           /* 0x28 */
     u8 unk29;           /* 0x29 */
     u8 unk2A[0x36 - 0x2A];
@@ -31,7 +33,8 @@ typedef struct {
     u8 unk60[2];
     s8 unk62;           /* 0x62: offline */
     s8 unk63;           /* 0x63 */
-    u8 unk64[0xA7 - 0x64];
+    u8 unk64[0xA1 - 0x64];
+    u8 unkA1[6];        /* 0xA1: per player, its voice bank (character kind + 1; 0: none) */
     s8 unkA7;           /* 0xA7 */
     u8 unkA8[0xBA - 0xA8];
     u8 unkBA;           /* 0xBA: (game start byte 2) */

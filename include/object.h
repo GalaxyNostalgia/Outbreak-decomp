@@ -43,7 +43,9 @@ typedef struct DrawObjFull {
     u8 unkBB6[0xBBA - 0xBB6];
     u16 unkBBA;         /* 0xBBA */
     u8 costume;         /* 0xBBC */
-    u8 unkBBD[0xC84 - 0xBBD];
+    u8 unkBBD[0xC7C - 0xBBD];
+    u8 unkC7C;          /* 0xC7C: the item in hand (0xFF: none) */
+    u8 unkC7D[0xC84 - 0xC7D];
     u8 unkC84[4];       /* 0xC84: effects on the character (script ops 0x39, 0x3A) */
     u8 unkC88[0x20];    /* 0xC88: (effects 400-420) */
     u8 unkCA8[0xCCC - 0xCA8];

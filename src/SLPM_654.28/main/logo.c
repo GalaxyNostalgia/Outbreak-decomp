@@ -35,3 +35,25 @@ void func_001BAD50(s32 logo) {
         func_001AAB10(&D_00217340[wide]);
     }
 }
+
+/* The "now loading" picture (texture 0, a 256x128 sprite at 368,320) drawn for 3 frames. */
+extern Sprite2D D_00216880;
+void func_001B9140(s32 a);
+
+void func_001AF710(void) {
+    s32 tex;
+    s32 i;
+
+    tex = func_001D04D0(0);
+    if (tex != 0) {
+        for (i = 0; i < 3; i++) {
+            func_001B9140(1);
+            func_001AE430(4, 5);
+            func_001AE9C0(0x63, 0x10000);
+            func_001AE9C0(0x6C, 0);
+            func_0019CD60(1, &tex);
+            func_001AE9C0(4, tex);
+            func_001AAB10(&D_00216880);
+        }
+    }
+}
