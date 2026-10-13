@@ -1,0 +1,207 @@
+#include "common.h"
+#include "options.h"
+#include "script.h"
+
+/* GAME.BIN: the room script (r%03d.evb): its header is 0x20 offsets, made pointers when it is
+   loaded; entries 0x10-0x17 are tables of offsets ending with 0. */
+
+void func_005A7450(void);
+void func_0065A520(u32 *script);
+
+void func_0065A370(void) {
+    s32 i;
+    s32 j;
+    u32 *buf;
+    u32 *t;
+
+    D_0048BE70.wait[0] = 0;
+    D_0048BE70.entry[0] = 0;
+    D_00306590.unk28 = 1;
+    D_0048BE70.entry[4] = 4;
+    D_0048BE70.wait[4] = 0;
+    for (i = 0; i < 3; i++) {
+        D_0048BE70.unk90[i][0] = 0;
+        D_0048BE70.unk90[i][1] = 0;
+    }
+    D_0048BE70.unkC8 = 0;
+    D_0048BE70.unkCC = 0;
+    D_0048BE70.unkD0 = 0;
+    D_0048BE70.unkD4 = 0;
+    for (i = 7; i >= 0; i--) {
+        D_0048BE70.unkA8[i] = -1;
+        D_0048BE70.unkD8[i] = i;
+    }
+    buf = (u32 *)D_00306590.script;
+    for (i = 0; i < 0x20; i++) {
+        if (buf[i] != 0) {
+            buf[i] += (u32)buf;
+        }
+    }
+    buf = (u32 *)D_00306590.script;
+    for (i = 0x10; i < 0x18; i++) {
+        t = (u32 *)buf[i];
+        if (t != NULL) {
+            for (j = 0; t[j] != 0; j++) {
+                t[j] += (u32)buf;
+            }
+        }
+    }
+    D_0048BE70.pc[0] = (u32 *)buf[D_0048BE70.entry[0]];
+    D_0048BE70.pc[4] = (u32 *)buf[D_0048BE70.entry[4]];
+    D_0048BE70.base[0] = (u32)buf;
+    D_0048BE70.base[4] = (u32)buf;
+    func_005A7450();
+    func_0065A520(buf);
+}
+
+/* Without a script: the interpreter runs an empty one. */
+extern u8 D_0023AD18[];
+
+void func_0065A2B0(void);
+#ifdef NON_MATCHING   /* first draft */
+void func_0065A2B0(void) {
+    s32 i;
+    s8 k;
+
+    D_0048BE70.wait[0] = 0;
+    D_0048BE70.wait[4] = 0;
+    D_0048BE70.pc[0] = (u32 *)D_0023AD18;
+    D_0048BE70.pc[4] = (u32 *)D_0023AD18;
+    for (i = 0; i < 3; i++) {
+        D_0048BE70.unk90[i][0] = 0;
+        D_0048BE70.unk90[i][1] = 0;
+    }
+    D_0048BE70.unkC8 = 0;
+    D_00306590.unk28 = 1;
+    D_0048BE70.unkCC = 0;
+    D_0048BE70.unkD0 = 0;
+    D_0048BE70.unkD4 = 0;
+    for (k = 7; k >= 0; k--) {
+        D_0048BE70.unkA8[k] = -1;
+        D_0048BE70.unkD8[k] = k;
+    }
+}
+#endif
+
+/* The scene's tables from the script: header entries 8-11 (lists ending with 0xFF; 10 and 11 start
+   with an enemy type each) and 14-15 (lists ending with 0xFFFF). */
+typedef struct {
+    u8 unk0[0x9A0];
+    u16 lists[4][0x80];     /* 0x9A0 */
+    u16 emType[2];          /* 0xDA0 */
+    u16 unkDA4[2];          /* 0xDA4 */
+    u8 unkDA8[8];
+    u16 lists2[2][0x80];    /* 0xDB0 */
+    u8 unkFB0[0x1254 - 0xFB0];
+} SceneData;
+
+extern SceneData D_0048AC10;
+extern u8 D_0048A010[0x800];
+
+#ifdef NON_MATCHING   /* first draft */
+void func_0065A520(u32 *script) {
+    s32 k;
+    s32 j;
+    u16 *p;
+    u16 v;
+
+    for (k = 8; k < 0xC; k++) {
+        p = (u16 *)script[k];
+        if (k >= 0xA) {
+            D_0048AC10.emType[k - 0xA] = p[0];
+            D_0048AC10.unkDA4[k - 0xA] = p[1];
+            p += 2;
+        }
+        for (j = 0; (v = *p) != 0xFF; j++) {
+            p++;
+            D_0048AC10.lists[k - 8][j] = v;
+        }
+    }
+    for (k = 0xE; k < 0x10; k++) {
+        p = (u16 *)script[k];
+        for (j = 0; (v = *p) != 0xFFFF; j++) {
+            p++;
+            D_0048AC10.lists2[k - 0xE][j] = v;
+        }
+    }
+    memset(D_0048A010, 0xFF, sizeof(D_0048A010));
+}
+#endif
+
+/* Every room's ... set from the difficulty's table. */
+typedef struct {
+    u8 unk0[8];
+    u16 unk8;
+    u8 unkA[0x20 - 0xA];
+} DiffEntry;
+
+typedef struct {
+    u8 unk0[0x2F00];
+    u16 unk2F00[0x80][0x18];
+} RoomTbl;
+
+extern DiffEntry D_006E36D0[];
+extern RoomTbl D_00470090;
+extern u8 D_0048C01A[];
+
+#ifdef NON_MATCHING   /* first draft */
+void func_005A7450(void) {
+    s32 i;
+    s32 j;
+
+    for (i = 0; i < 0x80; i++) {
+        for (j = 0x17; j >= 0; j--) {
+            D_00470090.unk2F00[i][j] = D_006E36D0[D_0048C01A[0]].unk8;
+        }
+    }
+}
+#endif
+
+/* The interpreter: runs thread t until an instruction yields (0x0A, 0x0D) or it sleeps. Each
+   instruction is a word: the opcode in the low 24 bits, log2 of its length in words above. */
+typedef s32 (*ScriptOp)(u32 *args);
+
+extern ScriptOp D_006E3870[];
+s32 func_001AF4D0(void);
+void func_006CCEE0(s8 t);
+
+#ifdef NON_MATCHING   /* first draft */
+void func_0065A770(s8 t) {
+    u32 insn;
+    u32 op;
+    s32 r;
+
+    if (func_001AF4D0() == 1) {
+        func_006CCEE0(t);
+        return;
+    }
+    D_0048BE70.cur = t;
+    if (D_00306590.unk28 == 0) {
+        return;
+    }
+    D_0048BE70.unk78[(u8)t] = 0;
+    for (;;) {
+        insn = *D_0048BE70.pc[(u8)t];
+        if (!(D_0048BE70.wait[(u8)t] == 0)) {
+            D_0048BE70.wait[(u8)t]--;
+            return;
+        }
+        op = insn & 0xFFFFFF;
+        r = D_006E3870[op](D_0048BE70.pc[(u8)t] + 1);
+        if (r == 2) {
+            insn = *D_0048BE70.pc[(u8)t];
+        } else if (op == 0xA || op == 0xD) {
+            return;
+        }
+        if (r == 0) {
+            D_0048BE70.pc[(u8)t] += 1 << ((insn & 0xFF000000) >> 24);
+        }
+    }
+}
+#endif
+
+void func_0065A960(void) {
+    D_0048BE70.entry[0] = 0;
+    D_0048BE70.pc[0] = ((u32 **)D_00306590.script)[D_0048BE70.entry[0]];
+    func_0065A770(0);
+}

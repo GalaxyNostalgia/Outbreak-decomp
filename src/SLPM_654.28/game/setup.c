@@ -192,3 +192,330 @@ void func_005BA750(void) {
         func_001D7090();
     }
 }
+
+/* The scenario's enemy placements (em_set/e%03d.emd, or sgl_e%03d.emd offline): records of 0x60
+   bytes for this difficulty and this game's variant (0-3), copied into D_0071A030 by room. */
+
+typedef struct {
+    u8 unk0[2];
+    u8 type;            /* 0x02: 0xFF ends the file */
+    u8 unk3;
+    u8 unk4;
+    u8 unk5;
+    u8 unk6[2];
+    s32 unk8;
+    s32 unkC;
+    s32 pos[3];         /* 0x10 */
+    u8 room;            /* 0x1C */
+    u8 unk1D;
+    u8 variant;         /* 0x1E */
+    u8 unk1F;
+    u8 unk20;
+    s8 unk21;
+    u8 unk22;
+    u8 unk23;
+    u8 unk24;
+    u8 unk25;
+    u8 unk26;
+    u8 unk27[10];       /* 0x27 */
+    u8 unk31;
+    u8 unk32;
+    u8 hpIndex;         /* 0x33 */
+    u8 unk34[6];        /* 0x34 */
+    u8 unk3A;
+    u8 unk3B[6];        /* 0x3B */
+    u8 unk41;
+    u8 unk42;
+    u8 unk43;
+    u8 unk44;
+    u8 unk45[3];        /* 0x45 */
+    u8 unk48;
+    u8 difficulties;    /* 0x49: a bit per difficulty */
+    u8 unk4A;
+    u8 unk4B;
+    u8 unk4C[0x60 - 0x4C];
+} EnemyRec;
+
+typedef struct {
+    s8 index;           /* 0x00 */
+    u8 unk1;
+    u8 type;            /* 0x02 */
+    u8 unk3;
+    u8 unk4;
+    u8 unk5;
+    u8 unk6[2];
+    s32 unk8;
+    s32 unkC;
+    f32 pos[3];         /* 0x10 */
+    s16 hp;             /* 0x1C */
+    s16 hpMax;          /* 0x1E */
+    u8 unk20;
+    u8 unk21;
+    u8 room;            /* 0x22 */
+    u8 unk23[3];
+    u8 unk26;           /* 0x26 */
+    s8 unk27;
+    u8 unk28;
+    u8 unk29;
+    u8 unk2A;
+    u8 unk2B;
+    u8 unk2C;
+    u8 unk2D;
+    u8 unk2E;
+    u8 unk2F[10];       /* 0x2F */
+    s8 unk39;
+    s8 unk3A;
+    u8 unk3B;
+    s16 unk3C;          /* 0x3C */
+    u8 unk3E[2];
+    s8 unk40;           /* 0x40 */
+    u8 unk41;
+    s8 unk42;           /* 0x42 */
+    u8 unk43;
+    u8 unk44;
+    s8 unk45;
+    u8 unk46;
+    u8 unk47;
+    u8 unk48[6];        /* 0x48 */
+    u8 unk4E[6];        /* 0x4E */
+    u8 unk54;
+    u8 unk55;
+    u8 unk56;
+    u8 unk57[3];        /* 0x57 */
+    u8 unk5A;
+    u8 unk5B;
+    u8 unk5C;
+    u8 unk5D;
+    u8 unk5E[2];
+} EnemySlot;            /* 0x60 */
+
+extern EnemySlot D_0071A030[0x100];
+extern u8 D_00386310[0x100];
+extern s8 D_007200B0[0x80];         /* each room's first slot */
+extern s8 D_00720030[0x80];         /* each room's number of slots */
+extern s16 D_006F5EC0[][4][8];      /* hit points by type, difficulty and index */
+extern s16 D_006F4F40[][4][8];
+extern u8 D_0023AFD0[];
+extern char D_0070BFB0[];           /* "data/rom/scene/em_set/sgl_e%03d.emd" */
+extern char D_0070BFE0[];           /* "data/rom/scene/em_set/e%03d.emd" */
+extern s8 D_0048C01E[];
+s32 sprintf(char *buf, const char *fmt, ...);
+s32 func_001CFBB0(const char *name, void *buf, s32 flags, s32 unused);
+s32 func_001AF4D0(void);
+u8 func_00688C10(void);
+void func_0064F690(u8 type, s16 id);
+void func_00689DF0(EnemySlot *s);
+void func_001B1DE0(void);
+
+#ifdef NON_MATCHING   /* first draft */
+void func_00688640(void) {
+    char name[0x100];
+    s32 *file;
+    EnemyRec *r;
+    EnemySlot *s;
+    s16 i;
+    s16 n;
+    s8 count;
+    u16 room;
+    u16 slot8;
+    u16 variant;
+    u8 diff;
+    s16 hp;
+
+    memset(D_0071A030, 0, sizeof(D_0071A030));
+    for (i = 0; i < 0x100; i++) {
+        D_00386310[i] = 0xFF;
+    }
+    file = (s32 *)D_00306590.unk4C;
+    for (i = 0; i < 0x100; i++) {
+        name[i] = 0;
+    }
+    if (func_001AF4D0() == 1) {
+        sprintf(name, D_0070BFB0, D_00306590.unk1A);
+    } else {
+        sprintf(name, D_0070BFE0, D_00306590.unk1A);
+    }
+    if (func_001CFBB0(name, file, 0x10001, 0) == 0) {
+        return;
+    }
+    diff = 1 << D_0048BF60.unkBA;
+    r = (EnemyRec *)&file[file[0] / 4];
+    for (i = 0; i < 0x80; i++) {
+        D_007200B0[i] = 0;
+        D_00720030[i] = 0;
+    }
+    n = 0;
+    count = 0;
+    room = 0xFF;
+    slot8 = func_001ADEF0(0) & 7;
+    variant = func_001ADEF0(2) & 3;
+    if (func_001AF4D0() == 1) {
+        variant = D_0048BF60.unkBA & 3;
+    }
+    for (; r->type != 0xFF; r++) {
+        if (r->variant != variant || !(r->difficulties & diff)) {
+            continue;
+        }
+        s = &D_0071A030[n];
+        s->index = count;
+        s->unk27 = count;
+        s->type = r->type;
+        s->pos[0] = r->pos[0];
+        s->pos[1] = r->pos[1];
+        s->pos[2] = r->pos[2];
+        s->unk8 = r->unk8;
+        s->unkC = r->unkC;
+        s->unk3 = r->unk3;
+        s->unk4 = r->unk22;
+        s->unk5 = r->unk4;
+        s->room = r->room;
+        s->unk29 = r->unk1F;
+        s->unk2A = r->unk20;
+        s->unk2B = r->unk5;
+        s->unk3A = r->unk21;
+        s->unk2D = r->unk23;
+        s->unk41 = r->unk24;
+        s->unk43 = r->unk25;
+        s->unk44 = r->unk26;
+        s->unk45 = 0;
+        for (i = 0; i < 10; i++) {
+            s->unk2F[i] = r->unk27[i];
+        }
+        hp = 0x7FFF;
+        if (r->hpIndex < 8) {
+            if (func_00688C10()) {
+                hp = D_006F5EC0[s->type][D_0048BF60.unkBA & 3][r->hpIndex];
+            } else {
+                hp = D_006F4F40[s->type][D_0048BF60.unkBA & 3][r->hpIndex];
+            }
+            s->hp = hp;
+        } else {
+            s->hp = 0x7FFF;
+        }
+        s->hpMax = hp;
+        s->unk3C = r->unk44;
+        s->unk20 = r->unk3A;
+        s->unk26 = r->unk1D;
+        s->unk46 = r->unk31;
+        s->unk47 = r->unk32;
+        s->unk48[0] = r->unk34[0];
+        s->unk48[1] = r->unk34[1];
+        s->unk48[2] = r->unk34[2];
+        s->unk48[3] = r->unk34[3];
+        s->unk48[4] = r->unk34[4];
+        s->unk48[5] = r->unk34[5];
+        s->unk4E[0] = r->unk3B[0];
+        s->unk4E[1] = r->unk3B[1];
+        s->unk4E[2] = r->unk3B[2];
+        s->unk4E[3] = r->unk3B[3];
+        s->unk4E[4] = r->unk3B[4];
+        s->unk4E[5] = r->unk3B[5];
+        s->unk55 = r->unk42;
+        s->unk56 = r->unk43;
+        s->unk57[0] = r->unk45[0];
+        s->unk57[1] = r->unk45[1];
+        s->unk57[2] = r->unk45[2];
+        if (s->unk57[0] != 0) {
+            s->unk57[0] += 0x31;
+        }
+        if (s->unk57[1] != 0) {
+            s->unk57[1] += 0x31;
+        }
+        if (s->unk57[2] != 0) {
+            s->unk57[2] += 0x31;
+        }
+        s->unk5A = r->unk48;
+        s->unk5B = r->difficulties;
+        s->unk5C = D_0023AFD0[r->unk4A];
+        s->unk5D = r->unk4B;
+        if (r->room != room) {
+            room = r->room;
+            D_007200B0[room] = n;
+        }
+        s->index = n;
+        if (s->unk26 != 0) {
+            func_0064F690(2, n);
+        }
+        n++;
+        count++;
+        D_00720030[room]++;
+        s->unk42 = slot8;
+        slot8 = (slot8 + 1) & 7;
+        if (s->unk26 != 0) {
+            func_00689DF0(s);
+        }
+    }
+    D_0048C01E[0] = n;
+    func_001B1DE0();
+}
+#endif
+
+/* Which loaded enemy model set (2) holds a type, and its index per room. */
+extern u16 D_0048B9B0[2];
+extern u16 D_0048B7B0[2][0x80];
+
+#ifdef NON_MATCHING   /* first draft */
+u16 func_00577730(s8 type, s16 room) {
+    s8 i;
+
+    for (i = 0; i < 2; i++) {
+        if (type == D_0048B9B0[i]) {
+            return D_0048B7B0[i][room];
+        }
+    }
+    return 0xFFFF;
+}
+#endif
+
+extern s8 **D_006FD570[];           /* by scenario: by model index: by unk5D: rooms (-1 ends) */
+
+s8 *func_006A1ED0(EnemySlot *s) {
+    u16 m = func_00577730((s8)s->type, s->room);
+    s8 **t;
+    s8 *list;
+
+    if (m == 0xFFFF) {
+        return NULL;
+    }
+    t = (s8 **)D_006FD570[D_00306590.unk1A][m];
+    if (t == NULL) {
+        return NULL;
+    }
+    list = t[s->unk5D];
+    if (list == NULL) {
+        return NULL;
+    }
+    if (list[0] < 0) {
+        return NULL;
+    }
+    return list;
+}
+
+#ifdef NON_MATCHING   /* first draft */
+s8 func_006A1F80(s8 room, s8 *list) {
+    s8 i;
+
+    for (i = 0; list[i] >= 0; i++) {
+        if (room == list[i]) {
+            return i;
+        }
+    }
+    return -1;
+}
+#endif
+
+#ifdef NON_MATCHING   /* first draft */
+void func_00689DF0(EnemySlot *s) {
+    s8 *list;
+    s8 r = -1;
+
+    list = func_006A1ED0(s);
+    if (list != NULL) {
+        r = func_006A1F80(s->room, list);
+        if (r < 0) {
+            r = -1;
+        }
+    }
+    s->unk40 = r;
+}
+#endif

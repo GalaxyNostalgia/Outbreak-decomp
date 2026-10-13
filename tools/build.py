@@ -86,9 +86,23 @@ def c_addr_syms(label):
     key, _, target = label.partition(".")
     elf = VERSIONS[key[:-2] if key.endswith("en") else key]["elf"]
     names = set()
+    words = set()
     for src in sorted((ROOT / "src" / elf / target).rglob("*.c")):
-        names |= set(re.findall(r"\b((?:func|D)_([0-9A-F]{6,8}))\b", src.read_text()))
-    return [f"PROVIDE({n} = 0x{a});" for n, a in sorted(names)]
+        text = src.read_text()
+        names |= set(re.findall(r"\b((?:func|D)_([0-9A-F]{6,8}))\b", text))
+        words |= set(re.findall(r"\b([A-Za-z_]\w*)\s*\(", text))
+    out = [f"PROVIDE({n} = 0x{a});" for n, a in sorted(names)]
+    # named functions of the main executable (memcpy, sprintf...) an overlay's C calls
+    if target != "main":
+        known = {}
+        for line in (ROOT / "config" / elf / "symbol_addrs.txt").read_text().splitlines():
+            m = re.match(r"\s*(\w+)\s*=\s*(0x[0-9A-Fa-f]+)\s*;", line)
+            if m:
+                known[m.group(1)] = int(m.group(2), 16)
+        for w in sorted(words):
+            if w in known and not re.fullmatch(r"(func|D)_[0-9A-F]+", w):
+                out.append(f"PROVIDE({w} = {known[w]:#x});")
+    return out
 
 
 # C functions' jump tables: {func: (obj, section, size)}. Each is linked at the address of the original

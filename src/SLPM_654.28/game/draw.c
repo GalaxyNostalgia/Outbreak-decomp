@@ -96,7 +96,6 @@ extern DrawObjFull D_00476DD0[8];   /* the players */
 extern u8 D_003AEF74;
 extern Vec3 D_006D5C00[];
 
-void func_00107B50(void *dst, void *src, s32 n);
 s32 func_00562B70(Effect *e, u32 flag);
 void func_001B1460(void (*fn)(void *), void *a, void *b);
 void func_00560D70(void *e);
@@ -114,7 +113,7 @@ void func_00560B60(void) {
     if (D_0048C02A[0] != 0) {
         return;
     }
-    func_00107B50(&l, &D_00305FA0.b[0], sizeof(Light));
+    memcpy(&l, &D_00305FA0.b[0], sizeof(Light));
     l.w[3] = 1.0f;
     l.w[2] = 1.0f;
     l.w[1] = 1.0f;
@@ -141,7 +140,7 @@ void func_00560B60(void) {
             }
         } else {
             if (e->flags & 0x1000) {
-                func_00107B50(&l.w[13], &D_006D5C00[e->unkE], sizeof(Vec3));
+                memcpy(&l.w[13], &D_006D5C00[e->unkE], sizeof(Vec3));
                 func_001AE9C0(0x5A, (u32)&l);
             }
             e->draw(e);

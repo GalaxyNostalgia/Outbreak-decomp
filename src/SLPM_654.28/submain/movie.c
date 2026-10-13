@@ -453,6 +453,38 @@ void func_003498B0(s16 w, s16 h) {
 }
 #endif
 
+extern char D_0035BA70[];
+extern char D_0035BA80[];           /* (English titles) */
+
+/* An event's movie (the scenario's movie archive, file named by the two strings). */
+void func_00349D00(void) {
+    s32 fid;
+
+    if (func_001B6980(0xE) != 0) {
+        return;
+    }
+    D_0023BC70 = &D_003209B0;
+    if (D_0023BC70->ply == NULL) {
+        func_003498B0(0x200, 0x170);
+        if (D_0023BC70->ply == NULL) {
+            return;
+        }
+    }
+    if (D_003065CD[0] == 0) {
+        fid = func_001AA5C0(D_0035BA70);
+    } else {
+        fid = func_001AA5C0(D_0035BA80);
+    }
+    if (fid == -1) {
+        func_00349E20();
+        return;
+    }
+    mwPlyEntryAfs(D_0023BC70->ply, 3, fid);
+    mwPlySetLpFlg(D_0023BC70->ply, 0);
+    mwPlyStartSeamless(D_0023BC70->ply);
+    mwPlyReleaseSeamless(D_0023BC70->ply);
+}
+
 /* Stops the movie (it ends at its end). */
 void func_00349DE0(void) {
     D_0023BC70 = &D_003209B0;
@@ -581,6 +613,16 @@ u8 func_0034A290(void) {
         return 2;
     }
     return D_0023BC70->stat;
+}
+
+/* A movie is loaded and running. */
+s32 func_0034A2F0(void) {
+    Movie *m = D_0023BC70;
+
+    if (m->ply == NULL) {
+        return 0;
+    }
+    return m->stat != 0;
 }
 
 extern char D_0035BBC0[], D_0035BBE0[], D_0035BC00[], D_0035BC20[];   /* PS2title1/2_jpn/eng.sfd */

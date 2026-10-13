@@ -216,6 +216,7 @@ mwPlyStartAfs = 0x0015F250; // type:func
 mwPlyGetPlyInf = 0x00160558; // type:func
 mwPlyStartSeamless = 0x00162310; // type:func
 mwPlySetLpFlg = 0x001623A0; // type:func
+mwPlyReleaseSeamless = 0x001624E8; // type:func
 mwPlyEntryAfs = 0x00162548; // type:func
 __ieee754_acosf = 0x00120220; // type:func
 __ieee754_atan2f = 0x00120648; // type:func

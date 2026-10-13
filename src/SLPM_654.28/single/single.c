@@ -3,8 +3,22 @@
 
 /* SINGLE.BIN: the offline game's code (loaded at 0x820000; NETAQ.BIN takes its place online). */
 
-extern u8 D_0084E2B0[0x5200];
-extern u8 D_0084E2A0[0x10];
+/* What the offline script has for each room. */
+typedef struct {
+    s32 used;           /* 0x00 */
+    s32 entry;          /* 0x04 */
+    s32 unk8;
+    u8 *unkC;
+    u8 *unk10;
+    u8 unk14[0x94 - 0x14];
+    s32 *unk94;         /* 0x94 */
+    s32 unk98;
+    u8 *unk9C;
+    u8 *unkA0;
+} SglRoom;              /* 0xA4 */
+
+extern SglRoom D_0084E2B0[0x80];
+extern u32 D_0084E2A0[4];
 
 void func_00825DF0(void) {
     memset(D_0084E2B0, 0, sizeof(D_0084E2B0));
@@ -26,7 +40,7 @@ typedef struct {
     s32 unk24;
     s32 unk28;
     u8 unk2C[0x38 - 0x2C];
-    u8 unk38[8];        /* 0x38: per player */
+    u8 unk38[8];        /* 0x38: per player: in the session */
     s32 unk40;
     s32 unk44;
     u32 unk48;          /* 0x48: time of the last minute */
@@ -48,11 +62,13 @@ typedef struct {
 } MsgQueue;
 
 typedef struct {
-    u8 unk0[4];
-    s32 unk4;
-    u16 unk8;
-    u8 unkA;
-    u8 unkB;
+    s16 to;             /* 0x00: 1-9 */
+    u8 kind;            /* 0x02 */
+    u8 len;             /* 0x03 */
+    s32 time;           /* 0x04: the sender's frame */
+    u16 from;           /* 0x08 */
+    u8 type;            /* 0x0A */
+    u8 flags;           /* 0x0B: 0x80 to everyone */
     u8 data[0xF4];
 } MsgRec;
 
@@ -134,7 +150,6 @@ s32 func_001B6980(s32 slot);
 void func_001B27B0(s32 x, s32 line, const char *fmt, ...);
 void func_001B2600(s32 x, s32 line, s32 color, const char *fmt, ...);
 u32 func_001AB8E0(void);
-void func_00107B50(void *dst, void *src, s32 n);
 s32 func_00820530(void);
 void func_008207B0(s32 which);
 void func_00821760(void);
@@ -192,7 +207,7 @@ void func_00820200(void) {
             w->unk28 = 0;
         }
         if (D_00306590.unk10[2] == 0) {
-            func_00107B50(D_0083B960, D_0083BB60, 0x200);
+            memcpy(D_0083B960, D_0083BB60, 0x200);
             func_008207B0(1);
             func_008207B0(0);
             func_00821760();
@@ -261,10 +276,10 @@ void func_008205B0(s32 n) {
     r = (MsgRec *)q->buf;
     pp = &pkt;
     while (q->count != 0) {
-        pp->unk0 = r->unk4;
-        pp->unk4 = r->unk8;
-        pp->unk6 = r->unkA;
-        pp->unk7 = r->unkB;
+        pp->unk0 = r->time;
+        pp->unk4 = r->from;
+        pp->unk6 = r->type;
+        pp->unk7 = r->flags;
         copy_bytes(pp->data, r->data, 0xF4);
         func_00820EF0(n, pp);
         r++;
@@ -291,10 +306,10 @@ void func_008206B0(s32 n) {
     r = (MsgRec *)q->buf;
     pp = &pkt;
     while (q->count != 0) {
-        pp->unk0 = r->unk4;
-        pp->unk4 = r->unk8;
-        pp->unk6 = r->unkA;
-        pp->unk7 = r->unkB;
+        pp->unk0 = r->time;
+        pp->unk4 = r->from;
+        pp->unk6 = r->type;
+        pp->unk7 = r->flags;
         copy_bytes(pp->data, r->data, 0xF4);
         func_00820AC0(n, pp->data);
         r++;
@@ -357,7 +372,7 @@ void func_008215A0(void) {
         m.len = (u8)q->count + 4;
         m.idx = i;
         m.unk3 = 0;
-        func_00107B50(m.data, q->buf, q->count);
+        memcpy(m.data, q->buf, q->count);
         func_00820940(q->id, &m, 0, 4);
         if (func_001B6980(0) != 0 && func_001B6980(0x68) != 0) {
             func_001B2600(q->id % 4 * 6 + 0xD, q->id / 4 + 0xC, 0xFFFF0000, D_0083B188);
@@ -376,4 +391,354 @@ void func_00820820(void) {
         func_008215A0();
         D_0084E040.unk40 = D_0084E040.unk28;
     }
+}
+
+/* The offline script (r%03d.sgl, loaded at D_008534C0): word 2 is the offset of a table, a count
+   and then 12-byte entries; each entry's block has 16 offsets made pointers when it is loaded. */
+
+typedef struct {
+    s16 a;
+    s16 b;
+    s32 off;            /* 0x04: the entry's block, from the start of the file */
+    s32 unk8;
+} SglEntry;
+
+extern s32 D_008534C0[];
+
+static s32 func_008260C0(void);
+static SglEntry *func_008260E0(s32 i);
+static s32 func_008261E0(s32 i);
+static u8 *func_00826210(s32 i);
+static u8 *func_00826240(s32 i);
+static s32 *func_00826370(s32 i);
+static s32 func_00826280(s32 i);
+static u8 *func_008262D0(s32 i);
+static u8 *func_00826320(s32 i);
+static s32 func_00826000(void);
+static s32 *func_00826020(void);
+static u8 *func_00826040(void);
+static u8 *func_00826080(void);
+
+typedef struct {
+    u8 unk0[0x2A0];
+    u8 roomVariant[0x80];   /* 0x2A0 */
+} SceneData2A0;
+
+extern SceneData2A0 D_0048AC10;
+extern u8 D_00476DD0[];
+void func_006CCDE0(s16 room);
+void func_006CCD20(void);
+void func_006CCDA0(void *players);
+
+void func_00825E30(s32 mode);
+#ifdef NON_MATCHING   /* first draft */
+/* Sets up the offline script's rooms (mode 2: without starting them). */
+void func_00825E30(s32 mode) {
+    s32 n;
+    s32 i;
+    SglEntry *e;
+    SglRoom *r;
+
+    func_00825DF0();
+    n = func_008260C0();
+    for (i = 0; i < n; i++) {
+        e = func_008260E0(i);
+        if (e == NULL || D_0048AC10.roomVariant[e->a] != e->b) {
+            continue;
+        }
+        r = &D_0084E2B0[e->a];
+        r->used = 1;
+        r->entry = i;
+        r->unk8 = func_008261E0(i);
+        r->unkC = func_00826210(i);
+        r->unk10 = func_00826240(i);
+        r->unk94 = func_00826370(i);
+        r->unk98 = func_00826280(i);
+        r->unk9C = func_008262D0(i);
+        r->unkA0 = func_00826320(i);
+        if (mode != 2) {
+            func_006CCDE0(e->a);
+        }
+    }
+    D_0084E2A0[0] = func_00826000();
+    D_0084E2A0[1] = (u32)func_00826020();
+    D_0084E2A0[2] = (u32)func_00826040();
+    D_0084E2A0[3] = (u32)func_00826080();
+    switch (mode) {
+    case 0:
+        func_006CCD20();
+        break;
+    case 1:
+        func_006CCDA0(D_00476DD0);
+        break;
+    }
+}
+#endif
+
+
+static s32 *func_00825FE0(void) {
+    return (s32 *)((u8 *)D_008534C0 + D_008534C0[2]);
+}
+
+static s32 func_008260C0(void) {
+    return *func_00825FE0();
+}
+
+static SglEntry *func_008260E0(s32 i) {
+    if (func_008260C0() < i) {
+        return NULL;
+    }
+    return (SglEntry *)(func_00825FE0() + 1) + i;
+}
+
+static u8 *func_008261A0(s32 i) {
+    SglEntry *e = func_008260E0(i);
+
+    if (e == NULL) {
+        return NULL;
+    }
+    return (u8 *)D_008534C0 + e->off;
+}
+
+static s32 func_008261E0(s32 i) {
+    s32 *p = (s32 *)func_008261A0(i);
+
+    if (p == NULL) {
+        return 0;
+    }
+    return p[2];
+}
+
+static s32 *func_00826370(s32 i) {
+    s32 *p = (s32 *)func_008261A0(i);
+
+    if (p == NULL) {
+        return NULL;
+    }
+    return (s32 *)((u8 *)p + p[1]);
+}
+
+void func_008263B0(void) {
+    s32 i;
+    s32 j;
+    s32 n;
+    s32 *p;
+
+    n = func_008260C0();
+    for (i = 0; i < n; i++) {
+        p = func_00826370(i);
+        for (j = 0; j < 0x10; j++) {
+            if (p[j] != 0) {
+                p[j] += (s32)p;
+            }
+        }
+    }
+}
+
+static s32 *func_00825FC0(void) {
+    return (s32 *)((u8 *)D_008534C0 + D_008534C0[1]);
+}
+
+static s32 func_00826000(void) {
+    return *func_00825FC0();
+}
+
+static s32 *func_00826020(void) {
+    return func_00825FC0() + 1;
+}
+
+static u8 *func_00826040(void) {
+    s32 n = func_00826000();
+
+    return (u8 *)func_00826020() + n * 12;
+}
+
+static u8 *func_00826080(void) {
+    s32 n = func_00826000();
+
+    return func_00826040() + ((n * n + 3) & ~3);
+}
+
+static u8 *func_00826210(s32 i) {
+    u8 *p = func_008261A0(i);
+
+    if (p == NULL) {
+        return NULL;
+    }
+    return p + 0xC;
+}
+
+static u8 *func_00826240(s32 i) {
+    s32 k = func_008261E0(i);
+    u8 *p = func_00826210(i);
+
+    if (p == NULL) {
+        return NULL;
+    }
+    return p + k * 64;
+}
+
+#ifdef NON_MATCHING   /* first draft */
+static s32 func_00826280(s32 i) {
+    s32 *p = (s32 *)func_008261A0(i);
+
+    if (p == NULL) {
+        return 0;
+    }
+    return p[p[0] / 4 + 1];
+}
+#endif
+
+static u8 *func_008262D0(s32 i) {
+    s32 *p = (s32 *)func_008261A0(i);
+
+    if (p == NULL) {
+        return NULL;
+    }
+    return (u8 *)(p + p[0] / 4 + 2);
+}
+
+static u8 *func_00826320(s32 i) {
+    s32 *p = (s32 *)func_008261A0(i);
+
+    if (p == NULL) {
+        return NULL;
+    }
+    return (u8 *)(p + p[0] / 4);
+}
+
+
+#ifdef NON_MATCHING   /* first draft */
+/* Queues a message for its receiver (offline, everything stays in this machine). */
+void func_00820860(MsgRec *m) {
+    MsgQueue *q;
+    MsgRec *d;
+    u32 i;
+    u8 *src;
+    u8 *dst;
+
+    if (m->to == 0) {
+        return;
+    }
+    if (m->flags == 0) {
+        q = &D_0084DFD0[m->to - 1];
+    } else {
+        q = &D_0084DF60[m->to - 1];
+    }
+    d = (MsgRec *)q->end;
+    d->to = m->to;
+    d->kind = m->kind;
+    d->len = m->len;
+    d->time = m->time;
+    d->from = m->from;
+    d->type = m->type;
+    d->flags = m->flags;
+    src = m->data;
+    dst = d->data;
+    for (i = 0; i < 0xF4; i++) {
+        *dst++ = *src++;
+    }
+    q->count++;
+    q->end += 0x100;
+}
+#endif
+
+extern char D_0083B0B8[];
+
+#ifdef NON_MATCHING   /* first draft */
+/* Sends a message: kind 0 to one receiver, 1 to everyone. */
+void func_00820940(s16 to, Msg *msg, s32 kind, s32 a3) {
+    MsgRec r;
+    MsgRec *p;
+
+    if (to <= 0 || to >= 10) {
+        return;
+    }
+    if (msg->len > 0xF0) {
+        func_001B2600(0xD, 5, 0xFFFF0000, D_0083B0B8);
+        return;
+    }
+    r.kind = a3;
+    p = &r;
+    r.len = msg->len;
+    r.time = D_0084E040.frames;
+    r.type = msg->type;
+    switch (kind) {
+    case 0:
+        p->to = to;
+        p->from = p->to;
+        p->flags = 0;
+        break;
+    case 1:
+        p->to = 7;
+        p->from = D_0048BF60.unk1D + 1;
+        p->flags = 0x80;
+        break;
+    }
+    memcpy(p->data, msg, p->len);
+    D_0084E040.unk24++;
+    D_0084E040.unk28 += p->len + 0x10;
+    func_00820860(p);
+}
+#endif
+
+#ifdef NON_MATCHING   /* first draft */
+/* Sends the scenario flags that changed this frame. */
+void func_00821760(void) {
+    struct {
+        Msg m;
+    } buf;
+    u8 *out;
+    s32 n;
+    s32 i;
+    s32 j;
+    u8 *a;
+    u8 *b;
+
+    if (D_0084E040.unk5 == 0) {
+        return;
+    }
+    buf.m.type = 4;
+    buf.m.len = 0;
+    buf.m.data[0] = 2;
+    out = &buf.m.data[2];
+    buf.m.idx = D_0048BF60.unk1D;
+    n = 0;
+    buf.m.unk3 = 4;
+    buf.m.data[1] = 0;
+    for (i = 0; i < 0x80; i++) {
+        a = D_0083BB60[i];
+        b = D_0083B960[i];
+        for (j = 0; j < 4; j++, a++, b++) {
+            if (*a != *b) {
+                out[0] = i;
+                n++;
+                out[1] = D_0083B960[i][0];
+                out[2] = D_0083B960[i][1];
+                out[3] = D_0083B960[i][2];
+                out[4] = D_0083B960[i][3];
+                out += 5;
+                memcpy(D_0083BB60[i], D_0083B960[i], 4);
+                break;
+            }
+        }
+    }
+    if (n == 0) {
+        return;
+    }
+    if (n >= 9) {
+        while (1) {
+        }
+    }
+    buf.m.len = n * 5 + 6;
+    func_00820940(7, &buf.m, 1, 4);
+}
+#endif
+
+s32 func_00821750(void) {
+    return D_0084E040.unk5;
+}
+
+s32 func_00821D00(s32 i) {
+    return D_0084E040.unk38[i];
 }

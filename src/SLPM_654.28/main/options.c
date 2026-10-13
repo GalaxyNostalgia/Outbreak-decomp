@@ -425,6 +425,38 @@ void func_00820200(void);     /* SINGLE.BIN */
 void func_00821D60(void);     /* NETAQ.BIN */
 void func_00820820(void);     /* SINGLE.BIN */
 void func_00822760(void);     /* NETAQ.BIN */
+s32 func_00821750(void);      /* SINGLE.BIN */
+s32 func_00820F20(void);      /* NETAQ.BIN */
+s32 func_00821D00(s32 i);     /* SINGLE.BIN */
+s32 func_00821570(s32 i);     /* NETAQ.BIN */
+
+/* The session is up (always, outside the network modes). */
+s32 func_001AF0A0(void) {
+    switch (func_001AF500()) {
+    case 0:
+        return func_00821750();
+    case 1:
+        return func_00820F20();
+    case 2:
+    case 3:
+        break;
+    }
+    return 1;
+}
+
+/* Player i is in the session. */
+s32 func_001AF110(s32 i) {
+    switch (func_001AF500()) {
+    case 0:
+        return func_00821D00(i);
+    case 1:
+        return func_00821570(i);
+    case 2:
+    case 3:
+        break;
+    }
+    return i == 0;
+}
 
 /* Hands a call to the loaded game mode's overlay. */
 void func_001AEDC0(s32 a) {
@@ -618,4 +650,23 @@ s32 func_001ACCC0(s32 n, s32 fid, s32 ptid) {
     ADXT_Pause(*h, 0);
     D_0029B060[n].active = 0;
     return 0;
+}
+
+extern char D_00231B18[];
+
+/* Starts the stream for an event on the BGM stream (paused until it is ready). */
+void func_001ADDF0(void) {
+    s32 fid;
+
+    if (D_0029B0B8[0] == NULL) {
+        return;
+    }
+    func_001AD260(0, D_0029B060[0].target);
+    func_001AD960(0);
+    D_0029B060[0].started = 1;
+    ADXT_Pause(D_0029B0B8[0], 0);
+    fid = func_001AA5C0(D_00231B18);
+    if (fid != -1) {
+        ADXT_StartAfs(D_0029B0B8[0], 3, fid);
+    }
 }

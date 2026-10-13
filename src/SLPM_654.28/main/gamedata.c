@@ -120,3 +120,15 @@ void func_001AE7F0(void) {
 /* Left empty in the release. */
 void func_001CF590(void) {
 }
+
+extern s16 D_0048B9BC[];
+extern s16 D_0048B9BE[];
+extern u8 D_0048B9C0[];
+extern u8 D_0048A810[0x400];
+
+void func_001B1DE0(void) {
+    D_0048B9BC[0] = 0;
+    D_0048B9BE[0] = 0;
+    memset(D_0048B9C0, 0, 4);
+    memset(D_0048A810, 0xFF, sizeof(D_0048A810));
+}

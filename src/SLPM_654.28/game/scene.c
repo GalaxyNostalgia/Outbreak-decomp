@@ -166,8 +166,7 @@ void func_00340310(s32 x, s32 y, s32 z, Mat44 *m);     /* SUBMAIN.BIN: rotation 
 void func_00340560(Vec3 *out, Vec3 *to, Vec3 *from);    /* SUBMAIN.BIN */
 void func_001913A0(Vec3 *out, Vec3 *v, Mat44 *m);
 void func_00191750(Vec3 *v);
-void func_00107B50(void *dst, void *src, s32 n);
-void func_00681340(Vec3 *out, Vec3 *v, Vec3 *a);
+static void func_00681340(Vec3 *out, Vec3 *v, Vec3 *a);
 extern Vec3 D_006EC0C8;         /* the direction lights point at angle 0 */
 
 #ifdef NON_MATCHING   /* the light-direction copies go through pointers in the original */
@@ -252,7 +251,7 @@ void func_0067F860(void) {
     a = clamp_color(D_00305FA0.color2[3], D_00305FA0.offset2[3]);
     func_001AE9C0(0xE, b | (g << 8 | (a << 24 | r << 16)));
     if (D_00305FA0.enable[3] != 0) {
-        func_00107B50(&l, &D_00305FA0.b[0], sizeof(Light));
+        memcpy(&l, &D_00305FA0.b[0], sizeof(Light));
         func_00681340((Vec3 *)&l.w[1], (Vec3 *)&D_00305FA0.b[0].w[1], &D_00305FA0.unk304);
         func_00681340((Vec3 *)&l.w[9], (Vec3 *)&D_00305FA0.b[0].w[9], &D_00305FA0.unk304);
         func_001AE9C0(0x5A, (u32)&l);
@@ -285,7 +284,7 @@ void func_0067F290(s32 mode) {
 
 
 /* out = a + b, each component kept within 0..1 (light colours). */
-void func_00681340(Vec3 *out, Vec3 *a, Vec3 *b) {
+static void func_00681340(Vec3 *out, Vec3 *a, Vec3 *b) {
     out->x = a->x + b->x;
     out->y = a->y + b->y;
     out->z = a->z + b->z;
@@ -295,14 +294,12 @@ void func_00681340(Vec3 *out, Vec3 *a, Vec3 *b) {
 }
 
 void func_00681440(void);
-#ifdef NON_MATCHING   /* the original keeps an argument register across the first call */
 /* Restores the renderer's first light (mode 2's, moved by unk304). */
 void func_00681440(void) {
     Light l;
 
-    func_00107B50(&l, &D_00305FA0.b[0], sizeof(Light));
+    memcpy(&l, &D_00305FA0.b[0], sizeof(Light));
     func_00681340((Vec3 *)&l.w[1], (Vec3 *)&D_00305FA0.b[0].w[1], &D_00305FA0.unk304);
     func_00681340((Vec3 *)&l.w[9], (Vec3 *)&D_00305FA0.b[0].w[9], &D_00305FA0.unk304);
     func_001AE9C0(0x5A, (u32)&l);
 }
-#endif
