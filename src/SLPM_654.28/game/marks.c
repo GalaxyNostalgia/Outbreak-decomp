@@ -315,3 +315,76 @@ void func_00650050(void) {
     }
 }
 #endif
+
+extern u8 D_0070F8B0[0x848];   /* {queued, changes, the message (to 0x148)}, then the marks */
+u8 func_0064F7A0(Mark *m);
+void func_0055D150(Mark *m, u8 state);
+void func_0055D330(Mark *m);
+
+/* Once a frame: sends the marks' changes (and the queued 5-byte messages) to the others. */
+void func_0064F8C0(void);
+#ifdef NON_MATCHING   /* first draft */
+void func_0064F8C0(void) {
+    u8 msg[4];
+    u8 body[0x10];
+    s32 up = func_001AF0A0();
+    u8 *q = D_0070F8B0 + 8;
+    u8 *out;
+    Mark *m;
+    s32 i;
+    u8 s;
+
+    if (up != 0) {
+        for (i = 0, m = D_0070F9F8; i < 0x40; i++, m++) {
+            if (m->used != 0) {
+                if (m->unk2 == 0) {
+                    m->unk2 = 1;
+                } else if (m->unk3 == 0xFF) {
+                    func_0055D330(m);
+                }
+            }
+        }
+        q = D_0070F8B0 + 8;
+    }
+    while (((s32 *)D_0070F8B0)[0] != 0) {
+        msg[0] = 0;
+        msg[1] = 9;
+        msg[3] = 0;
+        msg[2] = D_0048BF60.unk1D | 0x80;
+        func_00107B50(body, q, 5);
+        func_001AF000(0xA, (NetMsg *)msg, 0, 4);
+        q += 5;
+        ((s32 *)D_0070F8B0)[0]--;
+    }
+    if (up == 0) {
+        return;
+    }
+    out = D_0070F8B0 + 0xC + ((s32 *)D_0070F8B0)[1] * 2;
+    if ((u32)(((s32 *)D_0070F8B0)[1] * 2 + 4) >= 0x141) {
+        return;
+    }
+    for (i = 0, m = D_0070F9F8; i < 0x40; i++, m++) {
+        if (m->used == 0) {
+            continue;
+        }
+        s = func_0064F7A0(m);
+        if (m->unk3 != s) {
+            m->unk3 = s;
+            out[0] = i;
+            out[1] = s;
+            out += 2;
+            ((s32 *)D_0070F8B0)[1]++;
+            if (s == 0xFF) {
+                func_0055D150(m, s);
+            }
+        }
+    }
+    if (((s32 *)D_0070F8B0)[1] > 0) {
+        D_0070F8B0[8] = 1;
+        D_0070F8B0[9] = ((s32 *)D_0070F8B0)[1] * 2 + 4;
+        D_0070F8B0[0xB] = 0;
+        D_0070F8B0[0xA] = 0xFF;
+        func_001AF000(0xA, (NetMsg *)(D_0070F8B0 + 8), 0, 4);
+    }
+}
+#endif
