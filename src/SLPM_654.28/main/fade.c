@@ -147,6 +147,36 @@ void func_001BAAB0(void) {
     }
 }
 
+/* The brightness option: above 0x80 the screen is brightened (added white), below it darkened. */
+void func_001BAB90(void) {
+    u32 b = D_00306590.brightness;
+    s32 c;
+    Rect2D r;
+
+    if (b == 0x80) {
+        return;
+    }
+    if (b > 0x80) {
+        func_001AE430(4, 1);
+        b -= 0x80;
+        c = 0xFF;
+    } else {
+        func_001AE430(4, 5);
+        c = 0;
+        b = 0x80 - b;
+        b *= 2;
+    }
+    r.x1 = 640;
+    r.y0 = 0;
+    r.y1 = 448;
+    r.x0 = 0;
+    r.color = c | (c << 8 | (b << 24 | c << 16));
+    func_001AE9C0(0x5F, 5);
+    func_001AE9C0(0x60, 0);
+    func_001AE9C0(0x6C, 0);
+    func_001AAE10(&r);
+}
+
 typedef struct {
     u8 unk0;
     u8 colorIndex;  /* 0x01 */

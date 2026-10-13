@@ -25,7 +25,7 @@ typedef struct {
     u8 unk10[5];
     u8 unk15;           /* 0x15: 1 runs SUBMAIN's func_349EC0 each frame */
     u8 unk16;           /* 0x16 */
-    u8 unk17;
+    s8 unk17;           /* 0x17: files come from the hard disk */
     u8 unk18;
     u8 unk19;
     u16 unk1A;
@@ -50,16 +50,20 @@ typedef struct {
     u8 ovl54;           /* 0x38: overlay loaded at 0x540000 */
     u8 ovl82;           /* 0x39: overlay loaded at 0x820000 */
     u8 unk3A;
-    u8 unk3B;
+    s8 unk3B;           /* 0x3B: 1 or 2 while a game runs */
     u8 unk3C;
     u8 unk3D;
     u8 unk3E;
     u8 adxBusy;         /* 0x3F: an ADX stream is reading */
-    u8 unk40[0x4C - 0x40];
+    u8 unk40[5];
+    u8 unk45;           /* 0x45: 1 draws the screen effects (func_003479E0) */
+    u8 unk46[0x4C - 0x46];
     s32 unk4C;          /* 0x4C: a big work area (in game: +0x2CF000 is the frame's scratch) */
     u8 unk50[0x54 - 0x50];
     s32 fontTbp;        /* 0x54: GS page for the font's glyphs */
-    u8 unk58[0x84 - 0x58];
+    u8 unk58[0x64 - 0x58];
+    u8 *script;         /* 0x64: the room script buffer (r%03d.evb) */
+    u8 unk68[0x84 - 0x68];
     u8 *unk84;          /* 0x84: 0xA8 entries of 0x70 bytes */
     u8 unk88[0x8C - 0x88];
     u8 *roomBuf;        /* 0x8C */

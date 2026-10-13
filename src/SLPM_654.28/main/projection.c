@@ -170,3 +170,10 @@ void func_00190BF0(Mat44 *m) {
     func_00190BA0(m);
     func_001913A0(m->m[3], &t, m);
 }
+
+/* Moves a matrix by (x, y, z). */
+void func_0018FA40(Mat44 *m, f32 x, f32 y, f32 z) {
+    m->m[3][0] += x;
+    m->m[3][1] += y;
+    m->m[3][2] += z;
+}

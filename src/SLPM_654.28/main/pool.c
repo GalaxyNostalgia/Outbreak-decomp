@@ -67,3 +67,28 @@ void func_001B13D0(void) {
     D_0023BB74 = 0;
     D_0023BB78 = 0x100;
 }
+
+/* Depth-sorted draw callbacks: 0xA0 buckets threaded into one list (D_002FAAE0); an entry is
+   linked in after its bucket (func_001A5130), so walking the list visits them far to near. */
+typedef struct DrawCb {
+    u32 next;
+    s32 depth;          /* 0x04 */
+    f32 pos[4];         /* 0x08 */
+    void *arg;          /* 0x18 */
+    void (*fn)(struct DrawCb *cb); /* 0x1C */
+} DrawCb;
+
+u32 func_001A5150(u32 *list);  /* util.c */
+
+/* Runs this frame's draw callbacks. */
+void func_001B17C0(void) {
+    u32 p = (u32)D_002FAAE0;
+
+    for (;;) {
+        p = func_001A5150(&p);
+        if (p == 0) {
+            break;
+        }
+        ((DrawCb *)p)->fn((DrawCb *)p);
+    }
+}

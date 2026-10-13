@@ -1,6 +1,7 @@
 #include "common.h"
 #include "options.h"
 #include "game.h"
+#include "object.h"
 
 /* GAME.BIN: the game's object pools. Most are an array of objects, a table of pointers to them and
    three counters (in use, free, and a third) that start empty. */
@@ -232,14 +233,22 @@ void func_006AC300(void) {
 /* 0xA8 objects in two lists (by unk7) plus a free list. In a list, next/prev link them; in the
    free list, prev is the next free one. */
 typedef struct Obj250L {
-    u8 unk0;
-    u8 unk1;
+    s8 unk0;
+    s8 unk1;
     u8 unk2[5];
     u8 list;
     u8 unk8[0x1C - 8];
     struct Obj250L *next;
     struct Obj250L *prev;
-    u8 unk24[0x250 - 0x24];
+    u8 unk24[0x2C - 0x24];
+    DrawObjFull *owner;  /* 0x2C: drawn only when its owner was */
+    u8 unk30[0x38 - 0x30];
+    Vec3 pos;           /* 0x38 */
+    u8 unk44[0x1F0 - 0x44];
+    Mat44 *mtx;         /* 0x1F0: follows this matrix (pos is then an offset) */
+    u8 unk1F4[0x200 - 0x1F4];
+    u32 flags;          /* 0x200 */
+    u8 unk204[0x250 - 0x204];
 } Obj250L;
 
 extern Obj250L D_003CE5B0[0xA8];
@@ -545,4 +554,86 @@ extern u8 D_0070F8B0[0x848];
 
 void func_0064F600(void) {
     memset(D_0070F8B0, 0, sizeof(D_0070F8B0));
+}
+
+/* Drawing the shadows and lights of list 0 and list 1 (renderer callbacks queued per object). */
+
+void func_00190ED0(Mat44 *dst, Mat44 *src);
+void func_0018FA40(Mat44 *m, f32 x, f32 y, f32 z);
+void func_001B1460(void *fn, void *a, void *b);
+void func_001B1600(void *fn, void *a, void *b);
+void func_00620770(Obj250L *o);
+s32 func_00346F60(Vec3 *pos);
+void func_00345D00(Obj250L *o);
+extern u8 D_00343330[];         /* (SUBMAIN.BIN) the callback */
+
+#ifdef NON_MATCHING   /* the vector's element addresses are kept in registers in the original */
+void func_006208B0(void) {
+    Obj250L *o;
+    Mat44 m;
+    f32 v[4];
+
+    for (o = D_0023BDD8[0]; o != NULL; o = o->next) {
+        if ((o->owner != NULL && o->owner->drawn == 0) || o->unk0 == 0 || o->unk1 == 0) {
+            continue;
+        }
+        if (o->flags & 0x8000) {
+            if (o->flags & 0x2000) {
+                func_00620770(o);
+            } else {
+                if (o->mtx != NULL) {
+                    func_00190ED0(&m, o->mtx);
+                    func_0018FA40(&m, o->pos.x, o->pos.y, o->pos.z);
+                    v[0] = m.m[3][0];
+                    v[1] = m.m[3][1];
+                    v[2] = m.m[3][2];
+                } else {
+                    v[0] = o->pos.x;
+                    v[1] = o->pos.y;
+                    v[2] = o->pos.z;
+                }
+                v[3] = 1.0f;
+                func_001B1460(D_00343330, o, v);
+            }
+        } else if (func_00346F60(&o->pos) == 1) {
+            func_00345D00(o);
+        }
+    }
+}
+#endif
+
+#ifdef NON_MATCHING   /* the vector's element addresses are kept in registers in the original */
+void func_00620A30(void) {
+    Obj250L *o;
+    Mat44 m;
+    f32 v[4];
+
+    for (o = D_0023BDD8[1]; o != NULL; o = o->next) {
+        if (o->unk0 == 0 || o->unk1 == 0) {
+            continue;
+        }
+        if (o->mtx != NULL) {
+            func_00190ED0(&m, o->mtx);
+            func_0018FA40(&m, o->pos.x, o->pos.y, o->pos.z);
+            v[0] = m.m[3][0];
+            v[1] = m.m[3][1];
+            v[2] = m.m[3][2];
+        } else {
+            v[0] = o->pos.x;
+            v[1] = o->pos.y;
+            v[2] = o->pos.z;
+        }
+        v[3] = 1.0f;
+        if (o->flags & 0x10000) {
+            func_001B1600(D_00343330, o, NULL);
+        } else {
+            func_001B1460(D_00343330, o, v);
+        }
+    }
+}
+#endif
+
+void func_00620740(void) {
+    func_006208B0();
+    func_00620A30();
 }

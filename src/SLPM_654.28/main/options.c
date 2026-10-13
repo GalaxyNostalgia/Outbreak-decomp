@@ -404,6 +404,16 @@ s32 func_001AF500(void) {
     return D_00306590.online;
 }
 
+/* 1 when Options.unk3B is 1 or 2 */
+s32 func_001AF510(void) {
+    s8 x = D_00306590.unk3B;
+
+    if (x == 1 || x == 2) {
+        return 1;
+    }
+    return 0;
+}
+
 /* 1 offline (SINGLE.BIN), 0 online */
 s32 func_001AF4D0(void) {
     return func_001AF500() == 0;

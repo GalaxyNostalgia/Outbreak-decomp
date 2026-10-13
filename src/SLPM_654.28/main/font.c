@@ -288,6 +288,11 @@ typedef struct {
 extern TextLines D_002F7440;
 void func_001B3400(void);
 
+/* Clears every line. */
+void func_001B3960(void) {
+    memset(&D_002F7440, 0, sizeof(TextLines));
+}
+
 void func_001B3920(void) {
     memset(&D_002F7440, 0, sizeof(TextLines));
     func_001AEC40(func_001B3400);
@@ -343,7 +348,7 @@ void func_001B3400(void) {
 }
 
 s32 func_001A8AD0(s32 id, s32 slot);
-void func_001B3960(s32 a);
+void func_001B3960(void);
 void func_006AE930(void);           /* GAME.BIN */
 
 void func_001B2D00(void);
@@ -362,7 +367,7 @@ void func_001B2D00(void) {
         D_0048BF60.unkBC = 1;
     }
     if (D_00306590.unk2B == 0) {
-        func_001B3960(2);
+        func_001B3960();
         func_001AECB0(func_001B3400);
         return;
     }

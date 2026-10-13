@@ -116,3 +116,7 @@ void func_001B69A0(void) {
 void func_001AE7F0(void) {
     D_00306590.unkD = 1;
 }
+
+/* Left empty in the release. */
+void func_001CF590(void) {
+}

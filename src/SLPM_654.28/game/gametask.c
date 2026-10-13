@@ -293,3 +293,181 @@ void func_005CD890(void) {
         break;
     }
 }
+
+extern s16 D_0023BD78;          /* (pools.c) a queue's read and write positions */
+extern s16 D_0023BD7C;
+extern u32 D_0023BE14;          /* players */
+extern u32 D_003064D0;          /* buttons pressed this frame */
+
+void func_005BA730(GameState *g) {
+    D_00306590.unk1C = 0;
+    D_00306590.unk1A = D_002F88B0[3];
+}
+void func_001ADDF0(s32 a);
+s32 func_001ADBA0(s32 a);
+void func_00349D00(void);
+s32 func_0034A290(void);
+s32 func_0034A2F0(void);
+void func_001ADC30(s32 a);
+void func_00349E20(void);
+void func_001AD470(void);
+void func_0065A960(void);
+s32 func_001B6980(s32 slot);
+void func_005D2920(s16 a);
+void func_005BF6E0(s16 a);
+void func_005BDC20(void);
+void func_00349B40(void);
+void func_001B3960(void);
+void func_005BDC80(void);
+s32 func_001AF500(void);
+void func_006500B0(s32 a);
+void func_001BA7A0(s32 a);
+void func_001BA870(void);
+void func_005D2F00(void);
+
+#ifdef NON_MATCHING   /* first draft */
+/* State 14: an event (a movie with the game paused behind it), then on to state 1. */
+void func_005D2A90(void) {
+    GameState *g = &D_0048BF60;
+    u32 i;
+    s32 n;
+
+    switch (g->step) {
+    case 0:
+        func_005BA730(g);
+        D_0048BF60.unk29 = 0;
+        func_005BA6D0();
+        func_005BA750();
+        g->unkA = 0;
+        g->unkC = 0;
+        g->step++;
+        break;
+    case 1:
+        if (func_001AF500() == 1) {
+            g->step += 5;
+            break;
+        }
+        if (D_00306590.unk1A != 1) {
+            g->step += 5;
+            break;
+        }
+        g->timer = 0;
+        g->step++;
+        func_001ADDF0(1);
+        break;
+    case 2:
+        if (func_001ADBA0(0) != 0) {
+            D_00306590.unk3C = 1;
+            func_00349D00();
+            g->step++;
+        }
+        break;
+    case 3:
+        if (func_0034A290() == 2) {
+            func_001ADC30(0);
+            g->step++;
+        }
+        break;
+    case 4:
+        if (func_0034A2F0() == 0) {
+            D_00306590.unk3C = 0;
+            func_00349E20();
+            g->timer = 0x28;
+            g->step++;
+            break;
+        }
+        if (g->unkA == 1) {
+            D_00306590.unk3C = 0;
+            func_00349E20();
+            func_001AD470();
+            g->timer = 0x5A;
+            g->step++;
+        }
+        if (D_003064D0 & 0x8000) {
+            g->unkA = 1;
+        }
+        break;
+    case 5:
+        if (--g->timer == 0) {
+            g->step++;
+            func_001AD470();
+        }
+        break;
+    case 6:
+        func_0065A960();
+        if (func_001B6980(0x62) == 0 && D_0023BD7C != D_0023BD78) {
+            func_005D2920(D_0023BD7C);
+            g->step++;
+            break;
+        }
+        while (D_0023BD7C != D_0023BD78) {
+            func_005BF6E0(D_0023BD7C);
+        }
+        g->unk28 = 0;
+        g->unkCA = 0;
+        g->step += 3;
+        g->unkC = 5;
+        break;
+    case 7:
+        if (func_001ADBA0(1) != 0) {
+            D_00306590.unk3C = 1;
+            if (D_0023BD7C != D_0023BD78) {
+                func_005BF6E0(D_0023BD7C);
+                func_005BDC20();
+                func_00349B40();
+            }
+            g->step++;
+        }
+        break;
+    case 8:
+        if (func_0034A2F0() == 0) {
+            g->step++;
+            g->unkC = 10;
+            g->unk28 = 0;
+            g->unkCA = 0;
+            func_00349E20();
+            func_001AD470();
+            func_001B3960();
+            break;
+        }
+        if (g->step2 == 0 && func_0034A290() == 2) {
+            func_001ADC30(1);
+            g->step2 = 1;
+        }
+        func_005BDC80();
+        if (func_001AF500() == 1) {
+            n = 0;
+            for (i = 0; i < D_0023BE14; i++) {
+                if (g->unkCB & (1 << i)) {
+                    n++;
+                }
+            }
+            if (n == D_0023BE14) {
+                func_00349E20();
+                func_001AD470();
+                break;
+            }
+        } else if (g->unkC != 0) {
+            func_00349E20();
+            func_001AD470();
+            break;
+        }
+        if (D_003064D0 & 0x8000) {
+            if (func_001AF500() == 1) {
+                func_006500B0(2);
+            } else {
+                g->unkC = 5;
+            }
+        }
+        break;
+    case 9:
+        func_001BA7A0(6);
+        if (--g->unkC == 0) {
+            func_001BA870();
+            func_005D2F00();
+            func_005CE710(1);
+        }
+        break;
+    }
+}
+#endif

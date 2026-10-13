@@ -282,3 +282,27 @@ void func_0067F290(s32 mode) {
         D_00305FA0.mode = mode;
     }
 }
+
+
+/* out = a + b, each component kept within 0..1 (light colours). */
+void func_00681340(Vec3 *out, Vec3 *a, Vec3 *b) {
+    out->x = a->x + b->x;
+    out->y = a->y + b->y;
+    out->z = a->z + b->z;
+    out->x = out->x < 0.0f ? 0.0f : out->x > 1.0f ? 1.0f : out->x;
+    out->y = out->y < 0.0f ? 0.0f : out->y > 1.0f ? 1.0f : out->y;
+    out->z = out->z < 0.0f ? 0.0f : out->z > 1.0f ? 1.0f : out->z;
+}
+
+void func_00681440(void);
+#ifdef NON_MATCHING   /* the original keeps an argument register across the first call */
+/* Restores the renderer's first light (mode 2's, moved by unk304). */
+void func_00681440(void) {
+    Light l;
+
+    func_00107B50(&l, &D_00305FA0.b[0], sizeof(Light));
+    func_00681340((Vec3 *)&l.w[1], (Vec3 *)&D_00305FA0.b[0].w[1], &D_00305FA0.unk304);
+    func_00681340((Vec3 *)&l.w[9], (Vec3 *)&D_00305FA0.b[0].w[9], &D_00305FA0.unk304);
+    func_001AE9C0(0x5A, (u32)&l);
+}
+#endif
