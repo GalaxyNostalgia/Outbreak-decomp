@@ -522,16 +522,7 @@ void func_00689DF0(EnemySlot *s) {
 
 /* The room's items, then (offline, with the start option's bit 0) the ones left alone get
    unk24 = 1. */
-typedef struct {
-    s8 unk0;
-    u8 unk1[5];
-    u16 unk6;           /* 0x06 */
-    u8 unk8[0x24 - 8];
-    s16 unk24;          /* 0x24 */
-    u8 unk26[0x3C - 0x26];
-} Unk3967D0;
-
-extern Unk3967D0 D_003967D0[0x100];
+#include "item.h"
 void func_00561640(void);
 void func_00561970(u16 room);
 void func_00561B60(u16 room);
@@ -543,7 +534,7 @@ s32 func_001AF4D0(void);
 void func_00561870(void) {
     u16 room = D_00306590.unk1A;
     s32 i;
-    Unk3967D0 *e;
+    ItemSlot *e;
 
     func_00561640();
     if (func_001AF4D0() == 1) {
@@ -554,7 +545,7 @@ void func_00561870(void) {
     func_00561CE0(room);
     if (func_001AF4D0() == 1 && (D_0048BF60.unkC6 & 1)) {
         for (i = 0, e = D_003967D0; i < 0x100; i++, e++) {
-            if (e->unk0 != 0 && e->unk6 != 0x20 && func_00583EA0(i, 1) != 0
+            if (e->active != 0 && e->unk6 != 0x20 && func_00583EA0(i, 1) != 0
                 && func_00583EA0(i, 0x6000) != 0 && e->unk24 <= 0) {
                 e->unk24 = 1;
             }
@@ -567,7 +558,7 @@ void func_00561870(void) {
 extern u16 D_006D5F20[10];
 extern char *D_0070E280[10];
 extern char D_0070E2B0[10][0x28];
-char *func_001C0020(u16 id);
+char *func_001C0020(s32 id);
 u32 strlen(const char *s);
 
 void func_00574B40(void) {

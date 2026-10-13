@@ -664,3 +664,115 @@ void func_00639180(void) {
     }
 }
 
+
+/* Entering a room: its data, then everything in it. */
+void func_001AC9F0(void);
+void func_005BB840(void);
+void func_001D4C40(void);
+void func_0065A620(void);
+void func_005BB2D0(u8 room, u8 a, u8 b);
+void func_001D7320(void);
+void func_005BB5A0(s32 slot, DrawObjFull *obj);
+
+void func_005BAB70(void) {
+    s32 i;
+    DrawObjFull *obj;
+
+    func_001AC9F0();
+    func_001AB8E0();
+    func_005BB840();
+    func_001D4C40();
+    func_0065A620();
+    func_005BB2D0(D_00306590.unk1A, D_00306590.unk1C, D_00306590.unk1E);
+    func_001D7320();
+    for (i = 0, obj = D_00476DD0; i < (s32)D_0023BE14; i++, obj++) {
+        func_005BB5A0(i, obj);
+    }
+    func_001AB8E0();
+}
+
+void func_001B1D60(void);
+void func_001B1E70(void);
+void func_001D2DC0(void);
+void func_00688C40(void);
+void func_001D33D0(void);
+void func_00651EF0(void);
+void func_006A3B60(void);
+void func_005A9C70(void);
+void func_006897A0(void);
+void func_001D6960(void);
+void func_005BAED0(void);
+void func_00639800(void);
+void func_00561570(void);
+void func_0067B1F0(void);
+void func_00651340(void);
+void func_006383E0(void);
+void func_00346810(void);
+void func_00346900(void);
+void func_00346990(void);
+void func_00638850(void);
+void func_00651660(void);
+void func_003478F0(void);
+void func_00546E30(void);
+void func_001B7D60(void);
+void func_001AF190(void);
+void func_006AB300(u16 a);
+void func_006AB4E0(s32 a);
+
+void func_005BAC20(void) {
+    func_001AB8E0();
+    func_0018D730();
+    func_001B1D60();
+    func_0018D730();
+    func_001B1E70();
+    func_001D2DC0();
+    func_00688C40();
+    func_0018D730();
+    func_001D33D0();
+    func_00651EF0();
+    func_0018D730();
+    func_006A3B60();
+    func_005A9C70();
+    func_006897A0();
+    func_001D6960();
+    func_005BAED0();
+    func_0018D730();
+    func_00639800();
+    func_00561570();
+    func_0067B1F0();
+    func_00651340();
+    func_006383E0();
+    func_00346810();
+    func_00346900();
+    func_00346990();
+    func_00638850();
+    func_00651660();
+    func_003478F0();
+    func_00546E30();
+    func_001B7D60();
+    func_001AB8E0();
+    func_001AF190();
+    func_006AB300(D_00306590.unk1C);
+    func_006AB4E0(-1);
+    D_00306590.unk3E = 0;
+}
+
+void func_001B9C30(s32 a, u32 color);
+void func_00341AB0(void);
+void func_001B2C90(void);
+void func_00345480(void);
+
+/* State 1's start: the room, then a fade in. */
+void func_005CD9E0(void) {
+    D_00306590.unk10[2] = 1;
+    D_0048BF60.unk64 = 1;
+    func_005BAB70();
+    func_005BAC20();
+    D_0048BF60.unk64 = 0;
+    func_00345480();
+    func_001B9C30(0x10, 0xFF000000);
+    func_005CE710(2);
+    func_00341AB0();
+    func_001B2C90();
+    D_00306590.unk10[2] = 0;
+}

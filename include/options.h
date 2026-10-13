@@ -61,7 +61,8 @@ typedef struct {
     s32 unk4C;          /* 0x4C: a big work area (in game: +0x2CF000 is the frame's scratch) */
     u8 unk50[0x54 - 0x50];
     s32 fontTbp;        /* 0x54: GS page for the font's glyphs */
-    u8 unk58[0x64 - 0x58];
+    u8 unk58[0x60 - 0x58];
+    u8 *unk60;          /* 0x60: (the same work memory as unk4C) */
     u8 *script;         /* 0x64: the room script buffer (r%03d.evb) */
     u8 unk68[0x7C - 0x68];
     s32 *message;       /* 0x7C: the room's messages (r%03d.bin) */

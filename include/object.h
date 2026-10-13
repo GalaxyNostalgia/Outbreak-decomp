@@ -38,9 +38,12 @@ typedef struct DrawObjFull {
     u8 unk553;          /* 0x553: casts a shadow */
     u8 unk554[0xB98 - 0x554];
     u8 unkB98;          /* 0xB98 */
-    u8 unkB99[0xBB4 - 0xB99];
-    u16 unkBB4;         /* 0xBB4 */
-    u8 unkBB6[0xBBA - 0xBB6];
+    u8 unkB99[0xBAC - 0xB99];
+    s32 unkBAC;         /* 0xBAC */
+    f32 unkBB0;         /* 0xBB0: D_00712280[kind] */
+    u16 unkBB4;         /* 0xBB4: (NPCs) their model + 1 */
+    s16 unkBB6;         /* 0xBB6 */
+    s16 unkBB8;         /* 0xBB8 */
     u16 unkBBA;         /* 0xBBA */
     u8 costume;         /* 0xBBC */
     u8 unkBBD[0xC7C - 0xBBD];
@@ -52,7 +55,10 @@ typedef struct DrawObjFull {
     u8 color[4];        /* 0xCCC: r, g, b, a */
     u8 unkCD0[0xCE8 - 0xCD0];
     u32 unkCE8;         /* 0xCE8 */
-    u8 unkCEC[0xFB4 - 0xCEC];
+    u8 unkCEC[0xD28 - 0xCEC];
+    s32 unkD28;         /* 0xD28 */
+    s32 unkD2C;         /* 0xD2C */
+    u8 unkD30[0xFB4 - 0xD30];
     u8 held;            /* 0xFB4: (enemies) what they hold, 0xFF nothing */
     u8 unkFB5[0xFF0 - 0xFB5];
     s8 isNpc;           /* 0xFF0: (players) a computer-controlled partner */

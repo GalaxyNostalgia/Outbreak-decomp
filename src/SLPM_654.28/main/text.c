@@ -42,3 +42,10 @@ char *func_001C0180(s32 n) {
     }
     return D_002180F0[n];
 }
+
+/* System message id's text. */
+extern char *D_002176F0[];
+
+char *func_001C0020(s32 id) {
+    return D_002176F0[id];
+}

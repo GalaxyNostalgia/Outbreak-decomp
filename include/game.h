@@ -35,7 +35,8 @@ typedef struct {
     u8 unk60[2];
     s8 unk62;           /* 0x62: offline */
     s8 unk63;           /* 0x63 */
-    u8 unk64[0xA1 - 0x64];
+    s8 unk64;           /* 0x64: a room is being set up */
+    u8 unk65[0xA1 - 0x65];
     u8 unkA1[6];        /* 0xA1: per player, its voice bank (character kind + 1; 0: none) */
     s8 unkA7;           /* 0xA7 */
     u8 unkA8[0xBA - 0xA8];

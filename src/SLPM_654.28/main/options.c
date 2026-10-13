@@ -694,7 +694,11 @@ void func_001B8AC0(s32 player, s32 kind) {
 extern s8 D_0023BB90;
 extern DrawObjFull D_00476DD0[];
 s32 func_001A12B0(s32 pad);
-void func_001AFB90(DrawObjFull *obj, s8 pad);
+extern s8 D_0023BB38[8];         /* per character: its pad */
+
+void func_001AFB90(DrawObjFull *obj, s8 pad) {
+    D_0023BB38[obj->kind] = pad;
+}
 
 void func_001AFBB0(void) {
     s8 pad;

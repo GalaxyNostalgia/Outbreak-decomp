@@ -109,3 +109,21 @@ void func_005BB5A0(s32 slot, DrawObjFull *obj) {
     func_0018D730();
 }
 #endif
+
+extern f32 D_00712280[];
+s32 func_001AF4D0(void);
+void func_008220A0(DrawObjFull *obj);
+
+void func_00639100(DrawObjFull *obj) {
+    if (obj->active != 0) {
+        obj->unkD2C = -1;
+        obj->unkD28 = -1;
+        obj->unkBB0 = D_00712280[obj->unkB98];
+        obj->unkBAC = 0;
+        obj->unkBB6 = 0;
+        obj->unkBB8 = 0;
+        if (func_001AF4D0() == 1) {
+            func_008220A0(obj);
+        }
+    }
+}

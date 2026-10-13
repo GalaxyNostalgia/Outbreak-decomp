@@ -130,3 +130,26 @@ void func_001A0EB0(PadCfg *cfg, s32 i) {
     D_0023BAB0[i] = *cfg;
     func_001A53B0(i, D_0023BAB0[i].a, D_0023BAB0[i].b, D_0023BAB0[i].c);
 }
+
+/* Pad n is connected (type 0x8000: none). */
+s32 func_001A12B0(s32 n);
+#ifdef NON_MATCHING   /* the pad base is loaded before the multiply */
+s32 func_001A12B0(s32 n) {
+    u8 *in = D_0023BAB8 + n * 0x78;
+    u16 type;
+    s32 r;
+
+    if (in[0] == 0) {
+        return 0;
+    }
+    type = *(u16 *)(in + 2);
+    r = 0;
+    if (type != 0) {
+        r = 1;
+        if (type == 0x8000) {
+            r = 0;
+        }
+    }
+    return r;
+}
+#endif
