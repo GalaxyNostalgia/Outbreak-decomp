@@ -1,6 +1,7 @@
 #include "common.h"
 #include "options.h"
 #include "game.h"
+#include "object.h"
 
 /* The map: the rooms seen (per room, its parts {count, count parts of 8 bytes}). */
 
@@ -222,13 +223,18 @@ void func_006AC8A0(void) {
 
 typedef struct {
     u8 unk0[4];
-    u8 open;            /* 0x04: 1 the map, 2 ... */
+    u8 open;            /* 0x04: 0 closed, 1 the menu, 2 ..., 4, 5 */
+    u8 unk5[0x32C0 - 5];
+    u16 pad;            /* 0x32C0: buttons pressed */
+    u8 unk32C2[0x33C0 - 0x32C2];
+    s8 unk33C0;         /* 0x33C0 */
 } MapScreen;
 
 extern MapScreen D_00720BE0;
 extern s8 D_00723F94;
 extern u8 *D_0023BFBC;
 extern u8 D_00476DD0[][0x10E0];
+void *memset(void *p, s32 c, u32 n);
 void func_0064E360(void *p, s32 a, u8 b);
 void func_006B9910(void);
 void func_001B6EB0(void);
@@ -263,5 +269,110 @@ void func_006AE930(void) {
     FIELD(&D_0048BF60, s8, 0x1E) = 0;
     func_006A5A10(0);
     func_006AC8A0();
+}
+#endif
+
+extern u8 D_00389740[0x10];
+extern u8 D_00723F9E;
+void func_006AC230(void);
+s32 func_001AF510(void);
+s32 func_001AF500(void);
+void func_006AC8D0(u8 mode);
+u8 func_005C1060(DrawObjFull *p);
+void func_006AE420(s32 mode, u8 player);
+void func_005C15E0(DrawObjFull *p);
+void func_006AC3C0(void);
+void func_006AA8A0(void);
+void func_006AF010(void);
+void func_006B3600(void);
+void func_006B32D0(void);
+void func_006B38E0(void);
+void func_006B9D20(void);
+void func_006BA610(void);
+
+/* Once a frame: the in-game menu (opened with its buttons when it is closed). */
+void func_006AC510(void);
+#ifdef NON_MATCHING   /* first draft */
+void func_006AC510(void) {
+    MapScreen *m = &D_00720BE0;
+    DrawObjFull *p;
+    u8 r;
+
+    if (FIELD(&D_0048BF60, u8, 0x63) == 0) {
+        return;
+    }
+    func_006AC230();
+    if (func_001AF510() == 1) {
+        p = (DrawObjFull *)D_00476DD0[D_0048BF60.unk1D];
+    } else {
+        p = (DrawObjFull *)D_00476DD0[0];
+    }
+    if (m->open != 1 && m->open < 4) {
+        func_006AC8D0(m->open);
+    }
+    switch (m->open) {
+    case 0:
+        if (FIELD(&D_0048BF60, u8, 0x1E) != 0) {
+            break;
+        }
+        r = func_005C1060(p);
+        if (func_001AF500() == 1 && (m->pad & 0x4000)) {
+            if (r != 0) {
+                func_006AE420(4, D_0048BF60.unk1D);
+            }
+            break;
+        }
+        if (r != 1) {
+            break;
+        }
+        if (m->pad & 0x200) {
+            FIELD(&D_0048BF60, s8, 0x38) = 0;
+            FIELD(&D_0048BF60, u8, 0x1E) = p->kind + 1;
+            memset(D_00389740, 0, sizeof(D_00389740));
+            func_006AE420(1, p->kind);
+        } else if (m->pad & 0x8000) {
+            m->pad &= 0x7FFF;
+            FIELD(&D_0048BF60, s8, 0x38) = 0;
+            FIELD(&D_0048BF60, u8, 0x1E) = p->kind + 1;
+            memset(D_00389740, 0, sizeof(D_00389740));
+            func_005C15E0(p);
+            func_006AE420(0, p->kind);
+            D_00389740[0] = 0;
+        }
+        break;
+    case 1:
+        func_006AC3C0();
+        func_006AA8A0();
+        switch (D_00723F9E) {
+        case 0:
+            func_006AF010();
+            break;
+        case 1:
+            func_006B3600();
+            break;
+        case 2:
+            func_006B32D0();
+            break;
+        default:
+            if (m->pad & 0x10) {
+                func_006AE930();
+            } else if (D_00720BE0.pad & 0x400) {
+                m->unk33C0 = 1;
+            } else if (m->pad & 0x800) {
+                m->unk33C0 = 2;
+            }
+            break;
+        }
+        break;
+    case 2:
+        func_006B38E0();
+        break;
+    case 4:
+        func_006B9D20();
+        break;
+    case 5:
+        func_006BA610();
+        break;
+    }
 }
 #endif

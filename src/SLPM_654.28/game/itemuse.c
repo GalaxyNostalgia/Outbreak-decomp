@@ -128,9 +128,7 @@ void func_0058E420(void) {
             if (f->timer != 0xFFFF && f->timer != 0xFFFE) {
                 D_003AEF50.timer--;
             }
-            /* (as built: the store sits in the branch's delay slot, so it happens whether or
-               not the character has 0x20000) */
-            if (f->timer != 0xFFFE) {
+            if (f->timer != 0xFFFE && (p->unkBA0 & 0x20000)) {
                 f->timer = 0;
             }
             if (f->timer == 0) {
