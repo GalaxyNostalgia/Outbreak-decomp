@@ -2,6 +2,8 @@
 #include "options.h"
 #include "task.h"
 #include "sce.h"
+#include "system.h"
+#include "ps2mem.h"
 
 /* DEMO.BIN: the title screen and its menus, attract mode. Its task runs in slot 4. */
 
@@ -2219,7 +2221,52 @@ typedef struct {
     u32 color;
 } Rect2D;
 
-void func_00548EB0(Sprite2D *s, s32 off);
+void func_00189618(u128 *src, u128 *dst, s32 n);
+s32 func_001937B0(u32 *pkt);
+u32 func_001982C0(u32 c, s32 alphaOnly);
+extern u32 D_00559640[];    /* textured sprite packet */
+
+#ifdef NON_MATCHING   /* first draft, main's func_001AAB10 at depth z */
+/* A textured rectangle at depth z (0 is the far plane, negative wraps to the near end). */
+void func_00548EB0(Sprite2D *s, s32 z) {
+    s32 ox;
+    s32 oy;
+    s32 x;
+    s32 y;
+    s32 w;
+    s32 h;
+    f32 sx;
+    u32 c;
+
+    if (D_00281DB0.unk3F4 == 0) {
+        ox = (0x1000 - D_00281DB0.width) / 2;
+        oy = (0x1000 - D_00281DB0.dispHeight) / 2;
+        y = s->y * 16;
+        sx = D_00281DB0.width / 640.0f;
+        x = 16.0f * (s->x * sx);
+        w = 16.0f * (s->w * sx);
+        h = s->h * 16;
+        if (D_00281DB0.field == 0) {
+            y >>= 1;
+            h >>= 1;
+        }
+        x += ox * 16;
+        y += oy * 16;
+        func_00189618((u128 *)D_00559640, (u128 *)PS2_SPR(0x70000000), 3);
+        *(u64 *)PS2_SPR(0x70000018) = 0x535310;
+        c = func_001982C0(s->color, 0);
+        *(u64 *)PS2_SPR(0x70000028) = ((u64)((c >> 16) & 0xFF) | ((u64)((c >> 8) & 0xFF) << 8) |
+                                       ((u64)(c & 0xFF) << 16) | ((u64)((c >> 24) & 0xFF) << 24)) | ((u64)1 << 32);
+        *(u64 *)PS2_SPR(0x70000030) = (s64)(s->u0 * 16 + 8) | ((s64)(s->v0 * 16 + 8) << 16);
+        *(u64 *)PS2_SPR(0x70000038) = ((u64)(u32)z << 32) | ((s64)x | ((s64)y << 16));
+        *(u64 *)PS2_SPR(0x70000040) = (s64)(s->u1 * 16 + 8) | ((s64)(s->v1 * 16 + 8) << 16);
+        *(u64 *)PS2_SPR(0x70000048) = ((u64)(u32)z << 32) | ((s64)(x + w) | ((s64)(y + h) << 16));
+        func_001937B0((u32 *)PS2_SPR(0x70000000));
+    }
+}
+#else
+void func_00548EB0(Sprite2D *s, s32 z);
+#endif
 s32 func_001AAE10(Rect2D *r);
 s32 func_001AB4F0(Tri2D *t);
 

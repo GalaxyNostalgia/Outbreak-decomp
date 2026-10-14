@@ -33,9 +33,10 @@ typedef struct {
     u8 unk35;           /* 0x35 */
     s8 unk36;           /* 0x36 */
     u8 unk37;           /* 0x37 */
-    u8 unk38[0x3A - 0x38];
+    u8 unk38;
+    s8 unk39;           /* 0x39: a message is up */
     s8 unk3A;           /* 0x3A */
-    u8 unk3B;           /* 0x3B */
+    u8 unk3B;           /* 0x3B: messages in msgs */
     s8 unk3C;           /* 0x3C: a movie is playing */
     u8 unk3D[2];
     u8 unk3F;           /* 0x3F: the player motions are loaded */
@@ -45,7 +46,9 @@ typedef struct {
     s8 unk62;           /* 0x62: offline */
     s8 unk63;           /* 0x63 */
     u8 unk64;           /* 0x64: a room is being set up */
-    u8 unk65[0xA1 - 0x65];
+    u8 unk65;
+    u8 msgs[19][3];     /* 0x66: the messages being shown: text (two bytes), speaker */
+    u8 unk9F[0xA1 - 0x9F];
     u8 unkA1[6];        /* 0xA1: per player, its voice bank (character kind + 1; 0: none) */
     s8 unkA7;           /* 0xA7 */
     u8 unkA8[0xBA - 0xA8];

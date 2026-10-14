@@ -266,6 +266,56 @@ s32 func_0019C780(void) {
 }
 
 /* A free palette slot, as a handle's high half. */
+s32 func_0019E4F0(FlTexture *t);
+s32 func_0018D710(s32 handle);
+s32 func_0018D150(void);
+
+/* Free texture handle tex: out of VRAM, its pixels released, its slot cleared. */
+s32 func_0019CAA0(u32 tex) {
+    FlTexture *t = &D_0027AAC0[tex - 1];
+
+    if (tex == 0) {
+        return 0;
+    }
+    if (tex > 0x100) {
+        return 0;
+    }
+    if (t->used == 0) {
+        return 0;
+    }
+    func_0018D150();
+    func_0019E4F0(t);
+    if (t->mem != 0) {
+        func_0018D710(t->mem);
+    }
+    func_0018D600(t, 0, sizeof(FlTexture));
+    D_0023BAA4--;
+    return 1;
+}
+
+/* Free palette slot pal (1-based), the same way. */
+s32 func_0019CC00(u32 pal) {
+    FlTexture *t = &D_002772C0[pal - 1];
+
+    if (pal == 0) {
+        return 0;
+    }
+    if (pal > 0x100) {
+        return 0;
+    }
+    if (t->used == 0) {
+        return 0;
+    }
+    func_0018D150();
+    func_0019E4F0(t);
+    if (t->mem != 0) {
+        func_0018D710(t->mem);
+    }
+    func_0018D600(t, 0, sizeof(FlTexture));
+    D_0023BA64--;
+    return 1;
+}
+
 s32 func_0019CA50(void) {
     s32 i;
 

@@ -563,3 +563,485 @@ s32 func_0065BCB0(u32 *args) {
     return 0;
 }
 #endif
+
+#include "message.h"
+
+extern s8 D_0048BF50[];
+extern u32 D_006E3510[];        /* the message when our character can't talk */
+void func_00635780(s32 a);
+
+/* Queue an event message. */
+void func_005BF4C0(EventMsg *m) {
+    D_003839B0[D_0023BD78].v[0] = m->v[0];
+    D_003839B0[D_0023BD78].v[1] = m->v[1];
+    D_003839B0[D_0023BD78].v[2] = m->v[2];
+    D_003839B0[D_0023BD78].v[3] = m->v[3];
+    D_003839B0[D_0023BD78].v[4] = m->v[4];
+    D_003839B0[D_0023BD78].v[5] = m->v[5];
+    D_003839B0[D_0023BD78].v[6] = m->v[6];
+    D_003839B0[D_0023BD78].v[7] = m->v[7];
+    D_0023BD78++;
+    D_0023BD78 &= 0xF;
+}
+
+/* 0x62: a message (args[0..4]); a stock one when our character is in no state to (status 0x80) */
+s32 func_0065D090(u32 *args) {
+    EventMsg m;
+
+    if (D_00476DD0[D_0048BF60.unk1D].unkBA0 & 0x80) {
+        if (D_0048BF60.unk28 == 0) {
+            args = D_006E3510;
+            D_0048BF60.unkA7 = 1;
+        } else {
+            return 0;
+        }
+    }
+    D_0048BF60.unk28 = 1;
+    if (D_00476DD0[D_0048BF60.unk1D].unkBA0 & 0x120) {
+        D_0048BF60.unkA7 = 1;
+    } else {
+        D_0048BF60.unk28 = 1;
+        m.v[0] = args[0];
+        m.v[1] = args[1];
+        m.v[2] = args[2];
+        m.v[3] = args[3];
+        m.v[4] = args[4];
+        m.v[7] = 0;
+        m.v[6] = 0;
+        m.v[5] = 0;
+        func_005BF4C0(&m);
+    }
+    if (D_0048BF60.unkA7 != 0) {
+        func_00635780(0);
+    }
+    D_0048BF50[0] = 0;
+    return 0;
+}
+
+/* if character kind args[0] is (args[1] 1) or isn't (0) one of the players */
+s32 func_0065F770(u32 *args) {
+    u8 kind = *(u8 *)&args[0];
+    u32 i;
+    u8 v = *(u8 *)&args[1];
+    u8 found = 0;
+
+    D_0048BE70.unk78[CUR]++;
+    for (i = 0; i < *(u32 *)&D_0023BE14; i++) {
+        if (kind == D_00476DD0[i].unkB98) {
+            found = 1;
+            break;
+        }
+    }
+    if ((v == 1 && found == 0) || (v == 0 && found == 1)) {
+        func_0065AAF0();
+        return 2;
+    }
+    return 0;
+}
+
+void func_0065ACF0(void);
+
+/* 0xE4: else (reached from the true branch: skip to the endif) */
+s32 func_0065F2A0(u32 *args) {
+    func_0065ACF0();
+    return 2;
+}
+
+/* if our character is (args[1] != 0) or isn't kind args[0] */
+s32 func_00661850(u32 *args) {
+    u8 kind = *(u8 *)&args[0];
+    s32 v = args[1];
+
+    D_0048BE70.unk78[CUR]++;
+    if (v != 0) {
+        if (kind != D_00476DD0[D_0048BF60.unk1D].unkB98) {
+            func_0065AAF0();
+            return 2;
+        }
+    } else {
+        if (kind == D_00476DD0[D_0048BF60.unk1D].unkB98) {
+            func_0065AAF0();
+            return 2;
+        }
+    }
+    return 0;
+}
+
+/* 0xE5: an if that's always true */
+s32 func_0065F2C0(u32 *args) {
+    D_0048BE70.unk78[CUR]++;
+    return 0;
+}
+
+extern u8 D_0048BBE0[];         /* per item: who has it (player + 1) */
+void func_00341B50(void);
+void func_00341AB0(void);
+void func_006ABBA0(void);
+void func_006ABD70(u8 a, u8 b, s32 c, s32 d);
+
+/* Who says a message of this kind: 2 our character, 3 the item's holder (or us), 1 and 5 whether
+   the item's holder (unkB99) ... */
+#ifdef NON_MATCHING   /* the item holder's number is masked late */
+u8 func_005BF590(s32 kind) {
+    u8 n;
+    u8 r = 0;
+
+    switch (kind) {
+    case 1:
+    case 5:
+        if (D_0035FFD0.item < 0) {
+            return 0;
+        }
+        n = D_0048BBE0[D_0035FFD0.item];
+        if (n == 0) {
+            return 0;
+        }
+        if (*(u8 *)&(D_00476DD0 - 1)[n].unkB99 != 0) {
+            r = 1;
+        } else {
+            return 0;
+        }
+        break;
+    case 2:
+        r = D_00476DD0[D_0048BF60.unk1D].unkB98;
+        break;
+    case 3:
+        n = D_0048BBE0[D_0035FFD0.item];
+        if (n == 0) {
+            r = D_00476DD0[D_0048BF60.unk1D].unkB98;
+        } else {
+            r = (D_00476DD0 - 1)[n].unkB98;
+        }
+        break;
+    }
+    return r;
+}
+#endif
+
+/* Show the next queued message, with the ones of the same exchange after it. */
+void func_005BF6E0(s16 unused);
+#ifdef NON_MATCHING   /* keeps registers across func_005BF590, which has to match first */
+void func_005BF6E0(s16 unused) {
+    s16 r = D_0023BD7C;
+    s32 i;
+    s16 k;
+
+    D_0035FFD0.kind = D_003839B0[r].v[0];
+    D_0035FFD0.a = D_003839B0[r].v[1];
+    D_0035FFD0.b = D_003839B0[r].v[2];
+    D_0035FFD0.who = D_003839B0[r].v[3];
+    D_0035FFD0.who2 = D_0035FFD0.who;
+    D_0035FFD0.item = D_003839B0[r].v[4];
+    D_0023BD7C = r + 1;
+    D_0023BD7C &= 0xF;
+    D_0035FFD0.who = func_005BF590(D_0035FFD0.who);
+    if (D_0035FFD0.kind == 3) {
+        D_0035FFD0.kind = 1;
+    }
+    D_0048BF60.unk3B = 0;
+    if (D_0035FFD0.kind != 0) {
+        D_0048BF60.unk39 = 1;
+        D_0048BF60.unk3B++;
+        D_0048BF60.msgs[0][0] = D_0035FFD0.a;
+        D_0048BF60.msgs[0][1] = D_0035FFD0.b;
+        D_0048BF60.msgs[0][2] = D_0035FFD0.who;
+        k = D_0023BD7C;
+        for (i = 0; i < 0x10; i++) {
+            if (k == D_0023BD78) {
+                break;
+            }
+            if (D_003839B0[k].v[0] == 0) {
+                break;
+            }
+            D_0048BF60.msgs[D_0048BF60.unk3B][0] = D_003839B0[k].v[1];
+            D_0048BF60.msgs[D_0048BF60.unk3B][1] = D_003839B0[k].v[2];
+            D_0048BF60.msgs[D_0048BF60.unk3B][2] = func_005BF590(D_003839B0[k].v[3]);
+            k = (k + 1) & 0xF;
+            D_0048BF60.unk3B++;
+        }
+        D_0023BD7C = k;
+    }
+    if (D_0035FFD0.kind == 3 || D_0035FFD0.kind == 1) {
+        func_00341B50();
+        func_006ABBA0();
+    } else {
+        func_00341AB0();
+        func_006ABD70(D_0035FFD0.a, D_0035FFD0.b, 0, 0);
+    }
+}
+#endif
+
+void *memset(void *p, s32 c, u32 n);
+s32 func_005BCEA0(s32 mode);
+void func_001BA0F0(u32 color);
+s32 func_001B9C30(s16 frames, u32 color);
+
+/* After a message: its work cleared, func_005BCEA0(1), the fade reset. */
+void func_005BDC20(void) {
+    D_0048BF60.unk3A = 0;
+    D_0048BF60.unk1E[0] = 0;
+    memset(&D_0035FFD0, 0, sizeof(D_0035FFD0));
+    func_005BCEA0(1);
+    func_001BA0F0(0xFF000000);
+    func_001B9C30(1, 0xFF000000);
+}
+
+/* A message file's tables, found by func_005BD4C0. */
+typedef struct {
+    s32 unk0;           /* the file's word 0x20 */
+    s32 n1;             /* 0x04: entries in t1 (0x18 bytes each) */
+    s32 n2;             /* 0x08: in t2 (0x28 bytes) */
+    s32 n3;             /* 0x0C: in t3 (0x28 bytes) */
+    u8 *t1;             /* 0x10 */
+    u8 *t2;             /* 0x14 */
+    u8 *t3;             /* 0x18 */
+    s32 unk1C;
+} MsgFile;
+
+/* past a table: a count, then count entries of size bytes (rounded down to words) */
+#define MSG_SKIP(p, size)                \
+    {                                    \
+        c = *(s32 *)(p);                 \
+        (p) += 4;                        \
+        (p) += (c * (size)) & ~3;        \
+    }
+
+/* Find the tables in a message file. */
+s32 func_005BD4C0(u8 *file, MsgFile *f) {
+    s32 n;
+    s32 i;
+    s32 j;
+    s32 c;
+
+    f->unk0 = *(s32 *)(file + 0x20);
+    n = *(s32 *)(file + 0x24);
+    file += 0x28;
+    file += (n * 16) & ~3;
+    for (i = 0; i < n - 1; i++) {
+        for (j = 0; j < 2; j++) {
+            MSG_SKIP(file, 0x38);
+        }
+    }
+    n = *(s32 *)file;
+    f->n1 = n;
+    file += 4;
+    f->t1 = file;
+    file += (n * 0x18) & ~3;
+    MSG_SKIP(file, 0x24);
+    n = *(s32 *)file;
+    file += 4;
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < 8; j++) {
+            MSG_SKIP(file, 0x24);
+        }
+    }
+    n = *(s32 *)file;
+    file += 4;
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < 7; j++) {
+            MSG_SKIP(file, 0x24);
+        }
+    }
+    n = *(s32 *)file;
+    f->n2 = n;
+    file += 4;
+    f->t2 = file;
+    file += (n * 0x28) & ~3;
+    n = *(s32 *)file;
+    file += 4;
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < 2; j++) {
+            MSG_SKIP(file, 0x30);
+        }
+    }
+    f->n3 = *(s32 *)file;
+    f->t3 = file + 4;
+    return 0;
+}
+
+extern char D_0070A1E0[];       /* "data/edit/eve/r%03d/dm%02d%02d%c.bin" */
+extern char D_0070A210[];       /* "dm%02d%02d%c.bin" */
+extern s32 D_0023BD40;
+extern u8 *D_0023BD50;          /* the loaded messages' data */
+extern s32 D_0023BD54;
+extern s32 D_0023BD58;
+extern s32 D_0023BD5C;
+extern s32 D_0023BD60;
+extern s32 D_0023BD64;
+extern u8 *D_0023BD68;          /* its third table (NULL if empty) */
+extern u8 *D_0023BD6C;          /* its second table */
+extern s32 D_0023BD70;
+extern u8 *D_0023BD74;          /* its first table (NULL if empty) */
+s32 sprintf(char *s, const char *fmt, ...);
+s32 func_0018D530(const char *name);
+void func_0018D630(void *dst, const void *src, s32 n);
+s32 func_001CFBB0(const char *name, void *buf, s32 flags, s32 size);
+s32 func_001A96E0(const char *name, void *buf);
+s32 func_005BD4C0(u8 *file, MsgFile *out);
+s32 func_005BD280(MsgFile *src, MsgFile *acc);
+void func_001D7260(s32 mode);
+
+/* Append a message file's tables (src) to the ones gathered so far (acc): a table's closing
+   entry (0xFFFF) is dropped first, and the new entries' indices (field 2) are moved past acc's. */
+s32 func_005BD280(MsgFile *src, MsgFile *acc) {
+    s32 base = acc->unk0;
+    u8 *q;
+    s32 i;
+    s32 j;
+    u8 *p;
+
+    acc->unk0 = base + src->unk0;
+    p = acc->t1 + acc->n1 * 0x18;
+    if (acc->n1 != 0 && *(u16 *)(p - 0x16) == 0xFFFF) {
+        p -= 0x18;
+        acc->n1--;
+    }
+    for (i = 0; i < src->n1; i++, p += 0x18) {
+        func_0018D630(p, src->t1 + i * 0x18, 0x18);
+        if (*(u16 *)(p + 2) != 0xFFFF) {
+            *(u16 *)(p + 2) += base;
+        }
+    }
+    acc->n1 += src->n1;
+    q = acc->t2 + acc->n2 * 0x28;
+    if (acc->n2 != 0 && *(u16 *)(q - 0x26) == 0xFFFF) {
+        q -= 0x28;
+        acc->n2--;
+    }
+    for (j = 0; j < src->n2; j++, q += 0x28) {
+        func_0018D630(q, src->t2 + j * 0x28, 0x28);
+        if (*(u16 *)(q + 2) != 0xFFFF) {
+            *(u16 *)(q + 2) += base;
+        }
+    }
+    acc->n2 += src->n2;
+    q = acc->t3 + acc->n3 * 0x28;
+    if (acc->n3 != 0 && *(u16 *)(q - 0x26) == 0xFFFF) {
+        q -= 0x28;
+        acc->n3--;
+    }
+    for (j = 0; j < src->n3; j++, q += 0x28) {
+        func_0018D630(q, src->t3 + j * 0x28, 0x28);
+        if (*(u16 *)(q + 2) != 0xFFFF) {
+            *(u16 *)(q + 2) += base;
+        }
+    }
+    acc->n3 += src->n3;
+    return 0;
+}
+
+/* Load the messages being shown (D_0048BF60.msgs: file dm<text><text><speaker>.bin each) and
+   merge their tables in work memory. mode 0 uses unk4C/unk68's memory, 1 unk6C's. */
+#ifdef NON_MATCHING   /* register allocation: the original keeps &acc.n1 in fp */
+s32 func_005BCEA0(s32 mode) {
+    char name[0x80];
+    MsgFile f;
+    MsgFile acc;
+    u8 *buf;
+    u8 *p;
+    u8 *q;
+    s32 i;
+
+    acc.unk0 = 0;
+    acc.n1 = 0;
+    acc.n2 = 0;
+    acc.n3 = 0;
+    if (mode == 0) {
+        p = (u8 *)D_00306590.unk4C;
+        acc.t1 = p;
+        acc.t2 = p + 0x4000;
+        acc.t3 = p + 0x8000;
+        memset(p, 0, 0x3000);
+    } else {
+        q = D_00306590.unk6C;
+        acc.t1 = p = q + 0x18000;
+        acc.t2 = q + 0x19000;
+        acc.t3 = q + 0x1A000;
+        memset(p, 0, 0x3000);
+    }
+    for (i = 0; i < D_0048BF60.unk3B; i++) {
+        if (mode != 0) {
+            buf = D_00306590.unk6C;
+        } else {
+            buf = (u8 *)D_00306590.unk4C + 0x40000;
+        }
+        memset(name, 0, sizeof(name));
+        if (D_00306590.unk17 == 0) {
+            sprintf(name, D_0070A1E0, D_00306590.unk1A, D_0048BF60.msgs[i][0], D_0048BF60.msgs[i][1],
+                    D_0048BF60.msgs[i][2] + 'a');
+            if (func_001CFBB0(name, buf, 1, func_0018D530(name)) == 0) {
+                continue;
+            }
+        } else {
+            sprintf(name, D_0070A210, D_0048BF60.msgs[i][0], D_0048BF60.msgs[i][1], D_0048BF60.msgs[i][2] + 'a');
+            if (func_001A96E0(name, buf) == 0) {
+                continue;
+            }
+        }
+        if (func_005BD4C0(buf, &f) == 0) {
+            func_005BD280(&f, &acc);
+        }
+    }
+    D_0023BD70 = 0;
+    D_0035FFD0.unk14 = 0;
+    D_0023BD64 = 0;
+    D_0035FFD0.unk16 = 0;
+    D_0023BD60 = 0;
+    D_0035FFD0.unk18 = 0;
+    D_0023BD5C = 0;
+    D_0035FFD0.unk1C = 0;
+    D_0023BD58 = 0;
+    D_0035FFD0.unk20 = 0;
+    D_0023BD54 = 0;
+    D_0035FFD0.unk22 = 0;
+    D_0023BD40 = 0;
+    D_0035FFD0.unk2E = 0;
+    D_0035FFD0.n2 = acc.n2;
+    D_0035FFD0.n3 = acc.n3;
+    D_0035FFD0.count = acc.unk0;
+    if (mode == 0) {
+        D_0023BD50 = p = D_00306590.unk68 + 0x40000;
+        memset(p, 0, 0x18000);
+    } else {
+        D_0023BD50 = p = D_00306590.unk6C;
+        memset(p, 0, 0x18000);
+    }
+    func_0018D630(p, acc.t1, acc.n1 * 0x18);
+    if (acc.n1 != 0) {
+        D_0023BD74 = p;
+    } else {
+        D_0023BD74 = NULL;
+    }
+    D_0023BD6C = q = (u8 *)(((u32)p + acc.n1 * 0x60 + 3) & ~3);
+    func_0018D630(q, acc.t2, acc.n2 * 0x28);
+    p = (u8 *)(((u32)q + acc.n2 * 0xA0 + 3) & ~3);
+    func_0018D630(p, acc.t3, acc.n3 * 0x28);
+    if (acc.n3 != 0) {
+        D_0023BD68 = p;
+    } else {
+        D_0023BD68 = NULL;
+    }
+    func_001D7260(mode);
+    return 0;
+}
+#endif
+
+void func_005BF080(void);
+void func_005BF2A0(void);
+void func_005BF200(void);
+void func_001BA180(void);
+void func_005BF480(void);
+
+/* Once a frame while a message is up. */
+void func_005BDC80(void) {
+    func_005BF080();
+    func_005BF2A0();
+    func_005BF200();
+    func_001BA180();
+    func_005BF480();
+    if (D_00306590.unkC != 0) {
+        D_0035FFD0.frames += 2;
+    } else {
+        D_0035FFD0.frames += 1;
+    }
+}

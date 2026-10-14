@@ -1,6 +1,7 @@
 #include "common.h"
 #include "game.h"
 #include "object.h"
+#include "options.h"
 
 /* The per-frame passes over the object lists. */
 

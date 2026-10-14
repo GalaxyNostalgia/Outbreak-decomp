@@ -95,3 +95,35 @@ void func_001D6960(void) {
     }
 }
 #endif
+
+extern char D_00238728[];       /* "%s/dm%03d.bin" */
+extern char D_00238738[];       /* "data/edit/eve" */
+extern char D_00238748[];       /* "dm%03d.bin" */
+s32 sprintf(char *s, const char *fmt, ...);
+s32 func_001CFBB0(const char *name, void *buf, s32 flags, s32 size);
+s32 func_001A96E0(const char *name, void *buf);
+
+/* Load the room's dm file (mode 0: to Options.speech, 1: to unk6C + 0x10000); a missing one
+   leaves a zero word. */
+void func_001D7260(s32 mode) {
+    char name[0x80];
+    Options *o = &D_00306590;
+    s32 *buf;
+    s32 size;
+
+    if (mode != 0) {
+        buf = (s32 *)((s32)D_00306590.unk6C + 0x10000);
+    } else {
+        buf = (s32 *)D_00306590.speech;
+    }
+    if (D_00306590.unk17 == 0) {
+        sprintf(name, D_00238728, D_00238738, o->unk1A);
+        size = func_001CFBB0(name, buf, 1, 0);
+    } else {
+        sprintf(name, D_00238748, o->unk1A);
+        size = func_001A96E0(name, buf);
+    }
+    if (size <= 0) {
+        *buf = 0;
+    }
+}

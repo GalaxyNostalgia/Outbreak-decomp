@@ -180,3 +180,59 @@ s32 func_001AAB10(Sprite2D *s) {
     return 1;
 }
 #endif
+
+/* A textured triangle (the current texture) in 640x448 screen coordinates. */
+typedef struct {
+    s16 x0, y0, x1, y1, x2, y2;
+    u32 color;      /* 0xAARRGGBB */
+    s16 u0, v0, u1, v1, u2, v2;
+} Tri2D;
+
+extern u32 D_00216510[];    /* textured triangle packet: tags, PRIM, RGBAQ, (UV, XYZ2) x3 */
+
+#ifdef NON_MATCHING   /* first draft, like func_001AAB10 */
+s32 func_001AB4F0(Tri2D *t) {
+    s32 ox;
+    s32 oy;
+    s32 x0, x1, x2;
+    s32 y0, y1, y2;
+    f32 sx;
+    u32 c;
+
+    if (D_00281DB0.unk3F4 != 0) {
+        return 1;
+    }
+    ox = (0x1000 - D_00281DB0.width) / 2 * 16;
+    oy = (0x1000 - D_00281DB0.dispHeight) / 2 * 16;
+    sx = D_00281DB0.width / 640.0f;
+    y0 = t->y0 * 16;
+    y1 = t->y1 * 16;
+    y2 = t->y2 * 16;
+    x0 = 16.0f * (t->x0 * sx);
+    x1 = 16.0f * (t->x1 * sx);
+    x2 = 16.0f * (t->x2 * sx);
+    if (D_00281DB0.field == 0) {
+        y0 >>= 1;
+        y1 >>= 1;
+        y2 >>= 1;
+    }
+    x0 += ox;
+    y0 += oy;
+    x1 += ox;
+    x2 += ox;
+    y1 += oy;
+    y2 += oy;
+    func_00189618((u128 *)D_00216510, (u128 *)PS2_SPR(0x70000000), 3);
+    c = func_001982C0(t->color, 0);
+    *(u64 *)PS2_SPR(0x70000028) = ((u64)((c >> 16) & 0xFF) | ((u64)((c >> 8) & 0xFF) << 8) |
+                                   ((u64)(c & 0xFF) << 16) | ((u64)((c >> 24) & 0xFF) << 24)) | ((u64)1 << 32);
+    *(u64 *)PS2_SPR(0x70000030) = (s64)(t->u0 * 16 + 8) | ((s64)(t->v0 * 16 + 8) << 16);
+    *(u64 *)PS2_SPR(0x70000038) = ((u64)(u32)D_00281DB0.zMax << 32) | ((s64)x0 | ((s64)y0 << 16));
+    *(u64 *)PS2_SPR(0x70000040) = (s64)(t->u1 * 16 + 8) | ((s64)(t->v1 * 16 + 8) << 16);
+    *(u64 *)PS2_SPR(0x70000048) = ((u64)(u32)D_00281DB0.zMax << 32) | ((s64)x1 | ((s64)y1 << 16));
+    *(u64 *)PS2_SPR(0x70000050) = (s64)(t->u2 * 16 + 8) | ((s64)(t->v2 * 16 + 8) << 16);
+    *(u64 *)PS2_SPR(0x70000058) = ((u64)(u32)D_00281DB0.zMax << 32) | ((s64)x2 | ((s64)y2 << 16));
+    func_001937B0((u32 *)PS2_SPR(0x70000000));
+    return 1;
+}
+#endif

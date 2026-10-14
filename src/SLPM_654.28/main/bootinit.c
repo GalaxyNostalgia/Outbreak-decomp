@@ -163,8 +163,8 @@ static TexSlot *func_001CFD10(void) {
     return NULL;
 }
 
-void func_0019CAA0(s32 tex);
-void func_0019CC00(s32 pal);
+s32 func_0019CAA0(u32 tex);
+s32 func_0019CC00(u32 pal);
 
 /* Frees a texture handle's texture and palette. */
 void func_001CFCC0(s32 handle) {

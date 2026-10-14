@@ -486,6 +486,61 @@ extern ScenePlayers D_0048AC10;
 extern u8 D_0048AEB0[];
 extern DrawObjFull D_00476DD0[];
 
+extern u8 D_00825400[][3];      /* (online) the players: character, ... */
+extern u32 D_0023BE14;
+extern char *D_006DA350[];      /* room 1's music by our character: without Kevin */
+extern char *D_006DA370[];      /* ... with Kevin */
+extern char D_0070AEA0[];
+extern char D_0070AEC0[];
+extern char D_0070AEE0[];
+void func_001ADA60(s32 n, s32 byId, char *file, s32 ptid);
+
+/* Kevin (character 1) is playing. */
+s32 func_005D2860(void) {
+    s32 i;
+
+    if (func_001AF500() == 1) {
+        for (i = 0; i < 4; i++) {
+            if (D_00825400[i][0] == 1) {
+                return 1;
+            }
+        }
+        return 0;
+    }
+    for (i = 0; i < D_0023BE14; i++) {
+        if (D_00476DD0[i].unkB98 == 1) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+/* The music for the rooms that start with some (the event's arg is unused). */
+#ifdef NON_MATCHING   /* the constant args' order in the calls */
+void func_005D2920(s16 a) {
+    switch (D_00306590.unk1A) {
+    case 1:
+        if (func_005D2860() == 0) {
+            func_001ADA60(1, 0, D_006DA350[D_00476DD0[D_0048BF60.unk1D].unkB98], 0);
+        } else {
+            func_001ADA60(1, 0, D_006DA370[D_00476DD0[D_0048BF60.unk1D].unkB98], 0);
+        }
+        break;
+    case 2:
+        break;
+    case 0x1C:
+        func_001ADA60(1, 0, D_0070AEA0, 0);
+        break;
+    case 0x23:
+        func_001ADA60(1, 0, D_0070AEC0, 0);
+        break;
+    case 0x29:
+        func_001ADA60(1, 0, D_0070AEE0, 0);
+        break;
+    }
+}
+#endif
+
 void func_005D2F00(void) {
     s32 i;
     u8 id;

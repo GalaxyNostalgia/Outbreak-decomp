@@ -41,7 +41,7 @@ extern u8 D_002771A0[], D_002771E0[], D_00277220[];
 
 void func_00191750(void *p);
 void func_0019CD60(s32 mode, u32 *v);
-void func_00197BE0(u32 v);
+s32 func_00197BE0(u32 v);
 void func_00197330(u32 flags, s32 unused);
 void func_00197A50(u32 v);
 void func_00196C00(u32 v);

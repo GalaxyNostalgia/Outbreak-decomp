@@ -402,6 +402,20 @@ void func_001AE430(s32 a, s32 b);
 void func_001AE9C0(s32 cmd, u32 arg);
 void func_001B9DA0(void);
 
+extern u8 D_002F8840[0x18];     /* the message backdrop's state (the rectangle at +0xC) */
+extern s32 D_0023BD40;
+
+/* The full-screen rectangle behind messages, in this colour (drawn while D_0048BF60.unk28). */
+void func_001BA0F0(u32 color) {
+    memset(D_002F8840, 0, sizeof(D_002F8840));
+    D_002F884C.color = color;
+    D_0023BD40 = 0;
+    D_002F884C.x1 = 0x280;
+    D_002F884C.y1 = 0x1E0;
+    D_002F884C.x0 = 0;
+    D_002F884C.y0 = 0;
+}
+
 void func_001B9CC0(void) {
     if (func_001B6980(0x58) != 0) {
         return;

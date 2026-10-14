@@ -65,7 +65,9 @@ typedef struct {
     s32 rdtSize;        /* 0x5C: the room's .rdt file */
     u8 *unk60;          /* 0x60: (the same work memory as unk4C; the room's .rdt) */
     u8 *script;         /* 0x64: the room script buffer (r%03d.evb) */
-    u8 unk68[0x78 - 0x68];
+    u8 *unk68;          /* 0x68: work memory (+0x40000: the messages' data, offline) */
+    u8 *unk6C;          /* 0x6C: work memory (the messages' data and files, the other mode) */
+    u8 unk70[0x78 - 0x70];
     u8 *speech;         /* 0x78: the room's speech data (sp/spm files) */
     s32 *message;       /* 0x7C: the room's messages (r%03d.bin) */
     u8 unk80[0x84 - 0x80];

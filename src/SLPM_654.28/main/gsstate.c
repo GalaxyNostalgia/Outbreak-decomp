@@ -380,6 +380,141 @@ s32 func_00197B10(s32 flags, s32 ctx) {
     return 1;
 }
 
+/* The texture-state packet in .data: a header and six A+D writes (TEXA, TEX1, TEX0, CLAMP,
+   MIPTBP1, MIPTBP2) that func_00197BE0 fills in for one texture and sends. */
+extern u32 D_002126E0[];
+extern u64 D_00212700[];
+extern u64 D_00212710[];
+extern u64 D_00212720[];
+extern u64 D_00212730[];
+extern u64 D_00212740[];
+extern u64 D_00212750[];
+extern s32 D_0023BA58;      /* mipmap K (cmd 6) */
+extern u32 D_0023BA5C;      /* mipmap L (cmd 7) */
+extern s32 D_0023BA8C;
+s32 func_001937B0(u32 *pkt);
+s16 func_0019C6A0(FlTexture *t, u32 mip);
+s32 func_00197C50(u32 h, u64 *texa, u64 *tex1, u64 *tex0, u64 *clamp, u64 *mip1, u64 *mip2, u32 flags);
+
+/* Use texture handle h for drawing (0 if it isn't in GS memory). */
+s32 func_00197BE0(u32 h) {
+    if (func_00197C50(h, D_00212700, D_00212710, D_00212720, D_00212730, D_00212740, D_00212750, D_0023BA8C) == 0) {
+        return 0;
+    }
+    func_001937B0(D_002126E0);
+    return 1;
+}
+
+/* The GS registers for texture handle h: flags bit 16 point sampling, bits 17-18 clamp to the
+   texture's size, bits 22-23 mipmapping (1 nearest level, 2/3 blend levels). */
+#ifdef NON_MATCHING   /* first draft: the TEX0 and MIPTBP expressions' order */
+s32 func_00197C50(u32 h, u64 *texa, u64 *tex1, u64 *tex0, u64 *clamp, u64 *mip1, u64 *mip2, u32 flags) {
+    FlTexture *t = &D_0027AAC0[(h & 0xFFFF) - 1];
+    FlTexture *c;
+    s32 tbp[6];
+    s32 tbw[6];
+    s32 w;
+    s32 i;
+    s16 bw;
+
+    if ((h & 0xFFFF) == 0) {
+        return 0;
+    }
+    if (t->vram == 0) {
+        return 0;
+    }
+    if (t->inVram == 0) {
+        return 0;
+    }
+    if (t->flags & 4) {
+        if ((h & 0xFFFF0000) >> 16 == 0) {
+            return 0;
+        }
+        c = &D_002772C0[((h & 0xFFFF0000) >> 16) - 1];
+        if (c->vram == 0) {
+            return 0;
+        }
+        if (c->inVram == 0) {
+            return 0;
+        }
+    }
+
+    if (!(flags & 0xC00000) || t->mips == 1) {
+        if ((flags & 0x10000) == 0x10000) {
+            *tex1 = 0;
+        } else {
+            *tex1 = 0x60;
+        }
+    } else if ((flags & 0xC00000) == 0x400000) {
+        if ((flags & 0x10000) == 0x10000) {
+            *tex1 = ((u64)(t->mips - 1) << 2 | 0x80) | (u64)D_0023BA5C << 19 | (u64)(u32)((D_0023BA58 << 4) & 0xFFF) << 32;
+        } else {
+            *tex1 = ((u64)(t->mips - 1) << 2 | 0x120) | (u64)D_0023BA5C << 19 | (u64)(u32)((D_0023BA58 << 4) & 0xFFF) << 32;
+        }
+    } else {
+        if ((flags & 0x10000) == 0x10000) {
+            *tex1 = ((u64)(t->mips - 1) << 2 | 0xC0) | (u64)D_0023BA5C << 19 | (u64)(u32)((D_0023BA58 << 4) & 0xFFF) << 32;
+        } else {
+            *tex1 = ((u64)(t->mips - 1) << 2 | 0x160) | (u64)D_0023BA5C << 19 | (u64)(u32)((D_0023BA58 << 4) & 0xFFF) << 32;
+        }
+    }
+
+    bw = t->w / 64;
+    if (bw == 0) {
+        bw = 1;
+    }
+    if (t->flags & 4) {
+        c = &D_002772C0[((h & 0xFFFF0000) >> 16) - 1];
+        if (c->bpp == 3) {
+            *texa = 0x80 | (u64)0x80 << 32;
+        } else {
+            *texa = (u64)0x80 << 32;
+        }
+        *tex0 = (u64)t->vram | (u64)bw << 14 | (u64)(u32)t->psm << 20 | (u64)t->tw << 26 | (u64)t->th << 30
+              | (u64)4 << 32 | (u64)c->vram << 37 | (u64)(u32)c->psm << 51 | (u64)0x40000000 << 32;
+    } else {
+        if (t->bpp == 3) {
+            *texa = 0x80 | (u64)0x80 << 32;
+        } else {
+            *texa = (u64)0x80 << 32;
+        }
+        *tex0 = (u64)t->vram | (u64)bw << 14 | (u64)(u32)t->psm << 20 | (u64)t->tw << 26 | (u64)t->th << 30
+              | (u64)4 << 32;
+    }
+
+    switch (flags & 0x60000) {
+    case 0:
+        *clamp = 0;
+        break;
+    default:
+        *clamp = ((u64)t->w << 14 | 0xA) | (u64)t->h << 34;
+        break;
+    }
+
+    *mip1 = 0;
+    *mip2 = 0;
+    if (t->mips < 2) {
+        return 1;
+    }
+    for (i = 5; i >= 0; i--) {
+        tbp[i] = 0;
+        tbw[i] = 0;
+    }
+    w = t->w >> 1;
+    for (i = 0; i < t->mips - 1; i++) {
+        tbp[i] = func_0019C6A0(t, i + 1);
+        tbw[i] = w / 64;
+        if (tbw[i] == 0) {
+            tbw[i] = 1;
+        }
+        w >>= 1;
+    }
+    *mip1 = (u64)tbp[0] | (u64)tbw[0] << 14 | (u64)tbp[1] << 20 | (u64)tbw[1] << 34 | (u64)tbp[2] << 40 | (u64)tbw[2] << 54;
+    *mip2 = (u64)tbp[3] | (u64)tbw[3] << 14 | (u64)tbp[4] << 20 | (u64)tbw[4] << 34 | (u64)tbp[5] << 40 | (u64)tbw[5] << 54;
+    return 1;
+}
+#endif
+
 extern s32 D_0023BA80;      /* fog colour */
 extern s32 D_0023BA8C;      /* default drawing flags */
 extern f32 D_0023BA1C;      /* frame height / next power of two */

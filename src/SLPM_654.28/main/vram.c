@@ -35,6 +35,28 @@ void func_0019E1A0(TexEntry *e) {
     D_0023BA68--;
 }
 
+/* The VRAM allocation holding texture t, if it's in VRAM. */
+TexEntry *func_0019E270(FlTexture *t) {
+    TexEntry *e;
+
+    for (e = D_0023BA6C; e != NULL; e = e->next) {
+        if (e->tex == t) {
+            return e;
+        }
+    }
+    return NULL;
+}
+
+/* Take texture t out of VRAM. */
+s32 func_0019E4F0(FlTexture *t) {
+    TexEntry *e = func_0019E270(t);
+
+    if (e != NULL) {
+        func_0019E1A0(e);
+    }
+    return 1;
+}
+
 s32 func_0019E4B0(void) {
     while (D_0023BA6C != NULL) {
         func_0019E1A0(D_0023BA6C);

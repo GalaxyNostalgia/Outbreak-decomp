@@ -5,6 +5,7 @@
 #include "libgraph.h"
 #include "libdma.h"
 #include "cri.h"
+#include "game.h"
 
 /* SUBMAIN.BIN: the game's movie player on CRI Sofdec. Movies come from the AFS archives; each
    decoded frame (RGBA, 16x16 macroblocks one after another) is uploaded to GS memory and drawn
@@ -484,6 +485,140 @@ void func_00349D00(void) {
     mwPlyStartSeamless(D_0023BC70->ply);
     mwPlyReleaseSeamless(D_0023BC70->ply);
 }
+
+void func_001AE8E0(s32 a);
+char *strcpy(char *dst, const char *src);
+s32 sprintf(char *s, const char *fmt, ...);
+extern char D_0035BA50[];   /* "PS2continue.sfd" */
+extern char D_0035BA60[];   /* "%02d_%d_%d" */
+
+s32 strlen(const char *s);
+s32 strcmp(const char *a, const char *b);
+
+/* The message movies by room: names (each byte inverted) and their AFS file ids. */
+typedef struct {
+    char *name;
+    u8 fid;
+} MsgMovie;
+
+typedef struct {
+    s32 room;           /* -1 ends the table */
+    MsgMovie *movies;   /* ends with a NULL name */
+} RoomMsgMovies;
+
+extern RoomMsgMovies D_00358B60[];
+
+/* The AFS file id of this room's message movie name (-1: none; room 6: 0). */
+s32 func_003418C0(const char *name) {
+    char buf[0x100];
+    RoomMsgMovies *r;
+    MsgMovie *m;
+    s32 len;
+    s32 i;
+    char *d;
+    char *s;
+
+    if (D_00306590.unk1A == 6) {
+        return 0;
+    }
+    m = NULL;
+    for (r = D_00358B60; r->room >= 0; r++) {
+        if (r->room == D_00306590.unk1A) {
+            m = r->movies;
+            break;
+        }
+    }
+    if (m == NULL) {
+        return -1;
+    }
+    for (; (s = m->name) != NULL; m++) {
+        len = strlen(s);
+        d = buf;
+        for (i = 0; i < len; i++) {
+            if (*s == 0) {
+                break;
+            }
+            *d++ = *s++ ^ 0xFF;
+        }
+        *d = 0;
+        if (strcmp(buf, name) == 0) {
+            return m->fid;
+        }
+    }
+    return -1;
+}
+
+/* Queue the continue movie. */
+s32 func_00349AF0(void) {
+    strcpy((char *)D_0035D350, D_0035BA50);
+    mwPlyEntryAfs(D_0023BC70->ply, 3, func_001AA5C0((char *)D_0035D350));
+    return 1;
+}
+
+/* Play the movies of the messages being shown ("<text>_<text>_<speaker>"; kind 0x63: the
+   continue movie); none found stops the player. */
+void func_00349B40(void);
+#ifdef NON_MATCHING   /* first draft: the message bytes' loads and the counters' registers */
+void func_00349B40(void) {
+    s32 skip;
+    s32 i;
+    s32 n;
+    s32 fid;
+    u8 a;
+    u8 t;
+    u8 c;
+
+    if (func_001B6980(0xE) != 0) {
+        return;
+    }
+    skip = 0;
+    if (D_00306590.unk0 != 0 && D_003065CC[0] == 2) {
+        skip = 1;
+        D_003065CC[0] = 1;
+    }
+    D_0023BC70 = &D_003209B0;
+    if (D_0023BC70->ply == NULL) {
+        func_003498B0(0x200, 0x140);
+        if (D_0023BC70->ply == NULL) {
+            return;
+        }
+    }
+    if (skip) {
+        return;
+    }
+    D_0023BC70->unk91 = 1;
+    n = 0;
+    if (D_00306590.unk0 != 0) {
+        for (i = 0; i < D_0048BF60.unk3B; i++) {
+            a = D_0048BF60.msgs[i][0];
+            t = D_0048BF60.msgs[i][1];
+            c = D_0048BF60.msgs[i][2];
+            if (a == 0x63) {
+                if (func_00349AF0() == 0) {
+                    continue;
+                }
+                n++;
+            } else {
+                sprintf((char *)D_0035D350, D_0035BA60, a, t, c);
+                D_0023A148 = fid = func_003418C0((char *)D_0035D350);
+                if (fid != -1) {
+                    mwPlyEntryAfs(D_0023BC70->ply, 2, fid);
+                    n++;
+                }
+            }
+        }
+        if (n == 0) {
+            func_00349E20();
+            return;
+        }
+    }
+    mwPlySetLpFlg(D_0023BC70->ply, 0);
+    mwPlyStartSeamless(D_0023BC70->ply);
+    mwPlyReleaseSeamless(D_0023BC70->ply);
+    D_0023BC70->unk91 = 0;
+    func_001AE8E0(0);
+}
+#endif
 
 /* Stops the movie (it ends at its end). */
 void func_00349DE0(void) {

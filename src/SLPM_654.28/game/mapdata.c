@@ -376,3 +376,20 @@ void func_006AC510(void) {
     }
 }
 #endif
+
+extern s32 D_0023BFC8;
+extern s32 D_0023BFCC;
+extern u8 D_007209B0[0xE8];     /* the text window's state (func_006ABD70 shows a text) */
+/* (empty) */
+void func_006A5A00(void) {
+}
+
+/* Clears the text window. */
+void func_006ABBA0(void) {
+    D_0023BFCC = 0;
+    D_0023BFC8 = 0;
+    memset(D_007209B0, 0, sizeof(D_007209B0));
+    D_00306590.unk2A = 0;
+    func_006A5A00();
+    D_00306590.unk3E = 0;
+}

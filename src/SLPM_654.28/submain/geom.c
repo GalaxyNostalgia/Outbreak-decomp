@@ -61,7 +61,25 @@ void func_001AEC40(void (*fn)(void));
 void func_001B3920(void);
 void func_00341AF0(void);
 
+void func_001AE290(void);
+void func_001B17C0(void);
+void func_001B9CC0(void);
+
+/* The per-frame work while a message is up (installed by func_00341B20/func_00341B50). */
+void func_00341AF0(void) {
+    func_001AE290();
+    func_001B17C0();
+    func_001B9CC0();
+}
+
 void func_00341B20(void) {
+    func_001AEC00();
+    func_001AEC40(func_00341AF0);
+    func_001B3920();
+}
+
+/* The same, when a message comes up. */
+void func_00341B50(void) {
     func_001AEC00();
     func_001AEC40(func_00341AF0);
     func_001B3920();

@@ -93,6 +93,13 @@ void func_001D6E70(u8 *types);
 
 #define BIT(a, n) ((a)[(n) >> 5] & (1 << ((n) & 0x1F)))
 
+s32 func_001AF4D0(void);
+
+/* Playing offline. */
+u8 func_00688C10(void) {
+    return func_001AF4D0() == 1;
+}
+
 /* Places the room's enemies: the scenario's enemy sets (when their scene flag is on), then the
    ones placed whatever the scenario, of the groups' types; then loads the types' code. */
 void func_00688C40(void);
