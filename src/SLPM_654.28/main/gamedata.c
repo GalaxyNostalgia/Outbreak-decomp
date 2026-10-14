@@ -486,7 +486,7 @@ s32 func_001A32E0(void *out, void *p, u32 n);
 s32 func_001A2540(s16 *out, void *p, u32 n);
 s32 func_00189790(void *mesh, u32 layout);
 void func_001B00D0(s32 group);
-void func_001D5B40(u32 *light, ModelPart *part);
+void func_001D5B40(u32 *b, ModelPart *part);
 s32 func_0018D680(u32 *mark);
 void func_0018D6A0(u32 *mark);
 void func_001AE9C0(s32 cmd, u32 arg);
@@ -535,3 +535,53 @@ void func_001D5920(Slot1468 *m, void *model, u8 mode) {
     }
 }
 #endif
+
+extern s32 D_0023A0D0[2];
+extern s32 D_0023A0D8[2];
+extern s32 D_0023A0E0[2];
+extern s32 D_0023A0E8[2];
+extern s32 D_0023A0F0[2];
+extern u32 D_00218EC0[];
+extern u32 D_00218EF0[];
+extern u32 D_00218F10[];
+
+/* A part's render block (a mesh's 0x48 bytes, func_001A25E0) as drawing state commands. */
+void func_001D5B40(u32 *b, ModelPart *part) {
+    func_001AE9C0(0x15, D_0023A0D0[b[1]]);
+    if (D_0023A0D0[b[1]] == 2) {
+        func_001AE9C0(2, D_00218EF0[b[2]]);
+        part->unk8D = 0;
+        part->unk90 = b[5];
+    } else {
+        func_001AE9C0(2, 0);
+        part->unk90 = 0;
+        if (b[2] & 1) {
+            part->unk8D = 1;
+        } else {
+            part->unk8D = 0;
+        }
+    }
+    func_001AE9C0(0x12, D_0023A0D8[b[8]]);
+    func_001AE9C0(1, D_00218EC0[b[5]]);
+    func_001AE9C0(0x66, D_0023A0E0[b[9]]);
+    func_001AE9C0(0x62, D_0023A0E8[b[7]]);
+    func_001AE9C0(0xC, D_0023A0F0[b[4]]);
+    func_001AE9C0(0, D_00218F10[b[3]]);
+    switch (b[10]) {
+    case 6:
+        func_001AE9C0(0x5D, 0x06000000);
+        break;
+    case 5:
+        func_001AE9C0(0x5D, 0x05000000);
+        break;
+    default:
+    case 0:
+        func_001AE9C0(0x5D, 0);
+        break;
+    }
+    part->unk89 = b[11];
+    part->unk8A = b[12];
+    part->unk8B = b[13];
+    part->unk8C = (s32)b[16] >> 16;
+    part->unk8F = b[15];
+}

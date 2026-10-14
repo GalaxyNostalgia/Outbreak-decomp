@@ -1,4 +1,5 @@
 #include "common.h"
+#include "system.h"
 
 /* Model files: a header {flags, count, ?} and count chunks {u8 type, ..., count at 4, size at 8,
    data at 0xC}. Type 0 holds the bone tree's roots, the others bones ({?, ?, child, sibling, ...})
@@ -22,7 +23,7 @@ typedef struct {
 
 #define NEXT_CHUNK(c) ((Chunk *)((u8 *)(c) + (c)->size))
 
-Chunk *func_001A1310(void *p);
+static Chunk *func_001A1310(void *p);
 static ChunkFile *func_001A21D0(void *p);
 Chunk *func_001A21E0(ChunkFile *f, s32 type);
 Chunk *func_001A2240(ChunkFile *f, u32 n);
@@ -30,6 +31,508 @@ static void *func_001A22C0(ChunkFile *f, u32 n);
 static s32 func_001A2140(ChunkFile *f, s32 bone);
 static void func_001A2160(ChunkFile *f, s32 bone);
 extern s32 D_0023BAC4;
+
+/* --- Motion files (the same chunk layout): a header {u8 kind (1, 2), count, ?, loops, loop time},
+   then count motions {?, tracks, size, tracks of {kind << 16 | flags, keys, size, keys}}. Loaded,
+   a motion becomes MotionHdr: a table of MotionAnim, each a table of MotionTrack of keys; the
+   pointers are kept as offsets from the load address (D_0023BAC0). --- */
+
+typedef struct {
+    u8 kind;            /* 0x00 */
+    u8 unk1[3];
+    u32 count;          /* 0x04 */
+    u32 unk8;
+    u32 loops;          /* 0x0C */
+    f32 loop;           /* 0x10 */
+} MotionFile;
+
+typedef struct {
+    u32 type;           /* 0x00: bits 16-23: key kind; bit 31: used; low 9 bits: interpolation */
+    s32 count;          /* 0x04 */
+    s32 size;           /* 0x08 */
+} MotionFileTrack;
+
+typedef struct {
+    u8 kind;            /* 0x00: 0x11-0x13, 0x21-0x23 (0x20: none) */
+    u8 interp;          /* 0x01 */
+    u16 n;              /* 0x02 */
+    u32 keys;           /* 0x04 */
+} MotionTrack;
+
+typedef struct {
+    u16 flags;          /* 0x00: 0x1000, 0x2000: the file's kind */
+    u16 n;              /* 0x02 */
+    u32 tracks;         /* 0x04 */
+} MotionAnim;
+
+typedef struct {
+    u16 flags;          /* 0x00: 0x8000 loops */
+    s16 n;              /* 0x02 */
+    f32 start;          /* 0x04 */
+    f32 end;            /* 0x08 */
+    f32 loop;           /* 0x0C */
+    u32 anims;          /* 0x10 */
+    s32 unk14;
+    s32 size;           /* 0x18 */
+    s32 unk1C;
+} MotionHdr;
+
+extern LinearHeap D_00292340;   /* motion load heap */
+extern u32 D_0023BAC0;          /* the motion being loaded */
+extern f32 D_00239E08;          /* a big number */
+s32 func_001A2030(void *p);
+void func_001A42D0(u32 base);
+f32 func_001A4360(MotionTrack *t);
+f32 func_001A4430(MotionTrack *t);
+
+static Chunk *func_001A1310(void *p) {
+    return p;
+}
+
+MotionFileTrack *func_001A1320(void *p, s32 n);
+
+/* Motion n's chunk. */
+#ifdef NON_MATCHING   /* first draft (registers/scheduling) */
+MotionFileTrack *func_001A1320(void *p, s32 n) {
+    u8 *c = (u8 *)func_001A1310(p) + 0x14;
+    MotionFileTrack *t = (MotionFileTrack *)c;
+    s32 i;
+
+    for (i = 0; i < n; i++) {
+        c += t->size;
+        t = (MotionFileTrack *)c;
+    }
+    return t;
+}
+#endif
+
+/* The loop time (0 and 0 when the motions don't loop). */
+s32 func_001A1370(void *p, f32 *loop) {
+    MotionFile *f = (MotionFile *)func_001A1310(p);
+
+    s32 r;
+
+    if (f->loops != 0) {
+        r = 1;
+        *loop = f->loop;
+    } else {
+        *(s32 *)loop = 0;
+        r = 0;
+    }
+    return r;
+}
+
+s32 func_001A1440(MotionFileTrack *m);
+
+/* The bytes the loaded motions take. */
+s32 func_001A13B0(void *p) {
+    MotionFileTrack *m;
+    s32 i;
+    s32 n = func_001A2030(p);
+    s32 size = n * 4 + 0x20;
+
+    for (i = 0; i < n; i++) {
+        m = func_001A1320(p, i);
+        size += 8;
+        size += m->count * 8;
+        size += func_001A1440(m);
+    }
+    return size;
+}
+
+/* The bytes a motion's keys take. */
+#ifdef NON_MATCHING   /* first draft (registers/scheduling) */
+s32 func_001A1440(MotionFileTrack *m) {
+    MotionFileTrack *t = (MotionFileTrack *)((u8 *)m + 0xC);
+    s32 size = 0;
+    s32 i;
+
+    for (i = 0; i < m->count; i++) {
+        switch ((t->type & 0xFF0000) >> 16) {
+        case 0x21:
+            size += t->count * 8;
+            break;
+        case 0x22:
+            size += t->count * 16;
+            break;
+        case 0x23:
+            size += t->count * 20;
+            break;
+        case 0x11:
+            size += t->count * 4;
+            break;
+        case 0x12:
+            size += t->count * 8;
+            break;
+        case 0x13:
+            size += t->count * 12;
+            break;
+        }
+        t = (MotionFileTrack *)((u8 *)t + t->size);
+    }
+    return size;
+}
+#endif
+
+void func_001A1760(MotionAnim *a, void *p, s32 n);
+f32 func_001A1F30(MotionAnim *a);
+f32 func_001A1FB0(MotionAnim *a);
+
+/* Load the file's motions to mem (MotionHdr in out). */
+s32 func_001A1540(MotionHdr *out, u32 mem, void *p);
+#ifdef NON_MATCHING   /* first draft (registers/scheduling) */
+s32 func_001A1540(MotionHdr *out, u32 mem, void *p) {
+    s32 size = func_001A13B0(p);
+    MotionHdr *h;
+    MotionAnim **a;
+    s32 n;
+    s32 i;
+    f32 end;
+    f32 start;
+    f32 loop;
+    f32 v;
+    u32 *src;
+    u32 *dst;
+
+    D_0023BAC0 = mem;
+    func_001A42D0(mem);
+    func_00189480(&D_00292340, mem, size, 1);
+    h = (MotionHdr *)func_00189500(&D_00292340, 0x20, 0);
+    n = func_001A2030(p);
+    h->flags = 0;
+    h->n = n;
+    h->anims = func_00189500(&D_00292340, n * 4, 0);
+    end = 0.0f;
+    h->unk14 = 0;
+    h->size = size;
+    a = (MotionAnim **)h->anims;
+    start = D_00239E08;
+    for (i = 0; i < n; i++) {
+        *a = (MotionAnim *)func_00189500(&D_00292340, 8, 0);
+        func_001A1760(*a, p, i);
+        v = func_001A1F30(*a);
+        if (v > end) {
+            end = v;
+        }
+        v = func_001A1FB0(*a);
+        if (v < start) {
+            start = v;
+        }
+        a++;
+    }
+    h->start = start;
+    h->end = end;
+    if (func_001A1370(p, &loop) != 0) {
+        h->flags |= 0x8000;
+        h->loop = loop;
+    } else {
+        h->flags &= 0x7FFF;
+        *(s32 *)&h->loop = 0;
+    }
+    for (i = 0; i < n; i++) {
+        ((u32 *)h->anims)[i] -= D_0023BAC0;
+    }
+    h->anims -= D_0023BAC0;
+    src = (u32 *)h;
+    dst = (u32 *)out;
+    for (i = 4; i > 0; i--) {
+        dst[0] = src[0];
+        dst[1] = src[1];
+        src += 2;
+        dst += 2;
+    }
+    out->unk14 = mem;
+    return 1;
+}
+#endif
+
+void func_001A1830(void *p, MotionAnim *a, MotionFileTrack *m, s32 unused);
+
+/* Motion n into a. */
+#ifdef NON_MATCHING   /* first draft (registers/scheduling) */
+void func_001A1760(MotionAnim *a, void *p, s32 n) {
+    MotionFileTrack *m;
+    MotionFile *f;
+
+    if (func_001A2030(p) < n) {
+        return;
+    }
+    m = func_001A1320(p, n);
+    if (m == NULL) {
+        return;
+    }
+    f = (MotionFile *)func_001A1310(p);
+    if (f == NULL) {
+        return;
+    }
+    switch (f->kind) {
+    case 2:
+        a->flags = 0x2000;
+        break;
+    case 1:
+        a->flags = 0x1000;
+        break;
+    }
+    switch (a->flags & 0xF000) {
+    case 0x2000:
+    case 0x1000:
+        func_001A1830(p, a, m, 0);
+        break;
+    }
+}
+#endif
+
+void func_001A19F0(MotionFileTrack *t, MotionTrack *k);
+
+/* A motion's tracks (unused ones kind 0x20). */
+#ifdef NON_MATCHING   /* first draft (registers/scheduling) */
+void func_001A1830(void *p, MotionAnim *a, MotionFileTrack *m, s32 unused) {
+    s32 n = m->count;
+    MotionTrack *k;
+    MotionFileTrack *t;
+    MotionTrack *tracks;
+    u32 type;
+    s32 i;
+
+    a->n = n;
+    tracks = (MotionTrack *)func_00189500(&D_00292340, n * 8, 0);
+    a->tracks = (u32)tracks;
+    for (i = 0; i < n; i++) {
+        tracks[i].kind = 0x20;
+        tracks[i].n = 0;
+    }
+    t = (MotionFileTrack *)((u8 *)m + 0xC);
+    for (i = 0; i < n; i++) {
+        type = t->type;
+        if (type & 0x80000000) {
+            k = &tracks[i];
+            func_001A19F0(t, k);
+            switch (type & 0x1FF) {
+            case 0x100:
+                k->interp = 8;
+                break;
+            case 0x80:
+                k->interp = 7;
+                break;
+            case 0x40:
+                k->interp = 6;
+                break;
+            case 0x20:
+                k->interp = 5;
+                break;
+            case 0x10:
+                k->interp = 4;
+                break;
+            case 8:
+                k->interp = 3;
+                break;
+            case 4:
+                k->interp = 2;
+                break;
+            case 2:
+                k->interp = 1;
+                break;
+            case 1:
+                k->interp = 0;
+                break;
+            }
+        }
+        t = (MotionFileTrack *)((u8 *)t + t->size);
+    }
+    a->tracks -= D_0023BAC0;
+}
+#endif
+
+void func_001A1AB0(MotionFileTrack *t, MotionTrack *k);
+void func_001A1B60(MotionFileTrack *t, MotionTrack *k);
+void func_001A1C20(MotionFileTrack *t, MotionTrack *k);
+void func_001A1CF0(MotionFileTrack *t, MotionTrack *k);
+void func_001A1DA0(MotionFileTrack *t, MotionTrack *k);
+void func_001A1E60(MotionFileTrack *t, MotionTrack *k);
+
+/* A track's keys, by kind. */
+void func_001A19F0(MotionFileTrack *t, MotionTrack *k) {
+    switch ((t->type & 0xFF0000) >> 16) {
+    case 0x21:
+        func_001A1AB0(t, k);
+        break;
+    case 0x22:
+        func_001A1B60(t, k);
+        break;
+    case 0x23:
+        func_001A1C20(t, k);
+        break;
+    case 0x11:
+        func_001A1CF0(t, k);
+        break;
+    case 0x12:
+        func_001A1DA0(t, k);
+        break;
+    case 0x13:
+        func_001A1E60(t, k);
+        break;
+    }
+}
+
+/* Keys of two floats. */
+void func_001A1AB0(MotionFileTrack *t, MotionTrack *k) {
+    f32 *src = (f32 *)((u8 *)t + 0xC);
+    f32 *dst;
+    s32 i;
+
+    k->kind = 0x21;
+    k->interp = 0;
+    k->n = t->count;
+    dst = (f32 *)func_00189500(&D_00292340, k->n * 8, 0);
+    k->keys = (u32)dst;
+    for (i = 0; i < k->n; i++) {
+        dst[0] = src[0];
+        dst[1] = src[1];
+        src += 2;
+        dst += 2;
+    }
+    k->keys -= D_0023BAC0;
+}
+
+/* Keys of four floats. */
+void func_001A1B60(MotionFileTrack *t, MotionTrack *k) {
+    f32 *src = (f32 *)((u8 *)t + 0xC);
+    f32 *dst;
+    s32 i;
+
+    k->kind = 0x22;
+    k->interp = 0;
+    k->n = t->count;
+    dst = (f32 *)func_00189500(&D_00292340, k->n * 16, 0);
+    k->keys = (u32)dst;
+    for (i = 0; i < k->n; i++) {
+        dst[0] = src[0];
+        dst[1] = src[1];
+        dst[2] = src[2];
+        dst[3] = src[3];
+        src += 4;
+        dst += 4;
+    }
+    k->keys -= D_0023BAC0;
+}
+
+/* Keys of a word and four floats. */
+void func_001A1C20(MotionFileTrack *t, MotionTrack *k) {
+    f32 *src = (f32 *)((u8 *)t + 0xC);
+    f32 *dst;
+    s32 i;
+
+    k->kind = 0x23;
+    k->interp = 0;
+    k->n = t->count;
+    dst = (f32 *)func_00189500(&D_00292340, k->n * 20, 0);
+    k->keys = (u32)dst;
+    for (i = 0; i < k->n; i++) {
+        ((u32 *)dst)[0] = ((u32 *)src)[0];
+        dst[1] = src[1];
+        dst[2] = src[2];
+        dst[3] = src[3];
+        dst[4] = src[4];
+        src += 5;
+        dst += 5;
+    }
+    k->keys -= D_0023BAC0;
+}
+
+/* Keys of two halves. */
+void func_001A1CF0(MotionFileTrack *t, MotionTrack *k) {
+    u16 *src = (u16 *)((u8 *)t + 0xC);
+    u16 *dst;
+    s32 i;
+
+    k->kind = 0x11;
+    k->interp = 0;
+    k->n = t->count;
+    dst = (u16 *)func_00189500(&D_00292340, k->n * 4, 0);
+    k->keys = (u32)dst;
+    for (i = 0; i < k->n; i++) {
+        dst[0] = src[0];
+        dst[1] = src[1];
+        src += 2;
+        dst += 2;
+    }
+    k->keys -= D_0023BAC0;
+}
+
+/* Keys of four halves. */
+void func_001A1DA0(MotionFileTrack *t, MotionTrack *k) {
+    u16 *src = (u16 *)((u8 *)t + 0xC);
+    u16 *dst;
+    s32 i;
+
+    k->kind = 0x12;
+    k->interp = 0;
+    k->n = t->count;
+    dst = (u16 *)func_00189500(&D_00292340, k->n * 8, 0);
+    k->keys = (u32)dst;
+    for (i = 0; i < k->n; i++) {
+        dst[0] = src[0];
+        dst[1] = src[1];
+        dst[2] = src[2];
+        dst[3] = src[3];
+        src += 4;
+        dst += 4;
+    }
+    k->keys -= D_0023BAC0;
+}
+
+/* Keys of a word and four halves. */
+void func_001A1E60(MotionFileTrack *t, MotionTrack *k) {
+    u16 *src = (u16 *)((u8 *)t + 0xC);
+    u16 *dst;
+    s32 i;
+
+    k->kind = 0x13;
+    k->interp = 0;
+    k->n = t->count;
+    dst = (u16 *)func_00189500(&D_00292340, k->n * 12, 0);
+    k->keys = (u32)dst;
+    for (i = 0; i < k->n; i++) {
+        *(u32 *)dst = *(u32 *)src;
+        dst[2] = src[2];
+        dst[3] = src[3];
+        dst[4] = src[4];
+        dst[5] = src[5];
+        src += 6;
+        dst += 6;
+    }
+    k->keys -= D_0023BAC0;
+}
+
+/* The motion's last key time over its tracks. */
+f32 func_001A1F30(MotionAnim *a) {
+    f32 t = 0.0f;
+    f32 v;
+    s32 i;
+
+    for (i = 0; i < (s16)a->n; i++) {
+        v = func_001A4430((MotionTrack *)(a->tracks + D_0023BAC0) + i);
+        if (v > t) {
+            t = v;
+        }
+    }
+    return t;
+}
+
+/* Its first key time. */
+f32 func_001A1FB0(MotionAnim *a) {
+    f32 t = D_00239E08;
+    f32 v;
+    s32 i;
+
+    for (i = 0; i < (s16)a->n; i++) {
+        v = func_001A4360((MotionTrack *)(a->tracks + D_0023BAC0) + i);
+        if (v < t) {
+            t = v;
+        }
+    }
+    return t;
+}
 
 s32 func_001A2030(void *p) {
     return func_001A1310(p)->count;
@@ -1068,6 +1571,117 @@ s32 func_001A3AE0(MeshOut *out, WChunkFile *m) {
         }
         v->weights = (w[0] << 24) | (w[1] << 16) | (w[2] << 8) | w[3];
         v->bones = (bones[0] << 24) | (bones[1] << 16) | (bones[2] << 8) | bones[3];
+    }
+    return 1;
+}
+#endif
+
+/* Convert a mesh without vertex weights: primitives as func_001A3AE0's (no type), vertices of
+   position, normal, colour and (when the mesh has UVs) UV: 0x24 bytes, or 0x1C without UVs (the
+   buffer is sized for 0x24 either way). */
+#ifdef NON_MATCHING   /* first draft */
+s32 func_001A34C0(MeshOut *out, WChunkFile *m) {
+    u8 *v;
+    u16 *p;
+    f32 *f;
+    s32 uv = 0;
+    s32 nstrips;
+    s32 nprims;
+    s32 len;
+    s32 size;
+    s32 total;
+    s32 i;
+    s32 k;
+    s32 j;
+
+    if (func_001A2AF0(m, 0xA0000) == 0) {
+        uv = 1;
+    }
+    out->flags = 0x21000;
+    nstrips = func_001A2BF0(m);
+    out->count = func_001A2D30(m);
+    total = 0;
+    if (func_001A3430(m) == 1) {
+        out->flags |= 0x100000;
+    }
+    for (i = 0; i < nstrips; i++) {
+        nprims = func_001A2CB0(m, i);
+        for (k = 0; k < nprims; k++) {
+            total += func_001A2E80(m, i, k);
+        }
+    }
+    size = (out->count + total) * 2;
+    if (out->flags & 0x100000) {
+        size += out->count * 2;
+    }
+    if (D_0023BAC8 < size) {
+        D_0023BAC8 = size;
+    }
+    if (size > 0x40000) {
+        return 0;
+    }
+    if (D_003065DC == NULL) {
+        return 0;
+    }
+    out->prims = (u16 *)(D_003065DC + 0x200000);
+    out->primSize = size;
+    p = out->prims;
+    for (i = 0; i < nstrips; i++) {
+        nprims = func_001A2CB0(m, i);
+        for (k = 0; k < nprims; k++) {
+            len = func_001A2E80(m, i, k);
+            *p = len;
+            if (func_001A2F30(m, i, k) != 0) {
+                *p |= 0x8000;
+            } else {
+                *p |= 0x4000;
+            }
+            p++;
+            if (out->flags & 0x100000) {
+                *p++ = func_001A2DD0(m, i, k);
+            }
+            if (out->flags & 0x1000) {
+                for (j = 0; j < len; j++) {
+                    *p++ = func_001A2FF0(m, i, k, j);
+                }
+            }
+        }
+    }
+    out->format = 0x25;
+    if (uv) {
+        out->format |= 0x10;
+    }
+    out->nverts = func_001A2D90(m);
+    size = out->nverts * 0x24;
+    if (D_0023BAC8 < size) {
+        D_0023BAC8 = size;
+    }
+    if (size > 0x40000) {
+        return 0;
+    }
+    if (D_003065DC == NULL) {
+        return 0;
+    }
+    out->verts = (MeshVertex *)(D_003065DC + 0x240000);
+    out->vertSize = size;
+    v = (u8 *)out->verts;
+    for (i = 0; i < out->nverts; i++) {
+        f = func_001A30D0(m, i);
+        ((f32 *)v)[0] = f[0];
+        ((f32 *)v)[1] = f[1];
+        ((f32 *)v)[2] = f[2];
+        f = func_001A3120(m, i);
+        ((f32 *)v)[3] = f[0];
+        ((f32 *)v)[4] = f[1];
+        ((f32 *)v)[5] = f[2];
+        if (uv) {
+            f = func_001A3170(m, i);
+            ((f32 *)v)[7] = f[0];
+            ((f32 *)v)[8] = f[1];
+        }
+        f = func_001A31B0(m, i);
+        ((u32 *)v)[6] = ((u32)f[3] << 24) | ((u32)f[0] << 16) | ((u32)f[1] << 8) | (u32)f[2];
+        v += uv ? 0x24 : 0x1C;
     }
     return 1;
 }

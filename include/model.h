@@ -25,6 +25,19 @@ typedef struct {
     u8 *unk1464;        /* 0x1464: unk1460 + 0x74 */
 } Slot1468;
 
+/* The room's object model (D_0039A3D0): a model slot's header, then for each of its skeleton roots
+   (objects) the world and bind-pose matrices of up to 6 bones. */
+typedef struct {
+    u8 slot[0x820];         /* 0x00000: as Slot1468 */
+    Mat44 world[0x60][6];   /* 0x00820 */
+    Mat44 pose[0x60][6];    /* 0x09820 */
+    s16 nroots;             /* 0x12820 */
+    u8 unk12822[2];
+    u16 rootId[0x60];       /* 0x12824 */
+    s16 count[0x60];        /* 0x128E4 */
+    u8 unk129A4[0xC];
+} RoomObjModel;             /* 0x129B0 */
+
 /* Materials: 0x258 of them (D_004BEEF0; D_004BDA90 says which are in use), a model's listed in
    Slot1468.ids. Colours as in the model file, in another order. */
 typedef struct {
@@ -68,8 +81,16 @@ typedef struct {
     s32 group;          /* 0x00: its packet group (-1: none) */
     s32 nmats;          /* 0x04 */
     s32 mats[0x20];     /* 0x08: indices into the model's material ids */
-    s8 lit;             /* 0x88: it has a lighting block (func_001D5B40) */
-    u8 unk89[0x98 - 0x89];
+    s8 lit;             /* 0x88: it has a render block (func_001D5B40) */
+    s8 unk89;           /* 0x89: from the block's 0x2C, 0x30, 0x34 */
+    s8 unk8A;
+    s8 unk8B;
+    s8 unk8C;           /* 0x8C: 0x40 >> 16 */
+    s8 unk8D;           /* 0x8D */
+    u8 unk8E;
+    s8 unk8F;           /* 0x8F: 0x3C */
+    s8 unk90;           /* 0x90 */
+    u8 unk91[0x98 - 0x91];
 } ModelPart;
 
 /* A material in a model file (table 9). */

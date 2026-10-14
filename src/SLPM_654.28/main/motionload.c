@@ -302,3 +302,111 @@ void func_001D11E0(s32 id, Slot1468 *m, void *motion) {
         func_001D6690(m);
     }
 }
+
+extern RoomObjModel D_0039A3D0;
+s32 func_001A2050(void *p);
+s32 func_001A2090(void *f);
+s32 func_001A20C0(void *f, u32 n);
+s32 func_00191F50(s32 handle);
+void func_001B01F0(s32 handle);
+s32 func_00192D20(FlBone *bones, s32 skel);
+void func_0018F7C0(f32 *m);
+void func_00192BE0(FlBone *b, f32 *parent);
+
+/* The room objects' bones (a skeleton root each): for each, its root bone's id and the world and
+   bind-pose matrices of the bones under it. */
+void func_001D6230(Slot1468 *m, void *motion) {
+    u16 first[0x61];
+    u32 hdr[4];
+    f32 ident[4][4];
+    u16 k;
+    FlBone *b;
+    FlBone *buf;
+    u16 r;
+
+    m->nblocks = func_001A2050(motion);
+    D_0039A3D0.nroots = func_001A2090(motion);
+    for (r = 0; r < D_0039A3D0.nroots; r++) {
+        first[r] = func_001A20C0(motion, r);
+    }
+    first[r] = m->nblocks;
+    buf = (FlBone *)(D_00306590.unk4C + 0x200000);
+    func_0018F7C0((f32 *)ident);
+    for (r = 0; r < D_0039A3D0.nroots; r++) {
+        func_001D6670(hdr, buf, motion, r);
+        m->unk80C = func_00191E50(hdr);
+        func_001B01A0(m->unk80C);
+        func_00192D20(buf, m->unk80C);
+        func_00192BE0(buf, (f32 *)ident);
+        D_0039A3D0.count[r] = 0;
+        b = buf;
+        for (k = first[r]; k < first[r + 1]; k++, b++) {
+            if (k == first[r]) {
+                D_0039A3D0.rootId[r] = b->unkC6;
+            } else {
+                D_0039A3D0.world[r][D_0039A3D0.count[r]] = *(Mat44 *)b->world;
+                D_0039A3D0.pose[r][D_0039A3D0.count[r]] = *(Mat44 *)b->pose;
+                D_0039A3D0.count[r]++;
+            }
+        }
+        func_00191F50(m->unk80C);
+        func_001B01F0(m->unk80C);
+        m->unk80C = 0;
+    }
+}
+
+/* A character's body parts (one skeleton root each): for each, its root bone's id and the ids
+   (unk174) of the bones it holds; kind 0 into D_00389750, else work memory. */
+typedef struct {
+    u8 unk0[0x820];
+    s16 nroots;         /* 0x820 */
+    u8 unk822[2];
+    u16 rootId[0x200];  /* 0x824 */
+    s16 count[0x200];   /* 0xC24 */
+    s16 bones[1][16];   /* 0x1024 */
+} BodyParts;
+
+extern u8 D_00389750[];
+
+#ifdef NON_MATCHING   /* first draft */
+void func_001D6480(Slot1468 *m, void *motion, s32 kind) {
+    u32 hdr[4];
+    u16 first[0x208];
+    BodyParts *bp;
+    FlBone *b;
+    FlBone *buf;
+    u16 r;
+    u16 k;
+
+    if (kind == 0) {
+        bp = (BodyParts *)D_00389750;
+    } else {
+        bp = (BodyParts *)(D_00306590.unk4C + 0x2FF000);
+    }
+    m->nblocks = func_001A2050(motion);
+    bp->nroots = func_001A2090(motion);
+    for (r = 0; r < bp->nroots; r++) {
+        first[r] = func_001A20C0(motion, r);
+    }
+    first[r] = m->nblocks;
+    buf = (FlBone *)(D_00306590.unk4C + 0x200000);
+    for (r = 0; r < bp->nroots; r++) {
+        func_001D6670(hdr, buf, motion, r);
+        m->unk80C = func_00191E50(hdr);
+        func_001B01A0(m->unk80C);
+        func_00192D20(buf, m->unk80C);
+        bp->count[r] = 0;
+        b = buf;
+        for (k = first[r]; k < first[r + 1]; k++, b++) {
+            if (k == first[r]) {
+                bp->rootId[r] = b->unkC6;
+            } else if (b->unk174 >= 0) {
+                bp->bones[r][bp->count[r]++] = b->unk174;
+            }
+        }
+        func_00191F50(m->unk80C);
+        func_001B01F0(m->unk80C);
+        m->unk80C = 0;
+    }
+}
+#endif

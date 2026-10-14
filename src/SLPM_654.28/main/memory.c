@@ -1302,7 +1302,51 @@ s32 func_001929B0(s32 h) {
     return 0;
 }
 
+void func_00192C00(FlBone *b, f32 *parent, f32 sx, f32 sy, f32 sz);
+void func_0018F830(f32 x, f32 y, f32 z, f32 *m);
+void func_0018F7C0(f32 *m);
+void func_00190DB0(f32 *a, const f32 *b);
+void func_00190CD0(f32 *a, const f32 *b);
+
+/* World matrices of the tree from b at scale 1, under parent. */
+void func_00192BE0(FlBone *b, f32 *parent) {
+    func_00192C00(b, parent, 1.0f, 1.0f, 1.0f);
+}
+
+/* Each bone's world matrix: its scale, the inverse of the parents' scale, its local translation,
+   times its parent's. */
+void func_00192C00(FlBone *b, f32 *parent, f32 sx, f32 sy, f32 sz) {
+    f32 t[4][4];
+    f32 x = b->cur[0][0];
+    f32 y = b->cur[0][1];
+    f32 z = b->cur[0][2];
+
+    func_0018F830(x, y, z, (f32 *)b->world);
+    func_0018F7C0((f32 *)t);
+    t[0][0] = 1.0f / sx;
+    t[1][1] = 1.0f / sy;
+    t[2][2] = 1.0f / sz;
+    t[3][0] = b->local[3][0];
+    t[3][1] = b->local[3][1];
+    t[3][2] = b->local[3][2];
+    func_00190DB0((f32 *)b->world, (f32 *)b->local);
+    func_00190CD0((f32 *)b->world, (f32 *)t);
+    func_00190CD0((f32 *)b->world, parent);
+    if (b->child != NULL) {
+        func_00192C00(b->child, (f32 *)b->world, x, y, z);
+    }
+    if (b->next != NULL) {
+        func_00192C00(b->next, parent, sx, sy, sz);
+    }
+}
+
 s32 func_00192F30(FlBone **bones, s32 skel, s32 a, s32 mode);
+s32 func_00192D30(FlBone *bones, s32 skel, s32 a, s32 mode);
+
+/* The same into a run of bones. */
+s32 func_00192D20(FlBone *bones, s32 skel) {
+    return func_00192D30(bones, skel, 0, 1);
+}
 
 /* Set the skeleton's bones up in blocks. */
 s32 func_00192F20(FlBone **bones, s32 skel) {
@@ -1373,6 +1417,58 @@ s32 func_00192F30(FlBone **bones, s32 skel, s32 unused, s32 mode) {
         break;
     }
     return 1;
+}
+
+void func_00192E60(FlBone *bones, FlBone *b, FlBone *parent);
+
+/* func_00192F30 for a run of bones. */
+s32 func_00192D30(FlBone *bones, s32 skel, s32 unused, s32 mode) {
+    s16 n;
+    u8 *s;
+    s32 i;
+
+    s = (u8 *)func_0018D720(skel);
+    n = ((s16 *)s)[1];
+    for (i = 0; i < n; i++) {
+        bones[i].nbones = n;
+        bones[i].nextIdx = -1;
+        bones[i].childIdx = -1;
+        bones[i].next = NULL;
+        bones[i].child = NULL;
+        bones[i].unkD4 = 0;
+        bones[i].unkD8 = 0;
+        bones[i].unk178 = 0;
+        bones[i].unk17C = 0;
+        func_0018F7C0((f32 *)bones[i].local);
+    }
+    for (i = 0; i < n; i++) {
+        func_00193570(&bones[i], s, i);
+    }
+    func_00192E60(bones, bones, NULL);
+    switch (mode) {
+    case 0:
+        func_00193110(bones);
+        break;
+    case 1:
+        func_00193220(bones);
+        break;
+    }
+    return 1;
+}
+
+/* func_00193070 for a run of bones. */
+void func_00192E60(FlBone *bones, FlBone *b, FlBone *parent) {
+    if (parent != NULL) {
+        b->parent = parent;
+    }
+    if (b->childIdx != -1) {
+        b->child = &bones[b->childIdx];
+        func_00192E60(bones, b->child, b);
+    }
+    if (b->nextIdx != -1) {
+        b->next = &bones[b->nextIdx];
+        func_00192E60(bones, b->next, parent);
+    }
 }
 
 /* Link bone b (and, through it, its children and siblings) to its parent. */
