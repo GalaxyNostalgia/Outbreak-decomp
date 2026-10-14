@@ -185,7 +185,10 @@ typedef struct DrawObjFull {
     u8 unk1099;         /* 0x1099 */
     s16 unk109A;        /* 0x109A */
     s32 unk109C;        /* 0x109C */
-    u8 unk10A0[0x10AC - 0x10A0];
+    s32 unk10A0;        /* 0x10A0 */
+    u8 unk10A4[4];
+    s8 unk10A8;         /* 0x10A8 */
+    u8 unk10A9[3];
     void *modeInfo;     /* 0x10AC: &D_00838860[mode] */
     u8 unk10B0[8];      /* 0x10B0: from modeInfo */
     u8 unk10B8[8];      /* 0x10B8 */

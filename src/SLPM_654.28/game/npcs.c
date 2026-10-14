@@ -22,7 +22,8 @@ typedef struct {
     s16 hp;             /* 0x16 */
     u8 unk18[0x1E - 0x18];
     u8 state;           /* 0x1E: 1, 2 ... */
-    u8 unk1F[2];
+    s8 only;            /* 0x1F: only in this random variant (+1; 0: always) */
+    u8 unk20;
     u8 unk21;           /* 0x21 */
     u16 flags2;         /* 0x22: 0x10 ..., 0x20 ... */
     s8 unk24;           /* 0x24 */
@@ -552,5 +553,154 @@ void func_00651340(void) {
         FIELD(n, s8, 0xC53) = 0;
         n = n->next;
     }
+}
+#endif
+
+#include "item.h"
+
+/* Script op: the NPCs of model args[0] hold item args[1] (if they carry it). */
+s32 func_0065C020(u32 *args);
+#ifdef NON_MATCHING   /* registers */
+s32 func_0065C020(u32 *args) {
+    s8 model = *(s8 *)&args[0];
+    s16 id = *(s16 *)&args[1];
+    NpcRecord *r;
+    s32 i;
+    s32 k;
+    u8 s;
+
+    if (model < 0 || id < 0) {
+        return 0;
+    }
+    for (r = D_003614F0, i = 0; i < 0x40; i++, r++) {
+        if (r->active != 0 && r->model == model) {
+            for (k = 0; k < 4; k++) {
+                s = r->unk4C[k];
+                if (s != 0 && id == D_003967D0[s].unk6) {
+                    r->item = s;
+                    return 0;
+                }
+            }
+        }
+    }
+    return 0;
+}
+#endif
+
+/* The (first unplaced) NPC record of a model: its hp (if >= 0) and its flags (top bits: 0x80000000
+   clear, 0x40000000 set, 0x20000000 assign the low byte); flags2 follows flags 0x10 and 0x40. */
+s32 func_00652610(u16 model, s16 hp, u32 flags);
+#ifdef NON_MATCHING   /* first draft */
+s32 func_00652610(u16 model, s16 hp, u32 flags) {
+    u8 i;
+    NpcRecord *r;
+
+    for (i = 0; i < 0x40; i++) {
+        r = &D_003614F0[i];
+        if (model == r->model && !(r->flags & 1)) {
+            if (hp >= 0) {
+                D_003614F0[i].hp = hp;
+            }
+            if (flags & 0x80000000) {
+                D_003614F0[i].flags &= ~(flags & 0xFFFFFFF);
+            } else if (flags & 0x40000000) {
+                D_003614F0[i].flags |= flags;
+            } else if (flags & 0x20000000) {
+                D_003614F0[i].flags = flags;
+            }
+            if (D_003614F0[i].flags & 0x10) {
+                D_003614F0[i].flags2 |= 0x10;
+            } else {
+                D_003614F0[i].flags2 &= ~0x10;
+            }
+            D_003614F0[i].state = 0;
+            D_003614F0[i].unk28 = 0;
+            if (D_003614F0[i].flags & 0x40) {
+                D_003614F0[i].flags2 |= 0x20;
+            } else {
+                D_003614F0[i].flags2 &= ~0x20;
+            }
+            return 0;
+        }
+    }
+    return 0;
+}
+#endif
+
+u16 func_001ADEF0(s32 n);
+
+void func_00652360(void) {
+}
+
+/* The NPC of a model (in this variant) is placed at (x, y, z); its map mark shown. */
+s32 func_00652370(u16 model, s32 x, s32 y, s32 z);
+#ifdef NON_MATCHING   /* first draft */
+s32 func_00652370(u16 model, s32 x, s32 y, s32 z) {
+    u8 i;
+    NpcRecord *r;
+    s32 ok;
+
+    for (i = 0; i < 0x40; i++) {
+        r = &D_003614F0[i];
+        ok = 1;
+        if (r->only != 0 && r->only - 1 != (func_001ADEF0(2) & 3)) {
+            ok = 0;
+        }
+        if (model == r->model && ok) {
+            D_003614F0[i].flags |= 1;
+            D_003614F0[i].unk38[0] = x;
+            D_003614F0[i].unk38[1] = y;
+            D_003614F0[i].unk38[2] = z;
+            D_003614F0[i].state = 0;
+            D_003614F0[i].unk28 = 0;
+            if (D_003614F0[i].model == 100) {
+                if (D_00306590.unk1A != 1 && D_003614F0[i].mark != 0) {
+                    func_0064F690(1, i);
+                }
+            } else if (D_003614F0[i].mark != 0) {
+                func_0064F690(1, i);
+            }
+            return 0;
+        }
+    }
+    return 0;
+}
+#endif
+
+/* Where an unplaced NPC of a model will be: its scenario, position and heading. */
+s32 func_00652540(u16 model, s8 scenario, f32 *pos, u16 heading);
+#ifdef NON_MATCHING   /* first draft */
+s32 func_00652540(u16 model, s8 scenario, f32 *pos, u16 heading) {
+    u8 i;
+
+    for (i = 0; i < 0x40; i++) {
+        if (model == D_003614F0[i].model && !(D_003614F0[i].flags & 1)) {
+            D_003614F0[i].scenario = scenario;
+            D_003614F0[i].pos[0] = pos[0];
+            D_003614F0[i].pos[1] = pos[1];
+            D_003614F0[i].pos[2] = pos[2];
+            D_003614F0[i].heading = heading;
+            D_003614F0[i].state = 0;
+            D_003614F0[i].unk28 = 0;
+            return 0;
+        }
+    }
+    return 0;
+}
+#endif
+
+/* The NPC of a model is no longer placed. */
+s32 func_006527B0(u16 model);
+#ifdef NON_MATCHING   /* first draft */
+s32 func_006527B0(u16 model) {
+    u8 i;
+
+    for (i = 0; i < 0x40; i++) {
+        if (model == D_003614F0[i].model) {
+            D_003614F0[i].flags &= ~1;
+            return 0;
+        }
+    }
+    return 0;
 }
 #endif

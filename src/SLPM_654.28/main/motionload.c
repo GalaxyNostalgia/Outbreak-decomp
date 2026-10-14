@@ -226,15 +226,15 @@ void func_001D6E70(u8 *types) {
 }
 #endif
 
-extern u8 D_00470BB0[];
-extern u8 D_00474DC0[];
+extern Mat44 D_00470BB0[];
+extern Mat44 D_00474DC0[];
 s32 func_001A2350(void *hdr, void *out, void *motion, s32 root);
 s32 func_00191E50(u32 *hdr);
 void func_001B01A0(s32 handle);
 s32 func_001929B0(s32 h);
 u8 *func_001B0330(void);
 s32 func_00192F20(FlBone **bones, s32 skel);
-void func_001D5DE0(Slot1468 *m, void *motion, u8 *a, u8 *b);
+void func_001D5DE0(Slot1468 *m, void *motion, Mat44 *world, Mat44 *pose);
 void func_001D6110(Slot1468 *m, void *motion);
 void func_001D6230(Slot1468 *m, void *motion);
 void func_001D6480(Slot1468 *m, void *motion, s32 kind);
@@ -408,5 +408,88 @@ void func_001D6480(Slot1468 *m, void *motion, s32 kind) {
         func_001B01F0(m->unk80C);
         m->unk80C = 0;
     }
+}
+#endif
+
+/* The room's door models (textures 0x1800-0x1FFF): for each skeleton root (door), its first
+   bone, a number from the first unnumbered bone's scale, its position, and the world and pose
+   matrices of its numbered bones (unk174) into world/pose. */
+extern u8 D_00470090[];
+void func_0018FAB0(f32 *out, FlBone *b);
+
+#ifdef NON_MATCHING   /* first draft */
+void func_001D5DE0(Slot1468 *m, void *motion, Mat44 *world, Mat44 *pose) {
+    f32 ident[4][4];
+    u32 hdr[4];
+    u16 first[0x20];
+    u16 r;
+    u16 k;
+    FlBone *buf;
+    FlBone *b;
+
+    m->nblocks = func_001A2050(motion);
+    D_00470090[3] = func_001A2090(motion);
+    for (r = 0; r < D_00470090[3]; r++) {
+        first[r] = func_001A20C0(motion, r);
+        D_00470090[0x2B20 + r] = first[r] - r * 2;
+    }
+    first[r] = m->nblocks;
+    buf = (FlBone *)(D_00306590.unk4C + 0x200000);
+    func_0018F7C0((f32 *)ident);
+    for (r = 0; r < D_00470090[3]; r++) {
+        func_001D6670(hdr, buf, motion, r);
+        m->unk80C = func_00191E50(hdr);
+        func_001B01A0(m->unk80C);
+        func_00192D20(buf, m->unk80C);
+        for (k = first[r] + 1, b = buf + 1; k < first[r + 1]; k++, b++) {
+            if (b->unk174 < 0) {
+                D_00470090[0x2B38 + r] = (u32)b->bind[0][0];
+                break;
+            }
+        }
+        func_00192BE0(buf, (f32 *)ident);
+        D_00470090[4 + r] = 0;
+        for (k = first[r], b = buf; k < first[r + 1]; k++, b++) {
+            if (k == first[r]) {
+                func_0018FAB0((f32 *)&D_00470090[0x2B50 + r * 0xC], b);
+            }
+            if (b->unk174 >= 0) {
+                world[b->unk174] = *(Mat44 *)b->world;
+                pose[b->unk174] = *(Mat44 *)b->pose;
+                D_00470090[4 + r]++;
+            }
+        }
+        func_00191F50(m->unk80C);
+        func_001B01F0(m->unk80C);
+        m->unk80C = 0;
+    }
+}
+#endif
+
+/* Models 0x2100-0x23FF: the world matrices of root 0's numbered bones (unk174) into
+   Options.unk68. */
+#ifdef NON_MATCHING   /* registers */
+void func_001D6110(Slot1468 *m, void *motion) {
+    f32 ident[4][4];
+    u32 hdr[4];
+    Mat44 *out = (Mat44 *)D_00306590.unk68;
+    s32 n = func_001A2050(motion);
+    FlBone *b = (FlBone *)(D_00306590.unk4C + 0x200000);
+    s32 i;
+
+    func_0018F7C0((f32 *)ident);
+    func_001D6670(hdr, b, motion, 0);
+    m->unk80C = func_00191E50(hdr);
+    func_001B01A0(m->unk80C);
+    func_00192D20(b, m->unk80C);
+    func_00192BE0(b, (f32 *)ident);
+    for (i = 0; i < n; i++, b++) {
+        if (b->unk174 >= 0) {
+            out[b->unk174] = *(Mat44 *)b->world;
+        }
+    }
+    func_00191F50(m->unk80C);
+    func_001B01F0(m->unk80C);
+    m->unk80C = 0;
 }
 #endif

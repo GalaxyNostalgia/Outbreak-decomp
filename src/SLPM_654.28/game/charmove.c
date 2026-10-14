@@ -195,22 +195,8 @@ void func_005E9220(DrawObjFull *o) {
 }
 #endif
 
-/* The room's trigger zones (a list, next at 0x28). */
-typedef struct Zone {
-    u8 unk0[0x20];
-    s32 top;            /* 0x20 */
-    s32 bottom;         /* 0x24 */
-    struct Zone *next;  /* 0x28 */
-    u8 unk2C[4];
-    u8 kind;            /* 0x30 */
-    u8 unk31[3];
-    void *who;          /* 0x34: who stepped in */
-    u8 unk38[8];
-    s32 *def;           /* 0x40: def[0x10] its switch (D_00470090 + 0x4730) */
-} Zone;
+#include "zone.h"
 
-extern Zone *D_0023BD90;
-extern s16 D_0023BD88;
 extern u8 D_00470090[0x6D40];
 s32 func_00340940(Zone *z, s32 *xz, s32 n);
 void func_005910F0(Zone *z, s32 hit);
@@ -235,7 +221,7 @@ void func_005516D0(DrawObjFull *o) {
         if (z->kind != 0x85) {
             continue;
         }
-        if (D_00470090[0x4731 + z->def[0x10] * 0x60] != 2 || func_00340940(z, xz, 4) != 1) {
+        if (D_00470090[0x4731 + z->u.def[0x10] * 0x60] != 2 || func_00340940(z, xz, 4) != 1) {
             continue;
         }
         top = z->top;

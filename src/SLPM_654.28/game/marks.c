@@ -184,7 +184,7 @@ typedef struct {
 
 extern u32 D_0023BE14;              /* players */
 s32 func_001AF110(s32 i);
-void func_0064BFC0(u16 a, u8 b, s32 c);
+void func_0064BFC0(s32 id, u8 on, s32 player);
 
 void func_0064EB50(void);
 #ifdef NON_MATCHING   /* first draft */
@@ -427,5 +427,57 @@ void func_0064FB70(s32 type, s32 id, u8 *b, s32 player) {
         e[3] = b[2];
         e[4] = b[3];
         q->n++;
+    }
+}
+
+/* Event flag changes, online told to the others; who changed each flag last (0xFF: kept). */
+extern u8 D_0048BBE0[];
+
+typedef struct {
+    u8 type;
+    u8 len;
+    u8 unk2[2];
+    s16 id;
+    s8 on;
+    u8 unk7[0x29];
+} FlagMsg;
+
+void func_0064BFC0(s32 id, u8 on, s32 player) {
+    FlagMsg m;
+
+    if (D_00476DD0[D_0048BF60.unk1D].unkBA0 & 0x5C0) {
+        return;
+    }
+    if (func_001AF510() == 0) {
+        D_0048BBE0[id] = player;
+        return;
+    }
+    m.len = 8;
+    m.on = on;
+    m.type = 0;
+    m.id = id;
+    func_001AF000(5, (NetMsg *)&m, 0, 4);
+    if (D_0048BBE0[id] != 0xFF) {
+        D_0048BBE0[id] = player;
+    }
+}
+
+/* Tells the others enemy i's unk2E (v). */
+void func_0064F390(s8 i, s8 v) {
+    struct {
+        u8 type;
+        u8 len;
+        u8 unk2[2];
+        s8 i;
+        s8 v;
+        u8 unk6[0x2A];
+    } m;
+
+    if (func_001AF510() != 0) {
+        m.type = 6;
+        m.len = 6;
+        m.i = i;
+        m.v = v;
+        func_001AF000(5, (NetMsg *)&m, 0, 4);
     }
 }

@@ -184,3 +184,10 @@ void func_0018FA30(f32 x, f32 y, f32 z, f32 *m) {
     m[13] = y;
     m[14] = z;
 }
+
+/* A matrix's translation row. */
+void func_0018FAB0(f32 *out, const Mat44 *m) {
+    out[0] = m->m[3][0];
+    out[1] = m->m[3][1];
+    out[2] = m->m[3][2];
+}

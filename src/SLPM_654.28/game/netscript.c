@@ -156,3 +156,282 @@ all:
     D_0048BF60.unk1D = 0;
 }
 #endif
+
+/* The per-player flags: run as the scene (D_0023C004 0) a flag is all three players' (rows 1-3
+   of D_0048ABD0, 0x10 words each; the second set from D_0048AC90), else the player's own. */
+extern u32 D_0048ABD0[][0x10];
+extern u32 D_0048AC50[0x10];
+extern u32 D_0048AC90[][0x10];
+extern u32 D_0048ACD0[0x10];
+extern u32 D_0048AD10[0x10];
+extern u32 D_0048AD50[0x10];
+
+s32 func_006CD3A0(u32 n) {
+    s32 p = D_0023C004;
+
+    if (p == 0) {
+        return (1 << (n & 0x1F)) & D_0048AC10.unk0[n >> 5];
+    }
+    return (1 << (n & 0x1F)) & D_0048ABD0[p][n >> 5];
+}
+
+s32 func_006CD410(u32 n);
+#ifdef NON_MATCHING   /* first draft */
+s32 func_006CD410(u32 n) {
+    s32 p = D_0023C004;
+    s32 bit;
+    u32 w;
+
+    if (p == 0) {
+        bit = 1 << (n & 0x1F);
+        w = D_0048ACD0[n >> 5];
+    } else {
+        bit = 1 << (n & 0x1F);
+        w = D_0048AC90[p][n >> 5];
+    }
+    return w & bit;
+}
+#endif
+
+void func_006CD480(u32 n) {
+    s32 p = D_0023C004;
+
+    if (p == 0) {
+        D_0048AC10.unk0[n >> 5] |= 1 << (n & 0x1F);
+        D_0048AC50[n >> 5] |= 1 << (n & 0x1F);
+        D_0048AC90[0][n >> 5] |= 1 << (n & 0x1F);
+    } else {
+        D_0048ABD0[p][n >> 5] |= 1 << (n & 0x1F);
+    }
+}
+
+void func_006CD530(u32 n) {
+    s32 p = D_0023C004;
+
+    if (p == 0) {
+        D_0048ACD0[n >> 5] |= 1 << (n & 0x1F);
+        D_0048AD10[n >> 5] |= 1 << (n & 0x1F);
+        D_0048AD50[n >> 5] |= 1 << (n & 0x1F);
+    } else {
+        D_0048AC90[p][n >> 5] |= 1 << (n & 0x1F);
+    }
+}
+
+void func_006CD5E0(u32 n) {
+    s32 p = D_0023C004;
+    u32 mask;
+
+    if (p == 0) {
+        mask = ~(1 << (n & 0x1F));
+        D_0048AC10.unk0[n >> 5] &= mask;
+        D_0048AC50[n >> 5] &= mask;
+        D_0048AC90[0][n >> 5] &= mask;
+    } else {
+        D_0048ABD0[p][n >> 5] &= ~(1 << (n & 0x1F));
+    }
+}
+
+void func_006CD690(u32 n) {
+    s32 p = D_0023C004;
+    u32 mask;
+
+    if (p == 0) {
+        mask = ~(1 << (n & 0x1F));
+        D_0048ACD0[n >> 5] &= mask;
+        D_0048AD10[n >> 5] &= mask;
+        D_0048AD50[n >> 5] &= mask;
+    } else {
+        D_0048AC90[p][n >> 5] &= ~(1 << (n & 0x1F));
+    }
+}
+
+void func_005403E0(s32 id, s32 on);
+void func_00540450(s32 id, s32 on);
+
+/* Script op online: flag args[1] set (args[2]) as args[0] says: 0 an event flag (told as ours),
+   1 a per-player flag, 2 an event flag (told as the scene's). */
+s32 func_006CD950(u32 *args);
+#ifdef NON_MATCHING   /* the case tests */
+s32 func_006CD950(u32 *args) {
+    s32 kind = args[0];
+    u8 on = args[2];
+    s32 n = args[1];
+
+    if (kind == 2) {
+        func_00540450(n, on);
+    } else if (kind == 1) {
+        if (on == 0) {
+            func_006CD5E0(n);
+        } else {
+            func_006CD480(n);
+        }
+    } else if (kind == 0) {
+        func_005403E0(n, on);
+    }
+    return 0;
+}
+#endif
+
+extern u32 D_0023BE14;          /* players */
+void func_008223C0(DrawObjFull *p, s32 mode);   /* SINGLE.BIN */
+
+/* Script op: the partner AI mode args[2] for player args[1] (args[0] 0), or for the partners
+   playing character args[1]. */
+s32 func_006CF070(u32 *args);
+#ifdef NON_MATCHING   /* first draft */
+s32 func_006CF070(u32 *args) {
+    s32 mode = args[2];
+    s32 who = args[1];
+    DrawObjFull *p;
+    u32 i;
+
+    if (args[0] == 0) {
+        p = &D_00476DD0[who];
+        if (p->active != 0 && p->isNpc != 0) {
+            func_008223C0(p, mode);
+        }
+    } else {
+        for (i = 0, p = D_00476DD0; i < D_0023BE14; i++, p++) {
+            if (p->active != 0 && p->isNpc != 0 && p->unkB98 == who) {
+                func_008223C0(p, mode);
+            }
+        }
+    }
+    return 0;
+}
+#endif
+
+/* The partner script ops (offline): on player args[0] when it is a partner. */
+s32 func_006CF400(u32 *args) {
+    s32 v = args[1];
+    DrawObjFull *p = &D_00476DD0[args[0]];
+
+    if (p->active == 0 || p->isNpc == 0) {
+        return 0;
+    }
+    switch (v) {
+    case 0:
+        p->unkFF1 = 0;
+        break;
+    case 1:
+        p->unkFF1 = 1;
+        break;
+    }
+    return 0;
+}
+
+/* Every partner: unk1034 = (args[0] == 1). */
+s32 func_006CF480(u32 *args);
+#ifdef NON_MATCHING   /* first draft */
+s32 func_006CF480(u32 *args) {
+    s32 v = args[0];
+    s32 i;
+    DrawObjFull *p;
+
+    for (i = 0; i < 8; i++) {
+        p = &D_00476DD0[i];
+        if (p->active != 0 && p->isNpc != 0) {
+            if (v != 1) {
+                p->unk1034 = 0;
+            } else {
+                p->unk1034 = 1;
+            }
+        }
+    }
+    return 0;
+}
+#endif
+
+void func_00823340(DrawObjFull *obj, u16 v);    /* SINGLE.BIN */
+void func_0082A690(DrawObjFull *obj, u16 v);    /* SINGLE.BIN */
+
+s32 func_006CF4F0(u32 *args);
+#ifdef NON_MATCHING   /* first draft */
+s32 func_006CF4F0(u32 *args) {
+    s32 a = args[1];
+    s32 k = args[2];
+    DrawObjFull *p = &D_00476DD0[args[0]];
+
+    if (p->active == 0 || p->isNpc == 0) {
+        return 0;
+    }
+    p->unk10A0 = a;
+    switch (k) {
+    case 1:
+        p->unk109C = 2;
+        break;
+    case 2:
+        p->unk109C = 0;
+        break;
+    case 3:
+        p->unk109C = 1;
+        break;
+    default:
+        p->unk109C = k != 0 ? -1 : 4;
+        break;
+    }
+    func_00823340(p, 0);
+    func_0082A690(p, 0);
+    return 0;
+}
+#endif
+
+s32 func_006CF5E0(u32 *args) {
+    DrawObjFull *p = &D_00476DD0[args[0]];
+
+    if (p->active == 0 || p->isNpc == 0) {
+        return 0;
+    }
+    p->unk10A0 = 0;
+    p->unk109C = -1;
+    func_00823340(p, 0);
+    func_0082A690(p, 0);
+    return 0;
+}
+
+/* Every partner: unk10A8 = args[0] (0-2). */
+s32 func_006CF670(u32 *args);
+#ifdef NON_MATCHING   /* first draft */
+s32 func_006CF670(u32 *args) {
+    s32 v = args[0];
+    s32 i;
+    DrawObjFull *p;
+
+    for (i = 0; i < 8; i++) {
+        p = &D_00476DD0[i];
+        if (p->active != 0 && p->isNpc != 0) {
+            if (v == 2) {
+                p->unk10A8 = 2;
+            } else if (v == 1) {
+                p->unk10A8 = 1;
+            } else {
+                p->unk10A8 = 0;
+            }
+        }
+    }
+    return 0;
+}
+#endif
+
+void func_005C5A90(DrawObjFull *p, s32 a);
+
+/* Partner args[0] leaves. */
+s32 func_006CF700(u32 *args) {
+    DrawObjFull *p = &D_00476DD0[args[0]];
+
+    if (p->active == 0 || p->isNpc == 0) {
+        return 0;
+    }
+    p->unkBA0 |= 0x5E0;
+    func_005C5A90(p, 0);
+    p->active = 0;
+    p->visible = 0;
+    return 0;
+}
+
+void func_00826420(s32 a, s32 b, s32 c);        /* SINGLE.BIN */
+
+s32 func_006CF040(u32 *args) {
+    func_00826420(args[0], args[1], args[2]);
+    return 0;
+}

@@ -670,3 +670,41 @@ void func_006AB120(void) {
     memset(d->end, 0, 0x80);
 }
 #endif
+
+extern u32 D_0048BBC0[];
+void func_0064F710(u8 type, s32 id);
+
+/* Script op: enemy group args[0] back (its bit in D_0048BBC0 cleared; the marks of its enemies
+   gone). */
+s32 func_006623C0(u32 *args) {
+    EnemySlot *s = D_0071A030;
+    u32 n = args[0];
+    s32 i;
+
+    D_0048BBC0[n >> 5] &= ~(1 << (n & 0x1F));
+    for (i = 0; i < 0x100; i++, s++) {
+        if (s->unk26 != 0 && s->unk4 == n) {
+            func_0064F710(2, i);
+        }
+    }
+    return 0;
+}
+
+void func_0064F390(u8 i, s8 v, u8 group);
+
+/* The enemy of group (its number sub in it): unk2E = v, told on. */
+void func_00578AA0(u8 group, u8 sub, s8 v);
+#ifdef NON_MATCHING   /* first draft */
+void func_00578AA0(u8 group, u8 sub, s8 v) {
+    EnemySlot *s = D_0071A030;
+    s16 i;
+
+    for (i = 0; i < D_0048BF60.unkBE; i++, s++) {
+        if (s->unk4 == group && s->unk2D == sub) {
+            s->unk2E = v;
+            func_0064F390(i, v, group);
+            return;
+        }
+    }
+}
+#endif

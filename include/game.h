@@ -24,7 +24,8 @@ typedef struct {
     s8 unk29;           /* 0x29 */
     u8 unk2A;
     s8 unk2B;           /* 0x2B: the characters are set up already */
-    u8 unk2C[0x30 - 0x2C];
+    u8 unk2C[3];
+    u8 unk2F;           /* 0x2F */
     u8 timeH;           /* 0x30: play time (hours, minutes, seconds, frames) */
     u8 timeM;           /* 0x31 */
     u8 timeS;           /* 0x32 */
@@ -49,9 +50,13 @@ typedef struct {
     u8 unk65;
     u8 msgs[19][3];     /* 0x66: the messages being shown: text (two bytes), speaker */
     u8 unk9F[0xA1 - 0x9F];
-    u8 unkA1[6];        /* 0xA1: per player, its voice bank (character kind + 1; 0: none) */
+    u8 unkA1[5];        /* 0xA1: per player, its voice bank (character kind + 1; 0: none) */
+    s8 unkA6;           /* 0xA6 */
     s8 unkA7;           /* 0xA7 */
-    u8 unkA8[0xBA - 0xA8];
+    u8 unkA8[0xB6 - 0xA8];
+    u8 unkB6;           /* 0xB6: (offline) a bit per ... */
+    s8 unkB7;           /* 0xB7 */
+    u8 unkB8[2];
     u8 unkBA;           /* 0xBA: (game start byte 2) */
     u8 unkBB;
     s8 unkBC;           /* 0xBC */

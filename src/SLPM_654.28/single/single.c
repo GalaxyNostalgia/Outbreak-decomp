@@ -742,3 +742,230 @@ s32 func_00821750(void) {
 s32 func_00821D00(s32 i) {
     return D_0084E040.unk38[i];
 }
+
+extern char D_0083B170[];
+extern char D_0083B190[];
+void func_00107B50(void *dst, const void *src, s32 n);
+void func_00821390(s16 to, Msg *m, s32 kind);
+
+/* Sends message m to 'to' (1-9; 10: 8): to players 1-4 (kind 0) it's queued, else sent now
+   (when there's room). */
+void func_00821170(s32 to, Msg *m, s32 kind, s32 a3);
+#ifdef NON_MATCHING   /* first draft */
+void func_00821170(s32 to, Msg *m, s32 kind, s32 a3) {
+    SingleWork *w = &D_0084E040;
+    s32 n;
+    s16 c;
+
+    if (D_0084E040.unk4 == 0) {
+        return;
+    }
+    if (w->frames == 0 && to != 6 && to != 7) {
+        return;
+    }
+    if (to == 10) {
+        to = 8;
+    } else {
+        if (to <= 0 || to >= 10) {
+            return;
+        }
+        m->idx = D_0048BF60.unk1D;
+    }
+    if (to > 0 && to < 5 && kind == 0) {
+        func_00821390(to, m, kind);
+        return;
+    }
+    if (w->unk3 < 2) {
+        if (func_001B6980(0) != 0 && func_001B6980(0x68) != 0) {
+            func_001B2600(0xF, 3, 0xFFFF0000, D_0083B150, w->unk3);
+        }
+        return;
+    }
+    c = D_0083B930[D_0048BF60.unk1D].count;
+    n = w->unk28;
+    if (c != 0) {
+        n += c + 0x10;
+    }
+    if (n >= 0x200) {
+        if (func_001B6980(0) != 0 && func_001B6980(0x68) != 0) {
+            func_001B2600(0xF, 3, 0xFFFF0000, D_0083B170, n);
+        }
+        return;
+    }
+    func_00820940(to, m, kind, a3);
+    if (func_001B6980(0) != 0 && func_001B6980(0x68) != 0) {
+        func_001B2600(to % 4 * 6 + 0xD, to / 4 + 0xC, 0xFFFF0000, D_0083B188, to);
+    }
+}
+#endif
+
+/* Queues m for player 'to' (1-4), in 4-byte steps (another player's queue: sent now). */
+#ifdef NON_MATCHING   /* first draft */
+void func_00821390(s16 to, Msg *m, s32 kind) {
+    MsgQueue *q;
+    u8 len;
+    s32 n;
+    s32 total;
+    s16 c;
+
+    if (to == 0) {
+        return;
+    }
+    len = m->len;
+    q = &D_0083B930[to - 1];
+    if (len == 0) {
+        return;
+    }
+    n = (len + 3) / 4 * 4;
+    if (q->id != -1 && q->id != to) {
+        func_00820940(to, m, kind, 4);
+        if (func_001B6980(0) != 0 && func_001B6980(0x68) != 0) {
+            func_001B2600(to % 4 * 6 + 0xD, to / 4 + 0xC, 0xFFFF0000, D_0083B188, to);
+        }
+    }
+    total = D_0084E040.unk28;
+    if (q->count != 0) {
+        total += q->count + 0x10;
+    }
+    if (total >= 0x200) {
+        if (func_001B6980(0) != 0 && func_001B6980(0x68) != 0) {
+            func_001B2600(0xF, 3, 0xFFFF0000, D_0083B170, total);
+        }
+        return;
+    }
+    q->id = to;
+    c = q->count + n;
+    if (c >= 0x6C) {
+        if (func_001B6980(0) != 0 && func_001B6980(0x68) != 0) {
+            func_001B2600(0xF, 3, 0xFFFF0000, D_0083B190, c);
+        }
+        return;
+    }
+    q->count = c;
+    func_00107B50(q->end, m, len);
+    q->end += n;
+}
+#endif
+
+extern char D_0083B0C0[];       /* "RS %d" */
+extern s8 D_0084E045;
+extern s32 D_0084E048;
+extern s16 D_0023BBA0;
+extern u8 D_0023BB28;
+void func_001B27B0(s32 x, s32 line, const char *fmt, ...);
+void func_0064C130(u8 *m, u8 from);
+void func_00822090(u8 a, u8 *p);
+void func_0064E590(u8 a, u8 b, u8 c);
+void func_00821FE0(u8 *m, u8 from);
+void func_00821950(u8 a, u8 b, s32 c);
+void func_00821B10(u8 a, u8 b, s32 c);
+void func_0064FCB0(u8 n, u8 *m, s32 a);
+void func_00609590(s32 n, u8 *m, s32 a);
+void func_006531C0(u8 *m, s32 a);
+
+/* A message of kind n received (m[2]: who from). */
+#ifdef NON_MATCHING   /* first draft */
+void func_00820AC0(s32 n, u8 *m) {
+    u8 from;
+    u8 bit;
+
+    if (func_001B6980(0) != 0 && func_001B6980(0x68) != 0) {
+        func_001B27B0(n % 4 * 6 + 0xD, n / 4 + 7, D_0083B0C0, n);
+    }
+    if (n < 0 || (u32)n >= 10) {
+        return;
+    }
+    from = m[2];
+    switch (n) {
+    case 5:
+        if (D_0048BF60.unkA6 == 0 && from != D_0048BF60.unk1D) {
+            func_0064C130(m, from);
+        }
+        break;
+    case 6:
+        if (D_0048BF60.state == 7) {
+            switch (m[0]) {
+            case 0:
+                if (from != D_0048BF60.unk1D) {
+                    D_0048BF60.unk20[0] = m[4];
+                    D_0048BF60.unk2F = m[5];
+                    D_0023BBA0 = m[6] | (m[7] << 8);
+                }
+                break;
+            case 1:
+                if (D_0084E045 == 0) {
+                    func_00822090(m[4], m + 5);
+                }
+                break;
+            case 2:
+                D_0048BF60.unk62 = m[4];
+                break;
+            case 3:
+                D_0048BF60.unkB7 = 1;
+                break;
+            case 5:
+                if (from != D_0048BF60.unk1D) {
+                    D_0048BF60.unkBA = m[4];
+                    D_0048BF60.unkBB = 1;
+                }
+                break;
+            case 6:
+                if (from != D_0048BF60.unk1D) {
+                    D_0023BB28 = m[4];
+                    D_0048BF60.unkBB = 1;
+                }
+                break;
+            }
+        } else if (m[0] == 4) {
+            bit = 1 << m[4];
+            if (!(D_0048BF60.unkB6 & bit)) {
+                D_0048BF60.unkB6 |= bit;
+            }
+        }
+        break;
+    case 7:
+        switch (m[0]) {
+        case 0:
+            func_0064E590(m[4], m[5], m[6]);
+            break;
+        case 1:
+            if (D_0084E045 == 0 && m[8] == D_0048BF60.unk1D) {
+                D_0084E048 = *(s32 *)(m + 4);
+            }
+            break;
+        case 2:
+            func_00821FE0(m, from);
+            break;
+        case 3:
+            m[0] = m[3];
+            func_0064C130(m, from);
+            break;
+        case 4:
+            switch (m[4]) {
+            case 0:
+                func_00821950(m[5], m[6], 1);
+                break;
+            case 1:
+                func_00821B10(m[5], m[6], 1);
+                break;
+            case 2:
+                break;
+            }
+            break;
+        }
+        break;
+    case 8:
+        if (from & 0x80) {
+            func_0064FCB0(n, m, 0);
+        } else if (D_0048BF60.unkA6 == 0) {
+            func_00609590(n, m, 0);
+        }
+        break;
+    case 9:
+        if (D_0048BF60.unkA6 == 0) {
+            func_006531C0(m, 0);
+        }
+        break;
+    }
+}
+#endif

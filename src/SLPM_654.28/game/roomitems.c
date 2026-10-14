@@ -416,3 +416,234 @@ void func_00561570(void) {
         }
     }
 }
+
+/* The slot of the item at place (> 0). */
+static ItemSlot *func_00562520(s16 place) {
+    ItemSlot *e;
+    s32 i;
+
+    if (place <= 0) {
+        return NULL;
+    }
+    for (i = 0, e = D_003967D0; i < 0x100; i++, e++) {
+        if (e->place == place) {
+            return e;
+        }
+    }
+    return NULL;
+}
+
+void func_00581320(u8 i);
+
+/* The functions on the item at a place return the slot only when it's inactive (they fall off
+   the end otherwise, as the original does; callers don't use it). */
+
+/* The item at place is taken: no longer placed, its thing and its (unk20) gone. */
+ItemSlot *func_00562630(s16 place) {
+    ItemSlot *e = func_00562520(place);
+
+    if (e != NULL) {
+        if (e->active == 0) {
+            return e;
+        }
+        if (e->unk3 != 0) {
+            e->flags &= ~0x200001;
+            if (e->obj != NULL || e->unk20 != 0) {
+                func_00581320(e->index);
+            }
+        }
+    }
+}
+
+void func_005609F0(void *obj);
+void func_00590CC0(s32 h);
+
+void func_00581320(u8 i) {
+    ItemSlot *e = &D_003967D0[i];
+
+    if (e->active != 0) {
+        if (e->obj != NULL) {
+            func_005609F0(e->obj);
+            e->obj = NULL;
+        }
+        if (e->unk20 != 0) {
+            func_00590CC0(e->unk20);
+            e->unk20 = 0;
+        }
+    }
+}
+
+ItemSlot *func_00561720(s8 a, s16 place, s16 id);
+
+/* A new item id (count of it) that character who holds. */
+ItemSlot *func_005626B0(u16 who, s16 id, s16 count) {
+    ItemSlot *e = func_00561720(0, 0, id);
+
+    if (e == NULL) {
+        return NULL;
+    }
+    e->flags = 1;
+    e->unk3 = 0;
+    e->unk24 = count;
+    e->owner = who + 1;
+    return e;
+}
+
+void func_005614B0(ItemSlot *e);
+
+/* The item at place: shown (lying here: its thing made). */
+ItemSlot *func_00562720(s16 place) {
+    ItemSlot *e = func_00562520(place);
+
+    if (e != NULL) {
+        if (e->active == 0) {
+            return e;
+        }
+        if (e->unk3 != 0) {
+            e->flags |= 0x200001;
+            if (D_00306590.unk1C == (u8)e->unk1 && (u16)e->owner == 0) {
+                func_00561270(e);
+            }
+        }
+    }
+}
+
+ItemSlot *func_005627B0(s16 place) {
+    ItemSlot *e = func_00562520(place);
+
+    if (e != NULL) {
+        if (e->active == 0) {
+            return e;
+        }
+        if (e->unk3 != 0) {
+            e->flags |= 1;
+            e->flags &= ~0x200000;
+            if (D_00306590.unk1C == (u8)e->unk1 && (u16)e->owner == 0) {
+                func_005614B0(e);
+            }
+        }
+    }
+}
+
+/* Whether the item at place has been taken. */
+s32 func_00562840(s16 place) {
+    ItemSlot *e = func_00562520(place);
+
+    if (e == NULL) {
+        return 0;
+    }
+    if (e->active != 0 && e->unk3 == 0) {
+        return 1;
+    }
+    if (e->active == 0 && (e->flags & 0x20000000)) {
+        return 1;
+    }
+    return 0;
+}
+
+ItemSlot *func_00584500(s16 id, u16 *who);
+DrawObjFull *func_00651300(s32 i);
+void func_005C1430(DrawObjFull *o, u8 slot);
+void func_005C15E0(DrawObjFull *o);
+void func_00561810(u8 slot);
+extern DrawObjFull D_00476DD0[];
+
+/* Item id is taken from whoever holds it (players 0-3, then NPCs). */
+void func_005628C0(s16 id) {
+    u16 who;
+    ItemSlot *e = func_00584500(id, &who);
+    DrawObjFull *o;
+
+    if (e != NULL) {
+        if (e->obj != NULL) {
+            func_00581320(e->index);
+        }
+        if (who < 4) {
+            o = &D_00476DD0[who];
+        } else {
+            o = func_00651300(who - 4);
+        }
+        func_005C1430(o, e->index);
+        func_005C15E0(o);
+        func_00561810(e->index);
+    }
+}
+
+/* Flag 0x800 (0x400) of the item at place, and of its thing. */
+ItemSlot *func_00562970(s16 place, s32 on) {
+    ItemSlot *e = func_00562520(place);
+
+    if (e != NULL) {
+        if (e->active == 0) {
+            return e;
+        }
+        if (e->unk3 != 0) {
+            if (on != 0) {
+                e->flags |= 0x800;
+                if (e->obj != NULL) {
+                    *(s32 *)((u8 *)e->obj + 0x23C) |= 0x800;
+                }
+            } else {
+                e->flags &= ~0x800;
+                if (e->obj != NULL) {
+                    *(s32 *)((u8 *)e->obj + 0x23C) &= ~0x800;
+                }
+            }
+        }
+    }
+    return e;
+}
+
+ItemSlot *func_00562A10(s16 place, s32 on) {
+    ItemSlot *e = func_00562520(place);
+
+    if (e != NULL) {
+        if (e->active == 0) {
+            return e;
+        }
+        if (e->unk3 != 0) {
+            if (on != 0) {
+                e->flags |= 0x400;
+                if (e->obj != NULL) {
+                    *(s32 *)((u8 *)e->obj + 0x23C) |= 0x400;
+                }
+            } else {
+                e->flags &= ~0x400;
+                if (e->obj != NULL) {
+                    *(s32 *)((u8 *)e->obj + 0x23C) &= ~0x400;
+                }
+            }
+        }
+    }
+    return e;
+}
+
+void *func_00561050(u16 id, s32 a);
+
+/* The item at place is put (back) here: its thing made if it lies in this room. */
+ItemSlot *func_00562AB0(s16 place, s32 a);
+#ifdef NON_MATCHING   /* a delay slot left empty */
+ItemSlot *func_00562AB0(s16 place, s32 a) {
+    ItemSlot *e = func_00562520(place);
+    u8 *o;
+
+    if (e != NULL) {
+        if (e->active == 0) {
+            return e;
+        }
+        if (e->unk3 != 0) {
+            e->flags |= 1;
+            if (e->obj == NULL) {
+                if (D_00306590.unk1C == (u8)e->unk1 && (u16)e->owner == 0) {
+                    e->flags &= ~0x200000;
+                    o = func_00561050(e->unk6, a);
+                    if (o != NULL) {
+                        o[0x240] = e->index;
+                        e->obj = o;
+                    }
+                }
+            }
+        }
+    }
+}
+#endif

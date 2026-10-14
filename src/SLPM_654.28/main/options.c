@@ -430,6 +430,24 @@ s32 func_00820F20(void);      /* NETAQ.BIN */
 s32 func_00821D00(s32 i);     /* SINGLE.BIN */
 s32 func_00821570(s32 i);     /* NETAQ.BIN */
 
+void func_00821170(s32 to, void *msg, s32 kind, s32 a3);  /* SINGLE.BIN */
+void func_00820860(s32 to, void *msg, s32 kind, s32 a3);  /* NETAQ.BIN */
+
+/* Sends a message to the others (offline: to the partners' code). */
+void func_001AF000(s32 to, void *msg, s32 kind, s32 a3) {
+    switch (func_001AF500()) {
+    case 0:
+        func_00821170(to, msg, kind, a3);
+        break;
+    case 1:
+        func_00820860(to, msg, kind, a3);
+        break;
+    case 2:
+    case 3:
+        break;
+    }
+}
+
 /* The session is up (always, outside the network modes). */
 s32 func_001AF0A0(void) {
     switch (func_001AF500()) {

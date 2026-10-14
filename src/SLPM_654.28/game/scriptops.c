@@ -3,6 +3,7 @@
 #include "game.h"
 #include "script.h"
 #include "object.h"
+#include "item.h"
 
 /* The room script's instructions (the table at D_006E3870, by opcode). Each gets the words after
    the opcode and returns 0 to go on to the next instruction, 1 when it set the pc itself, or 2
@@ -425,12 +426,7 @@ s32 func_0065BA00(u32 *args) {
 }
 #endif
 
-typedef struct {
-    u8 unk0[2];
-    u8 unk2;            /* 0x02 */
-} Unk5626B0;
-
-Unk5626B0 *func_005626B0(u16 owner, u16 id, s16 arg);
+ItemSlot *func_005626B0(u16 owner, u16 id, s16 arg);
 extern s8 D_0023BE14;                   /* characters in the game */
 extern DrawObjFull D_00476DD0[];
 
@@ -440,7 +436,7 @@ s32 func_0065BA30(u32 *args);
 s32 func_0065BA30(u32 *args) {
     s16 n = *(s16 *)&args[0];
     s16 id = *(s16 *)&args[1];
-    Unk5626B0 *e;
+    ItemSlot *e;
     DrawObjFull *obj;
     s32 i;
 
@@ -461,14 +457,14 @@ s32 func_0065BA30(u32 *args) {
     if (id >= 400 && id < 421) {
         for (i = 0; i < 0x20; i++) {
             if (obj->unkC88[i] == 0) {
-                obj->unkC88[i] = e->unk2;
+                obj->unkC88[i] = e->index;
                 break;
             }
         }
     } else {
         for (i = 0; i < 4; i++) {
             if (obj->unkC84[i] == 0) {
-                obj->unkC84[i] = e->unk2;
+                obj->unkC84[i] = e->index;
                 break;
             }
         }
@@ -484,7 +480,7 @@ s32 func_0065BB60(u32 *args) {
     s8 kind = *(s8 *)&args[0];
     s16 arg = *(s16 *)&args[2];
     s16 id = *(s16 *)&args[1];
-    Unk5626B0 *e;
+    ItemSlot *e;
     DrawObjFull *obj;
     s32 n;
     s32 i;
@@ -504,14 +500,14 @@ s32 func_0065BB60(u32 *args) {
         if (id >= 400 && id < 421) {
             for (i = 0; i < 0x20; i++) {
                 if (obj->unkC88[i] == 0) {
-                    obj->unkC88[i] = e->unk2;
+                    obj->unkC88[i] = e->index;
                     return 0;
                 }
             }
         } else {
             for (i = 0; i < 4; i++) {
                 if (obj->unkC84[i] == 0) {
-                    obj->unkC84[i] = e->unk2;
+                    obj->unkC84[i] = e->index;
                     return 0;
                 }
             }
@@ -539,7 +535,7 @@ s32 func_0065BCB0(u32 *args) {
     s16 n = *(s16 *)&args[0];
     s16 arg = *(s16 *)&args[2];
     s16 id = *(s16 *)&args[1];
-    Unk5626B0 *e;
+    ItemSlot *e;
     Unk3614F0 *q;
     s32 k;
     s32 i;
@@ -556,7 +552,7 @@ s32 func_0065BCB0(u32 *args) {
         if (q->unk0 != 0 && q->unk4 == n) {
             for (i = 0; i < 4; i++) {
                 if (q->unk4C[i] == 0) {
-                    q->unk4C[i] = e->unk2;
+                    q->unk4C[i] = e->index;
                     return 0;
                 }
             }
@@ -1259,3 +1255,296 @@ s32 func_0065C2B0(s32 *args) {
     return 0;
 }
 #endif
+
+/* For the players playing character args[0]: their 3-byte state in the scene (0x280) = {0,
+   args[1], args[2]}; when that's us, a flag for the script. */
+s32 func_0065D270(u32 *args) {
+    u8 kind;
+    u8 me;
+    s32 i;
+    u8 b;
+    u8 c;
+    DrawObjFull *p;
+    u8 *s;
+
+    kind = args[0];
+    b = args[1];
+    c = args[2];
+    me = D_0048BF60.unk1D;
+
+    for (i = 0; i < 4; i++) {
+        p = &D_00476DD0[i];
+        if (kind == p->unkB98) {
+            s = (u8 *)D_0048AC10 + i * 3;
+            s[0x280] = 0;
+            s[0x281] = b;
+            s[0x282] = c;
+            if (me == p->kind) {
+                D_0048BE70.unkE0 = 1;
+            }
+        }
+    }
+    return 0;
+}
+
+void func_005C1AC0(DrawObjFull *p, u8 slot);
+
+/* Gives the player playing character 7 (if she has item 0x19D) args[1] of item args[0]
+   (0x12C-0x12E), up to 3 in all. */
+s32 func_00662BB0(u32 *args);
+#ifdef NON_MATCHING   /* first draft: registers */
+s32 func_00662BB0(u32 *args) {
+    s32 n = 0;
+    u8 has = 0;
+    s32 count = args[1];
+    u16 id = args[0];
+    s32 who = -1;
+    DrawObjFull *p;
+    s32 i;
+    s32 k;
+    ItemSlot *e;
+    u16 it;
+    u8 slot;
+
+    if (count == 0) {
+        return 0;
+    }
+    if (id < 0x12C || id >= 0x12F) {
+        return 0;
+    }
+    for (i = 0, p = D_00476DD0; i < *(s32 *)&D_0023BE14; i++, p++) {
+        if (p->active != 0 && p->unkB98 == 7) {
+            who = i;
+            for (k = 0; k < 0x20; k++) {
+                if ((slot = p->unkC88[k]) != 0) {
+                    it = D_003967D0[slot].unk6;
+                    if (it == 0x19D) {
+                        has = 1;
+                    } else if (id == it) {
+                        n++;
+                    }
+                }
+            }
+            break;
+        }
+    }
+    if (who < 0 || has == 0 || n >= 3) {
+        return 0;
+    }
+    if (count + n >= 4) {
+        count = 3 - n;
+    }
+    for (k = 0; k < count; k++) {
+        e = func_005626B0(who, id, 1);
+        if (e == NULL) {
+            return 0;
+        }
+        func_005C1AC0(p, e->index);
+    }
+    return 0;
+}
+#endif
+
+/* Adds (args[1], args[2]) to room args[0]'s 4 pairs (in the first free one). */
+typedef struct {
+    u16 a;
+    u16 b;
+} RoomPair;
+
+extern RoomPair D_0048A010[][4];
+
+s32 func_0065DE30(u32 *args);
+#ifdef NON_MATCHING   /* registers, the room offset recomputed */
+s32 func_0065DE30(u32 *args) {
+    s32 room = args[0];
+    u16 a = args[1];
+    u16 b = args[2];
+    s32 i;
+
+    for (i = 0; i < 4; i++) {
+        if (D_0048A010[room][i].a == 0xFFFF && D_0048A010[room][i].b == 0xFFFF) {
+            D_0048A010[room][i].a = a;
+            D_0048A010[room][i].b = b;
+            break;
+        }
+    }
+    return 0;
+}
+#endif
+
+/* NPCs by model id: ids from 200 are the room's (D_0048BE80[id] + 200). */
+extern u8 D_0048BE80[];
+void func_00652820(u32 id);
+void func_00652540(u16 id, s32 a, f32 *pos, u16 b);
+void func_00652610(u16 id, s32 a, s32 flags);
+
+s32 func_0065DA70(u32 *args) {
+    u32 id = args[0];
+
+    if (id >= 200) {
+        id = D_0048BE80[id] + 200;
+    }
+    func_00652820(id);
+    return 0;
+}
+
+/* A sound at (args[2..4]). */
+s32 func_0065DAB0(u32 *args) {
+    s32 id = *(u16 *)args;
+    f32 pos[3];
+    s32 a;
+
+    if (id >= 200) {
+        id = (u16)(D_0048BE80[id] + 200);
+    }
+    a = args[1];
+    pos[0] = (s32)args[2];
+    pos[1] = (s32)args[3];
+    pos[2] = (s32)args[4];
+    func_00652540(id, a, pos, args[5]);
+    return 0;
+}
+
+s32 func_0065DB30(u16 *args);
+#ifdef NON_MATCHING   /* args[1]'s address is made in both paths */
+s32 func_0065DB30(u16 *args) {
+    s32 id = args[0];
+
+    if (id >= 200) {
+        id = (u16)(D_0048BE80[id] + 200);
+    }
+    func_00652610(id, *(s32 *)(args + 2), 0x40000000);
+    return 0;
+}
+#endif
+
+s32 func_0065DB90(u32 *args) {
+    s32 id = *(u16 *)args;
+
+    if (id >= 200) {
+        id = (u16)(D_0048BE80[id] + 200);
+    }
+    func_00652610(id, -1, 0x40000008);
+    return 0;
+}
+
+s32 func_0065DBF0(u32 *args) {
+    s32 id = *(u16 *)args;
+
+    if (id >= 200) {
+        id = (u16)(D_0048BE80[id] + 200);
+    }
+    func_00652610(id, -1, (args[1] != 0 ? 0x80000000 : 0x40000000) | 0x10);
+    return 0;
+}
+
+extern s8 D_0048AF30[];
+
+s32 func_0065DC50(u32 *args) {
+    D_0048AF30[args[0]] = args[1];
+    return 0;
+}
+
+s32 func_006609A0(u32 *args) {
+    s32 i;
+
+    for (i = 3; i >= 0; i--) {
+        (&D_0048BE70.unkC8)[i] = 0;
+    }
+    return 0;
+}
+
+void func_00687E60(s32 a, s32 on);
+
+s32 func_006609D0(u32 *args) {
+    func_00687E60(args[0], 1);
+    return 0;
+}
+
+s32 func_00660A00(u32 *args) {
+    func_00687E60(args[0], 0);
+    return 0;
+}
+
+/* The scene's bytes 0x294-0x295 (in D_0048AC10). */
+typedef struct {
+    u8 unk0;
+    u8 unk1;
+    u8 unk2[0xE];
+} Scene294;
+
+extern Scene294 D_0048AEA4;
+
+/* Byte 0x295 = args[0]; when it changes, byte 0x294 = 0xFF. */
+s32 func_00660A30(u32 *args) {
+    if (D_0048AEA4.unk1 != args[0]) {
+        D_0048AEA4.unk1 = args[0];
+        D_0048AEA4.unk0 = 0xFF;
+    }
+    return 0;
+}
+
+#include "zone.h"
+
+void func_00593FA0(Zone *z);
+
+/* The kind-5 zones with id args[0]: armed (unk3C), with args[1] for its slot args[2] & 7. */
+s32 func_00660A70(u32 *args);
+#ifdef NON_MATCHING   /* the loop's shape */
+s32 func_00660A70(u32 *args) {
+    Zone *z;
+    s32 id;
+    s32 slot;
+    u16 v;
+
+    v = args[1];
+    slot = args[2];
+    id = args[0];
+    if (D_0023BD88 == 0x80) {
+        return 0;
+    }
+    z = D_0023BD90;
+    while (z != NULL) {
+        if (z->kind == 5 && z->u.id == id) {
+            func_00593FA0(z);
+            slot &= 7;
+            z->unk3C = 1;
+            z->unk50 = v;
+            z->unk59 |= 1 << slot;
+            z->unk5A[slot] = v;
+        }
+        z = z->next;
+    }
+    return 0;
+}
+#endif
+
+s32 func_00652370(s32 model, s32 x, s32 y, s32 z);
+
+/* The NPC of model args[0] placed at (args[1..3]). */
+s32 func_0065D990(u32 *args) {
+    u32 id = args[0];
+
+    if (id >= 200) {
+        id = D_0048BE80[id] + 200;
+    }
+    func_00652370(id, args[1], args[2], args[3]);
+    return 0;
+}
+
+extern u32 D_0048BBC0[];
+
+/* Enemy group args[0] gone (its bit in D_0048BBC0). */
+s32 func_00662380(u32 *args) {
+    u32 n = args[0];
+
+    D_0048BBC0[n >> 5] |= 1 << (n & 0x1F);
+    return 0;
+}
+
+void func_00578AA0(u8 a, u8 b, u8 c);
+
+s32 func_00662460(u32 *args) {
+    func_00578AA0(args[0], args[1], args[2]);
+    return 0;
+}
