@@ -25,6 +25,38 @@ typedef struct {
     u8 *unk1464;        /* 0x1464: unk1460 + 0x74 */
 } Slot1468;
 
+/* Materials: 0x258 of them (D_004BEEF0; D_004BDA90 says which are in use), a model's listed in
+   Slot1468.ids. Colours as in the model file, in another order. */
+typedef struct {
+    s32 unk0;
+    f32 col2[4];        /* 0x04: the file's second colour */
+    f32 col3[4];        /* 0x14: its third */
+    f32 col1[4];        /* 0x24: its first */
+    s32 unk34[4];
+    s32 tex;            /* 0x44: texture handle (0: none) */
+    s32 power;          /* 0x48 */
+} Material;             /* 0x4C */
+
+/* A model part (Slot1468.buf, 0x98 bytes each). */
+typedef struct {
+    s32 group;          /* 0x00: its packet group (-1: none) */
+    s32 nmats;          /* 0x04 */
+    s32 mats[0x20];     /* 0x08: indices into the model's material ids */
+    s8 lit;             /* 0x88: it has a lighting block (func_001D5B40) */
+    u8 unk89[0x98 - 0x89];
+} ModelPart;
+
+/* A material in a model file (table 9). */
+typedef struct {
+    f32 col1[4];        /* 0x00 */
+    f32 col2[4];        /* 0x10 */
+    f32 col3[4];        /* 0x20 */
+    f32 power;          /* 0x30 */
+    s32 textured;       /* 0x34 */
+    u8 unk38[0x100 - 0x38];
+    s32 tex;            /* 0x100: the texture (table 10 entry) */
+} FileMaterial;
+
 /* The game's work memory: one block taken from the heap when a game starts, cut into slots; its
    first part is handed out as part buffers (count entries of 0x98 bytes). */
 typedef struct {

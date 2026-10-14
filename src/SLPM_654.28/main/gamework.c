@@ -102,6 +102,10 @@ extern u16 D_0048B5B0[];    /* per scenario: its player motion set */
 void func_001B0EC0(void);
 void func_001D4CD0(u16 id);
 
+/* (empty) */
+void func_001B1D30(Slot1468 *m) {
+}
+
 /* The scenario's player motions, when they differ from the ones loaded. */
 void func_001B1D60(void) {
     u16 *p;

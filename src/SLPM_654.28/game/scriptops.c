@@ -29,7 +29,9 @@ typedef struct {
     u8 unk4;
     u8 cur;             /* 0x05 */
     s16 unk6;           /* 0x06 */
-    u8 unk8[0x24 - 0x8];
+    u8 unk8[0x1C - 0x8];
+    s32 unk1C;          /* 0x1C: (message actions) */
+    s32 unk20;          /* 0x20 */
     u8 unk24;           /* 0x24: the character kind we play */
     u8 unk25;           /* 0x25 */
     u8 unk26[0x34 - 0x26];
@@ -868,10 +870,7 @@ extern s32 D_0023BD58;
 extern s32 D_0023BD5C;
 extern s32 D_0023BD60;
 extern s32 D_0023BD64;
-extern u8 *D_0023BD68;          /* its third table (NULL if empty) */
-extern u8 *D_0023BD6C;          /* its second table */
 extern s32 D_0023BD70;
-extern u8 *D_0023BD74;          /* its first table (NULL if empty) */
 s32 sprintf(char *s, const char *fmt, ...);
 s32 func_0018D530(const char *name);
 void func_0018D630(void *dst, const void *src, s32 n);
@@ -1008,16 +1007,16 @@ s32 func_005BCEA0(s32 mode) {
     }
     func_0018D630(p, acc.t1, acc.n1 * 0x18);
     if (acc.n1 != 0) {
-        D_0023BD74 = p;
+        D_0023BD74 = (MsgCue *)p;
     } else {
         D_0023BD74 = NULL;
     }
-    D_0023BD6C = q = (u8 *)(((u32)p + acc.n1 * 0x60 + 3) & ~3);
+    D_0023BD6C = (MsgAction *)(q = (u8 *)(((u32)p + acc.n1 * 0x60 + 3) & ~3));
     func_0018D630(q, acc.t2, acc.n2 * 0x28);
     p = (u8 *)(((u32)q + acc.n2 * 0xA0 + 3) & ~3);
     func_0018D630(p, acc.t3, acc.n3 * 0x28);
     if (acc.n3 != 0) {
-        D_0023BD68 = p;
+        D_0023BD68 = (MsgCall *)p;
     } else {
         D_0023BD68 = NULL;
     }
@@ -1043,5 +1042,149 @@ void func_005BDC80(void) {
         D_0035FFD0.frames += 2;
     } else {
         D_0035FFD0.frames += 1;
+    }
+}
+
+/* The cue's effect, from the room's dm file. */
+typedef struct {
+    s32 unk0;
+    s32 index;          /* 0x04 */
+    s16 dur;            /* 0x08 */
+    s16 unkA;
+    s32 unkC;
+    s32 *data;          /* 0x10: offsets in the dm file */
+} MsgFx;
+
+extern MsgFx D_0070E530;
+extern u8 *D_0023A950[2];
+void func_001B3720(s32 a, s32 b, u8 *c, s16 d, s32 e, u8 *f);
+
+/* Start the current cue's effect when its time comes. */
+#ifdef NON_MATCHING   /* register allocation */
+void func_005BF080(void) {
+    MsgCue *e = D_0023BD74;
+    u16 t;
+    u16 now;
+    u8 *base;
+    s32 *tab;
+    u8 **pp;
+    s32 n;
+    s32 i;
+
+    if (e == NULL) {
+        return;
+    }
+    now = D_0035FFD0.frames;
+    t = e->time;
+    if (D_00306590.unkC != 0) {
+        t >>= 1;
+        now >>= 1;
+    }
+    if (t == now) {
+        base = D_00306590.unk6C + 0x10000;
+        tab = (s32 *)(base + 4);
+        memset(&D_0070E530, 0, sizeof(D_0070E530));
+        if (*tab != 0) {
+            D_0070E530.dur = e->dur / 2;
+            D_0070E530.index = e->fx;
+            D_0070E530.data = (s32 *)(base + tab[D_0070E530.index * 2]);
+            n = tab[D_0070E530.index * 2 + 1];
+            pp = &D_0023A950[n - 1];
+            for (i = 0; i < n; i++) {
+                func_001B3720(0, 0, *pp + i * 0x16, D_0070E530.dur, 0x18, base + D_0070E530.data[i]);
+            }
+        }
+        e++;
+        if (e->time == 0xFFFF) {
+            e = NULL;
+        }
+    }
+    D_0023BD74 = e;
+}
+#endif
+
+extern u8 D_00470090[];
+void func_001BA160(MsgAction *e);
+
+/* Do the actions whose time has come. */
+void func_005BF2A0(void) {
+    MsgAction *e = D_0023BD6C;
+    u16 t;
+    u16 now;
+    s32 i;
+    s32 j;
+    s32 k;
+    u16 bits;
+
+    if (e == NULL) {
+        return;
+    }
+    for (i = 0; i < D_0035FFD0.n2; i++, e++) {
+        now = D_0035FFD0.frames;
+        t = e->time;
+        if (D_00306590.unkC != 0) {
+            t >>= 1;
+            now >>= 1;
+        }
+        if (t == now) {
+            if (e->kind == 0) {
+                e->time = 0xFFFF;
+            } else if (e->kind == 1) {
+                for (j = 0; j < 8; j++) {
+                    bits = e->bits[j];
+                    for (k = 0; k < 0x10; k++) {
+                        D_00470090[0x8A0 + j * 0x10 + k] = (bits & (1 << k)) != 0;
+                    }
+                }
+                D_003AEF50[0].unk1C = e->a[0];
+                D_003AEF50[0].unk1C |= e->a[1] << 16;
+                D_003AEF50[0].unk20 = e->b[0];
+                D_003AEF50[0].unk20 |= e->b[1] << 16;
+                e->time = 0xFFFF;
+            } else if (e->kind == 2) {
+                func_001BA160(e);
+            }
+        }
+    }
+}
+
+void func_001B9060(s32 arg);
+
+/* Start the vibrations whose time has come. */
+void func_005BF200(void) {
+    MsgCall *e = D_0023BD68;
+    u16 t;
+    u16 now;
+    s32 i;
+
+    if (e == NULL) {
+        return;
+    }
+    for (i = 0; i < D_0035FFD0.n3; i++, e++) {
+        now = D_0035FFD0.frames;
+        t = e->time;
+        if (D_00306590.unkC != 0) {
+            t >>= 1;
+            now >>= 1;
+        }
+        if (t == now) {
+            func_001B9060(e->arg);
+            e->time = 0xFFFF;
+        }
+    }
+}
+
+/* Count the cue effect down. */
+void func_005BF480(void) {
+    MsgFx *fx = &D_0070E530;
+    s16 d;
+
+    if (D_0070E530.dur != 0) {
+        d = fx->dur - 1;
+        fx->dur = d;
+        if (d <= 0) {
+            fx->dur = 0;
+            fx->data = NULL;
+        }
     }
 }

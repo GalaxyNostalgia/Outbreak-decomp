@@ -3,6 +3,7 @@
 #include "task.h"
 #include "sce.h"
 #include "ps2mem.h"
+#include "message.h"
 
 /* Screen fades. */
 
@@ -403,13 +404,64 @@ void func_001AE9C0(s32 cmd, u32 arg);
 void func_001B9DA0(void);
 
 extern u8 D_002F8840[0x18];     /* the message backdrop's state (the rectangle at +0xC) */
-extern s32 D_0023BD40;
+extern MsgAction *D_0023BD40;   /* the message backdrop's colour now (a kind-2 message action) */
+
+/* A kind-2 message action sets the backdrop's colour from now on. */
+void func_001BA160(MsgAction *e) {
+    if (e->kind == 2) {
+        D_0023BD40 = e;
+    }
+}
+
+/* The backdrop's colour: blended toward the next kind-2 action's by the time between them. */
+void func_001BA180(void);
+#ifdef NON_MATCHING   /* first draft: control flow and the colour's operand order */
+void func_001BA180(void) {
+    MsgAction *n;
+    s32 i;
+    u32 t0;
+    s32 d;
+    f32 f;
+    u32 c;
+
+    if (D_0023BD40 == NULL) {
+        return;
+    }
+    for (i = 1; i <= 0x20; i++) {
+        n = &D_0023BD40[i];
+        if (n->kind != 2) {
+            continue;
+        }
+        if (n->time == 0xFFFF || D_0023BD40->time >= n->time) {
+            n = NULL;
+        }
+        if (n == NULL) {
+            c = D_0023BD40->bits[2] | (D_0023BD40->bits[1] << 8) | (D_0023BD40->bits[3] << 24) |
+                (D_0023BD40->bits[0] << 16);
+        } else {
+            t0 = D_0023BD40->time >> 1;
+            d = (n->time >> 1) - t0;
+            if (d == 0) {
+                f = 1.0f;
+            } else {
+                f = (f32)(D_0035FFD0.frames / 2 - t0) / (f32)d;
+            }
+            c = (s32)(D_0023BD40->bits[2] + f * (n->bits[2] - (f32)D_0023BD40->bits[2])) |
+                ((s32)(D_0023BD40->bits[1] + f * (n->bits[1] - (f32)D_0023BD40->bits[1])) << 8) |
+                ((s32)(D_0023BD40->bits[3] + f * (n->bits[3] - (f32)D_0023BD40->bits[3])) << 24) |
+                ((s32)(D_0023BD40->bits[0] + f * (n->bits[0] - (f32)D_0023BD40->bits[0])) << 16);
+        }
+        D_002F884C.color = c;
+        return;
+    }
+}
+#endif
 
 /* The full-screen rectangle behind messages, in this colour (drawn while D_0048BF60.unk28). */
 void func_001BA0F0(u32 color) {
     memset(D_002F8840, 0, sizeof(D_002F8840));
     D_002F884C.color = color;
-    D_0023BD40 = 0;
+    D_0023BD40 = NULL;
     D_002F884C.x1 = 0x280;
     D_002F884C.y1 = 0x1E0;
     D_002F884C.x0 = 0;

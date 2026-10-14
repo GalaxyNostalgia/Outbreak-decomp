@@ -102,6 +102,19 @@ void func_001B02B0(void) {
     }
 }
 
+/* A free material id (0 if none). */
+u16 func_001B0400(void) {
+    u16 i;
+
+    for (i = 0; i < 0x258; i++) {
+        if (D_004BDA90[i] == 0) {
+            D_004BDA90[i] = 1;
+            return i;
+        }
+    }
+    return 0;
+}
+
 extern u8 D_0048AC10[0x1254];
 
 void func_001AE6D0(void) {
@@ -351,3 +364,134 @@ void func_001B0EC0(void) {
     func_001B0D50(1);
     func_001B0D50(2);
 }
+
+s32 func_001A2800(void *p);
+void *func_001A2900(void *p, u32 n);
+void *func_001A29D0(void *p, u32 n);
+s32 func_001D0460(s32 n);
+s32 func_001D04D0(s32 id);
+s32 func_001D0540(s16 *tex, s32 n);
+
+/* The model's materials, each given a material id; their textures by the model's own texture list
+   (tex) or by number from the texture base (D_0023A0C4), else texture 0xFF0. */
+void func_001D5700(Slot1468 *m, void *model, s16 *tex) {
+    FileMaterial *fm;
+    Material *mt;
+    u16 *id;
+    s32 i;
+
+    m->nids = func_001A2800(model);
+    for (i = 0; i < m->nids; i++) {
+        fm = func_001A2900(model, i);
+        id = &m->ids[i];
+        *id = func_001B0400();
+        mt = (Material *)((u8 *)D_004BEEF0 + *id * 0x4C);
+        if (fm->textured != 0) {
+            s32 n = *(s32 *)func_001A29D0(model, fm->tex);
+
+            if (tex == NULL) {
+                mt->tex = func_001D0460(n);
+                if (mt->tex == 0) {
+                    mt->tex = func_001D04D0(0xFF0);
+                }
+            } else {
+                mt->tex = func_001D0540(tex, n);
+            }
+            mt->col2[0] = fm->col2[0];
+            mt->col2[1] = fm->col2[1];
+            mt->col2[2] = fm->col2[2];
+            mt->col2[3] = fm->col2[3];
+            mt->col1[0] = fm->col1[0];
+            mt->col1[1] = fm->col1[1];
+            mt->col1[2] = fm->col1[2];
+            mt->col1[3] = fm->col1[3];
+            mt->col3[0] = fm->col3[0];
+            mt->col3[1] = fm->col3[1];
+            mt->col3[2] = fm->col3[2];
+            mt->col3[3] = fm->col3[3];
+            mt->unk34[3] = 0;
+            mt->unk34[2] = 0;
+            mt->unk34[1] = 0;
+            mt->unk34[0] = 0;
+            mt->power = fm->power;
+        } else {
+            mt->col2[0] = fm->col2[0];
+            mt->col2[1] = fm->col2[1];
+            mt->col2[2] = fm->col2[2];
+            mt->col2[3] = fm->col2[3];
+            mt->col1[0] = fm->col1[0];
+            mt->col1[1] = fm->col1[1];
+            mt->col1[2] = fm->col1[2];
+            mt->col1[3] = fm->col1[3];
+            mt->col3[0] = fm->col3[0];
+            mt->col3[1] = fm->col3[1];
+            mt->col3[2] = fm->col3[2];
+            mt->col3[3] = fm->col3[3];
+            mt->unk34[3] = 0;
+            mt->unk34[2] = 0;
+            mt->unk34[1] = 0;
+            mt->unk34[0] = 0;
+            mt->power = fm->power;
+            mt->tex = 0;
+        }
+    }
+}
+
+extern u32 D_00218E30[];        /* packet layouts, by mode */
+s32 func_001A2700(void *p);
+s32 func_001A2A00(void *p, u32 n);
+s32 func_001A2A50(void *p, u32 n, s32 *out);
+s32 func_001A25E0(u32 *out, void *p, u32 n);
+s32 func_001A32E0(void *out, void *p, u32 n);
+s32 func_001A2540(s16 *out, void *p, u32 n);
+s32 func_00189790(void *mesh, u32 layout);
+void func_001B00D0(s32 group);
+void func_001D5B40(u32 *light, ModelPart *part);
+s32 func_0018D680(u32 *mark);
+void func_0018D6A0(u32 *mark);
+void func_001AE9C0(s32 cmd, u32 arg);
+
+/* The model's parts: their materials (state commands 0x3A on), lighting blocks and packets. */
+void func_001D5920(Slot1468 *m, void *model, u8 mode);
+#ifdef NON_MATCHING   /* one addu's operand order (the part's address in the material loop) */
+void func_001D5920(Slot1468 *m, void *model, u8 mode) {
+    u32 mark[2];
+    u8 mesh[0x28];
+    u32 light[0x14];
+    s32 i;
+    s32 j;
+    u32 *layout;
+    s32 off;
+
+    m->nparts = func_001A2700(model);
+    layout = &D_00218E30[mode];
+    for (i = 0; i < m->nparts; i++) {
+        off = i * sizeof(ModelPart);
+        ((ModelPart *)(m->buf + off))->nmats = func_001A2A00(model, i);
+        func_001A2A50(model, i, ((ModelPart *)(m->buf + off))->mats);
+        for (j = 0; j < ((ModelPart *)(m->buf + off))->nmats; j++) {
+            func_001AE9C0((j + 0x3A) & 0xFF,
+                          (u32)((u8 *)D_004BEEF0 + m->ids[((ModelPart *)(m->buf + off))->mats[j]] * 0x4C));
+        }
+        if (func_001A25E0(light, model, i) >= 0) {
+            func_001D5B40(light, (ModelPart *)(m->buf + off));
+            ((ModelPart *)(m->buf + off))->lit = 1;
+        } else {
+            ((ModelPart *)(m->buf + off))->lit = 0;
+        }
+        func_0018D680(mark);
+        if (func_001A32E0(mesh, model, i) != 0) {
+            ((ModelPart *)(m->buf + off))->group = func_00189790(mesh, *layout);
+            if (((ModelPart *)(m->buf + off))->group != 0) {
+                func_001B00D0(((ModelPart *)(m->buf + off))->group);
+            }
+        } else {
+            ((ModelPart *)(m->buf + off))->group = -1;
+        }
+        if (m->unk818 != NULL) {
+            func_001A2540((s16 *)(m->unk818 + i * 0x42), model, i);
+        }
+        func_0018D6A0(mark);
+    }
+}
+#endif

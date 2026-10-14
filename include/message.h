@@ -42,6 +42,41 @@ typedef struct {
 
 extern MsgWork D_0035FFD0;
 
+/* The loaded messages' first table (0x18 bytes an entry, 0xFFFF time ends it): cues by time. */
+typedef struct {
+    u16 unk0;
+    u16 time;           /* 0x02: when (MsgWork.frames) */
+    s16 unk4;
+    s16 fx;             /* 0x06: the room dm file's entry */
+    s32 dur;            /* 0x08 */
+    u8 unkC[0xC];
+} MsgCue;
+
+extern MsgCue *D_0023BD74;      /* the next cue (NULL: none) */
+
+/* The loaded messages' second table (0x28 bytes an entry): things to do at a time. */
+typedef struct {
+    u16 unk0;
+    u16 time;           /* 0x02: when (MsgWork.frames); 0xFFFF once done */
+    s32 kind;           /* 0x04: 0 nothing, 1 set the scene flags below, 2 the backdrop */
+    u16 bits[8];        /* 0x08: (1) 8 x 16 flags */
+    u16 a[2];           /* 0x18: (1) two words */
+    u16 b[2];           /* 0x1C */
+    u8 unk20[8];
+} MsgAction;
+
+extern MsgAction *D_0023BD6C;
+
+/* The third table (0x28 bytes an entry): pad vibrations at a time. */
+typedef struct {
+    u16 unk0;
+    u16 time;           /* 0x02: when; 0xFFFF once done */
+    s32 arg;            /* 0x04: the vibration (func_001B9060) */
+    u8 unk8[0x20];
+} MsgCall;
+
+extern MsgCall *D_0023BD68;
+
 void func_005BF4C0(EventMsg *m);
 
 #endif

@@ -834,12 +834,29 @@ s32 *func_001A3250(WChunkFile *m, s32 n, s32 k) {
 }
 #endif
 
+/* A mesh converted for drawing (built in work memory: Options.unk4C + 0x200000 / + 0x240000). */
 typedef struct {
-    u8 unk0[0x20];
+    u32 flags;          /* 0x00: 0x100000 primitives carry an index, 0x200000 a type, 0x1000 their words */
+    s32 count;          /* 0x04: primitives */
+    u16 *prims;         /* 0x08: per primitive: length | 0x8000 (flagged) or 0x4000, then the above */
+    u32 format;         /* 0x0C */
+    struct MeshVertex *verts; /* 0x10 */
+    s32 nverts;         /* 0x14 */
+    s32 vertSize;       /* 0x18: bytes */
+    s32 primSize;       /* 0x1C: bytes */
     s16 nbones;         /* 0x20 */
 } MeshOut;
 
-void func_001A33E0(MeshOut *out, WChunkFile *m);
+typedef struct MeshVertex {
+    f32 pos[3];         /* 0x00 */
+    f32 normal[3];      /* 0x0C */
+    u32 color;          /* 0x18: ARGB */
+    f32 uv[2];          /* 0x1C */
+    u32 bones;          /* 0x24: four bytes, the first in the top byte */
+    u32 weights;        /* 0x28: their weights (0-255, adding up to 255) */
+} MeshVertex;           /* 0x2C */
+
+s32 func_001A33E0(MeshOut *out, WChunkFile *m);
 
 s32 func_001A32E0(MeshOut *out, void *p, u32 n);
 s32 func_001A3430(WChunkFile *m);
@@ -862,8 +879,7 @@ s32 func_001A32E0(MeshOut *out, void *p, u32 n) {
     switch (m->type) {
     case 4:
         out->nbones = func_001A2A00(p, n);
-        func_001A33E0(out, (WChunkFile *)m);
-        break;
+        return func_001A33E0(out, (WChunkFile *)m);
     case 8:
         return 0;
     case 7:
@@ -879,12 +895,11 @@ s32 func_001A34C0(MeshOut *out, WChunkFile *m);
 s32 func_001A3AE0(MeshOut *out, WChunkFile *m);
 
 #ifdef NON_MATCHING   /* needs func_001A2B40 to match (callers rely on its registers) */
-void func_001A33E0(MeshOut *out, WChunkFile *m) {
+s32 func_001A33E0(MeshOut *out, WChunkFile *m) {
     if (func_001A2AF0(m, 0xC0000) != 0) {
-        func_001A34C0(out, m);
-    } else {
-        func_001A3AE0(out, m);
+        return func_001A34C0(out, m);
     }
+    return func_001A3AE0(out, m);
 }
 #endif
 
@@ -907,5 +922,153 @@ s32 func_001A3430(WChunkFile *m) {
         }
     }
     return 0;
+}
+#endif
+
+extern s32 D_0023BAC8;          /* the biggest converted mesh part so far (bytes) */
+extern u8 *D_003065DC;          /* Options.unk4C: work memory */
+
+/* Convert a mesh with vertex weights: its primitives to a u16 list, its vertices to MeshVertex
+   (colours to bytes, weights to 0-255 over at most 4 bones, the strongest last one taking what the
+   rounding left). 0 when a part is too big (over 0x40000 bytes) or there's no work memory. */
+#ifdef NON_MATCHING   /* first draft */
+s32 func_001A3AE0(MeshOut *out, WChunkFile *m) {
+    s32 bones[4];
+    s32 w[4];
+    MeshVertex *v;
+    u16 *p;
+    f32 *f;
+    s32 *wt;
+    s32 nstrips;
+    s32 nprims;
+    s32 len;
+    s32 type;
+    s32 size;
+    s32 total;
+    s32 last;
+    s32 n;
+    s32 i;
+    s32 k;
+    s32 j;
+
+    func_001A2AF0(m, 0xA0000);
+    out->flags = 0x221000;
+    nstrips = func_001A2BF0(m);
+    out->count = func_001A2D30(m);
+    total = 0;
+    if (func_001A3430(m) == 1) {
+        out->flags |= 0x100000;
+    }
+    for (i = 0; i < nstrips; i++) {
+        nprims = func_001A2CB0(m, i);
+        for (k = 0; k < nprims; k++) {
+            total += func_001A2E80(m, i, k);
+        }
+    }
+    size = (out->count + total) * 2;
+    if (out->flags & 0x100000) {
+        size += out->count * 2;
+    }
+    if (out->flags & 0x200000) {
+        size += out->count * 2;
+    }
+    if (D_0023BAC8 < size) {
+        D_0023BAC8 = size;
+    }
+    if (size > 0x40000) {
+        return 0;
+    }
+    if (D_003065DC == NULL) {
+        return 0;
+    }
+    out->prims = (u16 *)(D_003065DC + 0x200000);
+    out->primSize = size;
+    p = out->prims;
+    for (i = 0; i < nstrips; i++) {
+        nprims = func_001A2CB0(m, i);
+        type = func_001A2C30(m, i);
+        for (k = 0; k < nprims; k++) {
+            len = func_001A2E80(m, i, k);
+            *p = len;
+            if (func_001A2F30(m, i, k) != 0) {
+                *p |= 0x8000;
+            } else {
+                *p |= 0x4000;
+            }
+            p++;
+            if (out->flags & 0x100000) {
+                *p++ = func_001A2DD0(m, i, k);
+            }
+            if (out->flags & 0x200000) {
+                if (type == 0x40000) {
+                    *p = 1;
+                } else if (type == 0x30000) {
+                    *p = 0;
+                }
+                p++;
+            }
+            if (out->flags & 0x1000) {
+                for (j = 0; j < len; j++) {
+                    *p++ = func_001A2FF0(m, i, k, j);
+                }
+            }
+        }
+    }
+    out->format = 0x35;
+    out->format |= 0x100;
+    out->nverts = func_001A2D90(m);
+    size = out->nverts * sizeof(MeshVertex);
+    if (D_0023BAC8 < size) {
+        D_0023BAC8 = size;
+    }
+    if (size > 0x40000) {
+        return 0;
+    }
+    if (D_003065DC == NULL) {
+        return 0;
+    }
+    out->verts = (MeshVertex *)(D_003065DC + 0x240000);
+    out->vertSize = size;
+    v = out->verts;
+    for (i = 0; i < out->nverts; i++, v++) {
+        f = func_001A30D0(m, i);
+        v->pos[0] = f[0];
+        v->pos[1] = f[1];
+        v->pos[2] = f[2];
+        f = func_001A3120(m, i);
+        v->normal[0] = f[0];
+        v->normal[1] = f[1];
+        v->normal[2] = f[2];
+        f = func_001A3170(m, i);
+        v->uv[0] = f[0];
+        v->uv[1] = f[1];
+        f = func_001A31B0(m, i);
+        v->color = ((u32)f[3] << 24) | ((u32)f[0] << 16) | ((u32)f[1] << 8) | (u32)f[2];
+        v->bones = 0;
+        v->weights = 0;
+        n = func_001A31F0(m, i);
+        w[0] = w[1] = w[2] = w[3] = 0;
+        bones[0] = bones[1] = bones[2] = bones[3] = 0;
+        last = 0;
+        for (k = 0; k < n; k++) {
+            wt = func_001A3250(m, i, k);
+            w[k] = (s32)(255.0f * *(f32 *)&wt[1] / 100.0f) & 0xFF;
+            if (w[k] > 0) {
+                last = k;
+            }
+            bones[k] = *(u8 *)wt;
+        }
+        w[last] += 0xFF - w[0] - w[1] - w[2] - w[3];
+        for (k = 0; k < n - 1; k++) {
+            if (w[k] == 0) {
+                w[k] = w[k + 1];
+                bones[k] = bones[k + 1];
+                w[k + 1] = 0;
+            }
+        }
+        v->weights = (w[0] << 24) | (w[1] << 16) | (w[2] << 8) | w[3];
+        v->bones = (bones[0] << 24) | (bones[1] << 16) | (bones[2] << 8) | bones[3];
+    }
+    return 1;
 }
 #endif

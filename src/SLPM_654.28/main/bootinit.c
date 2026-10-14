@@ -127,7 +127,7 @@ TexSlot *func_001CFE20(s32 id, u32 addr);
 extern u8 D_0023BE2C;
 
 /* Texture ids 0x2100-0x23FF are per player (0x30 each) and map to 0x1800 + 0x80 per player. */
-s32 func_001D02B0(s32 id) {
+static s32 func_001D02B0(s32 id) {
     if (id >= 0x2100 && id < 0x2400) {
         id -= D_0023BE2C * 0x30 + 0x2100;
         id += (D_0023BE2C << 7) + 0x1800;
@@ -141,6 +141,46 @@ s32 func_001D04D0(s32 id) {
     s32 i;
 
     id = func_001D02B0(id);
+    t = D_00321590;
+    for (i = 0; i < 0x100; i++, t++) {
+        if (t->tex != 0 && t->id == id) {
+            return t->tex;
+        }
+    }
+    return 0;
+}
+
+extern s32 D_0023A0C4;          /* texture id base for the next loads */
+
+/* The loaded texture numbered n from the texture base, or 0. */
+s32 func_001D0460(s32 n) {
+    TexSlot *t;
+    s32 i;
+    s32 id;
+
+    id = n + func_001D02B0(D_0023A0C4);
+    t = D_00321590;
+    for (i = 0; i < 0x100; i++, t++) {
+        if (t->tex != 0 && t->id == id) {
+            return t->tex;
+        }
+    }
+    return 0;
+}
+
+/* The loaded texture of entry n (< 6) of a model's texture list, or 0. */
+s32 func_001D0540(s16 *tex, s32 n) {
+    TexSlot *t;
+    s32 i;
+    s32 id;
+
+    if (n > 5) {
+        return 0;
+    }
+    id = tex[n];
+    if (id == -1) {
+        return 0;
+    }
     t = D_00321590;
     for (i = 0; i < 0x100; i++, t++) {
         if (t->tex != 0 && t->id == id) {

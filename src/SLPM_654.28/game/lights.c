@@ -122,7 +122,7 @@ extern u8 D_004BEEF0[][0x4C];
 Obj250L *func_00620BE0(Obj250L *at, void *update, u8 list, s8 where);
 void func_00547530(Obj250L *p);
 void func_003419F0(s32 a, void *update);
-s32 func_001D04D0(s32 base, u16 id);
+s32 func_001D04D0(s32 id);
 
 void func_00546EB0(void);
 #ifdef NON_MATCHING   /* first draft */
@@ -153,7 +153,7 @@ void func_00546EB0(void) {
             func_003419F0(1, func_00547530);
             if (done == 0) {
                 tex = *(u16 *)(D_00389750 + 0x502C + f->kind * 2);
-                *(s32 *)(D_004BEEF0[tex] + 0x44) = func_001D04D0(0xFF0, tex);
+                *(s32 *)(D_004BEEF0[tex] + 0x44) = func_001D04D0(0xFF0);
                 done++;
             }
         }

@@ -118,14 +118,14 @@ void func_001D35E0(DrawObjFull *obj, u8 kind, u8 costume) {
 }
 
 extern s32 D_0023A0C4;
-void func_001D5700(Slot1468 *m, void *model, s32 a);
+void func_001D5700(Slot1468 *m, void *model, s16 *tex);
 void func_001B1D30(Slot1468 *m);
 void func_001D5920(Slot1468 *m, void *model, u8 mode);
 void func_001D11E0(s32 id, Slot1468 *m, void *motion);
 
 /* Sets a model up from its data (and its motion, when there is one). */
-s32 func_001D2720(Slot1468 *m, s32 mode, void *model, void *motion, s32 a) {
-    func_001D5700(m, model, a);
+s32 func_001D2720(Slot1468 *m, s32 mode, void *model, void *motion, s16 *tex) {
+    func_001D5700(m, model, tex);
     func_001B1D30(m);
     func_001D5920(m, model, mode);
     if (motion == NULL) {

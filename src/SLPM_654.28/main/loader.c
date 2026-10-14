@@ -259,7 +259,7 @@ void func_0018D730(void);
 void func_0018D630(void *dst, void *src, s32 size);
 void func_001D35E0(DrawObjFull *obj, u8 kind, u8 costume);
 void func_001D3770(DrawObjFull *obj, u8 kind);
-s32 func_001D2720(Slot1468 *m, s32 mode, void *model, void *motion, s32 a);
+s32 func_001D2720(Slot1468 *m, s32 mode, void *model, void *motion, s16 *tex);
 void func_00638C00(DrawObjFull *obj, u8 kind);
 
 void func_001A9A10(s32 slot, DrawObjFull *obj);
@@ -332,7 +332,7 @@ void func_001A9A10(s32 slot, DrawObjFull *obj) {
         return;
     }
     func_001D35E0(obj, obj->unkB98, obj->costume);
-    func_001D2720(&D_0047F4D0[obj->kind], 2, buf + hdr.model, buf + hdr.motion, 0);
+    func_001D2720(&D_0047F4D0[obj->kind], 2, buf + hdr.model, buf + hdr.motion, NULL);
     func_0018D730();
     func_00638C00(obj, obj->unkB98);
     if (obj->unkBB4 != 0) {
@@ -349,7 +349,7 @@ void func_001A9A10(s32 slot, DrawObjFull *obj) {
         func_001D3770(obj, obj->unkB98);
         held = D_003BB520[obj->kind];
         if (held[0] == 1) {
-            func_001D2720((Slot1468 *)(held + 4), 2, buf + hdr.held, NULL, 0);
+            func_001D2720((Slot1468 *)(held + 4), 2, buf + hdr.held, NULL, NULL);
         }
     }
 }
@@ -435,7 +435,7 @@ void func_001A9DA0(const char *name, Slot1468 *m, s32 id, u32 flags) {
     }
     func_0018D730();
     if (hdr.model != 0 && hdr.motion != 0) {
-        func_001D2720(m, flags & 0x7FFFFFFF, buf + hdr.model, buf + hdr.motion, 0);
+        func_001D2720(m, flags & 0x7FFFFFFF, buf + hdr.model, buf + hdr.motion, NULL);
         func_0018D730();
     }
 }
@@ -516,7 +516,7 @@ void func_001A97A0(u8 room, u8 a, u8 b) {
     func_001D0440((D_0023BE2C << 7) + 0x1800);
     D_004700F0.buf = func_001B1AD0(0x80, 6);
     D_004700F0.unk818 = NULL;
-    func_001D2720(&D_004700F0, 2, buf + hdr.model, buf + hdr.motion, 0);
+    func_001D2720(&D_004700F0, 2, buf + hdr.model, buf + hdr.motion, NULL);
     func_0018D730();
     for (i = 0; i < D_004700F0.nparts; i++) {
         D_00470090[0x8A0 + i] = 1;
@@ -532,7 +532,7 @@ void func_001A97A0(u8 room, u8 a, u8 b) {
         func_001AE9C0(2, 0);
         D_0038E774.buf = func_001B1AD0(0x400, 7);
         D_0038E774.unk818 = NULL;
-        func_001D2720(&D_0038E774, 2, buf + hdr.objModel, buf + hdr.objMotion, 0);
+        func_001D2720(&D_0038E774, 2, buf + hdr.objModel, buf + hdr.objMotion, NULL);
     }
 }
 #endif
