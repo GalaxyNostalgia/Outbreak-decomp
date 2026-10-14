@@ -1188,3 +1188,74 @@ void func_005BF480(void) {
         }
     }
 }
+
+/* Room table entry [args[0]][args[1]] = the difficulty's value args[2] (< 100), or the script's
+   own table's (100 and up). */
+typedef struct {
+    u16 v[0x10];
+} DiffVals;
+
+extern DiffVals D_006E36D0[];
+extern u16 D_00472F90[0x80][0x18];
+s32 func_0065FD70(s32 *args) {
+    s32 a = args[0];
+    s32 b = args[1];
+    s32 v = args[2];
+
+    if (v < 100) {
+        D_00472F90[a][b] = D_006E36D0[D_0048BF60.unkBA].v[v & 0xF];
+    } else {
+        D_00472F90[a][b] =
+            ((s32 *)(*(s32 *)(D_00306590.script + 0x34) + (D_0048BF60.unkBA << 6)))[(v - 100) & 0xF];
+    }
+    return 0;
+}
+
+/* Sets bit args[1] of entry args[0]'s flags. */
+extern u16 D_0048AFB0[][6];
+
+s32 func_0065FEC0(s32 *args);
+#ifdef NON_MATCHING   /* the constant 1's register */
+s32 func_0065FEC0(s32 *args) {
+    D_0048AFB0[args[0]][5] |= 1 << args[1];
+    return 0;
+}
+#endif
+
+void func_00540620(s32 row, s32 bit, s32 col);
+void func_00540670(s32 row, s32 bit, s32 col);
+void func_005406B0(s32 row, s32 bit, s32 col);
+void func_00540700(s32 row, s32 bit, s32 col);
+
+/* Flag word bits (D_0048AFB0, column 0): set, clear, and set/clear telling the others. */
+s32 func_0065C220(s32 *args);
+#ifdef NON_MATCHING   /* args[1] is read through args + 1 first */
+s32 func_0065C220(s32 *args) {
+    func_00540670(args[0], args[1], 0);
+    return 0;
+}
+#endif
+
+s32 func_0065C250(s32 *args);
+#ifdef NON_MATCHING   /* args[1] is read through args + 1 first */
+s32 func_0065C250(s32 *args) {
+    func_00540620(args[0], args[1], 0);
+    return 0;
+}
+#endif
+
+s32 func_0065C280(s32 *args);
+#ifdef NON_MATCHING   /* args[1] is read through args + 1 first */
+s32 func_0065C280(s32 *args) {
+    func_005406B0(args[0], args[1], 0);
+    return 0;
+}
+#endif
+
+s32 func_0065C2B0(s32 *args);
+#ifdef NON_MATCHING   /* args[1] is read through args + 1 first */
+s32 func_0065C2B0(s32 *args) {
+    func_00540700(args[0], args[1], 0);
+    return 0;
+}
+#endif

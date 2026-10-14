@@ -388,3 +388,44 @@ void func_0064F8C0(void) {
     }
 }
 #endif
+
+/* The mark (type, id) of a player (-1: none), or -1. */
+static s32 func_0064FAF0(Mark *m, s32 type, s32 id, s32 player) {
+    u8 p;
+    s32 i;
+
+    if (player == -1) {
+        p = 0xFF;
+    } else {
+        p = (u8)player + 1;
+    }
+    for (i = 0; i < 0x40; i++, m++) {
+        if (m->used != 0 && m->type == type && m->id == id && m->unk3 == p) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+typedef struct {
+    s32 n;              /* 0x00: queued */
+    s32 changes;        /* 0x04 */
+    u8 msg[0x40][5];    /* 0x08 */
+} MarkQueue;
+
+/* Queues a 5-byte message about that mark: its index and b[0..3]. */
+void func_0064FB70(s32 type, s32 id, u8 *b, s32 player) {
+    MarkQueue *q = (MarkQueue *)D_0070F8B0;
+    s32 i = func_0064FAF0(D_0070F9F8, type, id, player);
+
+    if (i != -1 && q->n != 0x40) {
+        u8 *e = q->msg[q->n];
+
+        e[0] = i & 0x3F;
+        e[1] = b[0];
+        e[2] = b[1];
+        e[3] = b[2];
+        e[4] = b[3];
+        q->n++;
+    }
+}

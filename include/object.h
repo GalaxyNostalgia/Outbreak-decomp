@@ -152,8 +152,45 @@ typedef struct DrawObjFull {
     u8 unkDA2[0xFB4 - 0xDA2];
     u8 held;            /* 0xFB4: (enemies) what they hold, 0xFF nothing */
     u8 unkFB5[0xFF0 - 0xFB5];
-    s8 isNpc;           /* 0xFF0: (players) a computer-controlled partner */
-    u8 unkFF1[0x10E0 - 0xFF1];
+    u8 isNpc;           /* 0xFF0: (players) a computer-controlled partner */
+    /* the partner's AI (SINGLE.BIN) */
+    u8 unkFF1;          /* 0xFF1 */
+    u8 unkFF2[2];
+    u16 unkFF4;         /* 0xFF4 */
+    u16 unkFF6;         /* 0xFF6: unkFF4 before */
+    u16 unkFF8;         /* 0xFF8 */
+    u16 unkFFA;         /* 0xFFA: unkFF8 before */
+    s8 unkFFC[4];       /* 0xFFC */
+    s16 unk1000[4];     /* 0x1000 */
+    s8 unk1008[4];      /* 0x1008 */
+    u8 unk100C[0x1034 - 0x100C];
+    s32 unk1034;        /* 0x1034 */
+    u8 unk1038[2];
+    s8 unk103A;         /* 0x103A */
+    u8 unk103B[0x105B - 0x103B];
+    u8 unk105B;         /* 0x105B */
+    u8 unk105C[0x1064 - 0x105C];
+    u8 unk1064;         /* 0x1064 */
+    u8 unk1065[2];
+    s8 mode;            /* 0x1067: its D_00838860 entry */
+    u8 unk1068[0x1072 - 0x1068];
+    s16 unk1072;        /* 0x1072 */
+    s8 unk1074;         /* 0x1074 */
+    u8 unk1075[0x107C - 0x1075];
+    u16 unk107C;        /* 0x107C */
+    u8 unk107E[0x1083 - 0x107E];
+    u8 unk1083;         /* 0x1083 */
+    u8 unk1084[0x1098 - 0x1084];
+    u8 unk1098;         /* 0x1098 */
+    u8 unk1099;         /* 0x1099 */
+    s16 unk109A;        /* 0x109A */
+    s32 unk109C;        /* 0x109C */
+    u8 unk10A0[0x10AC - 0x10A0];
+    void *modeInfo;     /* 0x10AC: &D_00838860[mode] */
+    u8 unk10B0[8];      /* 0x10B0: from modeInfo */
+    u8 unk10B8[8];      /* 0x10B8 */
+    u8 unk10C0[8];      /* 0x10C0 */
+    u8 unk10C8[0x10E0 - 0x10C8];
 } DrawObjFull;          /* 0x10E0: a player's size (enemies are 0x1170, things 0xD90) */
 
 /* The NPCs (survivors and such, pool D_003E8230[10]: 0x1170 bytes). */

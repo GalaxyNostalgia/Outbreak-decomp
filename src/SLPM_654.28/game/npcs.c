@@ -237,7 +237,7 @@ void func_005E91A0(Npc *n) {
     }
 }
 
-void func_0064FB70(s32 a, u8 slot, u8 *b, u8 player);
+void func_0064FB70(s32 type, u8 id, u8 *b, u8 player);   /* (marks.c: s32s) */
 
 void func_005F4B30(u8 slot) {
     u8 b[4];
