@@ -91,6 +91,20 @@ void func_001B0230(void) {
     D_0023BE24 = 0x480;
 }
 
+/* A free 0x190-byte block from the stack (NULL: none left). */
+u8 *func_001B0330(void) {
+    u8 *p;
+
+    if (D_0023BE24 == 0) {
+        return NULL;
+    }
+    p = *D_0023BE20;
+    *D_0023BE20 = NULL;
+    D_0023BE20++;
+    D_0023BE24--;
+    return p;
+}
+
 extern u8 D_004BDA90[0x258];
 
 void func_001B02B0(void) {
@@ -153,6 +167,19 @@ extern s32 D_0053AA10[0x2BC];   /* packet groups in use (-1: free) */
 extern s32 D_0053A910[0x40];    /* memory handles in use (-1: free) */
 extern s32 D_004BDCF0[0x480];   /* blocks that aren't the pool's */
 
+/* Note a packet group as in use (in the first free entry). */
+void func_001B00D0(s32 group) {
+    s32 *p = D_0053AA10;
+    s32 i;
+
+    for (i = 0; i < 0x2BC; i++, p++) {
+        if (*p == -1) {
+            *p = group;
+            return;
+        }
+    }
+}
+
 void func_001B0120(s32 group) {
     s32 *p = D_0053AA10;
     s32 i;
@@ -160,6 +187,19 @@ void func_001B0120(s32 group) {
     for (i = 0; i < 0x2BC; i++, p++) {
         if (*p == group) {
             *p = -1;
+        }
+    }
+}
+
+/* Note a memory handle as in use (in the first free entry). */
+void func_001B01A0(s32 handle) {
+    s32 *p = D_0053A910;
+    s32 i;
+
+    for (i = 0; i < 0x40; i++, p++) {
+        if (*p == -1) {
+            *p = handle;
+            return;
         }
     }
 }

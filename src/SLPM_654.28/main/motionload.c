@@ -3,6 +3,7 @@
 #include "game.h"
 #include "motion.h"
 #include "object.h"
+#include "model.h"
 
 /* Loading motion files: a list of 20 groups {count, offset of count motion offsets}; each motion
    is decoded (func_001A1540) into a memory handle the first time and its offset slot is replaced
@@ -224,3 +225,80 @@ void func_001D6E70(u8 *types) {
     }
 }
 #endif
+
+extern u8 D_00470BB0[];
+extern u8 D_00474DC0[];
+s32 func_001A2350(void *hdr, void *out, void *motion, s32 root);
+s32 func_00191E50(u32 *hdr);
+void func_001B01A0(s32 handle);
+s32 func_001929B0(s32 h);
+u8 *func_001B0330(void);
+s32 func_00192F20(FlBone **bones, s32 skel);
+void func_001D5DE0(Slot1468 *m, void *motion, u8 *a, u8 *b);
+void func_001D6110(Slot1468 *m, void *motion);
+void func_001D6230(Slot1468 *m, void *motion);
+void func_001D6480(Slot1468 *m, void *motion, s32 kind);
+
+/* The skeleton of a motion file's root 0. */
+s32 func_001D6670(void *hdr, void *out, void *motion, s32 root) {
+    return func_001A2350(hdr, out, motion, root);
+}
+
+/* The model's skeleton from its motion file (kept in memory of its own), and a 0x190-byte block
+   per bone for it. */
+void func_001D5D30(Slot1468 *m, void *motion) {
+    u32 hdr[4];
+    s32 i;
+    u32 *blocks = m->unk0;
+
+    func_001D6670(hdr, (void *)(D_00306590.unk4C + 0x200000), motion, 0);
+    m->unk80C = func_00191E50(hdr);
+    func_001B01A0(m->unk80C);
+    m->nblocks = func_001929B0(m->unk80C);
+    for (i = 0; i < m->nblocks; i++) {
+        *blocks++ = (u32)func_001B0330();
+    }
+    func_00192F20((FlBone **)m->unk0, m->unk80C);
+}
+
+/* Blocks for the model's second set too. */
+void func_001D6690(Slot1468 *m) {
+    s32 i;
+    u32 *blocks = m->unk4;
+
+    if (blocks != NULL) {
+        for (i = 0; i < m->nblocks; i++) {
+            *blocks++ = (u32)func_001B0330();
+        }
+        func_00192F20((FlBone **)m->unk4, m->unk80C);
+    }
+}
+
+/* Set a model's motion up by its texture id range: characters (0x1800-, 0x2000-, 0x2100-,
+   0x2400-), things 0x2A00-, others the plain way. */
+void func_001D11E0(s32 id, Slot1468 *m, void *motion) {
+    if (id >= 0x2000 && id < 0x2100) {
+        func_001D6480(m, motion, 0);
+        return;
+    }
+    if (id >= 0x2400 && id < 0x2500) {
+        func_001D6480(m, motion, 1);
+        return;
+    }
+    if (id >= 0x2A00 && id < 0x3000) {
+        func_001D6230(m, motion);
+        return;
+    }
+    if (id >= 0x1800 && id < 0x2000) {
+        func_001D5DE0(m, motion, D_00470BB0, D_00474DC0);
+        return;
+    }
+    if (id >= 0x2100 && id < 0x2400) {
+        func_001D6110(m, motion);
+        return;
+    }
+    func_001D5D30(m, motion);
+    if (m->unk4 != NULL && m->unk81C != 1) {
+        func_001D6690(m);
+    }
+}

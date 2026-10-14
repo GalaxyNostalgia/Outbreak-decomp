@@ -37,6 +37,32 @@ typedef struct {
     s32 power;          /* 0x48 */
 } Material;             /* 0x4C */
 
+/* A bone of a model's skeleton (0x190-byte blocks, Slot1468.unk0's entries). */
+typedef struct FlBone {
+    f32 world[4][4];    /* 0x000: (BONE_POS reads its translation) */
+    f32 local[4][4];    /* 0x040: from its rotation and translation */
+    f32 pose[4][4];     /* 0x080: the bind pose, from the root */
+    u8 unkC0[2];
+    s16 nbones;         /* 0x0C2: in the skeleton */
+    s16 id;             /* 0x0C4 */
+    u16 unkC6;          /* 0x0C6 */
+    struct FlBone *parent;  /* 0x0C8 */
+    struct FlBone *next;    /* 0x0CC: the next sibling */
+    struct FlBone *child;   /* 0x0D0: the first child */
+    s32 unkD4;
+    s32 unkD8;
+    f32 bind[3][3];     /* 0x0DC: scale, rotation, translation from the file */
+    u8 unk100[4];
+    f32 cur[3][3];      /* 0x104: the same, as posed */
+    u8 unk128[0x174 - 0x128];
+    s32 unk174;         /* 0x174 */
+    s32 unk178;
+    s32 unk17C;
+    s16 nextIdx;        /* 0x180: -1: none */
+    s16 childIdx;       /* 0x182 */
+    u8 unk184[0x190 - 0x184];
+} FlBone;
+
 /* A model part (Slot1468.buf, 0x98 bytes each). */
 typedef struct {
     s32 group;          /* 0x00: its packet group (-1: none) */

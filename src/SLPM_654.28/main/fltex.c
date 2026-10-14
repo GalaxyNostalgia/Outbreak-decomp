@@ -59,6 +59,23 @@ u128 *func_0018C0B0(u128 *p, s32 qwc, s32 irq, s32 unused) {
     return p + 1;
 }
 
+/* DMA next tag: qwc quadwords follow, then the chain goes on at next. */
+u128 *func_0018C0E0(u128 *p, s32 qwc, u128 *next, s32 irq) {
+    u32 addr = (u32)next & 0x0FFFFFFF;
+    u32 spr = 0;
+
+    if (((u32)next & 0x70000000) == 0x70000000) {
+        spr = 0x80000000;
+    }
+    *p = U128_ZERO;
+    *(u32 *)p = qwc + 0x20000000;
+    ((u32 *)p)[1] = addr | spr;
+    if (irq == 1) {
+        *(u32 *)p |= 0x80000000;
+    }
+    return p + 1;
+}
+
 #ifdef NON_MATCHING   /* first draft */
 /* DMA ref tag: qwc quadwords from addr. */
 u128 *func_0018C140(u128 *p, s32 qwc, u32 addr, s32 irq) {
@@ -94,6 +111,51 @@ u128 *func_0018C1A0(u128 *p, s32 qwc, u32 addr, s32 irq) {
     return p + 1;
 }
 #endif
+
+/* DMA call tag: qwc quadwords follow, then the chain at addr runs and comes back. */
+u128 *func_0018C1F0(u128 *p, s32 qwc, u32 addr, s32 irq) {
+    u32 a = addr & 0x0FFFFFFF;
+    u32 spr = 0;
+
+    if ((addr & 0x70000000) == 0x70000000) {
+        spr = 0x80000000;
+    }
+    *p = U128_ZERO;
+    *(u32 *)p = qwc + 0x50000000;
+    ((u32 *)p)[1] = a | spr;
+    if (irq == 1) {
+        *(u32 *)p |= 0x80000000;
+    }
+    return p + 1;
+}
+
+/* DMA ret tag: qwc quadwords follow, then back to the caller. */
+u128 *func_0018C250(u128 *p, s32 qwc, s32 irq, s32 unused) {
+    *p = U128_ZERO;
+    *(u32 *)p = qwc + 0x60000000;
+    if (irq == 1) {
+        *(u32 *)p |= 0x80000000;
+    }
+    return p + 1;
+}
+
+/* VIF MSCNT (run the VU1 program from where it stopped), after three NOPs. */
+u128 *func_0018C2B0(u128 *p) {
+    ((u32 *)p)[0] = 0x17000000;
+    ((u32 *)p)[1] = 0;
+    ((u32 *)p)[2] = 0;
+    ((u32 *)p)[3] = 0;
+    return p + 1;
+}
+
+/* VIF STCYCL 4/4 and UNPACK V4-32 of qwc quadwords to VU address addr (relative to TOPS). */
+u32 *func_0018C2D0(u128 *p, s32 qwc, s32 addr) {
+    ((u32 *)p)[0] = 0;
+    ((u32 *)p)[1] = 0;
+    ((u32 *)p)[2] = 0x01000404;
+    ((u32 *)p)[3] = addr | 0x8000 | (qwc << 16) | 0x6C000000;
+    return (u32 *)(p + 1);
+}
 
 /* VIF DIRECT of n quadwords (after three NOPs). */
 u128 *func_0018C310(u128 *p, s32 n) {
