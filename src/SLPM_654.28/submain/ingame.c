@@ -53,6 +53,18 @@ void func_00340310(s32 rx, s32 ry, s32 rz, Mat44 *m) {
 #endif
 
 #ifdef NON_MATCHING   /* VU0 in the original */
+/* out = a + b */
+void func_003404F0(Vec3 *out, Vec3 *a, Vec3 *b) {
+    Vec3 d;
+
+    d.x = a->x + b->x;
+    d.y = a->y + b->y;
+    d.z = a->z + b->z;
+    *out = d;
+}
+#endif
+
+#ifdef NON_MATCHING   /* VU0 in the original */
 /* out = a - b */
 void func_00340560(Vec3 *out, Vec3 *a, Vec3 *b) {
     Vec3 d;

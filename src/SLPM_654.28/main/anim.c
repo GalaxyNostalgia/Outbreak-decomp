@@ -25,6 +25,33 @@ void func_00191E20(s32 motion) {
     D_0023BA14 = func_0018D720(motion);
     func_0018DE30(D_0023BA14);
 }
+/* Takes the motions off all of root's tree. */
+s32 func_001924A0(FlBone *n) {
+    FlBone *root = n;
+
+    for (;;) {
+        n->motion = 0;
+        n->track = 0;
+        if (n->child != NULL) {
+            n = n->child;
+            continue;
+        }
+        if (n->next != NULL) {
+            n = n->next;
+            continue;
+        }
+        while (n != root) {
+            if (n->next != NULL) {
+                n = n->next;
+                goto found;
+            }
+            n = n->parent;
+        }
+        return 1;
+    found:;
+    }
+}
+
 /* The first node in layer id under root (depth first), or NULL. */
 FlBone *func_001926D0(FlBone *n, u16 id);
 

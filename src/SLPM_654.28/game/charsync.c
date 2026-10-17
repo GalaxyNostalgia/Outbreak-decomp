@@ -1,0 +1,401 @@
+#include "common.h"
+#include "options.h"
+#include "game.h"
+#include "object.h"
+
+/* GAME.BIN: telling the others (online the other players, offline the partners' code) about a
+   character's state: one message kind per call, not the same kind twice in a row. */
+
+typedef struct {
+    u8 kind;            /* 0x00 */
+    u8 len;             /* 0x01 */
+    u8 unk2;
+    u8 unk3;
+    u8 data[0x3C];      /* 0x04 */
+} CharMsg;
+
+typedef struct {
+    s8 used;
+    u8 room;
+    u8 unk2[0x16];
+    s8 x;               /* 0x18 */
+    s8 y;               /* 0x19 */
+    u8 unk1A[0x3C - 0x1A];
+} PlacedSlot;
+
+extern s8 D_0048BF88;
+extern u16 D_0023BF0C;          /* the last kind sent */
+extern DrawObjFull D_00476DD0[];
+extern PlacedSlot D_00395720[32];
+s32 func_001AF510(void);
+s32 func_001AF4D0(void);
+s32 func_001AF440(u16 room);
+void func_001AF000(s32 to, void *msg, s32 kind, s32 a3);
+/* Whether o (action 1) is in one of the steps that count as standing for the others. */
+s32 func_006332D0(DrawObjFull *o);
+#ifdef NON_MATCHING   /* the return blocks' order */
+s32 func_006332D0(DrawObjFull *o) {
+    if (o->act[0] != 1) {
+        return 0;
+    }
+    switch (o->act[1]) {
+    case 0x0:
+    case 0x1:
+    case 0x2:
+    case 0x3:
+    case 0x4:
+    case 0x5:
+    case 0x6:
+    case 0x7:
+    case 0x8:
+    case 0x9:
+    case 0xA:
+    case 0xB:
+    case 0xC:
+    case 0xD:
+    case 0xE:
+    case 0x31:
+    case 0x32:
+    case 0x98:
+    case 0x99:
+    case 0x9A:
+    case 0x9B:
+    case 0x9C:
+    case 0x9D:
+    case 0x9E:
+    case 0x9F:
+    case 0xA0:
+    case 0x24:
+    case 0x74:
+    case 0x75:
+    case 0x76:
+    case 0x77:
+    case 0x78:
+    case 0x79:
+    case 0x7A:
+    case 0x7B:
+    case 0x7C:
+    case 0x4A:
+    case 0x4B:
+    case 0x4C:
+    case 0x4D:
+    case 0x4E:
+    case 0x4F:
+    case 0x50:
+    case 0x51:
+    case 0x52:
+    case 0x53:
+    case 0x54:
+    case 0x55:
+    case 0xCD:
+    case 0xD0:
+    case 0xD1:
+    case 0x81:
+    case 0x82:
+    case 0x83:
+        return 1;
+    }
+    return 0;
+}
+#endif
+DrawObjFull *func_00634C00(s32 i);
+void func_0018D630(void *dst, void *src, s32 size);
+extern u32 D_006E6C70[];        /* per character: the virus count that is 100% */
+
+/* Our player's virus gauge, in % (o isn't used). */
+f32 func_00636540(DrawObjFull *o) {
+    DrawObjFull *p = &D_00476DD0[D_0048BF60.unk1D];
+
+    return 100.0f * ((f32)(u32)p->unkBAC / (f32)D_006E6C70[p->unkB98]);
+}
+
+/* That in four steps: 0 below 50%, 1 below 80%, 2 below 90%, 3. */
+u8 func_00637150(DrawObjFull *o) {
+    f32 v = func_00636540(o);
+    u8 r;
+
+    if (!(v < 90.0f)) {
+        r = 3;
+    } else if (!(v < 80.0f)) {
+        r = 2;
+    } else if (!(v < 50.0f)) {
+        r = 1;
+    } else {
+        r = 0;
+    }
+    return r;
+}
+
+/* The message's bytes by their place in the original's stack frame (the message is at 0x50). */
+#define M8(off) (*(u8 *)&m.data[(off) - 0x54])
+#define M16(off) (*(s16 *)&m.data[(off) - 0x54])
+#define M32(off) (*(s32 *)&m.data[(off) - 0x54])
+#define MF(off) (*(f32 *)&m.data[(off) - 0x54])
+
+void func_0064C620(DrawObjFull *o, u8 kind);
+#ifdef NON_MATCHING   /* first draft */
+void func_0064C620(DrawObjFull *o, u8 kind) {
+    CharMsg m;
+    s32 pri = 4;
+    DrawObjFull *p;
+    s32 i;
+    u16 v;
+
+    if (!func_001AF510() || D_0048BF88 != 0) {
+        return;
+    }
+    switch (o->type) {
+    case 0:
+        if (o->kind != D_0048BF60.unk1D) {
+            return;
+        }
+        break;
+    case 1:
+        if (!(o->unkBA0 & 0x10000000)) {
+            return;
+        }
+        break;
+    default:
+        return;
+    }
+    if (o->unkBA0 & 4) {
+        return;
+    }
+    if (D_0023BF0C == kind) {
+        return;
+    }
+    m.unk3 = 0;
+    m.unk2 = 0;
+    switch (kind) {
+    case 0:
+        return;
+    case 1:
+        pri = 4;
+        if (func_006332D0(o)) {
+            o->unkBA0 |= 0x8000000;
+        } else {
+            o->unkBA0 &= ~0x8000000;
+        }
+        m.kind = kind;
+        m.len = 0x2C;
+        M8(0x54) = o->act[0];
+        M8(0x55) = o->act[1];
+        M8(0x56) = o->act[2];
+        M8(0x57) = o->act[3];
+        M8(0x74) = o->unk1E2;
+        MF(0x58) = o->unk38[0];
+        MF(0x5C) = o->unk38[1];
+        MF(0x60) = o->unk38[2];
+        M16(0x64) = o->unk92;
+        M16(0x66) = o->unk544;
+        M32(0x68) = o->unkBA0;
+        M8(0x6C) = o->unkC7C;
+        M8(0x6D) = FIELD(o, u8, 0xC7F);
+        M8(0x6E) = FIELD(o, u8, 0xC80);
+        M8(0x6F) = FIELD(o, u8, 0xCB0);
+        M16(0x70) = FIELD(o, s16, 0xBC8);
+        M16(0x72) = FIELD(o, s16, 0xCD4);
+        M8(0x75) = FIELD(o, u8, 0xCDC);
+        M8(0x77) = func_00637150(o);
+        M8(0x78) = FIELD(o, u8, 0xCAA);
+        M8(0x79) = FIELD(o, u8, 0xCAB);
+        if (o->unkBA4 & 0x20000000) {
+            M8(0x7A) = 1;
+        } else {
+            M8(0x7A) = 0;
+        }
+        if (o->type == 1) {
+            M8(0x76) = o->unkBB4;
+        }
+        D_0023BF0C = kind;
+        break;
+    case 2:
+        pri = 2;
+        if (func_006332D0(o)) {
+            o->unkBA0 |= 0x8000000;
+        } else {
+            o->unkBA0 &= ~0x8000000;
+        }
+        m.kind = kind;
+        m.len = 0x18;
+        MF(0x54) = o->unk38[0];
+        MF(0x58) = o->unk38[1];
+        MF(0x5C) = o->unk38[2];
+        M16(0x64) = o->unk92;
+        M32(0x60) = o->unkBA0;
+        M8(0x66) = func_00637150(o);
+        break;
+    case 3:
+        m.kind = kind;
+        pri = 4;
+        m.len = 0x20;
+        for (i = 0; i < 7; i++) {
+            M32(0x54 + i * 4) = FIELD(o, s32, 0xAB8 + i * 4);
+        }
+        break;
+    case 4:
+        m.kind = kind;
+        m.len = 8;
+        pri = 4;
+        M8(0x54) = FIELD(o, u8, 0xC78);
+        M8(0x55) = FIELD(o, u8, 0xC79);
+        M8(0x56) = FIELD(o, u8, 0xC7A);
+        M8(0x57) = FIELD(o, u8, 0xC7B);
+        break;
+    case 5:
+        m.kind = kind;
+        m.len = 0x34;
+        pri = 4;
+        M8(0x54) = o->act[0];
+        M8(0x55) = o->act[1];
+        M8(0x56) = o->act[2];
+        M8(0x57) = o->act[3];
+        M16(0x58) = o->unk38[0];
+        M16(0x5A) = o->unk38[1];
+        M16(0x5C) = o->unk38[2];
+        M16(0x5E) = o->unk92;
+        M16(0x60) = o->unk544;
+        M8(0x62) = o->unk1E2;
+        M32(0x64) = o->unkBA0;
+        M8(0x68) = FIELD(o, u8, 0x148);
+        M8(0x69) = FIELD(o, u8, 0x149);
+        M8(0x6A) = FIELD(o, u8, 0x14A);
+        M8(0x6B) = FIELD(o, u8, 0x14B);
+        M8(0x6C) = FIELD(o, u8, 0x140);
+        M8(0x6D) = FIELD(o, u8, 0x13E);
+        M8(0x6E) = FIELD(o, u8, 0x14C);
+        M8(0x6F) = FIELD(o, u8, 0x141);
+        M8(0x70) = FIELD(o, u8, 0x143);
+        M8(0x71) = func_00637150(o);
+        *(Vec3 *)&MF(0x74) = FIELD(o, Vec3, 0x12C);
+        M32(0x80) = FIELD(o, s32, 0x11C);
+        if (o->type == 1) {
+            M8(0x63) = o->unkBB4;
+        }
+        D_0023BF0C = kind;
+        break;
+    case 6:
+        m.kind = kind;
+        m.len = 0x14;
+        pri = 4;
+        MF(0x54) = FIELD(o, f32, 0xC34);
+        MF(0x58) = FIELD(o, f32, 0xC38);
+        MF(0x5C) = FIELD(o, f32, 0xC3C);
+        M16(0x60) = FIELD(o, s16, 0xC4C);
+        break;
+    case 7:
+        m.kind = kind;
+        m.len = 0xC;
+        pri = 4;
+        M16(0x54) = FIELD(o, u16, 0xD92);
+        M8(0x56) = FIELD(o, u8, 0xDA2);
+        M8(0x57) = FIELD(o, u8, 0xDA3);
+        M8(0x58) = FIELD(o, u8, 0xDA4);
+        M8(0x59) = FIELD(o, u8, 0xDA5);
+        M8(0x5A) = FIELD(o, u8, 0xC7F);
+        if (func_001AF4D0() == 1) {
+            if ((FIELD(o, u16, 0xD92) & 1) && FIELD(o, u8, 0xDA3) != 0) {
+                FIELD(&D_00476DD0[FIELD(o, u8, 0xDA3) - 1], u8, 0xC78) = 2;
+                FIELD(&D_00476DD0[FIELD(o, u8, 0xDA3) - 1], u8, 0xC79) = 0;
+                FIELD(&D_00476DD0[FIELD(o, u8, 0xDA3) - 1], u8, 0xC7A) = FIELD(o, u8, 0xC7A);
+            }
+            if ((FIELD(o, u16, 0xD92) & 4) && FIELD(o, u8, 0xDA4) != 0) {
+                FIELD(&D_00476DD0[FIELD(o, u8, 0xDA4) - 1], u8, 0xC78) = 2;
+                FIELD(&D_00476DD0[FIELD(o, u8, 0xDA4) - 1], u8, 0xC79) = 1;
+            }
+            if ((FIELD(o, u16, 0xD92) & 0x100) && FIELD(o, u8, 0xDA4) != 0) {
+                FIELD(&D_00476DD0[FIELD(o, u8, 0xDA4) - 1], u8, 0xC78) = 2;
+                FIELD(&D_00476DD0[FIELD(o, u8, 0xDA4) - 1], u8, 0xC79) = 0;
+                FIELD(&D_00476DD0[FIELD(o, u8, 0xDA4) - 1], u8, 0xC7A) = FIELD(o, u8, 0xC7A);
+            }
+        }
+        break;
+    case 8:
+        m.kind = kind;
+        m.len = 0xC;
+        pri = 4;
+        M16(0x54) = FIELD(o, s16, 0xC64);
+        M16(0x56) = FIELD(o, s16, 0xC66);
+        M16(0x58) = FIELD(o, s16, 0xC68);
+        M16(0x5A) = FIELD(o, s16, 0xC6A);
+        if (func_001AF4D0() == 1) {
+            v = M16(0x56);
+            switch ((v & 0x8000) >> 15) {
+            case 0:
+                p = &D_00476DD0[v & 0x7FFF];
+                break;
+            case 1:
+                p = func_00634C00(v & 0x7FFF);
+                break;
+            }
+            if (p == NULL) {
+                return;
+            }
+            FIELD(p, s16, 0xC64) = M16(0x54);
+            FIELD(p, s16, 0xC66) = M16(0x56);
+            FIELD(p, s16, 0xC68) = M16(0x58);
+            FIELD(p, s16, 0xC6A) = M16(0x5A);
+            FIELD(p, u16, 0xC66) = o->kind;
+        }
+        break;
+    case 9:
+        m.len = 8;
+        m.kind = kind;
+        pri = 4;
+        M8(0x54) = FIELD(o, u8, 0xCB0);
+        M8(0x55) = D_00395720[FIELD(o, u8, 0xCB0)].x;
+        M8(0x56) = D_00395720[FIELD(o, u8, 0xCB0)].y;
+        break;
+    case 10:
+        pri = 4;
+        m.kind = kind;
+        m.len = 0x10;
+        M8(0x54) = FIELD(o, u8, 0xCAA);
+        M8(0x55) = FIELD(o, u8, 0xCAB);
+        func_0018D630(&M8(0x56), (u8 *)o + 0xC84, pri);
+        break;
+    case 11:
+        m.kind = kind;
+        m.len = 0x14;
+        pri = 4;
+        M32(0x54) = FIELD(o, s32, 0xDB4);
+        M16(0x58) = FIELD(o, s16, 0xDC2);
+        M16(0x5A) = FIELD(o, s8, 0xDC7);
+        M32(0x60) = FIELD(o, s8, 0xDC1);
+        M8(0x5C) = FIELD(o, s8, 0xDC0);
+        M8(0x5E) = FIELD(o, s8, 0xDA9);
+        M8(0x5D) = !(func_00636540(o) < 90.0f);
+        FIELD(o, s32, 0xDB8) = (s8)M8(0x5D);
+        break;
+    case 12:
+        pri = 4;
+        m.len = 8;
+        m.kind = kind;
+        func_0018D630(&M8(0x54), (u8 *)o + 0xC84, pri);
+        break;
+    case 13:
+        return;
+    case 14:
+        m.kind = kind;
+        m.len = 0xC;
+        pri = 4;
+        M32(0x54) = o->unkBA0;
+        M16(0x58) = o->unk544;
+        break;
+    case 15:
+        pri = 4;
+        m.len = 8;
+        m.kind = kind;
+        func_0018D630(&M8(0x54), (u8 *)o + 0xC89, pri);
+        break;
+    }
+    switch (o->type) {
+    case 0:
+        func_001AF000(o->kind + 1, &m, 0, pri);
+        break;
+    case 1:
+        func_001AF000(func_001AF440(D_00306590.unk1C) + 1, &m, 0, pri);
+        break;
+    }
+}
+#endif

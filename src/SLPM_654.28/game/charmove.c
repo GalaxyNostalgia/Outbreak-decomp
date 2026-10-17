@@ -444,3 +444,9 @@ s32 func_00633D80(DrawObjFull *o) {
     return 0;
 }
 #endif
+
+/* Remembers o's position and heading as where it started. */
+void func_00635920(DrawObjFull *o) {
+    *(Vec3 *)o->unkD94 = *(Vec3 *)o->unk38;
+    o->unkDA0 = o->unk92;
+}

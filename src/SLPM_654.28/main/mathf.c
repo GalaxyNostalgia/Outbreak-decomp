@@ -38,6 +38,14 @@ void func_00191590(f32 *v, f32 angle) {
 }
 #endif
 
+/* |x| */
+f32 func_00191A70(f32 x) {
+    if (x < 0.0f) {
+        x = -x;
+    }
+    return x;
+}
+
 f32 func_00191AD0(f32 x) {
     return acosf(x);
 }

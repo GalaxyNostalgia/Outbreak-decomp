@@ -382,7 +382,7 @@ typedef struct {
     u8 unk18[0x40 - 0x18];
 } Obj40b;
 
-extern Obj40b D_00394F20[0x20];
+extern Obj40b D_00394F20[0x20];    /* the route nodes (navnodes.c) */
 extern s32 D_0023BED8;
 
 void func_00601F60(void) {
@@ -395,10 +395,34 @@ void func_00601F60(void) {
     D_0023BED8 = 0;
 }
 
+/* The room's sound sources and ambient sounds (from the room data) and its reverb. */
 typedef struct {
-    u8 unk0[0xD74];
-    s32 unkD74;
-    u8 unkD78[0xD80 - 0xD78];
+    u8 unk0;            /* 0x00 */
+    u8 used;            /* 0x01 */
+    s16 unk2;           /* 0x02 */
+    u8 data[0x60];      /* 0x04 */
+    u8 unk64[4];
+} SoundSrc;             /* 0x68 */
+
+typedef struct {
+    u8 used;            /* 0x00 */
+    u8 unk1;            /* 0x01 */
+    s16 unk2;           /* 0x02 */
+    s16 unk4;           /* 0x04 */
+    u8 unk6[2];
+    f32 pos[3];         /* 0x08 */
+    u8 unk14[8];
+} RoomAmbient;          /* 0x1C */
+
+typedef struct {
+    SoundSrc src[32];       /* 0x000 */
+    RoomAmbient amb[4];     /* 0xD00 */
+    s16 unkD70;             /* 0xD70 */
+    s8 unkD72;              /* 0xD72 */
+    u8 reverbDelay;         /* 0xD73 */
+    s32 unkD74;             /* 0xD74: reverb depth (or-ed in) */
+    u8 reverbFeedback;      /* 0xD78 */
+    u8 unkD79[0xD80 - 0xD79];
 } Work3941A0;
 
 extern Work3941A0 D_003941A0;
@@ -410,6 +434,72 @@ void func_00543D00(void) {
     D_0023BE4C = 0;
     D_003941A0.unkD74 = 0x80000000;
     D_0023BE48 = 0;
+}
+
+typedef struct {
+    s32 unk0;
+    u8 data[0x60];      /* 0x04 */
+    s32 unk64;          /* 0x64 */
+} SoundSrcDef;
+
+typedef struct {
+    s32 used;           /* 0x00 */
+    s32 unk4;           /* 0x04 */
+    f32 pos[3];         /* 0x08 */
+    s32 unk14;          /* 0x14 */
+    s32 unk18;          /* 0x18 */
+} RoomAmbientDef;
+
+typedef struct {
+    s32 unk0;
+    s32 unk4;
+    s32 reverbDepth;    /* 0x08 */
+    s32 reverbDelay;    /* 0x0C */
+    s32 reverbFeedback; /* 0x10 */
+} RoomReverbDef;
+
+void *memcpy(void *d, const void *s, u32 n);
+
+/* Takes the room's sound sources, ambient sounds and reverb from f. */
+void func_00543D40(s32 *f) {
+    s8 i;
+    SoundSrc *e;
+    s32 *off;
+    s32 n1;
+    s32 n2;
+    RoomAmbient *a;
+    u8 *d;
+    RoomReverbDef *r;
+
+    func_00543D00();
+    n1 = f[0];
+    n2 = f[1];
+    off = f + 2;
+    if (n1 != 0 || n2 != 0) {
+        D_0023BE4C = n1;
+        D_0023BE48 = n2;
+        for (e = D_003941A0.src, i = 0; i < D_0023BE4C; i++, off++, e++) {
+            d = (u8 *)f + *off;
+            e->unk0 = ((SoundSrcDef *)d)->unk0;
+            e->used = 1;
+            e->unk2 = ((SoundSrcDef *)d)->unk64;
+            memcpy(e->data, ((SoundSrcDef *)d)->data, sizeof(e->data));
+        }
+        for (i = 0, a = D_003941A0.amb; i < D_0023BE48; i++, a++) {
+            d = (u8 *)f + *off++;
+            a->used = ((RoomAmbientDef *)d)->used;
+            a->unk1 = ((RoomAmbientDef *)d)->unk14;
+            a->unk2 = ((RoomAmbientDef *)d)->unk4;
+            a->unk4 = ((RoomAmbientDef *)d)->unk18;
+            *(Vec3 *)a->pos = *(Vec3 *)((RoomAmbientDef *)d)->pos;
+        }
+        r = (RoomReverbDef *)((u8 *)off + n1 * sizeof(SoundSrc) + n2 * sizeof(RoomAmbient));
+        D_003941A0.unkD70 = r->unk0;
+        D_003941A0.unkD72 = r->unk4;
+        D_003941A0.unkD74 |= r->reverbDepth;
+        D_003941A0.reverbDelay = r->reverbDelay;
+        D_003941A0.reverbFeedback = r->reverbFeedback;
+    }
 }
 
 extern u8 D_00395EA0[0x930];

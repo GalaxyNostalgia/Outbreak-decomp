@@ -379,9 +379,9 @@ void func_008215A0(void) {
         }
     }
     for (j = 0; j < 4; j++) {
-        D_0083B930[j].end = D_0083B930[i].buf;
-        D_0083B930[i].count = 0;
-        D_0083B930[i].id = -1;
+        D_0083B930[j].end = D_0083B930[j].buf;
+        D_0083B930[j].count = 0;
+        D_0083B930[j].id = -1;
     }
 }
 #endif

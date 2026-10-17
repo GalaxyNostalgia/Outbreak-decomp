@@ -647,3 +647,15 @@ ItemSlot *func_00562AB0(s16 place, s32 a) {
     }
 }
 #endif
+
+/* Clears every room item's unk2A. */
+void func_005811A0(void) {
+    s32 i;
+    ItemSlot *e;
+
+    for (i = 0, e = D_003967D0; i < 0x100; i++, e++) {
+        if (e->active != 0) {
+            e->unk2A = 0;
+        }
+    }
+}
