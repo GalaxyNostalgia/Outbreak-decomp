@@ -9,6 +9,14 @@ typedef struct {
     f32 v[4];
 } Vec4f;
 
+/* A motion layer of a thing. */
+typedef struct {
+    f32 unk0; /* 0x00: the frame it started on */
+    u8 unk4[0xE - 0x4];
+    s16 frame; /* 0x0E: its motion */
+    u8 unk10[0x20 - 0x10];
+} ThingLayer;
+
 /* The room's things (0xD90 bytes, pool D_003FFCA0): the enemies its enemy sets place. */
 typedef struct Thing {
     s8 active; /* 0x000 */
@@ -57,9 +65,9 @@ typedef struct Thing {
     void *unk1DC; /* 0x1DC: -> unkAEC */
     u8 pad1E0[0x1E2 - 0x1E0];
     u16 scenario; /* 0x1E2 */
-    u8 pad1E4[0x514 - 0x1E4];
-    void *motions; /* 0x514: (D_0048E620) */
-    u8 pad518[0x51C - 0x518];
+    ThingLayer layers[4]; /* 0x1E4: motion layers */
+    u8 pad264[0x514 - 0x264];
+    void *motions[2]; /* 0x514: (D_0048E620) */
     EnemyMotions *anims; /* 0x51C: (D_0048FDB0) */
     s16 unk520; /* 0x520 */
     u8 pad522[0x524 - 0x522];

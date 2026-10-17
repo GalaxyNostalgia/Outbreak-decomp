@@ -1182,3 +1182,10 @@ s32 func_0019CD70(s32 n, s32 *handles) {
 s32 func_0019CD60(s32 n, s32 *handles) {
     return func_0019CD70(n, handles);
 }
+
+extern void *D_0023BA10;
+
+/* Sets D_0023BA10 (the current motion's data). */
+void func_0018DE30(void *p) {
+    D_0023BA10 = p;
+}

@@ -203,7 +203,7 @@ void func_00688C40(void) {
         }
         t->unk54E = t->kind;
         t->anims = &D_0048FDB0[D_0048C030[t->kind]];
-        t->motions = D_0048E620[D_0048C030[t->kind]];
+        t->motions[0] = D_0048E620[D_0048C030[t->kind]];
         t->unk524 = t->anims->per;
     }
     for (j = 0, e = D_0071A030; j < D_0048BF60.unkBE; j++, e++) {
@@ -292,7 +292,7 @@ void func_00688C40(void) {
         }
         t->unk54E = t->kind;
         t->anims = &D_0048FDB0[D_0048C030[t->kind]];
-        t->motions = D_0048E620[D_0048C030[t->kind]];
+        t->motions[0] = D_0048E620[D_0048C030[t->kind]];
         t->unk524 = t->anims->per;
     }
     /* Which types' code to load: type 1 by the others with it (2 with 0x59, 3 with other types,

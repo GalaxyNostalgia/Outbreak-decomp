@@ -58,16 +58,17 @@ typedef struct FlBone {
     u8 unkC0[2];
     s16 nbones;         /* 0x0C2: in the skeleton */
     s16 id;             /* 0x0C4 */
-    u16 unkC6;          /* 0x0C6 */
+    u16 layer;          /* 0x0C6: its motion layer */
     struct FlBone *parent;  /* 0x0C8 */
     struct FlBone *next;    /* 0x0CC: the next sibling */
     struct FlBone *child;   /* 0x0D0: the first child */
-    s32 unkD4;
-    s32 unkD8;
+    s32 motion;         /* 0x0D4: its motion's handle (0: none) */
+    s32 track;          /* 0x0D8: its track in the motion (an offset) */
     f32 bind[3][3];     /* 0x0DC: scale, rotation, translation from the file */
     u8 unk100[4];
     f32 cur[3][3];      /* 0x104: the same, as posed */
-    u8 unk128[0x174 - 0x128];
+    u8 unk128[0x15C - 0x128];
+    u8 unk15C[0x174 - 0x15C]; /* 0x15C */
     s32 unk174;         /* 0x174 */
     s32 unk178;
     s32 unk17C;

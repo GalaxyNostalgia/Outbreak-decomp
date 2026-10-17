@@ -1398,8 +1398,8 @@ s32 func_00192F30(FlBone **bones, s32 skel, s32 unused, s32 mode) {
         bones[i]->childIdx = -1;
         bones[i]->next = NULL;
         bones[i]->child = NULL;
-        bones[i]->unkD4 = 0;
-        bones[i]->unkD8 = 0;
+        bones[i]->motion = 0;
+        bones[i]->track = 0;
         bones[i]->unk178 = 0;
         bones[i]->unk17C = 0;
         func_0018F7C0((f32 *)bones[i]->local);
@@ -1435,8 +1435,8 @@ s32 func_00192D30(FlBone *bones, s32 skel, s32 unused, s32 mode) {
         bones[i].childIdx = -1;
         bones[i].next = NULL;
         bones[i].child = NULL;
-        bones[i].unkD4 = 0;
-        bones[i].unkD8 = 0;
+        bones[i].motion = 0;
+        bones[i].track = 0;
         bones[i].unk178 = 0;
         bones[i].unk17C = 0;
         func_0018F7C0((f32 *)bones[i].local);
@@ -1605,7 +1605,7 @@ s32 func_00193570(FlBone *b, u8 *skel, s32 i) {
 
     b->unk174 = e->unkA;
     b->id = e->id;
-    b->unkC6 = e->unk2;
+    b->layer = e->unk2;
     b->childIdx = e->child;
     b->nextIdx = e->next;
     b->cur[0][0] = b->bind[0][0] = e->v[0][0];
@@ -1617,7 +1617,69 @@ s32 func_00193570(FlBone *b, u8 *skel, s32 i) {
     b->cur[2][0] = b->bind[2][0] = e->v[2][0];
     b->cur[2][1] = b->bind[2][1] = e->v[2][1];
     b->cur[2][2] = b->bind[2][2] = e->v[2][2];
-    b->unkD8 = 0;
-    b->unkD4 = 0;
+    b->track = 0;
+    b->motion = 0;
+    return 1;
+}
+
+/* A bone's track in a motion: its channels (which of the bone's 10 values each animates). */
+typedef struct {
+    u16 flags;          /* 0x0: kind in the top nibble (0x1000 plain, 0x2000 fixed point) */
+    s16 nchannels;      /* 0x2 */
+    s32 channels;       /* 0x4: offset in the motion */
+} MotionTrack;
+
+typedef struct {
+    u8 unk0;
+    u8 value;           /* 0x1: which of the bone's values */
+    u8 unk2[6];
+} MotionChannel;        /* 0x8 */
+
+extern u8 *D_0023BA14;          /* the current motion */
+extern f32 D_00239D34;          /* 2 pi / 16384: angle units to radians */
+f32 func_0018DE40(f32 frame, MotionChannel *c, u16 *state);
+
+/* Evaluates track at frame into cur (fixed-point tracks: angles to radians, the rest / 16). */
+s32 func_00193620(MotionTrack *t, f32 *bind, f32 *cur, f32 frame, u16 *state) {
+    if (t != NULL) {
+        switch (t->flags & 0xF000) {
+        case 0x1000: {
+            s32 i;
+            MotionChannel *c;
+            u8 k;
+
+            c = (MotionChannel *)(t->channels + (u32)D_0023BA14);
+            for (i = 0; i < t->nchannels; i++, c++) {
+                k = c->value;
+                cur[k] = func_0018DE40(frame, c, &state[k]);
+            }
+            break;
+        }
+        case 0x2000: {
+            u16 k;
+            f32 *p;
+            MotionChannel *c;
+            s32 i;
+
+            c = (MotionChannel *)(t->channels + (u32)D_0023BA14);
+            for (i = 0; i < t->nchannels; i++, c++) {
+                k = c->value;
+                p = &cur[k];
+                *p = func_0018DE40(frame, c, &state[k]);
+                switch (k) {
+                case 3:
+                case 4:
+                case 5:
+                    *p *= D_00239D34;
+                    break;
+                default:
+                    *p /= 16.0f;
+                    break;
+                }
+            }
+            break;
+        }
+        }
+    }
     return 1;
 }

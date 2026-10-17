@@ -342,7 +342,7 @@ void func_001D6230(Slot1468 *m, void *motion) {
         b = buf;
         for (k = first[r]; k < first[r + 1]; k++, b++) {
             if (k == first[r]) {
-                D_0039A3D0.rootId[r] = b->unkC6;
+                D_0039A3D0.rootId[r] = b->layer;
             } else {
                 D_0039A3D0.world[r][D_0039A3D0.count[r]] = *(Mat44 *)b->world;
                 D_0039A3D0.pose[r][D_0039A3D0.count[r]] = *(Mat44 *)b->pose;
@@ -399,7 +399,7 @@ void func_001D6480(Slot1468 *m, void *motion, s32 kind) {
         b = buf;
         for (k = first[r]; k < first[r + 1]; k++, b++) {
             if (k == first[r]) {
-                bp->rootId[r] = b->unkC6;
+                bp->rootId[r] = b->layer;
             } else if (b->unk174 >= 0) {
                 bp->bones[r][bp->count[r]++] = b->unk174;
             }

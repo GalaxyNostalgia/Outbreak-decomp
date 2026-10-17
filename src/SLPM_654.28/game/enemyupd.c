@@ -180,7 +180,7 @@ s32 func_006798B0(Thing *t) {
 s32 func_001AF4D0(void);
 void func_005AF010(Thing *t, s32 n);
 void func_00679370(Thing *t, s32 a, s32 b);
-void func_00678E60(Thing *t, u8 motion, s32 a);
+void func_00678E60(Thing *t, s32 motion, s8 mode);
 void func_00554600(Thing *t, s32 n);
 void func_00677CA0(Thing *t);
 void *memset(void *p, s32 c, u32 n);
