@@ -5,12 +5,12 @@
    (see collgrid.c) gives the cells a segment crosses; each cell lists triangles (-1 ends). */
 
 typedef struct {
-    s32 unk0;           /* cell width */
-    s32 unk4;           /* cell depth */
+    u32 unk0;           /* cell width */
+    u32 unk4;           /* cell depth */
     u32 ny;             /* 0x08: cells along x */
     u32 nx;             /* 0x0C: cells along z */
-    s32 unk10;          /* origin x */
-    s32 unk14;          /* origin z */
+    u32 unk10;          /* origin x */
+    u32 unk14;          /* origin z */
     s32 **cells;        /* 0x18 */
     u8 *list;           /* 0x1C */
 } CollGrid;
@@ -22,10 +22,9 @@ typedef struct {
 
 extern CollGrids D_003938A8;
 
-/* A triangle: a kind byte, three vertices, the plane (normal, d). */
+/* A triangle: its kind (low byte), sub-kind and id, three vertices, the plane (normal, d). */
 typedef struct {
-    u8 kind;
-    u8 pad1[3];
+    u32 info;
     f32 v[3][3];        /* 0x04 */
     f32 n[3];           /* 0x28 */
     f32 d;              /* 0x34 */
@@ -37,6 +36,35 @@ u32 func_001918C0(f32 rad);
 f32 func_00191AD0(f32 x);
 void func_00340FC0(f32 s, const f32 *dir, const f32 *p, f32 *out);
 void func_003405D0(f32 s, f32 *out, const f32 *v);
+s32 func_00340C50(const f32 *poly, const f32 *p, s32 n);
+void func_00341460(const f32 *n, const f32 *a, const f32 *b, f32 *m);
+void func_0018F7C0(f32 *m);
+
+typedef struct {
+    f32 x, y, z;
+} Vec3f;
+
+/* Whether p is over grid 1 (in x/z). */
+s32 func_005E5340(const f32 *p) {
+    s32 r;
+
+    if (p[0] < D_003938A8.g[1].unk10 || p[2] < D_003938A8.g[1].unk14) {
+        r = 0;
+    } else if (p[0] < D_003938A8.g[1].unk10 + D_003938A8.g[1].unk0 * D_003938A8.g[1].ny && p[2] < D_003938A8.g[1].unk14 + D_003938A8.g[1].unk4 * D_003938A8.g[1].nx) {
+        r = 1;
+    } else {
+        r = 0;
+    }
+    return r;
+}
+
+/* The triangle list of grid 1's cell under p. */
+CollTri **func_005E5F10(const f32 *p) {
+    s32 cz = (p[2] - D_003938A8.g[1].unk14) / D_003938A8.g[1].unk4;
+    s32 cx = (p[0] - D_003938A8.g[1].unk10) / D_003938A8.g[1].unk0;
+
+    return (CollTri **)D_003938A8.g[1].cells[cx * D_003938A8.g[1].nx + cz];
+}
 
 /* Whether p (on the triangle's plane) is inside it: the angles it sees the edges under add up to
    a full turn. */
@@ -222,7 +250,7 @@ s32 func_0054D360(CollTri **list, const f32 *from, const f32 *to, s32 kind, s32 
 
     for (i = 0; (t = list[i]) != (CollTri *)-1; i++) {
         flag = 1;
-        if (skip != t->kind && (kind == 0xFF || kind == t->kind)) {
+        if (skip != *(u8 *)&t->info && (kind == 0xFF || kind == *(u8 *)&t->info)) {
             if (func_005491E0(t, from, to, hit, &flag)) {
                 return 1;
             }
@@ -244,4 +272,102 @@ s32 func_0054D4F0(const f32 *from, const f32 *to, s32 kind, s32 skip) {
         }
     }
     return 0;
+}
+
+/* The floor under p (the highest facing up below p + 100, of kind want or, with 0xFF, any without
+   bit 0x80): its height (p's own when none), normal, info, and with doMtx a matrix tilting to it. */
+f32 func_005E5C20(const f32 *p, f32 *normal, f32 *m, u8 *kind, s32 want, u8 *sub, u16 *id,
+                  u8 doMtx);
+#ifdef NON_MATCHING   /* the 2D copies' addressing (addiu per element in the original) */
+f32 func_005E5C20(const f32 *p, f32 *normal, f32 *m, u8 *kind, s32 want, u8 *sub, u16 *id,
+                  u8 doMtx) {
+    CollTri *hit = NULL;
+    s32 i;
+    s32 n;
+    CollTri **list;
+    CollTri *t;
+    u32 w;
+    f32 best;
+    f32 y;
+
+    best = p[1];
+    *kind = 0xFF;
+    *sub = 0xFF;
+    *id = 0;
+    normal[2] = 0.0f;
+    normal[0] = 0.0f;
+    normal[1] = 1.0f;
+    if (func_005E5340(p) == 1) {
+    n = 0;
+    list = func_005E5F10(p);
+    i = 0;
+    w = want & 0xFF;
+    while ((t = list[i]) != (CollTri *)-1) {
+        f32 v[6];
+        f32 a[2];
+
+        if (w != 0xFF) {
+            if (*(u8 *)&t->info != w) {
+                i++;
+                continue;
+            }
+        } else if (t->info & 0x80) {
+            goto next;
+        }
+        a[0] = p[0];
+        a[1] = p[2];
+        v[0] = t->v[0][0];
+        v[1] = t->v[0][2];
+        v[2] = t->v[1][0];
+        v[3] = t->v[1][2];
+        v[4] = t->v[2][0];
+        v[5] = t->v[2][2];
+        if (t->n[1] <= 0.0f) {
+            goto next;
+        }
+        if (func_00340C50(v, a, 3) == 1) {
+            y = -(t->d + (t->n[0] * p[0] + t->n[2] * p[2])) / t->n[1];
+            if (y < 100.0f + p[1]) {
+                if (n == 0) {
+                    best = y;
+                    hit = t;
+                    *kind = t->info;
+                    *sub = (t->info & 0xFF00) >> 8;
+                    *id = (t->info & 0xFFFF0000) >> 16;
+                } else if (best < y) {
+                    best = y;
+                    hit = t;
+                    *kind = t->info;
+                    *sub = (t->info & 0xFF00) >> 8;
+                    *id = (t->info & 0xFFFF0000) >> 16;
+                }
+                n++;
+            }
+        }
+    next:
+        i++;
+    }
+    if (hit != NULL) {
+        *(Vec3f *)normal = *(Vec3f *)hit->n;
+    }
+    if (doMtx) {
+        if (hit != NULL) {
+            func_00341460(hit->n, hit->v[0], hit->v[1], m);
+        } else {
+            func_0018F7C0(m);
+        }
+    }
+    }
+    return best;
+}
+#endif
+
+/* The height of the floor under p (want: a kind, 0xFF any); kind gets the floor's. */
+f32 func_005E5B40(const f32 *p, u8 *kind, s32 want) {
+    f32 m[16];
+    f32 normal[3];
+    u16 id;
+    u8 sub;
+
+    return func_005E5C20(p, normal, m, kind, want, &sub, &id, 0);
 }

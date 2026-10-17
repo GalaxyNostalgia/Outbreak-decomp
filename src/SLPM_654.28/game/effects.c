@@ -2,6 +2,7 @@
 #include "options.h"
 #include "object.h"
 #include "effect.h"
+#include "thing.h"
 
 /* Making effects. */
 
@@ -51,6 +52,69 @@ Obj250L *func_00620280(Obj250L *at, u8 list, s8 where) {
     return p;
 }
 #endif
+
+extern Obj250L *D_0023BDD0[2];  /* each list's last */
+extern Obj250L *D_0023BDD8[2];  /* each list's first */
+
+/* Puts p first in list. */
+#ifdef NON_MATCHING   /* the list offset is computed once in the original */
+void func_006203B0(Obj250L *p, u8 list) {
+    if (D_0023BDD8[list] == NULL && D_0023BDD0[list] == NULL) {
+        D_0023BDD0[list] = p;
+        D_0023BDD8[list] = p;
+        return;
+    }
+    p->prev = NULL;
+    p->next = D_0023BDD8[list];
+    D_0023BDD8[list]->prev = p;
+    D_0023BDD8[list] = p;
+}
+#endif
+
+/* Puts p last in list. */
+#ifdef NON_MATCHING   /* the list offset is computed once in the original */
+void func_00620420(Obj250L *p, u8 list) {
+    if (D_0023BDD8[list] == NULL && D_0023BDD0[list] == NULL) {
+        D_0023BDD0[list] = p;
+        D_0023BDD8[list] = p;
+        return;
+    }
+    p->next = NULL;
+    p->prev = D_0023BDD0[list];
+    D_0023BDD0[list]->next = p;
+    D_0023BDD0[list] = p;
+}
+#endif
+
+/* Puts p before at in list. */
+void func_00620490(Obj250L *at, Obj250L *p, u8 list) {
+    if (at->prev == NULL) {
+        p->prev = NULL;
+        p->next = at;
+        at->prev = p;
+        D_0023BDD8[list] = p;
+    } else {
+        p->prev = at->prev;
+        p->next = at;
+        at->prev->next = p;
+        at->prev = p;
+    }
+}
+
+/* Puts p after at in list. */
+void func_006204E0(Obj250L *at, Obj250L *p, u8 list) {
+    if (at->next == NULL) {
+        p->next = NULL;
+        p->prev = at;
+        at->next = p;
+        D_0023BDD0[list] = p;
+    } else {
+        p->prev = at;
+        p->next = at->next;
+        at->next->prev = p;
+        at->next = p;
+    }
+}
 
 s16 func_003426E0(s16 id);
 void func_006216E0(Obj250L *p, s16 kind);
@@ -228,3 +292,24 @@ void func_005AEDB0(DrawObjFull *player) {
     }
 }
 #endif
+
+void func_005B99B0(Obj250L *p);
+
+/* Starts t's effect n (a kind 0x32 effect following t), except for type 1's flagged variants. */
+void func_005AF010(Thing *t, s8 n) {
+    Obj250L *p;
+
+    if (t->kind == 1 && D_00357500[1].defs[t->def].unk5 == 1) {
+        return;
+    }
+    p = func_00620280(NULL, 0, 1);
+    if (p != NULL) {
+        p->unk0 = 1;
+        p->unk1 = 0;
+        p->update = func_005B99B0;
+        p->draw = D_00341EB0;
+        p->kind = 0x32;
+        p->unk4 = n;
+        p->target = t;
+    }
+}
