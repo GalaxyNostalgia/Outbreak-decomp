@@ -98,3 +98,11 @@ void func_00340FC0(f32 s, const f32 *dir, const f32 *p, f32 *out) {
     out[1] = p[1] + d[1] * s;
     out[2] = p[2] + d[2] * s;
 }
+
+f32 func_00191B70(f32 x);
+extern f32 D_00239CD4;          /* 2 pi / 65536 */
+
+/* The cosine of a 16-bit angle. */
+f32 func_00340100(u16 a) {
+    return func_00191B70(D_00239CD4 * (u32)a);
+}

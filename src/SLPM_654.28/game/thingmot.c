@@ -1,5 +1,7 @@
 #include "common.h"
 #include "thing.h"
+#include "game.h"
+#include "options.h"
 
 /* GAME.BIN: changing an enemy's motion, with the blend time that suits the change. */
 
@@ -22,6 +24,152 @@ extern ThingMotion *D_006F4B70[];       /* by enemy type */
 
 void func_0055C030(Thing *t, f32 speed);
 void func_0055B6D0(Thing *t, MotionSet *ms, s32 frame, u16 layer, f32 start, f32 blend);
+
+s32 func_001AF510(void);
+void func_00606500(Thing *t, s8 se, u8 *done);
+void func_006094A0(Thing *t);
+
+/* With func_001AF510 (Options.unk3B 1 or 2): passes t's event se (0: none) on. */
+void func_00576690(Thing *t, s32 se) {
+    u8 done;
+
+    if (func_001AF510() == 1 && se != 0) {
+        done = 0;
+        func_00606500(t, se, &done);
+        if (done) {
+            func_006094A0(t);
+        }
+    }
+}
+
+void func_0064FB70(s32 type, s32 id, u8 *b, s32 player);
+s32 func_0064FF60(Thing *t);
+extern u8 *D_006D61E0[4];       /* per mode: per room, the message */
+
+/* With func_001AF510: queues message (3, m) about t's slot (mark type 2) for our player. */
+void func_005769F0(Thing *t, s32 unused, u8 m) {
+    u8 b[4];
+
+    if (func_001AF510() && t->unkB9C != 1) {
+        b[1] = m;
+        b[0] = 3;
+        b[2] = 0;
+        b[3] = 0;
+        func_0064FB70(2, t->set, b, D_0048BF60.unk1D);
+    }
+}
+
+/* Once (0xC2C): message mode (0-3) for this room about t, when t's slot is ours. */
+void func_00576A70(Thing *t, s32 mode) {
+    if (func_001AF510() && t->unkB9C != 1 && t->unkB9A == 1 && (u8)mode < 4 && t->unkC2C == 0 &&
+        func_0064FF60(t)) {
+        func_005769F0(t, 0, D_006D61E0[(u8)mode][D_00306590.unk1A]);
+        t->unkC2C = 1;
+    }
+}
+
+/* A knockback: a push (vx, vz) dying away by (dx, dz) each frame. */
+typedef struct {
+    s16 vx;             /* 0x00 */
+    s16 vz;             /* 0x02 */
+    u8 unk4[4];
+    s16 dx;             /* 0x08 */
+    s16 dz;             /* 0x0A */
+    u8 unkC[4];
+    u8 state;           /* 0x10: 0 off, 1 waiting (timer), 2 start, 3 running */
+    u8 arg;             /* 0x11 */
+    u8 timer;           /* 0x12 */
+    u8 pad13;
+} Knock;                /* 0x14 */
+
+/* A knockback's strength (along x and z) and how many frames it lasts. */
+typedef struct {
+    s16 x;
+    s16 z;
+    s16 frames;
+} KnockDef;
+
+void func_00190E00(f32 *out, const f32 *m);
+void func_001913A0(f32 *out, const f32 *v, const f32 *m);
+f32 func_00191A70(f32 x);
+void func_0055C450(Thing *t, u8 arg, Knock *k);
+
+/* Runs t's two knockbacks (k, with their strengths in defs). */
+void func_00577870(Thing *t, KnockDef *defs, Knock *ks);
+#ifdef NON_MATCHING   /* structure right; register use and a kept &state */
+void func_00577870(Thing *t, KnockDef *defs, Knock *ks) {
+    f32 m[16];
+    f32 v[3];
+    f32 ax;
+    u8 i;
+    Knock *k;
+    KnockDef *d;
+
+    for (i = 0; i < 2; i++) {
+        k = &ks[i];
+        switch (k->state) {
+        case 1:
+            if (--k->timer <= 0) {
+                k->state++;
+            }
+            break;
+        case 2:
+            k->state++;
+            func_00190E00(m, t->mtx);
+            func_001913A0(v, (f32 *)((u8 *)t + 0x12C), m);
+            ax = func_00191A70(v[0]);
+            d = &defs[i];
+            k->vx = d->x;
+            k->vz = d->z;
+            if (!(ax <= func_00191A70(v[2]))) {
+                k->vx = v[0] * k->vx;
+                k->vz = v[2] * k->vz;
+            } else {
+                k->vz = v[0] * k->vz;
+                k->vx = v[2] * k->vx;
+            }
+            k->dx = -(k->vx / d->frames);
+            k->dz = -(k->vz / d->frames);
+            k->dx /= (s16)D_0023BF7C;
+            k->dz /= (s16)D_0023BF7C;
+            break;
+        case 3:
+            if (k->vx != 0) {
+                k->vx += k->dx;
+                if (k->dx > 0) {
+                    if (k->vx > 0) {
+                        k->vx = 0;
+                    }
+                } else if (k->dx < 0) {
+                    if (k->vx < 0) {
+                        k->vx = 0;
+                    }
+                }
+            }
+            if (k->vz != 0) {
+                k->vz += ks[i].dz;
+                if (ks[i].dz > 0) {
+                    if (k->vz > 0) {
+                        k->vz = 0;
+                    }
+                } else if (ks[i].dz < 0) {
+                    if (k->vz < 0) {
+                        k->vz = 0;
+                    }
+                }
+            }
+            if (k->vx == 0 && k->vz == 0) {
+                ks[i].state = 0;
+                return;
+            }
+            break;
+        case 0:
+            continue;
+        }
+        func_0055C450(t, ks[i].arg, &ks[i]);
+    }
+}
+#endif
 
 /* Starts motion on all of t's layers. */
 void func_00578150(Thing *t, s16 motion, f32 start, f32 blend) {
@@ -119,6 +267,30 @@ void func_00678E60(Thing *t, s32 motion, s8 mode) {
             break;
         default:
             func_00578150(t, motion, start, blend);
+            break;
+        }
+    } else {
+        func_0055C030(t, 1.0f);
+    }
+}
+
+/* func_00678E60 without blending. */
+void func_00679370(Thing *t, s32 motion, s8 mode) {
+    f32 start = 0.0f;
+    s16 cur = t->unk520;
+
+    if (cur != motion) {
+        if (cur == 7 && motion == 5) {
+            start = 62.0f;
+        } else if (motion == 8 && t->unkC37) {
+            start = 56.0f;
+        }
+        switch (mode) {
+        case 1:
+            func_00578250(t, motion, 1, start, 0.0f);
+            break;
+        default:
+            func_00578150(t, motion, start, 0.0f);
             break;
         }
     } else {

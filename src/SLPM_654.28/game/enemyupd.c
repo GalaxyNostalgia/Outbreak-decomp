@@ -26,10 +26,51 @@ void func_005E5B40(f32 *p, u8 *kind, s32 want);
 void func_0067A960(Thing *t);
 void func_005516D0(Thing *t);
 void func_0062CA30(Thing *t);
+void func_005A9CC0(Thing *t, s32 a, s32 b);
+
+/* An enemy's request (2, 7) for this frame, unless 0x54A bit 2 says not. */
 void func_006031B0(Thing *t);
-void func_00577870(Thing *t, u8 *tbl, u8 *buf);
-void func_006798F0(Thing *t);
-void func_00664570(Thing *t);
+#ifdef NON_MATCHING   /* an unfilled delay slot */
+void func_006031B0(Thing *t) {
+    if (!(t->unk54A & 4)) {
+        func_005A9CC0(t, 2, 7);
+    }
+}
+#endif
+void func_00577870(Thing *t, void *defs, void *ks);
+void func_0055C450(Thing *t, u8 arg, void *p);
+
+/* Applies t's two pushes; they last only one frame unless 0xD45 is set. */
+void func_006798F0(Thing *t) {
+    if (t->pushA.v != 0) {
+        func_0055C450(t, t->pushA.arg, &t->pushA);
+    }
+    if (t->pushB.v != 0) {
+        func_0055C450(t, t->pushB.arg, &t->pushB);
+    }
+    if (t->unkD45 == 0) {
+        t->pushA.v = 0;
+        t->pushB.v = 0;
+    }
+}
+void func_00576A70(Thing *t, s32 mode);
+extern s8 *D_0023AD30[2];
+
+/* func_00576A70 with mode 2 for types 0 and 8 with 0xBA7 set, 1 for type 1 where D_0023AD30
+   allows its scenario (none otherwise), else 0. */
+void func_00664570(Thing *t) {
+    if ((t->unk4 == 0 || t->unk4 == 8) && t->unkBA7 != 0) {
+        func_00576A70(t, 2);
+        return;
+    }
+    if (t->unk4 == 1) {
+        if (D_0023AD30[t->unkBAC[3]][t->scenario] >= 0) {
+            func_00576A70(t, 1);
+        }
+    } else {
+        func_00576A70(t, 0);
+    }
+}
 
 /* Counts unkC2E down on every other frame, to 0. */
 void func_0060EB00(Thing *t) {
@@ -179,7 +220,7 @@ s32 func_006798B0(Thing *t) {
 }
 s32 func_001AF4D0(void);
 void func_005AF010(Thing *t, s32 n);
-void func_00679370(Thing *t, s32 a, s32 b);
+void func_00679370(Thing *t, s32 motion, s8 mode);
 void func_00678E60(Thing *t, s32 motion, s8 mode);
 void func_00554600(Thing *t, s32 n);
 void func_00677CA0(Thing *t);
@@ -234,8 +275,8 @@ void func_00664600(Thing *t) {
         t->unkD55 = 0xE;
         t->unk552 = 0xE;
         t->unk551 = 8;
-        t->unkD09 = 3;
-        t->unkD1B = 8;
+        t->pushA.arg = 3;
+        t->pushB.arg = 8;
     } else {
         if (t->unk4 == 6) {
             t->unk1A8 = D_006E0450[0];
@@ -259,8 +300,8 @@ void func_00664600(Thing *t) {
         t->unk551 = 0xA;
         t->unk552 = 0x15;
         t->unkBA8 = 0x18;
-        t->unkD09 = 3;
-        t->unkD1B = 0xA;
+        t->pushA.arg = 3;
+        t->pushB.arg = 0xA;
     }
     t->unkD2C = 0;
     t->unkD40 = 0;

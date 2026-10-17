@@ -9,6 +9,13 @@ typedef struct {
     f32 v[4];
 } Vec4f;
 
+/* A push on a thing (0x12 bytes). */
+typedef struct {
+    s16 v; /* 0x00 */
+    u8 unk2[0xF];
+    u8 arg; /* 0x11 */
+} ThingPush;
+
 /* A motion layer of a thing. */
 typedef struct {
     f32 unk0; /* 0x00: the frame it started on */
@@ -76,7 +83,7 @@ typedef struct Thing {
     s16 hp; /* 0x544 */
     s16 maxHp; /* 0x546 */
     u8 pad548[0x54A - 0x548];
-    s16 unk54A; /* 0x54A */
+    u16 unk54A; /* 0x54A */
     u8 pad54C;
     u8 unk54D; /* 0x54D */
     u8 unk54E; /* 0x54E */
@@ -135,7 +142,8 @@ typedef struct Thing {
     u8 unkC29; /* 0xC29 */
     u8 unkC2A; /* 0xC2A */
     u8 unkC2B; /* 0xC2B */
-    u8 padC2C[0xC2E - 0xC2C];
+    u8 unkC2C; /* 0xC2C: told the others (func_00576A70) */
+    u8 padC2D;
     s16 unkC2E; /* 0xC2E */
     u8 padC30[0xC36 - 0xC30];
     s8 unkC36; /* 0xC36 */
@@ -168,16 +176,15 @@ typedef struct Thing {
     u8 unkCA1; /* 0xCA1 */
     u8 padCA2[0xCCC - 0xCA2];
     u8 color[4]; /* 0xCCC */
-    u8 padCD0[0xD09 - 0xCD0];
-    u8 unkD09; /* 0xD09 */
-    u8 padD0A[0xD1B - 0xD0A];
-    u8 unkD1B; /* 0xD1B */
+    u8 padCD0[0xCF8 - 0xCD0];
+    ThingPush pushA; /* 0xCF8 */
+    ThingPush pushB; /* 0xD0A */
     u8 unkD1C[0x10]; /* 0xD1C */
     u8 unkD2C; /* 0xD2C */
     u8 padD2D[0xD40 - 0xD2D];
     u8 unkD40; /* 0xD40 */
     u8 padD41[0xD45 - 0xD41];
-    u8 unkD45; /* 0xD45 */
+    s8 unkD45; /* 0xD45 */
     u8 padD46[0xD55 - 0xD46];
     u8 unkD55; /* 0xD55 */
     u8 padD56[0xD7D - 0xD56];

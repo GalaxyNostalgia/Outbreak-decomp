@@ -94,8 +94,8 @@ typedef struct {
     u8 unkAD4;          /* 0xAD4 */ \
     u8 unkAD5[0xAEC - 0xAD5]; \
     u8 unkAEC[0xB90 - 0xAEC]; \
-    s32 unkB90;         /* 0xB90 */ \
-    u8 unkB94[4]; \
+    f32 unkB90;         /* 0xB90: how far tilted to the ground (0-1) */ \
+    f32 unkB94;         /* 0xB94: its speed */ \
     u8 unkB98;          /* 0xB98: the character */ \
     s8 unkB99;          /* 0xB99: uses the shared motions */ \
     u8 unkB9A;          /* 0xB9A */ \

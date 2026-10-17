@@ -920,3 +920,13 @@ s32 func_001BCA40(s32 n, u8 **seqs, u8 *out) {
     return *(s32 *)(D_003089D8 + 0xC);
 }
 #endif
+
+/* Sends a bank into slot 3 (the room's). */
+s32 func_001B8AA0(u8 *snd) {
+    return func_001AB9E0(snd, 3);
+}
+
+/* Sends a bank into slot 2. */
+s32 func_001B8AB0(u8 *snd) {
+    return func_001AB9E0(snd, 2);
+}

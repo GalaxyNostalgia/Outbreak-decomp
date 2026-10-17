@@ -247,7 +247,7 @@ void func_005516D0(DrawObjFull *o) {
 #endif
 
 void func_00340210(s32 rx, s32 ry, s32 rz, f32 *m);
-void func_00633D80(DrawObjFull *o);
+s32 func_00633D80(DrawObjFull *o);
 
 /* The character's world matrix (at 0x50) from its angles and position, its facing (0xA8), and
    the frame's pushes (0xD8 in its own frame, 0xE4 in the world's) applied. */
@@ -334,5 +334,113 @@ void func_0062D2C0(DrawObjFull *o) {
         return;
     }
     func_0062CF10(o, item);
+}
+#endif
+
+/* Requests for this frame (32 at most): a character and what to do for it. */
+typedef struct {
+    s16 b;              /* 0x0 */
+    s16 a;              /* 0x2 */
+    DrawObjFull *o;     /* 0x4 */
+} CharRequest;
+
+extern CharRequest D_00386650[32];
+extern s16 D_0023BD94;          /* how many */
+
+/* Queues request (a, b) for o. */
+void func_005A9CC0(DrawObjFull *o, s32 a, s32 b) {
+    if (D_0023BD94 < 32) {
+        D_00386650[D_0023BD94].o = o;
+        D_00386650[D_0023BD94].b = b;
+        D_00386650[D_0023BD94].a = a;
+        D_0023BD94++;
+    }
+}
+
+extern Vec3 D_006DEC28;         /* the ground samples: ahead */
+extern Vec3 D_006DEC38;         /* ahead to the left */
+extern Vec3 D_006DEC48;         /* ahead to the right */
+extern Vec3 D_006DEC58;         /* up */
+extern f32 D_00239CD0;          /* 0.1 */
+void func_00191590(f32 *v, f32 angle);
+f32 func_005E5B40(const f32 *p, u8 *kind, s32 want);
+f32 func_00340100(u16 a);
+
+/* Tilts o to the ground under it (when 0x548 bit 0 is on; players and NPCs start it when 0xBA0
+   bit 3 is set): three floor heights around it give the slope, and the matrix is blended toward
+   it by unkB90 (which runs 0-1 by unkB94). Gives up on steps over 80 or slopes too steep. */
+#ifdef NON_MATCHING   /* first draft: stack layout and the type branch */
+s32 func_00633D80(DrawObjFull *o) {
+    f32 m2[16];
+    f32 m[16];
+    Vec3 up;
+    Vec3 n;
+    Vec3 a = D_006DEC28;
+    Vec3 b = D_006DEC38;
+    Vec3 c = D_006DEC48;
+    Vec3 pc;
+    Vec3 pb;
+    Vec3 pa;
+    u8 kind;
+
+    if (o->type == 1 || o->type == 0) {
+        if ((o->unkBA0 & 8) && !(o->unk548 & 1)) {
+            o->unk548 |= 1;
+            o->unkB94 = D_00239CD0;
+        }
+        if (!(o->unk548 & 1)) {
+            return 1;
+        }
+    } else if (!(o->unk548 & 1)) {
+        return 1;
+    }
+    o->unkB90 += o->unkB94;
+    if (o->unkB94 > 0.0f) {
+        if (o->unkB90 > 1.0f) {
+            o->unkB90 = 1.0f;
+        }
+    } else if (o->unkB90 < 0.0f) {
+        o->unkB90 = 0.0f;
+    }
+    func_00191590(&a.x, D_00239E18 * (u16)o->unk92 / 65536.0f);
+    func_00191590(&b.x, D_00239E18 * (u16)(o->unk92 - 0x71C) / 65536.0f);
+    func_00191590(&c.x, D_00239E18 * (u16)(o->unk92 + 0x71C) / 65536.0f);
+    pa.x = a.x + o->unk38[0];
+    pa.y = a.y + o->unk38[1];
+    pa.z = a.z + o->unk38[2];
+    pb.x = b.x + o->unk38[0];
+    pb.y = b.y + o->unk38[1];
+    pb.z = b.z + o->unk38[2];
+    pc.x = c.x + o->unk38[0];
+    pc.y = c.y + o->unk38[1];
+    pc.z = c.z + o->unk38[2];
+    pa.y = func_005E5B40(&pa.x, &kind, 0xFF);
+    pb.y = func_005E5B40(&pb.x, &kind, 0xFF);
+    pc.y = func_005E5B40(&pc.x, &kind, 0xFF);
+    b.x = pb.x - pa.x;
+    b.y = pb.y - pa.y;
+    b.z = pb.z - pa.z;
+    c.x = pc.x - pa.x;
+    c.y = pc.y - pa.y;
+    c.z = pc.z - pa.z;
+    func_00191820(&n.x, &b.x, &c.x);
+    if (func_00191A70(pa.y - pc.y) <= 80.0f && func_00191A70(pa.y - pb.y) <= 80.0f) {
+        up = D_006DEC58;
+        if (func_001917C0((f32 *)((u8 *)o + 0x178), &up.x) <= func_00340100(0x100)) {
+            func_00191110(m, &n.x, (f32 *)&o->unkA8);
+            func_00190ED0(m2, (f32 *)((u8 *)o + 0x50));
+            m[14] = 0.0f;
+            m[13] = 0.0f;
+            m[12] = 0.0f;
+            m2[14] = 0.0f;
+            m2[13] = 0.0f;
+            m2[12] = 0.0f;
+            func_001912D0(1.0f - o->unkB90, o->unkB90, (f32 *)((u8 *)o + 0x50), m2, m);
+            return 0;
+        }
+    }
+    o->unk548 &= ~1;
+    o->unkB90 = 0.0f;
+    return 0;
 }
 #endif

@@ -481,3 +481,25 @@ void func_0064F390(s8 i, s8 v) {
         func_001AF000(5, (NetMsg *)&m, 0, 4);
     }
 }
+
+/* Whether o's enemy slot (type 2, id unkB98) has a mark of our player's (unk3: player + 1). */
+s32 func_0064FF60(DrawObjFull *o) {
+    u8 me = D_0048BF60.unk1D;
+    s32 found = 0;
+    Mark *m = D_0070F9F8;
+    u16 i;
+    u8 p;
+
+    if (me == -1) {
+        p = 0xFF;
+    } else {
+        p = (me & 0xFF) + 1;
+    }
+    for (i = 0; i < 0x40; i++, m++) {
+        if (m->used != 0 && m->id == o->unkB98 && m->type == 2 && m->unk3 == p) {
+            found = 1;
+            break;
+        }
+    }
+    return found;
+}

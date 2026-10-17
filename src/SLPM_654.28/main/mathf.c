@@ -21,6 +21,23 @@ void func_001918A0(f32 *dst, const f32 *src) {
     *(Vec3f *)dst = *(const Vec3f *)src;
 }
 
+void func_00191B80(f32 *s, f32 *c, f32 x);
+
+/* Turns v by angle about y. */
+void func_00191590(f32 *v, f32 angle);
+#ifdef NON_MATCHING   /* the copy's z is read through an address register */
+void func_00191590(f32 *v, f32 angle) {
+    Vec3f t;
+    f32 sn;
+    f32 c;
+
+    t = *(Vec3f *)v;
+    func_00191B80(&sn, &c, angle);
+    v[0] = c * t.x + sn * t.z;
+    v[2] = -sn * t.x + c * t.z;
+}
+#endif
+
 f32 func_00191AD0(f32 x) {
     return acosf(x);
 }
