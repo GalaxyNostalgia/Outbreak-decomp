@@ -1,5 +1,6 @@
 #include "common.h"
 #include "object.h"
+#include "options.h"
 
 /* SINGLE.BIN: the computer-controlled partners' AI state. */
 
@@ -100,3 +101,50 @@ void func_00825DB0(DrawObjFull *obj, s8 v) {
     func_0064FB70(0, obj->kind, b, -1);
 }
 #endif
+
+void func_0082C640(DrawObjFull *obj);
+void func_0082BE00(DrawObjFull *obj);
+void func_00637240(DrawObjFull *obj, u8 a);
+void func_006CCDA0(DrawObjFull *obj);
+
+/* A partner entering (in our scenario's room) or leaving the room; mode 1 also resets its AI
+   (func_006CCDA0). */
+void func_00822150(DrawObjFull *obj, s32 mode) {
+    u8 old = obj->unk105B;
+
+    if (obj->unk1E2 != D_00306590.unk1C) {
+        obj->unk105B = 1;
+        if (old == 0) {
+            FIELD(obj, s32, 0x1060) = 0x1C2;
+            if (!(obj->unkBA0 & 0x20)) {
+                func_0082C640(obj);
+            }
+            func_0082BE00(obj);
+        }
+    } else {
+        obj->unk105B = 0;
+        if (old == 1) {
+            if (mode == 0) {
+                if (!(obj->unkBA0 & 0x20)) {
+                    func_0082C640(obj);
+                }
+                func_00637240(obj, obj->unk54F);
+            } else {
+                func_0082A6A0(obj, old);
+            }
+        }
+    }
+    if (mode == 1) {
+        func_006CCDA0(obj);
+        if (FIELD(obj, s8, 0x105A) == 1) {
+            func_0082A690(obj, 0);
+        }
+    }
+    obj->unk1064 = 1;
+    obj->unk103A = 0;
+    obj->unkBD0 = 0;
+    obj->unkBA0 &= 0xDBD7FFFF;
+    obj->unk548 &= ~1;
+    obj->unkB90 = 0.0f;
+    obj->unk520 = 0;
+}

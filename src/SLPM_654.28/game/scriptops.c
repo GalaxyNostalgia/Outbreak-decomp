@@ -671,7 +671,58 @@ s32 func_0065F2C0(u32 *args) {
     return 0;
 }
 
-extern u8 D_0048BBE0[];         /* per item: who has it (player + 1) */
+/* if bit args[0] of D_0048ADD0 is args[1] */
+s32 func_0065F2F0(u32 *args) {
+    u32 n = args[0];
+    s32 v = args[1];
+    u32 *w;
+
+    D_0048BE70.unk78[CUR]++;
+    if (v != 0) {
+        w = &D_0048ADD0[n >> 5];
+        if (!(*w & (1 << (n & 0x1F)))) {
+            func_0065AAF0();
+            return 2;
+        }
+    } else {
+        w = &D_0048ADD0[n >> 5];
+        if (*w & (1 << (n & 0x1F))) {
+            func_0065AAF0();
+            return 2;
+        }
+    }
+    return 0;
+}
+
+/* if event flag args[0] is set and its D_0048ADD0 bit clear, is args[1] */
+s32 func_0065F910(u32 *args);
+#ifdef NON_MATCHING   /* and operand order in the flag tests */
+s32 func_0065F910(u32 *args) {
+    u32 n = args[0];
+    s32 v = args[1];
+
+    D_0048BE70.unk78[CUR]++;
+    if (v != 0) {
+        if ((D_0048AD90[n >> 5] & (1 << (n & 0x1F)))) {
+            if ((D_0048ADD0[n >> 5] & (1 << (n & 0x1F)))) {
+                func_0065AAF0();
+                return 2;
+            }
+        } else {
+            func_0065AAF0();
+            return 2;
+        }
+    } else {
+        if ((D_0048AD90[n >> 5] & (1 << (n & 0x1F))) && !(D_0048ADD0[n >> 5] & (1 << (n & 0x1F)))) {
+            func_0065AAF0();
+            return 2;
+        }
+    }
+    return 0;
+}
+#endif
+
+extern u8 D_0048BBE0[];        /* per item: who has it (player + 1) */
 void func_00341B50(void);
 void func_00341AB0(void);
 void func_006ABBA0(void);
@@ -1546,5 +1597,68 @@ void func_00578AA0(u8 a, u8 b, u8 c);
 
 s32 func_00662460(u32 *args) {
     func_00578AA0(args[0], args[1], args[2]);
+    return 0;
+}
+
+s32 func_001AF440(s32 room);
+
+/* if we are the player in this room is args[0] */
+s32 func_00661DE0(u32 *args) {
+    s32 v = args[0];
+
+    D_0048BE70.unk78[CUR]++;
+    if (v != 0) {
+        if (D_0048BF60.unk1D != func_001AF440(D_00306590.unk1C)) {
+            func_0065AAF0();
+            return 2;
+        }
+    } else {
+        if (D_0048BF60.unk1D == func_001AF440(D_00306590.unk1C)) {
+            func_0065AAF0();
+            return 2;
+        }
+    }
+    return 0;
+}
+
+s32 func_001AF4D0(void);
+
+/* if func_001AF4D0 (the talk state) is 1 (args[0] 0) or 0 (args[0] 1) */
+s32 func_00662D90(u32 *args) {
+    s32 r;
+
+    D_0048BE70.unk78[CUR]++;
+    r = 2;
+    switch (args[0]) {
+    case 0:
+        if (func_001AF4D0() == 1) {
+            r = 0;
+        }
+        break;
+    case 1:
+        if (func_001AF4D0() == 0) {
+            r = 0;
+        }
+        break;
+    }
+    if (r != 0) {
+        func_0065AAF0();
+    }
+    return r;
+}
+
+void func_001B2C70(void);
+
+/* 0x190 (does nothing in the release) */
+s32 func_00662E40(u32 *args) {
+    func_001B2C70();
+    return 0;
+}
+
+void func_001B2C80(void);
+
+/* (does nothing in the release either) */
+s32 func_00662E60(u32 *args) {
+    func_001B2C80();
     return 0;
 }

@@ -743,6 +743,20 @@ s32 func_00821D00(s32 i) {
     return D_0084E040.unk38[i];
 }
 
+/* Which player is in room (-1: nobody). */
+s32 func_00821D20(s32 room) {
+    u8 p;
+
+    if (room >= 0x80) {
+        return -1;
+    }
+    p = D_0083BD60[room][0];
+    if (p == 0xFF) {
+        return -1;
+    }
+    return p;
+}
+
 extern char D_0083B170[];
 extern char D_0083B190[];
 void func_00107B50(void *dst, const void *src, s32 n);
@@ -849,6 +863,72 @@ void func_00821390(s16 to, Msg *m, s32 kind) {
 
 extern char D_0083B0C0[];       /* "RS %d" */
 extern s8 D_0084E045;
+
+/* Player p (0 only, as written) takes (take) or tells the others it would take room object obj:
+   offline, each object's four takers are kept in D_0083B960, a player in one row at most. */
+void func_00821950(s32 p, s32 obj, s32 take);
+#ifdef NON_MATCHING   /* first draft */
+void func_00821950(s32 p, s32 obj, s32 take) {
+    u8 m[8];
+    u8 *row;
+    u8 *q;
+    s32 i;
+    s32 k;
+    s32 r;
+    u16 v;
+
+    if (p != 0 || p >= 4) {
+        return;
+    }
+    if (take == 0) {
+        v = FIELD(&D_00476DD0[p * 0x10E0], u16, 0x1E2);
+        if (v >= 0x80 || p != D_0048BF60.unk1D) {
+            return;
+        }
+        m[6] = v;
+        m[0] = 4;
+        m[1] = 8;
+        m[2] = D_0048BF60.unk1D;
+        m[5] = D_0048BF60.unk1D;
+        m[3] = 4;
+        m[4] = 0;
+        m[7] = 0;
+        func_00820940(7, (Msg *)m, 0, 4);
+        return;
+    }
+    if (D_0084E045 == 0) {
+        return;
+    }
+    row = D_0083B960[obj];
+    for (i = 0, q = row; i < 4; i++, q++) {
+        if (*q == (u8)p) {
+            return;
+        }
+    }
+    for (i = 0; i < 4; i++, row++) {
+        if (*row == 0xFF) {
+            *row = p;
+            break;
+        }
+    }
+    for (k = 0; k < 0x200; k++) {
+        r = k / 4;
+        if (r != obj && D_0083B960[0][k] == (u8)p) {
+            q = D_0083B960[r];
+            for (i = 0; i < 4; i++, q++) {
+                if (*q == (u8)p) {
+                    break;
+                }
+            }
+            for (; i < 3; i++, q++) {
+                q[0] = q[1];
+            }
+            *q = 0xFF;
+        }
+    }
+}
+#endif
+
 extern s32 D_0084E048;
 extern s16 D_0023BBA0;
 extern u8 D_0023BB28;
@@ -857,7 +937,6 @@ void func_0064C130(u8 *m, u8 from);
 void func_00822090(u8 a, u8 *p);
 void func_0064E590(u8 a, u8 b, u8 c);
 void func_00821FE0(u8 *m, u8 from);
-void func_00821950(u8 a, u8 b, s32 c);
 void func_00821B10(u8 a, u8 b, s32 c);
 void func_0064FCB0(u8 n, u8 *m, s32 a);
 void func_00609590(s32 n, u8 *m, s32 a);

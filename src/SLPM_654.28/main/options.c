@@ -476,6 +476,23 @@ s32 func_001AF110(s32 i) {
     return i == 0;
 }
 
+s32 func_00821D20(s32 room);   /* SINGLE.BIN */
+s32 func_00821590(s32 room);   /* NETAQ.BIN */
+
+/* Which player is in room (-1: nobody; outside the network modes, us when it's ours). */
+s32 func_001AF440(s32 room) {
+    switch (func_001AF500()) {
+    case 0:
+        return func_00821D20(room);
+    case 1:
+        return func_00821590(room);
+    case 2:
+    case 3:
+        break;
+    }
+    return D_00306590.unk1C == room ? 0 : -1;
+}
+
 /* Hands a call to the loaded game mode's overlay. */
 void func_001AEDC0(s32 a) {
     switch (func_001AF500()) {

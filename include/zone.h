@@ -20,11 +20,16 @@ typedef struct Zone {
         s32 *def;       /* 0x40: (kind 0x85) def[0x10] its switch (D_00470090 + 0x4730) */
         s32 id;         /* (kind 5) */
     } u;
-    u8 unk44[0x50 - 0x44];
+    s32 unk44;          /* 0x44: (kind 3) sub-kind; (kind 4, 13) id */
+    u8 unk48[0x50 - 0x48];
     u16 unk50;          /* 0x50 */
     u8 unk52[0x59 - 0x52];
     u8 unk59;           /* 0x59: which of unk5A are set */
     u16 unk5A[8];       /* 0x5A */
+    u8 unk6A[2];
+    s32 unk6C;          /* 0x6C */
+    u8 unk70[2];
+    u8 unk72;           /* 0x72 */
 } Zone;
 
 extern Zone *D_0023BD90;

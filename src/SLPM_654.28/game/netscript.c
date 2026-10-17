@@ -3,6 +3,7 @@
 #include "game.h"
 #include "script.h"
 #include "object.h"
+#include "zone.h"
 
 /* GAME.BIN: the room script online. Thread 1 runs once for every player (as that player, so
    per-player instructions act for each), and what each run did to the event flags is merged;
@@ -166,13 +167,60 @@ extern u32 D_0048ACD0[0x10];
 extern u32 D_0048AD10[0x10];
 extern u32 D_0048AD50[0x10];
 
-s32 func_006CD3A0(u32 n) {
+static s32 func_006CD3A0(u32 n) {
     s32 p = D_0023C004;
 
     if (p == 0) {
         return (1 << (n & 0x1F)) & D_0048AC10.unk0[n >> 5];
     }
     return (1 << (n & 0x1F)) & D_0048ABD0[p][n >> 5];
+}
+
+/* if this player's event flag args[0] is args[1] */
+s32 func_006CE750(u32 *args) {
+    u32 n = args[0];
+    s32 v = args[1];
+
+    D_0048BE70.unk78[(u8)D_0048BE70.cur]++;
+    if (v != 0) {
+        if (func_006CD3A0(n) == 0) {
+            func_0065AAF0();
+            return 2;
+        }
+    } else {
+        if (func_006CD3A0(n) != 0) {
+            func_0065AAF0();
+            return 2;
+        }
+    }
+    return 0;
+}
+
+s32 func_006CD410(u32 n);
+
+/* if this player's event flag args[0] is set and its second-set flag clear, is args[1] */
+s32 func_006CE7E0(u32 *args) {
+    u32 n = args[0];
+    s32 v = args[1];
+
+    D_0048BE70.unk78[(u8)D_0048BE70.cur]++;
+    if (v != 0) {
+        if (func_006CD3A0(n) != 0) {
+            if (func_006CD410(n) != 0) {
+                func_0065AAF0();
+                return 2;
+            }
+        } else {
+            func_0065AAF0();
+            return 2;
+        }
+    } else {
+        if (func_006CD3A0(n) != 0 && func_006CD410(n) == 0) {
+            func_0065AAF0();
+            return 2;
+        }
+    }
+    return 0;
 }
 
 s32 func_006CD410(u32 n);
@@ -429,9 +477,456 @@ s32 func_006CF700(u32 *args) {
     return 0;
 }
 
+/* Our partner leaves when event flag args[1] (args[0] 0: the shared one, else this player's)
+   is args[2]. */
+s32 func_006CF860(u32 *args);
+#ifdef NON_MATCHING   /* and operand order in the flag tests */
+s32 func_006CF860(u32 *args) {
+    s32 which = args[0];
+    u32 n = args[1];
+    s32 v = args[2];
+    DrawObjFull *p = &D_00476DD0[D_0048BF60.unk1D];
+    s32 hit = 0;
+
+    if (p->active == 0 || p->isNpc == 0) {
+        return 0;
+    }
+    if (which == 0) {
+        if (v != 0 && ((1 << (n & 0x1F)) & ((s32 *)D_0048AD90)[n >> 5])) {
+            hit = 1;
+        } else if (v == 0 && !((1 << (n & 0x1F)) & ((s32 *)D_0048AD90)[n >> 5])) {
+            hit = 1;
+        }
+    } else {
+        if (v != 0 && func_006CD3A0(n) != 0) {
+            hit = 1;
+        } else if (v == 0 && func_006CD3A0(n) == 0) {
+            hit = 1;
+        }
+    }
+    if (hit != 0) {
+        func_005C5A90(p, 0);
+        p->active = 0;
+        p->visible = 0;
+    }
+    return 0;
+}
+#endif
+
 void func_00826420(s32 a, s32 b, s32 c);        /* SINGLE.BIN */
 
 s32 func_006CF040(u32 *args) {
     func_00826420(args[0], args[1], args[2]);
     return 0;
+}
+
+/* (SINGLE.BIN) per room: its script's routine table */
+typedef struct {
+    u32 **tbl;
+    u8 unk4[0xA4 - 4];
+} RoomScriptRef;
+
+extern RoomScriptRef D_0084E344[];
+
+/* (SINGLE.BIN) the offline script's per-player switch entries: what func_006CDA90 sets */
+typedef struct {
+    u8 on;              /* 0x0 */
+    u8 kind;            /* 0x1: 0 by id, 2 by id and id2 */
+    u8 id;              /* 0x2 */
+    u8 id2;             /* 0x3 */
+    s16 val;            /* 0x4 */
+    u8 unk6[0x10 - 6];
+} SglSwitch;
+
+typedef struct {
+    u8 unk0[0x98];
+    s32 n;              /* 0x98 */
+    SglSwitch *sw;      /* 0x9C */
+    u8 unkA0[4];
+} SglRoomSw;            /* 0xA4 */
+
+extern SglRoomSw D_0084E2B0[];
+
+/* Sets the value of the zones (and, for the player, the offline switches) of kind 0 with id
+   args[0] or kind 2 with ids args[0], args[2] to args[1]. */
+s32 func_006CDA90(u32 *args) {
+    s32 v;
+    s32 id;
+    s32 id2;
+    Zone *z;
+    SglSwitch *e;
+    s32 i;
+
+    id = args[0];
+    v = args[1];
+    id2 = args[2];
+
+    if (D_0023C00C == 0) {
+        if (D_0023BD88 == 0x80) {
+            return 0;
+        }
+        z = D_0023BD90;
+        while (z != NULL) {
+            if (z->kind == 0) {
+                if (z->u.id == id) {
+                    z->unk6C = v;
+                    z->unk72 = 0;
+                }
+                z = z->next;
+            } else if (z->kind == 2) {
+                if (z->u.id == id && FIELD(z, s32, 0x50) == id2) {
+                    z->unk6C = v;
+                }
+                z = z->next;
+            } else {
+                z = z->next;
+            }
+        }
+    }
+    e = D_0084E2B0[D_0023C008].sw;
+    for (i = 0; i < D_0084E2B0[D_0023C008].n; i++, e++) {
+        if (e->on != 0) {
+            if (e->kind == 0 && e->id == id) {
+                e->val = v;
+            }
+            if (e->kind == 2 && e->id == id && e->id2 == id2) {
+                e->val = v;
+            }
+        }
+    }
+    return 0;
+}
+
+Zone *func_005518B0(u8 id, s32 which);
+
+/* Sets the value (0x66) of the zone with id args[0] (kind 2: both of its halves) to args[1]. */
+s32 func_006CEA10(u32 *args) {
+    s32 id = args[0];
+    s32 v = (u16)args[1];
+    Zone *z;
+
+    if (D_0023C00C == 0) {
+        z = func_005518B0(id, 0);
+        if (z == NULL) {
+            return 0;
+        }
+        if (z->kind == 0) {
+            FIELD(z, s16, 0x66) = v;
+        } else if (z->kind == 2) {
+            v = FIELD(z, s16, 0x66) = v;
+            z = func_005518B0(id, 1);
+            FIELD(z, s16, 0x66) = v;
+        }
+    }
+    return 0;
+}
+
+/* Arms the zones of kind args[0] with id args[1] (and second id args[2] for kinds 2 and 3;
+   where a kind keeps its id differs) and the matching offline switches. */
+s32 func_006CEB20(u32 *args) {
+    s32 kind;
+    s32 id;
+    s32 id2;
+    Zone *z;
+    SglSwitch *e;
+    s32 i;
+
+    kind = args[0];
+    id = args[1];
+    id2 = args[2];
+    if (D_0023C00C == 0) {
+        if (D_0023BD88 == 0x80) {
+            return 0;
+        }
+        z = D_0023BD90;
+        while (z != NULL) {
+            if (kind != z->kind) {
+                z = z->next;
+            } else {
+                switch (z->kind) {
+                case 0:
+                    if (z->u.id == id) {
+                        z->unk3C = 1;
+                    }
+                    z = z->next;
+                    break;
+                case 1:
+                    if (z->u.id == id) {
+                        z->unk3C = 1;
+                    }
+                    z = z->next;
+                    break;
+                case 2:
+                    if (z->kind == 2) {
+                        if (z->u.id == id && FIELD(z, s32, 0x50) == id2) {
+                            z->unk3C = 1;
+                        }
+                        z = z->next;
+                        break;
+                    }
+                    z = z->next;
+                    break;
+                case 3:
+                    if (z->u.id == id && (z->unk44 & 1) == id2) {
+                        z->unk3C = 1;
+                    }
+                    z = z->next;
+                    break;
+                case 4:
+                    if (z->unk44 == id) {
+                        z->unk3C = 1;
+                    }
+                    z = z->next;
+                    break;
+                case 6:
+                    if (FIELD(z, s32, 0x54) == id) {
+                        z->unk3C = 1;
+                    }
+                    z = z->next;
+                    break;
+                case 7:
+                    if (FIELD(z, s32, 0x70) == id) {
+                        z->unk3C = 1;
+                    }
+                    z = z->next;
+                    break;
+                case 11:
+                    if (z->u.id == id) {
+                        z->unk3C = 1;
+                    }
+                    z = z->next;
+                    break;
+                case 13:
+                    if (z->unk44 == id) {
+                        z->unk3C = 1;
+                    }
+                    z = z->next;
+                    break;
+                default:
+                    z = z->next;
+                    break;
+                }
+            }
+        }
+    }
+    e = D_0084E2B0[D_0023C008].sw;
+    for (i = 0; i < D_0084E2B0[D_0023C008].n; i++, e++) {
+        if (e->kind == kind && e->id == id && (e->kind != 2 || e->id2 == id2)
+            && (e->kind != 3 || (e->id2 & 1) == id2)) {
+            e->on = 1;
+        }
+    }
+    return 0;
+}
+
+/* Disarms the zones of kind args[0] with id args[1] (and second id args[2] for kinds 2 and 3;
+   where a kind keeps its id differs) and the matching offline switches. */
+s32 func_006CEDB0(u32 *args) {
+    s32 kind;
+    s32 id;
+    s32 id2;
+    Zone *z;
+    SglSwitch *e;
+    s32 i;
+
+    kind = args[0];
+    id = args[1];
+    id2 = args[2];
+    if (D_0023C00C == 0) {
+        if (D_0023BD88 == 0x80) {
+            return 0;
+        }
+        z = D_0023BD90;
+        while (z != NULL) {
+            if (kind != z->kind) {
+                z = z->next;
+            } else {
+                switch (z->kind) {
+                case 0:
+                    if (z->u.id == id) {
+                        z->unk3C = 0;
+                    }
+                    z = z->next;
+                    break;
+                case 1:
+                    if (z->u.id == id) {
+                        z->unk3C = 0;
+                    }
+                    z = z->next;
+                    break;
+                case 2:     /* (the original re-tests the kind, falling into case 3) */
+                    if (z->kind == 2) {
+                        if (z->u.id == id && FIELD(z, s32, 0x50) == id2) {
+                            z->unk3C = 0;
+                        }
+                        z = z->next;
+                        break;
+                    }
+                    z = z->next;
+                case 3:
+                    if (z->u.id == id && (z->unk44 & 1) == id2) {
+                        z->unk3C = 0;
+                    }
+                    z = z->next;
+                    break;
+                case 4:
+                    if (z->unk44 == id) {
+                        z->unk3C = 0;
+                    }
+                    z = z->next;
+                    break;
+                case 6:
+                    if (FIELD(z, s32, 0x54) == id) {
+                        z->unk3C = 0;
+                    }
+                    z = z->next;
+                    break;
+                case 7:
+                    if (FIELD(z, s32, 0x70) == id) {
+                        z->unk3C = 0;
+                    }
+                    z = z->next;
+                    break;
+                case 11:
+                    if (z->u.id == id) {
+                        z->unk3C = 0;
+                    }
+                    z = z->next;
+                    break;
+                case 13:
+                    if (z->unk44 == id) {
+                        z->unk3C = 0;
+                    }
+                    z = z->next;
+                    break;
+                default:
+                    z = z->next;
+                    break;
+                }
+            }
+        }
+    }
+    e = D_0084E2B0[D_0023C008].sw;
+    for (i = 0; i < D_0084E2B0[D_0023C008].n; i++, e++) {
+        if (e->kind == kind && e->id == id && (e->kind != 2 || e->id2 == id2)
+            && (e->kind != 3 || (e->id2 & 1) == id2)) {
+            e->on = 0;
+        }
+    }
+    return 0;
+}
+
+/* Disarms the kind-3 zones (sub-kinds 0 and 2) and the kind-4 zones (0x64 0) with id args[0],
+   and the matching offline switches. */
+s32 func_006CDD80(u32 *args) {
+    s32 id;
+    Zone *z;
+    SglSwitch *e;
+    s32 i;
+
+    id = args[0];
+    if (D_0023C00C == 0) {
+        if (D_0023BD88 == 0x80) {
+            return 0;
+        }
+        z = D_0023BD90;
+        while (z != NULL) {
+            if (z->kind == 3 && (z->unk44 == 0 || z->unk44 == 2)) {
+                if (z->u.id == id) {
+                    z->unk3C = 0;
+                }
+                z = z->next;
+            } else if (z->kind == 4 && FIELD(z, s32, 0x64) == 0) {
+                if (z->u.id == id) {
+                    z->unk3C = 0;
+                }
+                z = z->next;
+            } else {
+                z = z->next;
+            }
+        }
+    }
+    e = D_0084E2B0[D_0023C008].sw;
+    for (i = 0; i < D_0084E2B0[D_0023C008].n; i++, e++) {
+        if (e->kind == 3 && e->id == id && (e->id2 == 0 || e->id2 == 2)) {
+            e->on = 0;
+        }
+    }
+    return 0;
+}
+
+/* Arms the kind-3 zones (sub-kinds 1 and 3; 3 also takes args[1] at 0x58) and the kind-4 zones
+   (0x64 1) with id args[0], and the matching offline switches. */
+s32 func_006CDFF0(u32 *args) {
+    s32 id;
+    Zone *z;
+    u16 v;
+    SglSwitch *e;
+    s32 i;
+
+    id = args[0];
+    v = args[1];
+    if (D_0023C00C == 0) {
+        if (D_0023BD88 == 0x80) {
+            return 0;
+        }
+        z = D_0023BD90;
+        while (z != NULL) {
+            if (z->kind == 3 && (z->unk44 == 1 || z->unk44 == 3)) {
+                if (z->u.id == id) {
+                    z->unk3C = 1;
+                    if (z->unk44 == 3) {
+                        FIELD(z, u16, 0x58) = v;
+                    }
+                }
+                z = z->next;
+            } else if (z->kind == 4 && FIELD(z, s32, 0x64) == 1) {
+                if (z->u.id == id) {
+                    z->unk3C = 1;
+                }
+                z = z->next;
+            } else {
+                z = z->next;
+            }
+        }
+    }
+    e = D_0084E2B0[D_0023C008].sw;
+    for (i = 0; i < D_0084E2B0[D_0023C008].n; i++, e++) {
+        if (e->kind == 3 && e->id == id && (e->id2 == 1 || e->id2 == 3)) {
+            e->on = 1;
+        }
+    }
+    return 0;
+}
+
+/* Starts thread t on routine 8 of room's script (and thread 5 on routine 12). */
+void func_006CCE30(s32 t, s32 room) {
+    u32 **tbl;
+
+    D_00306590.unk29 = 1;
+    tbl = D_0084E344[room].tbl;
+    D_0048BE70.entry[t] = 8;
+    D_0048BE70.wait[t] = 0;
+    D_0048BE70.pc[t] = tbl[8];
+    D_0048BE70.base[t] = tbl;
+    D_0048BE70.entry[5] = 0xC;
+    D_0048BE70.wait[5] = 0;
+    D_0048BE70.pc[5] = tbl[0xC];
+    D_0048BE70.base[5] = tbl;
+}
+
+/* Offline, for a partner: starts its character's thread on its room's script. */
+void func_006CCDA0(DrawObjFull *o) {
+    if (o->kind < 3) {
+        func_006CCE30(*(s32 *)D_00708478[o->kind], o->unk1E2);
+    }
+}
+
+/* Runs the first character's thread on room's script, as our own player. */
+void func_006CCDE0(s32 room) {
+    func_006CCE30(*(s32 *)D_00708478[0], room);
+    D_0023C00C = 2;
+    D_0023C008 = room;
+    D_0023C004 = 1;
+    func_006CD1B0(D_00708478[0][0]);
 }

@@ -298,6 +298,13 @@ void func_001B3920(void) {
     func_001AEC40(func_001B3400);
 }
 
+/* (empty: debug output, gone from the release) */
+void func_001B2C70(void) {
+}
+
+void func_001B2C80(void) {
+}
+
 void func_001B2C90(void) {
     func_001B39B0(6);
     func_001B3920();
