@@ -536,3 +536,99 @@ void func_001A97A0(u8 room, u8 a, u8 b) {
     }
 }
 #endif
+
+extern char D_0022EDE8[];       /* "%s%s.NBD" */
+extern char D_0022ED70[];       /* "COMMON\\" */
+void func_001AE810(void *src, void *dst);
+s32 func_001D0250(u32 tim, s32 id);
+void func_001D0440(s32 base);
+
+/* The pictures of COMMON\name.NBD as textures from base; ids gets their ids (up to 7, -1
+   ends). */
+void func_001A9FF0(const char *name, s16 *ids, s32 base);
+#ifdef NON_MATCHING   /* first draft */
+void func_001A9FF0(const char *name, s16 *ids, s32 base) {
+    char path[0x100];
+    s32 hdr[12];
+    u8 *buf;
+    u8 *p;
+    u8 *tim;
+    s32 *id;
+    s32 n;
+    s32 size;
+    s32 i;
+
+    ids[0] = -1;
+    if (base == -1) {
+        return;
+    }
+    buf = (u8 *)D_00306590.unk4C;
+    sprintf(path, D_0022EDE8, D_0022ED70, name);
+    if (func_001A9780(path, buf) <= 0) {
+        return;
+    }
+    memcpy(hdr, buf, 0x30);
+    func_001D0440(base);
+    n = hdr[3];
+    if (hdr[1] == 0) {
+        return;
+    }
+    p = buf + hdr[1];
+    tim = (u8 *)D_00306590.unk4C + 0x180000;
+    i = 0;
+    if (n > 0) {
+        id = (s32 *)(tim + 8);
+        for (; i < n; i++) {
+            size = *(s32 *)p;
+            func_001AE810(p + 4, tim);
+            if (func_001D0250((u32)tim, *id) != 0) {
+                *ids = *id;
+            }
+            ids++;
+            p = p + 4 + size;
+        }
+    }
+    if (i < 7) {
+        *ids = -1;
+    }
+    func_0018D730();
+}
+#endif
+
+/* A model from COMMON\name.NBD (textures from id): its parts unless flags & 0x7F < 2, its motion
+   when asked (and not flags & 0x80). */
+void func_001AA150(const char *name, Slot1468 *m, s16 *tex, s32 id, s32 mode, u32 flags,
+                   s32 motion);
+#ifdef NON_MATCHING   /* first draft */
+void func_001AA150(const char *name, Slot1468 *m, s16 *tex, s32 id, s32 mode, u32 flags,
+                   s32 motion) {
+    char path[0x100];
+    s32 hdr[12];
+    u8 *buf;
+
+    if (id == -1) {
+        return;
+    }
+    buf = (u8 *)D_00306590.unk4C;
+    sprintf(path, D_0022EDE8, D_0022ED70, name);
+    if (func_001A9780(path, buf) <= 0) {
+        return;
+    }
+    memcpy(hdr, buf, 0x30);
+    func_001D0440(id);
+    if ((flags & 0x7F) < 2) {
+        if (motion == 0) {
+            return;
+        }
+    } else {
+        if (hdr[5] == 0) {
+            return;
+        }
+        func_001D2720(m, mode, buf + hdr[5], NULL, tex);
+        func_0018D730();
+    }
+    if (motion != 0 && !(flags & 0x80) && hdr[9] != 0) {
+        func_001D11E0(id, m, buf + hdr[9]);
+    }
+}
+#endif

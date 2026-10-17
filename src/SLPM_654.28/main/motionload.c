@@ -493,3 +493,61 @@ void func_001D6110(Slot1468 *m, void *motion) {
     m->unk80C = 0;
 }
 #endif
+
+/* Another motion file layout: up to 8 groups {count, offset of count motion offsets}; group k's
+   motions go to anims[base + k * stride + i]. */
+#ifdef NON_MATCHING   /* first draft */
+void func_001D46C0(u8 *file, MotionSet *set, s32 stride, MotionGroup *g, s32 size, s32 base) {
+    MotionTmp tmp;
+    u8 *end = file + g->offs;
+    u8 *work = (u8 *)(((u32)D_003065DC + size + 0x3F) & ~0x3F);
+    u16 k;
+    u16 i;
+    u32 count;
+    s32 *offs;
+    s32 *m;
+    u16 *slot;
+    u16 h;
+
+    for (k = 0; k < 8 && (u8 *)g < end; k++, g++) {
+        count = g->count;
+        if (count == 0) {
+            continue;
+        }
+        offs = (s32 *)(file + g->offs);
+        for (i = 0; i < count; i++) {
+            if (offs[i] == -1) {
+                continue;
+            }
+            m = (s32 *)(file + offs[i]);
+            if (m[0] == -1) {
+                set->anims[base + i + k * stride] = m[1];
+            } else {
+                func_001D6680(&tmp, work, m);
+                h = func_00191ED0(&tmp);
+                slot = &set->anims[base + i + k * stride];
+                if (*slot != 0) {
+                    func_00191F70(*slot);
+                }
+                *slot = h;
+                m[0] = -1;
+                m[1] = h;
+            }
+        }
+    }
+}
+#endif
+
+/* That file: {u16 count, u16 per, ...}, the groups at 8. */
+void func_001D4B20(u16 *file, MotionSet *set, s32 size, s32 stride, s32 base) {
+    u8 per = file[2];
+    u8 count = file[0];
+
+    set->count = count;
+    set->per = per;
+    set->loaded = 0;
+    func_001D46C0((u8 *)file, set, stride, (MotionGroup *)(file + 4), size, base);
+}
+
+void func_001D5100(void) {
+}
