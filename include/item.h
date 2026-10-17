@@ -31,12 +31,15 @@ typedef struct {
 /* Per item type (0x18 bytes, D_00716980). */
 typedef struct {
     u32 flags;          /* 0x00 */
-    u8 unk4[0xE - 4];
+    u8 unk4[0xC - 4];
+    s8 unkC;            /* 0x0C: (D_006EF3A0's column) */
+    s8 unkD;            /* 0x0D: (D_007175A0's entry) */
     s8 weapon;          /* 0x0E: the weapon sound bank (-1: none) */
     s8 unkF;            /* 0x0F */
     u8 unk10[2];
     u16 id;             /* 0x12 */
-    u8 unk14[4];
+    u8 unk14;           /* 0x14: its kind (D_006D5C30: the thing's update) */
+    u8 unk15[3];
 } ItemInfo;
 
 extern ItemSlot D_003967D0[0x100];

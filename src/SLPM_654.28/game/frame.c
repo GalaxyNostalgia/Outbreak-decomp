@@ -270,3 +270,15 @@ void func_005A78C0(void) {
     }
 }
 #endif
+
+extern u32 D_003938E8[];
+
+/* Clears bit n + 28 of D_003938E8. */
+void func_005AC1C0(s32 n) {
+    D_003938E8[0] &= ~(0x1000 << (n + 0x10));
+}
+
+/* Sets bit n + 28 of D_003938E8. */
+void func_005AC1F0(s32 n) {
+    D_003938E8[0] |= 0x1000 << (n + 0x10);
+}

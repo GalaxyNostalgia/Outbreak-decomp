@@ -223,6 +223,26 @@ s32 func_006CE7E0(u32 *args) {
     return 0;
 }
 
+/* if this player's second-set event flag args[0] is args[1] */
+s32 func_006CE8A0(u32 *args) {
+    u32 n = args[0];
+    s32 v = args[1];
+
+    D_0048BE70.unk78[(u8)D_0048BE70.cur]++;
+    if (v != 0) {
+        if (func_006CD410(n) == 0) {
+            func_0065AAF0();
+            return 2;
+        }
+    } else {
+        if (func_006CD410(n) != 0) {
+            func_0065AAF0();
+            return 2;
+        }
+    }
+    return 0;
+}
+
 s32 func_006CD410(u32 n);
 #ifdef NON_MATCHING   /* first draft */
 s32 func_006CD410(u32 n) {
@@ -542,7 +562,7 @@ typedef struct {
     u8 unk0[0x98];
     s32 n;              /* 0x98 */
     SglSwitch *sw;      /* 0x9C */
-    u8 unkA0[4];
+    u8 *seen;           /* 0xA0: per id, set by func_006CE9A0 */
 } SglRoomSw;            /* 0xA4 */
 
 extern SglRoomSw D_0084E2B0[];
@@ -616,6 +636,61 @@ s32 func_006CEA10(u32 *args) {
             v = FIELD(z, s16, 0x66) = v;
             z = func_005518B0(id, 1);
             FIELD(z, s16, 0x66) = v;
+        }
+    }
+    return 0;
+}
+
+void func_005AC1F0(s32 n);
+
+void func_005AC1C0(s32 n);
+
+/* Clears what func_006CE9A0 marks. */
+s32 func_006CE930(u32 *args) {
+    s32 n = args[0];
+
+    if (D_0023C00C == 0) {
+        func_005AC1C0(n);
+    }
+    D_0084E2B0[D_0023C008].seen[n] = 0;
+    return 0;
+}
+
+
+/* Marks id args[0] (in the scene: func_005AC1F0's flag too) as done for this player. */
+s32 func_006CE9A0(u32 *args) {
+    s32 n = args[0];
+
+    if (D_0023C00C == 0) {
+        func_005AC1F0(n);
+    }
+    D_0084E2B0[D_0023C008].seen[n] = 1;
+    return 0;
+}
+
+/* Arms the kind-13 zones with id args[0], with args[1] (at 0x62). */
+s32 func_006CEAA0(u32 *args) {
+    s32 id;
+    s16 v;
+    Zone *z;
+
+    id = args[0];
+    v = args[1];
+    if (D_0023C00C == 0) {
+        if (D_0023BD88 == 0x80) {
+            return 0;
+        }
+        z = D_0023BD90;
+        while (z != NULL) {
+            if (z->kind == 13) {
+                if (z->unk44 == id) {
+                    z->unk3C = 1;
+                    FIELD(z, s16, 0x62) = v;
+                }
+                z = z->next;
+            } else {
+                z = z->next;
+            }
         }
     }
     return 0;
@@ -855,6 +930,50 @@ s32 func_006CDD80(u32 *args) {
     return 0;
 }
 
+/* Arms the kind-3 zones (sub-kinds 0 and 2; 2 also takes args[1] at 0x58) and the kind-4 zones
+   (0x64 0) with id args[0], and the matching offline switches. */
+s32 func_006CDC00(u32 *args) {
+    s32 id;
+    Zone *z;
+    u16 v;
+    SglSwitch *e;
+    s32 i;
+
+    id = args[0];
+    v = args[1];
+    if (D_0023C00C == 0) {
+        if (D_0023BD88 == 0x80) {
+            return 0;
+        }
+        z = D_0023BD90;
+        while (z != NULL) {
+            if (z->kind == 3 && (z->unk44 == 0 || z->unk44 == 2)) {
+                if (z->u.id == id) {
+                    z->unk3C = 1;
+                    if (z->unk44 == 2) {
+                        FIELD(z, u16, 0x58) = v;
+                    }
+                }
+                z = z->next;
+            } else if (z->kind == 4 && FIELD(z, s32, 0x64) == 0) {
+                if (z->u.id == id) {
+                    z->unk3C = 1;
+                }
+                z = z->next;
+            } else {
+                z = z->next;
+            }
+        }
+    }
+    e = D_0084E2B0[D_0023C008].sw;
+    for (i = 0; i < D_0084E2B0[D_0023C008].n; i++, e++) {
+        if (e->kind == 3 && e->id == id && (e->id2 == 0 || e->id2 == 2)) {
+            e->on = 1;
+        }
+    }
+    return 0;
+}
+
 /* Arms the kind-3 zones (sub-kinds 1 and 3; 3 also takes args[1] at 0x58) and the kind-4 zones
    (0x64 1) with id args[0], and the matching offline switches. */
 s32 func_006CDFF0(u32 *args) {
@@ -913,6 +1032,17 @@ void func_006CCE30(s32 t, s32 room) {
     D_0048BE70.wait[5] = 0;
     D_0048BE70.pc[5] = tbl[0xC];
     D_0048BE70.base[5] = tbl;
+}
+
+/* Starts each of the first three characters' threads on their rooms' scripts. */
+void func_006CCD20(void) {
+    s32 i;
+
+    for (i = 0; i < 3; i++) {
+        if (D_00476DD0[i].active != 0) {
+            func_006CCE30(*(s32 *)D_00708478[i], D_00476DD0[i].unk1E2);
+        }
+    }
 }
 
 /* Offline, for a partner: starts its character's thread on its room's script. */

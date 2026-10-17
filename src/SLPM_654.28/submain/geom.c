@@ -44,6 +44,22 @@ s16 func_003426E0(s16 id) {
     return -1;
 }
 
+#include "model.h"
+
+extern RoomObjModel D_0039A3D0;
+
+/* Which of the room's object models is id (-1: none). */
+s16 func_00342450(s16 id) {
+    s32 i;
+
+    for (i = 0; i < D_0039A3D0.nroots; i++) {
+        if (id == (s16)D_0039A3D0.rootId[i]) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 /* A sound requested for the next frame (D_00320A42: 1 asked, 2 played). */
 extern u8 D_00320A42[];
 extern u16 D_00320A44[];

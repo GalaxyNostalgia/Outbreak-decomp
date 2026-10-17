@@ -3,6 +3,7 @@
 #include "game.h"
 #include "object.h"
 #include "item.h"
+#include "model.h"
 
 /* The room's items: placements (item%03d%02d.tbl, by difficulty and a random pick), the item
    types and spots (item%03d.dat) and what the NPCs carry. */
@@ -388,8 +389,170 @@ void func_00562100(void) {
 #endif
 
 void func_00560880(void);
-void *func_00560E80(u16 id, s32 a);
-void func_00561270(ItemSlot *e);
+/* An item's thing in the room (func_00560E80's; 0x250 bytes from the pool D_00386950). */
+typedef struct ItemObj {
+    s8 active;          /* 0x000 */
+    u8 unk1;            /* 0x001: its model is loaded */
+    u8 unk2;            /* 0x002: (8: an item) */
+    u8 unk3;
+    u8 unk4;            /* 0x004 */
+    u8 unk5;
+    u8 slot;            /* 0x006: its place in the pool */
+    u8 unk7[0xE - 7];
+    s16 unkE;           /* 0x00E */
+    u8 unk10[2];
+    s16 unk12;          /* 0x012 */
+    void *update;       /* 0x014: by the item's kind (D_006D5C30) */
+    void *draw;         /* 0x018 */
+    struct ItemObj *prev;   /* 0x01C */
+    struct ItemObj *next;   /* 0x020 */
+    u8 unk24[0x30 - 0x24];
+    u8 partOn[6];       /* 0x030 */
+    s16 id;             /* 0x036 */
+    u8 unk38[8];
+    Mat44 parts[6];     /* 0x040: its bones (from the room's object model) */
+    f32 mat[16];        /* 0x1C0 */
+    f32 pos[3];         /* 0x200 */
+    u8 unk20C[0x218 - 0x20C];
+    f32 unk218;         /* 0x218 */
+    s16 rot[3];         /* 0x21C */
+    u8 unk222[0x22C - 0x222];
+    f32 scale[3];       /* 0x22C */
+    s16 unk238;         /* 0x238 */
+    u8 unk23A[2];
+    s32 flags;          /* 0x23C */
+    u8 index;           /* 0x240 */
+    u8 unk241[1];       /* 0x241 */
+    s16 model;          /* 0x242 */
+    u8 unk244[0x250 - 0x244];
+} ItemObj;
+
+extern ItemObj D_003C51B0[0x40];
+extern ItemObj *D_00386950[0x40];   /* the free ones */
+extern s16 D_0023BDB0;              /* how many */
+extern ItemObj *D_0023BDB4;         /* the list's first */
+extern ItemObj *D_0023BDB8;         /* its last */
+
+/* A new (cleared) item thing, put last in the list (first when at != 0); NULL when none is free. */
+ItemObj *func_00560900(s32 at) {
+    ItemObj *o;
+
+    if (D_0023BDB0 == 0) {
+        return NULL;
+    }
+    D_0023BDB0--;
+    o = D_00386950[D_0023BDB0];
+    memset(o, 0, sizeof(ItemObj));
+    o->slot = (u32)((u8 *)o - (u8 *)D_003C51B0) / sizeof(ItemObj);
+    if (D_0023BDB8 == NULL) {
+        D_0023BDB4 = o;
+        D_0023BDB8 = o;
+        o->next = NULL;
+        o->prev = NULL;
+    } else if (at == 0) {
+        o->prev = D_0023BDB8;
+        o->next = NULL;
+        D_0023BDB8->next = o;
+        D_0023BDB8 = o;
+    } else {
+        o->prev = NULL;
+        o->next = D_0023BDB4;
+        D_0023BDB4->prev = o;
+        D_0023BDB4 = o;
+    }
+    return o;
+}
+
+/* Gives an item thing back (0 when the pool is full). */
+s32 func_005609F0(ItemObj *o) {
+    if (D_0023BDB0 == 0x40) {
+        return 0;
+    }
+    D_00386950[D_0023BDB0] = o;
+    D_0023BDB0++;
+    if (D_0023BDB8 == o) {
+        if (o->prev == NULL) {
+            D_0023BDB4 = NULL;
+            D_0023BDB8 = NULL;
+        } else {
+            o->prev->next = NULL;
+            D_0023BDB8 = o->prev;
+        }
+        memset(o, 0, sizeof(ItemObj));
+        return 1;
+    }
+    if (D_0023BDB4 == o) {
+        if (o->next == NULL) {
+            D_0023BDB4 = NULL;
+            D_0023BDB8 = NULL;
+        } else {
+            o->next->prev = NULL;
+            D_0023BDB4 = o->next;
+        }
+        memset(o, 0, sizeof(ItemObj));
+        return 1;
+    }
+    o->next->prev = o->prev;
+    o->prev->next = o->next;
+    memset(o, 0, sizeof(ItemObj));
+    return 1;
+}
+
+extern RoomObjModel D_0039A3D0;
+extern void *D_006D5C30[];
+extern u8 D_00341EB0[];
+s16 func_00342450(s16 id);
+void func_0018F7C0(f32 *m);
+void func_005AEA90(ItemObj *o, s32 a);
+
+/* A new thing for item id. */
+ItemObj *func_00560E80(s32 id, s32 a) {
+    u8 kind = 0;
+    ItemObj *o;
+    u8 type;
+    s32 i;
+    s16 sid;
+
+    if ((o = func_00560900(1)) == NULL) {
+        return NULL;
+    }
+    sid = id;
+    type = func_00583D60(sid);
+    if (type != 0xFF) {
+        kind = D_00716980[type].unk14;
+    }
+    o->active = 1;
+    o->unk2 = 8;
+    o->id = id;
+    o->unk4 = 0;
+    o->draw = D_00341EB0;
+    o->unk238 = 0xFF;
+    o->update = D_006D5C30[kind];
+    o->model = func_00342450(sid);
+    if (o->model >= 0) {
+        o->unk1 = 1;
+        for (i = 0; i < D_0039A3D0.count[o->model]; i++) {
+            o->partOn[i] = 1;
+            o->parts[i] = D_0039A3D0.world[o->model][i];
+        }
+    } else {
+        o->unk1 = 0;
+    }
+    o->pos[2] = 0.0f;
+    o->pos[1] = 0.0f;
+    o->pos[0] = 0.0f;
+    o->rot[2] = 0;
+    o->rot[1] = 0;
+    o->rot[0] = 0;
+    o->scale[2] = 1.0f;
+    o->scale[1] = 1.0f;
+    o->scale[0] = 1.0f;
+    func_0018F7C0(o->mat);
+    func_005AEA90(o, a);
+    return o;
+}
+
+void *func_00561270(ItemSlot *e);
 
 /* The room's item things again (from the slots), and the items lying in this scenario. */
 void func_00561570(void) {
@@ -415,6 +578,79 @@ void func_00561570(void) {
             func_00561270(e);
         }
     }
+}
+
+
+typedef struct {
+    f32 v[3];
+} ItemVec3;
+
+typedef struct {
+    u16 v;
+    u8 unk2[2];
+} Unk6EF3A0;
+
+extern Unk6EF3A0 D_006EF3A0[][7];
+ItemInfo *func_00583E30(u8 i);
+void func_005E5B80(f32 *pos, u8 *out, s32 c);
+u16 func_001ADEF0(s32 n);
+void func_005614B0(ItemSlot *e);
+
+/* Makes the thing of the item lying in slot e (again): placed, raised by its type or with its
+   own pose (D_006EF3A0), and its collision. */
+void *func_00561270(ItemSlot *e) {
+    s8 posed = 0;
+    ItemObj *o;
+    s8 col;
+    s8 k;
+    u16 v;
+
+    if (e->obj != NULL) {
+        func_005609F0(e->obj);
+        e->obj = NULL;
+    }
+    o = func_00560E80(e->unk6, 0);
+    if (o == NULL) {
+        return NULL;
+    }
+    *(ItemVec3 *)o->pos = *(ItemVec3 *)e->pos;
+    o->rot[2] = e->unk14;
+    o->rot[1] = e->unk16;
+    o->flags = e->flags;
+    o->index = e->index;
+    e->obj = o;
+    if (e->unk6 == 0x3200) {
+        func_005E5B80(o->pos, o->unk241, 0xFF);
+    } else if ((u16)e->owner == 0) {
+        o->flags |= 0x80000;
+        col = func_00583E30(e->index)->unkC;
+        k = func_00583E30(e->index)->unkD;
+        if (e->unk3 == 0) {
+            v = D_006EF3A0[(s8)e->unk2D][col].v;
+            if (v != 0) {
+                o->rot[2] = v;
+                posed = 1;
+                o->unk218 = ((f32 *)D_007175A0)[k];
+            }
+        }
+        if (posed == 0) {
+            o->pos[1] += ((f32 *)D_00716770)[e->type];
+            o->unk218 = 0.0f;
+        }
+        if (e->unk3 == 0) {
+            e->flags &= ~0x200000;
+            o->flags &= ~0x200000;
+        }
+        if (!(e->flags & 0x200000)) {
+            func_005614B0(e);
+        }
+        if (o->flags & 0x800) {
+            o->unkE = (s16)(func_001ADEF0(1) & 0x1F) + 0x3C;
+            o->unk12 = 0;
+        }
+        func_005E5B80(o->pos, o->unk241, 0xFF);
+    }
+    return o;
 }
 
 /* The slot of the item at place (> 0). */
@@ -455,7 +691,6 @@ ItemSlot *func_00562630(s16 place) {
     }
 }
 
-void func_005609F0(void *obj);
 void func_00590CC0(s32 h);
 
 void func_00581320(u8 i) {

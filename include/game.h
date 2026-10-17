@@ -43,7 +43,8 @@ typedef struct {
     u8 unk3F;           /* 0x3F: the player motions are loaded */
     u8 unk40[0x54 - 0x40];
     s32 bgm[3];         /* 0x54: the music on each ADX stream (main's options.c) */
-    u8 unk60[2];
+    s8 unk60;           /* 0x60: (set by script op func_0065D480) */
+    u8 unk61;
     s8 unk62;           /* 0x62: offline */
     s8 unk63;           /* 0x63 */
     u8 unk64;           /* 0x64: a room is being set up */

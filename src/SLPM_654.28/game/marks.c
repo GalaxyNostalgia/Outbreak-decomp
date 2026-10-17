@@ -215,7 +215,7 @@ void func_0064EB50(void) {
 #endif
 
 s32 func_001AF0A0(void);
-s32 func_00634640(DrawObjFull *o, s32 a);
+u8 func_00634640(DrawObjFull *o, s32 a);
 extern DrawObjFull D_00476DD0[8];
 
 void func_0064E9F0(void);

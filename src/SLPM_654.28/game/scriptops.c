@@ -722,6 +722,48 @@ s32 func_0065F910(u32 *args) {
 }
 #endif
 
+/* if D_0048BF60.unkBA compares with (byte) args[0] by (byte) args[1]: ==, !=, >=, <=, >, < */
+s32 func_0065FB30(u32 *args) {
+    u8 v = *(u8 *)&args[0];
+    u8 op = *(u8 *)&args[1];
+
+    D_0048BE70.unk78[CUR]++;
+    switch (op) {
+    case 0:
+        if (D_0048BF60.unkBA == v) {
+            return 0;
+        }
+        break;
+    case 1:
+        if (D_0048BF60.unkBA != v) {
+            return 0;
+        }
+        break;
+    case 2:
+        if (D_0048BF60.unkBA >= v) {
+            return 0;
+        }
+        break;
+    case 3:
+        if (D_0048BF60.unkBA <= v) {
+            return 0;
+        }
+        break;
+    case 4:
+        if (D_0048BF60.unkBA > v) {
+            return 0;
+        }
+        break;
+    case 5:
+        if (D_0048BF60.unkBA < v) {
+            return 0;
+        }
+        break;
+    }
+    func_0065AAF0();
+    return 2;
+}
+
 extern u8 D_0048BBE0[];        /* per item: who has it (player + 1) */
 void func_00341B50(void);
 void func_00341AB0(void);
@@ -1429,6 +1471,11 @@ void func_00652820(u32 id);
 void func_00652540(u16 id, s32 a, f32 *pos, u16 b);
 void func_00652610(u16 id, s32 a, s32 flags);
 
+s32 func_0065D480(u32 *args) {
+    D_0048BF60.unk60 = 1;
+    return 0;
+}
+
 s32 func_0065DA70(u32 *args) {
     u32 id = args[0];
 
@@ -1493,6 +1540,17 @@ extern s8 D_0048AF30[];
 
 s32 func_0065DC50(u32 *args) {
     D_0048AF30[args[0]] = args[1];
+    return 0;
+}
+
+/* Script variable args[0] (0-3, at 0xC8) = args[1] */
+s32 func_00660740(u32 *args) {
+    s32 i = args[0];
+
+    if ((u32)i > 3) {
+        return 0;
+    }
+    (&D_0048BE70.unkC8)[i] = args[1];
     return 0;
 }
 
@@ -1601,6 +1659,53 @@ s32 func_00662460(u32 *args) {
 }
 
 s32 func_001AF440(s32 room);
+
+#ifdef PLATFORM_PC
+u8 func_00634640(DrawObjFull *p, s32 a);
+#else
+s32 func_00634640(DrawObjFull *p, s32 a);   /* (returns u8, but this file saw s32: no masking) */
+#endif
+
+/* if every player still in the game is in room args[0] (args[1] 1) / none is (args[1] 0);
+   false when nobody is left */
+s32 func_00661450(u32 *args) {
+    s32 n = 0;
+    u16 room = args[0];
+    s32 v = args[1];
+    s32 i;
+    DrawObjFull *p;
+
+    D_0048BE70.unk78[CUR]++;
+    if (v != 0) {
+        for (i = 0; i < *(s32 *)&D_0023BE14; i++) {
+            p = &D_00476DD0[i];
+            if (func_00634640(p, 0) == 0) {
+                if (room != p->unk1E2) {
+                    func_0065AAF0();
+                    return 2;
+                }
+                n++;
+            }
+        }
+    } else {
+        for (i = 0; i < *(s32 *)&D_0023BE14; i++) {
+            p = &D_00476DD0[i];
+            if (func_00634640(p, 0) == 0) {
+                if (room == p->unk1E2) {
+                    func_0065AAF0();
+                    return 2;
+                }
+                n++;
+            }
+        }
+    }
+    if (n == 0) {
+        func_0065AAF0();
+        return 2;
+    }
+    return 0;
+}
+
 
 /* if we are the player in this room is args[0] */
 s32 func_00661DE0(u32 *args) {

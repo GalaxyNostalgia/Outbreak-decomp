@@ -446,6 +446,20 @@ s32 func_00633D80(DrawObjFull *o) {
 #endif
 
 /* Remembers o's position and heading as where it started. */
+/* Whether the character is out of the game (gone, or status 0x5E0); with a != 0 always 0. */
+u8 func_00634640(DrawObjFull *p, s32 a) {
+    u8 r;
+
+    if (a != 0) {
+        return 0;
+    }
+    r = (p->unkBA0 & 0x5E0) != 0;
+    if (p->active == 0) {
+        r = 1;
+    }
+    return r;
+}
+
 void func_00635920(DrawObjFull *o) {
     *(Vec3 *)o->unkD94 = *(Vec3 *)o->unk38;
     o->unkDA0 = o->unk92;

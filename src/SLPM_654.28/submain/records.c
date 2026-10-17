@@ -26,7 +26,7 @@ extern u32 D_0048AC10[];        /* the scene flags */
 extern s16 D_0048BDE0;
 extern DrawObjFull D_00476DD0[];
 s32 func_005409B0(u16 id);
-s32 func_00634640(DrawObjFull *p, s32 a);
+u8 func_00634640(DrawObjFull *p, s32 a);
 
 #define BIT(a, n) ((a)[(n) >> 5] & (1 << ((n) & 0x1F)))
 
