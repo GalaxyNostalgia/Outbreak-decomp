@@ -51,5 +51,7 @@ f32 func_00191690(const f32 *v);
 f32 func_001916E0(const f32 *a, const f32 *b);
 f32 func_001917C0(const f32 *a, const f32 *b);
 void func_00191820(f32 *out, const f32 *a, const f32 *b);
+/* SUBMAIN.BIN: out = v * s */
+void func_003405D0(f32 s, f32 *out, const f32 *v);
 
 #endif

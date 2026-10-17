@@ -66,7 +66,8 @@ typedef struct {
     s8 variant;         /* 0x7 */
     f32 scale;          /* 0x8 */
     s8 unkC;            /* 0xC: passed to func_005902F0 */
-    u8 unkD[3];
+    s8 hasData;         /* 0xD: has its own character data block */
+    s16 data;           /* 0xE: which (D_00358310[0][data], block data + 5) */
 } ThingDef;             /* 0x10 */
 
 typedef struct {

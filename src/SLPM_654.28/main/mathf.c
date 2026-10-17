@@ -12,6 +12,15 @@ f32 func_0018EED0(f32 x);                   /* cos on VU0 */
 void func_0018EFC0(f32 *out, f32 x);        /* sin and cos on VU0 */
 f32 func_00191BF0(f32 x);                   /* sqrt on VU0 */
 
+/* A vector's copy. */
+typedef struct {
+    f32 x, y, z;
+} Vec3f;
+
+void func_001918A0(f32 *dst, const f32 *src) {
+    *(Vec3f *)dst = *(const Vec3f *)src;
+}
+
 f32 func_00191AD0(f32 x) {
     return acosf(x);
 }

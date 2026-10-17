@@ -704,3 +704,15 @@ s32 func_006527B0(u16 model) {
     return 0;
 }
 #endif
+
+void func_0018D730(void);
+void func_001D50F0(u8 slot, u8 model, u8 a);
+void func_001D39C0(u8 slot, u8 model, u8 a, u8 b);
+
+/* NPC slot's model (and its held item's). */
+void func_005BB7C0(u8 slot, u8 model, u8 a, u8 b) {
+    func_0018D730();
+    func_001D50F0(slot, model, a);
+    func_001D39C0(slot, model, a, b);
+    func_0018D730();
+}

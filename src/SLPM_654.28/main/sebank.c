@@ -655,3 +655,268 @@ void func_001A6F20(void);
 void func_001AC210(void) {
     func_001A6F20();
 }
+
+/* Merging sound-driver sequence banks: each piece is a 16-byte header, a 0x28-byte header of chunk
+   offsets (-1: none) and up to five chunks, each {4 words: the 3rd its size, the 4th its last
+   index} then a table of entry offsets (-1: none) and the entries. The merge keeps piece 0's
+   headers and concatenates the entries, renumbering what entries refer to in the chunk before. */
+typedef struct {
+    u8 *base;           /* the piece */
+    u8 *base2;
+    u8 *hdr;            /* base + 0x10 */
+    u8 *c24;            /* its chunks (or (u8 *)-1) */
+    u8 *c14;
+    u8 *c18;
+    u8 *c1C;
+    u8 *c20;
+} SePiece;
+
+extern u8 *D_003089D0;      /* the output */
+extern u8 *D_003089D4;      /* its header */
+extern u8 *D_003089D8;      /* its chunk-offset header */
+extern u8 *D_003089E0;      /* the chunks written */
+extern u8 *D_003089E4;
+extern u8 *D_003089E8;
+extern u8 *D_003089EC;
+extern SePiece D_003089F0[16];
+void func_0018D600(void *p, s32 c, u32 n);
+
+#ifdef NON_MATCHING   /* first draft (the original copies field by field) */
+#define CH_SIZE(c) (*(s32 *)((c) + 8))
+#define CH_LAST(c) (*(s32 *)((c) + 0xC))
+#define CH_OFF(c, j) (*(s32 *)((c) + 0x10 + (j) * 4))
+
+static u8 *se_pad16(u8 *p, u8 *chunk) {
+    u32 k = 0x10 - ((p - chunk) & 0xF);
+    u32 i;
+
+    if (k != 0x10) {
+        for (i = 0; i < k; i++) {
+            *p++ = 0xFF;
+        }
+    }
+    return p;
+}
+
+static u8 *se_rel(u8 *base, s32 off) {
+    return off == -1 ? (u8 *)-1 : base + off;
+}
+
+s32 func_001BCA40(s32 n, u8 **seqs, u8 *out) {
+    u16 nA[16];
+    u16 nB[16];
+    u16 nC[16];
+    u32 i;
+    u32 j;
+    u32 k;
+    u8 *src;
+    u8 *dst;
+    s32 *tab;
+    s32 waves;
+    u16 acc;
+
+    func_0018D600(nA, 0, 0x20);
+    func_0018D600(nB, 0, 0x20);
+    func_0018D600(nC, 0, 0x20);
+    func_0018D600(&D_003089D0, 0, 0x20);
+    func_0018D600(D_003089F0, 0, 0x200);
+    for (i = 0; i < (u32)n; i++) {
+        SePiece *p = &D_003089F0[i];
+        p->base = seqs[i];
+        p->base2 = p->base;
+        p->hdr = p->base + 0x10;
+        p->c24 = se_rel(p->base, *(s32 *)(p->hdr + 0x24));
+        p->c14 = se_rel(p->base, *(s32 *)(p->hdr + 0x14));
+        p->c18 = se_rel(p->base, *(s32 *)(p->hdr + 0x18));
+        p->c1C = se_rel(p->base, *(s32 *)(p->hdr + 0x1C));
+        p->c20 = se_rel(p->base, *(s32 *)(p->hdr + 0x20));
+    }
+
+    D_003089D0 = out;
+    D_003089D4 = D_003089D0;
+    memcpy(D_003089D4, D_003089F0[0].base2, 0x10);
+    *(s32 *)(D_003089D4 + 8) = 0x10;
+    D_003089D8 = D_003089D0 + 0x10;
+    memcpy(D_003089D8, D_003089F0[0].hdr, 0x28);
+    for (k = 0; k < 7; k++) {
+        *(s32 *)(D_003089D8 + 0xC + k * 4) = -1;
+    }
+    dst = D_003089D8 + 0x28;
+    for (k = 0; k < 0x18; k++) {
+        *dst++ = 0xFF;
+    }
+
+    /* chunk 0x20: 8-byte entries; the first word moves by the wave bytes before */
+    D_003089EC = dst;
+    memcpy(D_003089EC, D_003089F0[0].c20, 0x10);
+    CH_SIZE(D_003089EC) = -1;
+    CH_LAST(D_003089EC) = 0;
+    for (i = 0; i < (u32)n; i++) {
+        src = D_003089F0[i].c20;
+        if (src != (u8 *)-1) {
+            nA[i] = CH_LAST(src) + 1;
+            CH_LAST(D_003089EC) += nA[i];
+        }
+    }
+    CH_LAST(D_003089EC)--;
+    tab = (s32 *)(D_003089EC + 0x10);
+    dst = (u8 *)tab + (CH_LAST(D_003089EC) + 1) * 4;
+    waves = 0;
+    for (i = 0; i < (u32)n; i++) {
+        src = D_003089F0[i].c20;
+        if (src == (u8 *)-1) {
+            continue;
+        }
+        for (j = 0; j < nA[i]; j++) {
+            s32 o = CH_OFF(src, j);
+            if (o != -1) {
+                *tab++ = dst - D_003089EC;
+                memcpy(dst, src + o, 8);
+                *(s32 *)dst += waves;
+                dst += 8;
+            } else {
+                *tab++ = o;
+            }
+        }
+        waves += *(s32 *)(D_003089F0[i].hdr + 0x10);
+    }
+    dst = se_pad16(dst, D_003089EC);
+    CH_SIZE(D_003089EC) = dst - D_003089EC;
+
+    /* chunk 0x1C: 0x2A-byte entries; the first halfword indexes chunk 0x20 */
+    D_003089E8 = dst;
+    memcpy(D_003089E8, D_003089F0[0].c1C, 0x10);
+    CH_SIZE(D_003089E8) = -1;
+    CH_LAST(D_003089E8) = 0;
+    for (i = 0; i < (u32)n; i++) {
+        src = D_003089F0[i].c1C;
+        if (src != (u8 *)-1) {
+            nB[i] = CH_LAST(src) + 1;
+            CH_LAST(D_003089E8) += nB[i];
+        }
+    }
+    CH_LAST(D_003089E8)--;
+    tab = (s32 *)(D_003089E8 + 0x10);
+    dst = (u8 *)tab + (CH_LAST(D_003089E8) + 1) * 4;
+    acc = 0;
+    for (i = 0; i < (u32)n; i++) {
+        src = D_003089F0[i].c1C;
+        if (src == (u8 *)-1) {
+            continue;
+        }
+        for (j = 0; j < nB[i]; j++) {
+            s32 o = CH_OFF(src, j);
+            if (o != -1) {
+                *tab++ = dst - D_003089E8;
+                memcpy(dst, src + o, 0x2A);
+                *(u16 *)dst += acc;
+                dst += 0x2A;
+            } else {
+                *tab++ = o;
+            }
+        }
+        acc += nA[i];
+    }
+    dst = se_pad16(dst, D_003089E8);
+    CH_SIZE(D_003089E8) = dst - D_003089E8;
+
+    /* chunk 0x18: {4 bytes, the 4th a count} then that many halfwords indexing chunk 0x1C */
+    D_003089E4 = dst;
+    memcpy(D_003089E4, D_003089F0[0].c18, 0x10);
+    CH_SIZE(D_003089E4) = -1;
+    CH_LAST(D_003089E4) = 0;
+    for (i = 0; i < (u32)n; i++) {
+        src = D_003089F0[i].c18;
+        if (src != (u8 *)-1) {
+            nC[i] = CH_LAST(src) + 1;
+            CH_LAST(D_003089E4) += nC[i];
+        }
+    }
+    CH_LAST(D_003089E4)--;
+    tab = (s32 *)(D_003089E4 + 0x10);
+    dst = (u8 *)tab + (CH_LAST(D_003089E4) + 1) * 4;
+    acc = 0;
+    for (i = 0; i < (u32)n; i++) {
+        src = D_003089F0[i].c18;
+        if (src == (u8 *)-1) {
+            continue;
+        }
+        for (j = 0; j < nC[i]; j++, tab++) {
+            s32 o = CH_OFF(src, j);
+            if (o != -1) {
+                u8 *e = src + o;
+                u16 *v = (u16 *)(e + 4);
+                *tab = dst - D_003089E4;
+                memcpy(dst, e, 4);
+                dst += 4;
+                for (k = 0; k < e[3]; k++) {
+                    *(u16 *)dst = *v++ + acc;
+                    dst += 2;
+                }
+            } else {
+                *tab = o;
+            }
+        }
+        acc += nB[i];
+    }
+    dst = se_pad16(dst, D_003089E4);
+    CH_SIZE(D_003089E4) = dst - D_003089E4;
+
+    /* chunk 0x14: programs by number, each a 0x24-byte header and [4] 0x14-byte entries whose
+       first halfword indexes chunk 0x18; two pieces may not use the same number */
+    D_003089E0 = dst;
+    memcpy(D_003089E0, D_003089F0[0].c14, 0x10);
+    CH_SIZE(D_003089E0) = -1;
+    *(u32 *)(D_003089E0 + 0xC) = 0;
+    for (i = 0; i < (u32)n; i++) {
+        src = D_003089F0[i].c14;
+        if (src != (u8 *)-1 && *(u32 *)(D_003089E0 + 0xC) < *(u32 *)(src + 0xC)) {
+            *(u32 *)(D_003089E0 + 0xC) = *(u32 *)(src + 0xC);
+        }
+    }
+    for (k = 0; k <= *(u32 *)(D_003089E0 + 0xC); k++) {
+        CH_OFF(D_003089E0, k) = -1;
+    }
+    dst = D_003089E0 + 0x10 + (*(u32 *)(D_003089E0 + 0xC) + 1) * 4;
+    acc = 0;
+    for (i = 0; i < (u32)n; i++) {
+        src = D_003089F0[i].c14;
+        if (src == (u8 *)-1) {
+            continue;
+        }
+        for (j = 0; j <= *(u32 *)(src + 0xC); j++) {
+            u8 *e;
+            u8 *s;
+            if (CH_OFF(src, j) == -1) {
+                continue;
+            }
+            if (CH_OFF(D_003089E0, j) != -1) {
+                return -4;
+            }
+            CH_OFF(D_003089E0, j) = dst - D_003089E0;
+            e = src + CH_OFF(src, j);
+            memcpy(dst, e, 0x24);
+            dst += 0x24;
+            s = e + 0x24;
+            for (k = 0; k < e[4]; k++) {
+                memcpy(dst, s, 0x14);
+                s += 0x14;
+                *(u16 *)dst += acc;
+                dst += 0x14;
+            }
+        }
+        acc += nC[i];
+    }
+    dst = se_pad16(dst, D_003089E0);
+    CH_SIZE(D_003089E0) = dst - D_003089E0;
+
+    *(s32 *)(D_003089D8 + 0xC) = dst - D_003089D0;
+    *(s32 *)(D_003089D8 + 0x10) = waves;
+    *(s32 *)(D_003089D8 + 0x14) = D_003089E0 - D_003089D0;
+    *(s32 *)(D_003089D8 + 0x18) = D_003089E4 - D_003089D0;
+    *(s32 *)(D_003089D8 + 0x1C) = D_003089E8 - D_003089D0;
+    *(s32 *)(D_003089D8 + 0x20) = D_003089EC - D_003089D0;
+    *(s32 *)(D_003089D8 + 0x24) = -1;
+    return *(s32 *)(D_003089D8 + 0xC);
+}
+#endif

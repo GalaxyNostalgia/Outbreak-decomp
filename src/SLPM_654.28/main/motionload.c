@@ -551,3 +551,6 @@ void func_001D4B20(u16 *file, MotionSet *set, s32 size, s32 stride, s32 base) {
 
 void func_001D5100(void) {
 }
+
+void func_001D50F0(void) {
+}

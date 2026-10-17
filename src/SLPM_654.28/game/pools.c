@@ -627,3 +627,9 @@ void func_006B9A00(void) {
 
 void func_0060DE80(void) {
 }
+
+void func_0060F2B0(void) {
+}
+
+void func_0060F2C0(void) {
+}

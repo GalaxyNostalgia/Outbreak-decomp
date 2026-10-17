@@ -906,3 +906,138 @@ void func_001D33D0(void) {
         }
     }
 }
+
+/* A model of enemy type n (kind 0) or NPC type n (kind 1, D_00357E60), variant sub, into slot
+   (textures from 0x1200/0x1300 + slot * 4); shared models (D_0023BB98 not 1) get 0x80000000. */
+extern ThingKind D_00357E60[];
+extern s16 D_0023BB98;
+extern Slot1468 D_0042A2C0[];
+u8 *func_001B1AD0(s32 count, s32 owner);
+void func_001B1BF0(u8 *buf);
+void func_001D0440(s32 base);
+
+void func_001D3AE0(u8 kind, u8 slot, u8 n, u8 sub, s32 shared);
+#ifdef NON_MATCHING   /* first draft */
+void func_001D3AE0(u8 kind, u8 slot, u8 n, u8 sub, s32 shared) {
+    u32 flags = 0;
+    ThingDef *list;
+    ThingDef *e;
+    Slot1468 *m;
+
+    if (D_0023BB98 != 1 && shared != 0) {
+        flags = 0x80000000;
+    }
+    if (kind != 1) {
+        list = D_00357500[n].defs;
+        func_001D0440(slot * 4 + 0x1200);
+    } else {
+        list = D_00357E60[n].defs;
+        func_001D0440(slot * 4 + 0x1300);
+        flags |= 0x20000000;
+    }
+    func_001D3560();
+    m = &D_0042A2C0[slot];
+    m->buf = func_001B1AD0(0x20, 9);
+    e = &list[sub];
+    m->unk0 = (u32 *)m->unk820;
+    m->unk4 = (u32 *)m->unkA20;
+    m->unk818 = m->unkC20;
+    if (func_001D2260(m, e->model, e->tex, flags | 2, e->shared) == 0) {
+        func_001B1BF0(m->buf);
+        m->buf = NULL;
+    }
+}
+#endif
+
+/* A 500-anim motion bank (an enemy type's extra motions). */
+typedef struct {
+    u8 count;
+    u8 per;
+    u8 unk2;            /* 0x2: 2 once loaded */
+    u8 unk3;
+    u16 anims[500];
+} EnemyMotions500;      /* 0x3EC */
+
+void func_001D4B50(u16 *file, EnemyMotions500 *out, s32 size) {
+    func_001D4B20(file, (EnemyMotions *)out, size, 500, 0);
+    out->unk2 = 2;
+}
+
+extern u8 D_0048C030[];             /* by enemy type: its motion bank (0xFF: none) */
+extern EnemyMotions D_0048FDB0[6];
+extern EnemyMotions500 D_0048E620[6];
+extern char *D_00358050[];          /* motion files by def unk2 */
+extern char *D_00358110[];          /* extra motion files (< 50) */
+
+/* Enemy type's motions into a free bank (copied from a loaded slot, or read), and its extra
+   motions. */
+void func_001D6700(s32 unused, u8 type, u8 variant);
+#ifdef NON_MATCHING   /* first draft */
+void func_001D6700(s32 unused, u8 type, u8 variant) {
+    u8 *bank = &D_0048C030[type];
+    s32 i;
+    ThingDef *defs;
+    EnemyMotions *m;
+    u8 *buf;
+    s32 size;
+    u8 k;
+
+    if (*bank != 0xFF) {
+        return;
+    }
+    for (i = 0; i < 6; i++) {
+        if (D_0048FDB0[i].per == 0) {
+            break;
+        }
+    }
+    if (i == 6) {
+        return;
+    }
+    *bank = i;
+    defs = D_00357500[type].defs;
+    m = &D_0048FDB0[i];
+    if (func_001D2B20(m, type, variant, i) != 1) {
+        buf = (u8 *)D_00306590.unk4C;
+        func_001D4B20((u16 *)buf, m, func_001CFBB0(D_00358050[defs[variant].unk2], buf, 0x20001, 0), 200, 0);
+    }
+    buf = (u8 *)D_00306590.unk4C;
+    k = defs[variant].unk2;
+    if (k < 50) {
+        size = func_001CFBB0(D_00358110[k], buf, 1, 0);
+        if (size > 0) {
+            func_001D4B50((u16 *)buf, &D_0048E620[i], size);
+        }
+    }
+}
+#endif
+
+extern Slot1468 D_003F3090[];       /* the NPCs' models */
+void func_001D38A0(s32 held, u8 model);
+
+/* NPC slot's model (textures 0x1400 + slot * 8; 0x1600 for kind 1, which also gets its held
+   item). */
+void func_001D39C0(u8 slot, u8 model, u8 kind, s8 held);
+#ifdef NON_MATCHING   /* first draft */
+void func_001D39C0(u8 slot, u8 model, u8 kind, s8 held) {
+    Slot1468 *m;
+
+    if (kind == 1) {
+        func_001D0440(slot * 8 + 0x1600);
+    } else {
+        func_001D0440(slot * 8 + 0x1400);
+    }
+    func_001D3560();
+    m = &D_003F3090[slot];
+    m->buf = func_001B1AD0(0x20, (kind == 1 ? 3 : 2) | (model << 16));
+    m->unk0 = (u32 *)m->unk820;
+    m->unk4 = (u32 *)m->unkA20;
+    m->unk818 = m->unkC20;
+    if (kind != 1) {
+        held = -1;
+    }
+    func_001D24C0(m, model, model, 3, 0, held);
+    if (kind == 1) {
+        func_001D38A0(held, model);
+    }
+}
+#endif

@@ -84,3 +84,17 @@ void func_00341B50(void) {
     func_001AEC40(func_00341AF0);
     func_001B3920();
 }
+
+void func_001918A0(f32 *dst, const f32 *src);
+void func_00191750(f32 *v);
+
+/* out = p + s * the direction of dir. */
+void func_00340FC0(f32 s, const f32 *dir, const f32 *p, f32 *out) {
+    f32 d[4];
+
+    func_001918A0(d, dir);
+    func_00191750(d);
+    out[0] = p[0] + d[0] * s;
+    out[1] = p[1] + d[1] * s;
+    out[2] = p[2] + d[2] * s;
+}

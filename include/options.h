@@ -81,7 +81,8 @@ typedef struct {
     u8 *rtp;            /* 0xA4: the room's r%02d.rtp */
     u8 *voice;          /* 0xA8: the players' voice partitions (0x10C0 bytes each) */
     s8 *emSet;          /* 0xAC: the room's enemy placements (r%02d.epp) */
-    u8 unkB0[0xB5 - 0xB0];
+    u8 *charData;       /* 0xB0: 0x1324 bytes per character (D_0023BCD0 points here) */
+    u8 unkB4;
     u8 unkB5;
 } Options;
 
