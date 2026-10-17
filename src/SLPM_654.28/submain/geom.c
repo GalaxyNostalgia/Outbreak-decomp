@@ -106,3 +106,17 @@ extern f32 D_00239CD4;          /* 2 pi / 65536 */
 f32 func_00340100(u16 a) {
     return func_00191B70(D_00239CD4 * (u32)a);
 }
+
+/* The point on the line through a and b nearest p. */
+void func_00341140(const f32 *a, const f32 *b, const f32 *p, f32 *out) {
+    f32 dx = b[0] - a[0];
+    f32 dy = b[1] - a[1];
+    f32 dz = b[2] - a[2];
+    f32 t;
+
+    t = (a[2] * dz + (a[1] * dy + (a[0] * dx - dx * p[0]) - dy * p[1]) - dz * p[2]) /
+        (-(dx * dx) - dy * dy - dz * dz);
+    out[0] = a[0] + dx * t;
+    out[1] = a[1] + dy * t;
+    out[2] = a[2] + dz * t;
+}

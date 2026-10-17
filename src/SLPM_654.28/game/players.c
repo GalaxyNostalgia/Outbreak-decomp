@@ -491,3 +491,60 @@ void func_00638850(void) {
     }
 }
 #endif
+
+/* A start point for the players (room data). */
+typedef struct {
+    s32 x;              /* 0x00 */
+    s32 z;              /* 0x04 */
+    s32 angle;          /* 0x08 */
+    s32 unkC[2];
+    s32 y;              /* 0x14 */
+    s32 unk18[2];
+} StartPoint;           /* 0x20 */
+
+/* (D_0048AC10 + 0x280: per player, whether it was placed and on which start point) */
+typedef struct {
+    u8 placed;
+    u8 unk1;
+    u8 point;
+} PlayerPlace;
+
+typedef struct {
+    u8 unk0[0x280];
+    PlayerPlace place[8];
+} ScenePlaces;
+
+extern s32 D_0023BE10;          /* start points */
+extern StartPoint D_00489C10[];
+void func_0018D630(void *dst, void *src, s32 size);
+
+/* Takes the room's start points from f and puts each player not yet placed (and not in one of
+   the 0x5E0 states) on its own. */
+void func_00631290(s32 *f);
+#ifdef NON_MATCHING   /* two base registers swapped */
+void func_00631290(s32 *f) {
+    DrawObjFull *p;
+    StartPoint *s;
+    u8 i;
+    u32 n;
+
+    D_0023BE10 = f[0];
+    func_0018D630(D_00489C10, f + 1, D_0023BE10 * sizeof(StartPoint));
+    n = D_0023BE14;
+    for (i = 0; i < n; i++) {
+        p = &D_00476DD0[i];
+        if (p->active != 0 && ((ScenePlaces *)&D_0048AC10)->place[i].placed == 0 &&
+            !(p->unkBA0 & 0x5E0)) {
+            s = &D_00489C10[((ScenePlaces *)&D_0048AC10)->place[i].point];
+            p->unk38[0] = s->x;
+            p->unk38[1] = s->y;
+            p->unk38[2] = s->z;
+            p->unk90 = 0;
+            p->unk92 = s->angle;
+            p->unk94 = 0;
+            ((ScenePlaces *)&D_0048AC10)->place[i].placed = 1;
+            p->unkBA4 |= 1;
+        }
+    }
+}
+#endif

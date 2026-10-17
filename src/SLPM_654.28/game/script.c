@@ -397,3 +397,31 @@ s32 func_00685060(void) {
     return script[table[i] + D_00306590.unk1C];
 }
 #endif
+
+void *memcpy(void *d, const void *s, u32 n);
+
+/* Takes the room script (size bytes) into the script buffer at 0x8000, turns its 16 routine
+   offsets into pointers and, online, starts threads 1 and 5 on routines 8 and 12. */
+void func_0065A680(void *src, u32 size) {
+    u32 **tbl;
+    s32 i;
+
+    D_00306590.unk29 = 1;
+    memcpy(D_00306590.script + 0x8000, src, size);
+    tbl = (u32 **)(D_00306590.script + 0x8000);
+    for (i = 0; i < 0x10; i++) {
+        if (tbl[i] != NULL) {
+            *(u32 *)&tbl[i] += (u32)tbl;
+        }
+    }
+    if (func_001AF4D0() != 1) {
+        D_0048BE70.wait[1] = 0;
+        D_0048BE70.entry[1] = 8;
+        D_0048BE70.pc[1] = tbl[8];
+        D_0048BE70.entry[5] = 0xC;
+        D_0048BE70.base[1] = tbl;
+        D_0048BE70.wait[5] = 0;
+        D_0048BE70.pc[5] = tbl[0xC];
+        D_0048BE70.base[5] = tbl;
+    }
+}
