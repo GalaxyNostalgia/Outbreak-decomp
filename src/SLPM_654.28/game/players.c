@@ -26,7 +26,7 @@ void func_00635780(s32 a);
 void func_005C5A90(DrawObjFull *p, s32 a);
 void func_00635920(DrawObjFull *p);
 void func_0062E1E0(DrawObjFull *p, s32 a);
-void func_005A4490(DrawObjFull *p, s32 flags, f32 a, f32 b);
+void func_005A4490(DrawObjFull *p, s16 id, f32 a, f32 b);
 void func_0055C4E0(DrawObjFull *p);
 void func_00556BD0(DrawObjFull *p);
 void func_005AEDB0(DrawObjFull *p);

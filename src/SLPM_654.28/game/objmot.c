@@ -1,6 +1,7 @@
 #include "common.h"
 #include "object.h"
 #include "options.h"
+#include "game.h"
 
 /* GAME.BIN: starting a motion on one layer of a character (players, NPCs, enemies alike). */
 
@@ -214,4 +215,115 @@ void func_0055C3D0(DrawObjFull *o, ObjAnim *a) {
     a->root->delta.x = 0.0f;
     a->root->delta.y = 0.0f;
     a->root->delta.z = 0.0f;
+}
+
+/* Marks every motion layer of o (both copies, 0x1F0 and 0x370) to start over. */
+void func_0055C4E0(DrawObjFull *o) {
+    u32 i;
+
+    for (i = 0; i < (u8)o->unk524; i++) {
+        ((u8 *)o)[0x1F0 + i * 0x20] = 1;
+        ((u8 *)o)[0x370 + i * 0x20] = 1;
+    }
+}
+
+void func_005661C0(DrawObjFull *o);
+void func_0056A440(DrawObjFull *o);
+void func_005BB880(DrawObjFull *o);
+void func_0058AA70(DrawObjFull *o);
+void func_0058AF00(DrawObjFull *o);
+void func_0058B200(DrawObjFull *o);
+void func_0058B550(DrawObjFull *o);
+void func_005BBC40(DrawObjFull *o);
+void func_0058BA20(DrawObjFull *o);
+void func_0058BE00(DrawObjFull *o);
+void func_00570310(DrawObjFull *o);
+void func_005655F0(DrawObjFull *o);
+
+/* A character's own step for its current motion's set (another character's: func_005655F0). */
+void func_005654D0(DrawObjFull *o) {
+    switch (o->unkCE0) {
+    case 0:
+        break;
+    case 0xFF:
+        func_005655F0(o);
+        return;
+    }
+    switch (o->unkCE1) {
+    case 0:
+        func_005661C0(o);
+        break;
+    case 1:
+        func_0056A440(o);
+        break;
+    case 2:
+        func_005BB880(o);
+        break;
+    case 3:
+        func_0058AA70(o);
+        break;
+    case 4:
+        func_0058AF00(o);
+        break;
+    case 5:
+        func_0058B200(o);
+        break;
+    case 6:
+        func_0058B550(o);
+        break;
+    case 7:
+        func_005BBC40(o);
+        break;
+    case 8:
+        func_0058BA20(o);
+        break;
+    case 9:
+        func_0058BE00(o);
+        break;
+    case 10:
+        func_00570310(o);
+        break;
+    }
+}
+void func_00578B30(DrawObjFull *o);
+
+/* Before the motions advance: characters' and things' own step. */
+void func_00543410(DrawObjFull *o) {
+    if (o->type == 0 || o->type == 1) {
+        func_005654D0(o);
+    } else if (o->type == 2) {
+        func_00578B30(o);
+    }
+}
+s32 func_0055BE60(DrawObjFull *o, s32 layer, f32 speed);
+
+/* Advances o's motion layers by speed (layer 0 last); the result is layer 0's (-1 when it is
+   held). For players, 0xCE2 tells whether the motion is past its frame 0xCE3 (0x80) and, for
+   ours, whether 0xF80 has any of 0xF3F (0x40). */
+s8 func_0055C030(DrawObjFull *o, f32 speed) {
+    s8 i;
+    s8 r;
+
+    func_00543410(o);
+    for (i = 1; i < (u8)o->unk524; i++) {
+        if (!(((u8 *)o)[0x1FE + i * 0x20] & 1)) {
+            func_0055BE60(o, i, speed);
+        }
+    }
+    if (((u8 *)o)[0x1FE] & 1) {
+        r = -1;
+    } else {
+        r = func_0055BE60(o, 0, speed);
+    }
+    if (o->type == 0) {
+        if (o->unkCE3 != 0) {
+            o->unkCE2 = (FIELD(o, f32, 0x1E4) >= (f32)(u32)o->unkCE3) ? 0x80 : 0;
+            if (o->kind == D_0048BF60.unk1D) {
+                o->unkCE2 |= (u8)((FIELD(o, s32, 0xF80) & 0xF3F) ? 0x40 : 0);
+            }
+        } else {
+            o->unkCE2 = 0;
+        }
+    }
+    return r;
 }

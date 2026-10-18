@@ -465,6 +465,28 @@ void func_00635920(DrawObjFull *o) {
     o->unkDA0 = o->unk92;
 }
 
+/* Clears o's turn request (0xD94-0xDA0). */
+void func_00635950(DrawObjFull *o) {
+    FIELD(o, s32, 0xD94) = 0;
+    FIELD(o, s32, 0xD98) = 0;
+    FIELD(o, s32, 0xD9C) = 0;
+    FIELD(o, s16, 0xDA0) = 0;
+}
+
+/* Takes o's pending motion change (unkBA4 4): 0 none (or the step is 0xFF), 2 with flag 0x80,
+   else 1. */
+s32 func_00635970(DrawObjFull *o) {
+    if (o->unkBA4 & 4) {
+        o->unkBA4 &= ~4;
+        o->unk520 = 0;
+        if (o->act[2] == 0xFF) {
+            return 0;
+        }
+        return (o->unkBA4 & 0x80) ? 2 : 1;
+    }
+    return 0;
+}
+
 /* The room script's second table (at its 0x8004): an entry per room object model (< 0x20). */
 u8 func_00551690(u8 model) {
     if (model >= 0x20) {
@@ -530,6 +552,37 @@ void func_00639CE0(DrawObjFull *o) {
     func_005A61C0(o, 1.0f);
 }
 
+void func_0062E0F0(DrawObjFull *o);
+
+/* Whether o's condition changed since its motion started (then action 1/0x62 plays the
+   change; not while bleeding). */
+#ifdef NON_MATCHING   /* register of the loaded unkB9C */
+s32 func_0061DF00(DrawObjFull *o) {
+    u8 cond;
+    s32 r;
+
+    if (o->unkBA0 & 0x80) {
+        return 0;
+    }
+    func_0062E0F0(o);
+    cond = o->unkB9B;
+    if (o->unkBA0 & 8) {
+        cond = 3;
+    }
+    r = 0;
+    if (o->unkB9C != cond) {
+        o->unk54A |= 0x10;
+        o->act[0] = 1;
+        o->act[1] = 0x62;
+        o->act[2] = 0;
+        o->act[3] = 0;
+        func_00635920(o);
+        r = 1;
+    }
+    return r;
+}
+#endif
+
 s32 func_006350A0(DrawObjFull *o);
 void func_0061DF90(DrawObjFull *o, s32 k);
 s32 func_001AF510(void);
@@ -537,7 +590,7 @@ s16 func_00635120(s32 k);
 void func_0064C620(DrawObjFull *o, s32 kind);
 s32 func_001AF540(DrawObjFull *o);
 void func_005C4260(void);
-void func_005A4490(DrawObjFull *o, s32 flags, f32 a, f32 b);
+void func_005A4490(DrawObjFull *o, s16 id, f32 a, f32 b);
 void func_0055C4E0(DrawObjFull *o);
 
 /* A character's pending hit (unkC64 2): what hit it (unkC65) decides the reaction. */

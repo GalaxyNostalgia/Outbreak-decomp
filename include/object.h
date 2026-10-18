@@ -74,7 +74,9 @@ typedef struct {
     u8 unk1E0[2]; \
     u16 unk1E2;         /* 0x1E2: the player's id (Options.unk1C is ours) */ \
     u8 unk1E4[0x200 - 0x1E4]; \
-    u8 unk200[0x41];    /* 0x200 */ \
+    u8 unk200[4];       /* 0x200 */ \
+    u8 unk204[0x20];    /* 0x204: the motion's state */ \
+    u8 unk224[0x241 - 0x224]; \
     u8 unk241; \
     u8 unk242[0x4E4 - 0x242]; \
     s32 unk4E4[3];      /* 0x4E4 */ \
@@ -142,7 +144,12 @@ typedef struct {
     s32 unkCB8;         /* 0xCB8 */ \
     u8 unkCBC[0xCCC - 0xCBC]; \
     u8 color[4];        /* 0xCCC: r, g, b, a */ \
-    u8 unkCD0[0xCE8 - 0xCD0]; \
+    u8 unkCD0[0xCE0 - 0xCD0]; \
+    u8 unkCE0;          /* 0xCE0: (0xFF) its motion set is another character's */ \
+    u8 unkCE1;          /* 0xCE1: which set (or that character's kind) */ \
+    u8 unkCE2;          /* 0xCE2: 0x80 past frame unkCE3, 0x40 ... */ \
+    u8 unkCE3;          /* 0xCE3 */ \
+    u8 unkCE4[4]; \
     u32 unkCE8;         /* 0xCE8 */ \
     s32 unkCEC;         /* 0xCEC */ \
     s32 unkCF0;         /* 0xCF0 */ \
