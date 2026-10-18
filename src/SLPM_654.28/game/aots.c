@@ -1,4 +1,5 @@
 #include "common.h"
+#include "item.h"
 #include "options.h"
 
 /* GAME.BIN: the room's trigger areas (0xC4 bytes, 0x80 of them in pool D_003B2290 with free
@@ -403,5 +404,69 @@ Aot *func_00595CD0(s32 index, s32 (*c)[2], s32 top, s32 bottom) {
     a->p.w[0] = index;
     a->on = 1;
     a->p.h[5] = 0xFFFF;
+    return a;
+}
+
+/* A room object's own area (type 0x81). */
+Aot *func_00595D90(ItemObj *o, s32 (*c)[2], s32 bottom, s32 top) {
+    Aot *a = func_00590BF0(0);
+
+    if (a == NULL) {
+        return a;
+    }
+    a->type = 0x81;
+    a->unk31 = 7;
+    a->unk3D = 0;
+    a->unk32 = 1;
+    func_00107B50(a->corner, c, 0x20);
+    a->unk20[0] = bottom;
+    a->unk20[1] = top;
+    memset(&a->p, 0, sizeof(a->p));
+    a->p.b[4] = o->index;
+    a->p.w[0] = (s32)o;
+    a->on = 1;
+    return a;
+}
+
+/* A room object's side area (type 0x82; side 0 or 1). */
+Aot *func_00595E60(ItemObj *o, s32 (*c)[2], s32 bottom, s32 top, s32 side) {
+    Aot *a = func_00590BF0(0);
+
+    if (a == NULL) {
+        return a;
+    }
+    a->type = 0x82;
+    a->unk31 = 0;
+    a->unk3D = 0;
+    a->unk32 = 1;
+    func_00107B50(a->corner, c, 0x20);
+    a->unk20[0] = bottom;
+    a->unk20[1] = top;
+    memset(&a->p, 0, sizeof(a->p));
+    a->p.b[4] = o->index;
+    a->p.b[5] = side;
+    a->p.w[0] = (s32)o;
+    a->on = 1;
+    return a;
+}
+
+/* The area on top of a room object (type 0x83). */
+Aot *func_00595F30(ItemObj *o, s32 (*c)[2], s32 bottom, s32 top) {
+    Aot *a = func_00590BF0(0);
+
+    if (a == NULL) {
+        return a;
+    }
+    a->type = 0x83;
+    a->unk31 = 0;
+    a->unk3D = 1;
+    a->unk32 = 1;
+    func_00107B50(a->corner, c, 0x20);
+    a->unk20[0] = bottom;
+    a->unk20[1] = top;
+    memset(&a->p, 0, sizeof(a->p));
+    a->p.b[4] = o->index;
+    a->p.w[0] = (s32)o;
+    a->on = 1;
     return a;
 }

@@ -135,23 +135,29 @@ typedef struct {
     s8 y;               /* 0x19 */
     u8 unk1A[5];
     s8 w;               /* 0x1F */
-    u8 unk20;
+    s8 d;               /* 0x20: (own size) its height */
     s8 h;               /* 0x21 */
     u8 unk22[2];
     s32 flags;          /* 0x24: 1 placed, 4 own size (w, h) */
     ItemObj *obj;       /* 0x28: its thing */
-    s32 unk2C;          /* 0x2C */
-    u8 unk30[0x3C - 0x30];
+    s32 unk2C;          /* 0x2C: its area (an Aot) */
+    s32 unk30;          /* 0x30: its side areas */
+    s32 unk34;
+    s32 unk38;          /* 0x38: the area on top of it */
 } RoomExtraSlot;        /* 0x3C */
 
 typedef struct {
     s8 shape;
-    u8 unk1[7];
+    s8 unk1;            /* 0x1: (> 0) it has side areas (func_0067BA30) */
+    s8 unk2;            /* 0x2: (> 0) it has an area of its own */
+    u8 unk3[5];
 } PlaceKind;
 
 typedef struct {
     s8 rect[4][4];      /* per turn: x0, y0, x1, y1 */
-    u8 unk10[4];
+    u8 unk10;
+    s8 height;          /* 0x11: in cells (50 units) */
+    u8 unk12[2];
 } PlaceShape;           /* 0x14 */
 
 extern PlaceKind D_00716000[];
@@ -235,7 +241,44 @@ void func_0067B070(f32 *out, RoomExtraSlot *s) {
 }
 
 f32 func_005E5B80(const f32 *p, u8 *sub, s32 want);
-void func_0067B890(RoomExtraSlot *s, s32 a);
+
+typedef struct {
+    f32 v[4][2];
+} SlotDirs;
+
+extern SlotDirs D_006E5800;     /* the corners' directions */
+void func_00340310(s32 rx, s32 ry, s32 rz, f32 *m);
+void func_00191410(f32 *v, const f32 *m);
+
+/* Slot s's own area: its size (w x h cells) turned by its heading, 10 units larger. */
+void func_0067B890(RoomExtraSlot *s, s32 (*out)[2]);
+#ifdef NON_MATCHING   /* element addresses (&c[2], &v[1], &v[2]) kept in s registers */
+void func_0067B890(RoomExtraSlot *s, s32 (*out)[2]) {
+    SlotDirs dirs = D_006E5800;
+    f32 m[16];
+    f32 c[3];
+    f32 v[3];
+    f32 w;
+    f32 d;
+    s32 i;
+
+    if (s == NULL || s->used == 0) {
+        return;
+    }
+    w = 50.0f * s->w;
+    d = 50.0f * s->h;
+    func_0067B070(c, s);
+    for (i = 0; i < 4; i++) {
+        func_00340310(0, s->dir << 14, 0, m);
+        v[0] = w * dirs.v[i][0];
+        v[1] = 0.0f;
+        v[2] = d * dirs.v[i][1];
+        func_00191410(v, m);
+        out[i][0] = c[0] + v[0] + 10.0f * dirs.v[i][0];
+        out[i][1] = c[2] + v[2] + 10.0f * dirs.v[i][1];
+    }
+}
+#endif
 
 /* Puts slot s (and its thing) where it stands. */
 void func_0067AF70(RoomExtraSlot *s) {
@@ -251,9 +294,164 @@ void func_0067AF70(RoomExtraSlot *s) {
         func_005E5B80(s->pos, s->obj->unk241, 0xFF);
     }
     if (s->unk2C != 0) {
-        func_0067B890(s, s->unk2C);
+        func_0067B890(s, (s32 (*)[2])s->unk2C);
     }
 }
+
+void func_00590CC0(s32 h);
+s32 func_00595D90(ItemObj *o, s32 (*c)[2], s32 bottom, s32 top);
+s32 func_00595E60(ItemObj *o, s32 (*c)[2], s32 bottom, s32 top, s32 side);
+s32 func_00595F30(ItemObj *o, s32 (*c)[2], s32 bottom, s32 top);
+void func_0067BA30(RoomExtraSlot *s, s32 (*a)[2], s32 (*b)[2]);
+void func_0067BC50(RoomExtraSlot *s, s32 (*c)[2]);
+
+/* (Re)makes slot s's areas: its own, its sides and its top, by its kind. */
+void func_0067BDD0(RoomExtraSlot *s) {
+    s32 c[4][2];
+    s32 b[4][2];
+    s32 y;
+    s32 top;
+    s8 shape;
+
+    if (s == NULL || s->obj == NULL) {
+        return;
+    }
+    shape = D_00716000[s->kind].shape;
+    if (shape == 7) {
+        return;
+    }
+    y = s->obj->pos[1];
+    top = y + D_006EF480[shape].height * 50 - 1;
+    if (D_00716000[s->kind].unk2 > 0 && (s->unk1A[0] & 0xF)) {
+        func_0067B890(s, c);
+        if (s->unk2C != 0) {
+            func_00590CC0(s->unk2C);
+        }
+        s->unk2C = func_00595D90(s->obj, c, y, top);
+    }
+    if (D_00716000[s->kind].unk1 > 0) {
+        func_0067BA30(s, c, b);
+        if (s->unk30 != 0) {
+            func_00590CC0(s->unk30);
+        }
+        if (s->unk34 != 0) {
+            func_00590CC0(s->unk34);
+        }
+        s->unk30 = func_00595E60(s->obj, c, y, top, 0);
+        s->unk34 = func_00595E60(s->obj, b, y, top, 1);
+        func_0067BC50(s, c);
+        if (s->unk38 != 0) {
+            func_00590CC0(s->unk38);
+        }
+        s->unk38 = func_00595F30(s->obj, c, top, top + 50);
+    }
+}
+
+typedef struct {
+    f32 v[4][3];
+} SlotNormals;
+
+typedef struct {
+    s8 v[8][3];
+} SlotTris;
+
+extern SlotNormals D_006E58C0;  /* the sides' normals */
+extern SlotTris D_006E58F0;     /* the sides' triangles (corner numbers) */
+extern SlotNormals D_006E5910;  /* the sides' outward directions */
+void *memset(void *p, s32 c, u32 n);
+void func_003405D0(f32 s, f32 *out, const f32 *v);
+void func_003404F0(f32 *out, const f32 *a, const f32 *b);
+s8 func_00549860(const f32 *from, const f32 *to, s32 mask, s32 a, s32 *hit);
+void func_005E84F0(f32 *a, f32 *b, f32 *c, f32 *n);
+
+/* Slot s's box (its cells, at least 300 units high unless it has side areas) as collision
+   walls; a side with something within 90 units in front of it is pushed out by that much. */
+void func_0067CB00(RoomExtraSlot *s);
+#ifdef NON_MATCHING   /* first draft: stack layout, &c[1]/&c[2] kept in s registers */
+void func_0067CB00(RoomExtraSlot *s) {
+    SlotNormals nrm = D_006E58C0;
+    SlotTris tris = D_006E58F0;
+    SlotNormals dirs = D_006E5910;
+    f32 offs[8][3];
+    f32 box[8][3];
+    f32 dir[3];
+    f32 to[3];
+    f32 c[3];
+    s32 hit;
+    f32 x0;
+    f32 x1;
+    f32 y0;
+    f32 y1;
+    f32 z0;
+    f32 z1;
+    s8 *r;
+    s32 i;
+
+    if (s->flags & 4) {
+        x0 = D_00395EA0.pos[0] + 50.0f * s->x;
+        x1 = D_00395EA0.pos[0] + 50.0f * (s->x + s->w);
+        y0 = D_00395EA0.pos[1];
+        y1 = D_00395EA0.pos[1] + 50.0f * s->d;
+        z0 = D_00395EA0.pos[2] + 50.0f * s->y;
+        z1 = D_00395EA0.pos[2] + 50.0f * (s->y + s->h);
+    } else {
+        r = func_0067B020(s);
+        x0 = D_00395EA0.pos[0] + 50.0f * (s->x + r[0]);
+        x1 = D_00395EA0.pos[0] + 50.0f * (s->x + r[2]);
+        y0 = D_00395EA0.pos[1];
+        y1 = D_00395EA0.pos[1] + 50.0f * D_006EF480[D_00716000[s->kind].shape].height;
+        z0 = D_00395EA0.pos[2] + 50.0f * (s->y + r[1]);
+        z1 = D_00395EA0.pos[2] + 50.0f * (s->y + r[3]);
+    }
+    if (D_00716000[s->kind].unk1 <= 0 && y1 - y0 < 300.0f) {
+        y1 = 300.0f + y0;
+    }
+    box[0][0] = x0;
+    box[0][1] = y1;
+    box[0][2] = z0;
+    box[1][0] = x0;
+    box[1][1] = y0;
+    box[1][2] = z0;
+    box[2][0] = x0;
+    box[2][1] = y1;
+    box[2][2] = z1;
+    box[3][0] = x0;
+    box[3][1] = y0;
+    box[3][2] = z1;
+    box[4][0] = x1;
+    box[4][1] = y1;
+    box[4][2] = z1;
+    box[5][0] = x1;
+    box[5][1] = y0;
+    box[5][2] = z1;
+    box[6][0] = x1;
+    box[6][1] = y1;
+    box[6][2] = z0;
+    box[7][0] = x1;
+    box[7][1] = y0;
+    box[7][2] = z0;
+    memset(offs, 0, sizeof(offs));
+    for (i = 0; i < 8; i += 2) {
+        c[0] = (box[(i + 3) & 7][0] + (box[(i + 2) & 7][0] + (box[i][0] + box[i + 1][0]))) / 4.0f;
+        c[1] = (box[(i + 3) & 7][1] + (box[(i + 2) & 7][1] + (box[i][1] + box[i + 1][1]))) / 4.0f;
+        c[2] = (box[(i + 3) & 7][2] + (box[(i + 2) & 7][2] + (box[i][2] + box[i + 1][2]))) / 4.0f;
+        func_003405D0(90.0f, dir, dirs.v[i / 2]);
+        func_003404F0(to, c, dir);
+        if (func_00549860(c, to, 0x4FFFF, 0, &hit)) {
+            func_003404F0(offs[i], offs[i], dir);
+            func_003404F0(offs[i + 1], offs[i + 1], dir);
+            func_003404F0(offs[(i + 2) & 7], offs[(i + 2) & 7], dir);
+            func_003404F0(offs[(i + 3) & 7], offs[(i + 3) & 7], dir);
+        }
+    }
+    for (i = 0; i < 8; i++) {
+        func_003404F0(box[i], box[i], offs[i]);
+    }
+    for (i = 0; i < 8; i++) {
+        func_005E84F0(box[tris.v[i][0]], box[tris.v[i][1]], box[tris.v[i][2]], nrm.v[i / 2]);
+    }
+}
+#endif
 
 /* The room grid: the room's own cells (from the room data) plus what is placed. */
 void func_0067C1A0(void);
