@@ -327,3 +327,53 @@ s8 func_0055C030(DrawObjFull *o, f32 speed) {
     }
     return r;
 }
+
+/* A motion layer's play state (0x20 bytes from 0x1E4). */
+typedef struct {
+    f32 frame;          /* 0x00 */
+    f32 end;            /* 0x04 */
+    f32 loopStart;      /* 0x08 */
+    s8 loop;            /* 0x0C */
+    s8 flags;           /* 0x0D: 0x10 held */
+    u8 unkE[0x20 - 0xE];
+} MotLayer;
+
+/* Whether layer's motion passes frame in this step of speed (twice as fast when Options.unkC
+   is 1), wrapping at the loop. */
+s32 func_00543460(DrawObjFull *o, u8 layer, f32 frame, f32 speed);
+#ifdef NON_MATCHING   /* delay slots of the returns, float registers */
+s32 func_00543460(DrawObjFull *o, u8 layer, f32 frame, f32 speed) {
+    MotLayer *l = (MotLayer *)((u8 *)o + layer * 0x20 + 0x1E4);
+    f32 next;
+
+    if (l->flags & 0x10) {
+        return 0;
+    }
+    if (D_00306590.unkC == 1) {
+        speed *= 2.0f;
+    }
+    if (l->loop != 0) {
+        next = l->frame + speed;
+        if (l->end < next) {
+            if (!(frame < l->frame) && frame <= l->end) {
+                return 1;
+            }
+            if (frame < l->loopStart) {
+                return 0;
+            }
+            if (frame < l->loopStart + (next - l->end)) {
+                return 1;
+            }
+            return 0;
+        }
+        if (!(frame < l->frame) && frame < next) {
+            return 1;
+        }
+        return 0;
+    }
+    if (!(frame < l->frame) && frame < l->frame + speed) {
+        return 1;
+    }
+    return 0;
+}
+#endif
