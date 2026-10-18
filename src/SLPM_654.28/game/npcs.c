@@ -716,3 +716,160 @@ void func_005BB7C0(u8 slot, u8 model, u8 a, u8 b) {
     func_001D39C0(slot, model, a, b);
     func_0018D730();
 }
+
+/* The NPCs' update: by state, then the common parts. */
+s32 func_001AF510(void);
+s32 func_0064FD50(s32 a, u8 slot);
+void func_00652B50(Npc *n, s32 a);
+void func_005F41F0(Npc *n, void *p);
+s32 func_005F4080(Npc *n);
+void func_0068A170(Npc *n);
+void func_00639CE0(Npc *n);
+void func_005F4BE0(Npc *n);
+void func_0058DD50(Npc *n);
+void func_005F4C10(Npc *n);
+void func_00689F40(Npc *n);
+void func_00689FE0(Npc *n);
+void func_0068A0A0(Npc *n);
+void func_0068A0B0(Npc *n);
+void func_0068A0C0(Npc *n);
+void func_0068A0D0(Npc *n);
+void func_0068A0E0(Npc *n);
+void func_0068A0F0(Npc *n);
+
+void func_00689E50(Npc *n) {
+    switch (n->unkFCF) {
+    case 0:
+        func_00689F40(n);
+        break;
+    case 1:
+        func_00689FE0(n);
+        break;
+    case 2:
+        func_0068A0F0(n);
+        break;
+    case 3:
+        func_0068A0C0(n);
+        break;
+    case 5:
+        func_0068A0A0(n);
+        break;
+    case 6:
+        func_0068A0B0(n);
+        break;
+    case 7:
+        func_0068A0D0(n);
+        break;
+    case 4:
+        func_0068A0E0(n);
+        break;
+    }
+    func_00639CE0(n);
+    func_005F4BE0(n);
+    func_0058DD50(n);
+    func_005F4C10(n);
+}
+
+/* State 0: its record marked, everything reset, then state 1 (shown unless it is gone). */
+void func_00689F40(Npc *n) {
+    NpcRecord *r = &D_003614F0[n->slot];
+
+    r->flags2 |= 1;
+    n->unkFD0[3] = 0;
+    n->unkFD0[2] = 0;
+    n->unkFD0[1] = 0;
+    n->unkFD0[0] = 0;
+    n->act[0] = 0;
+    n->act[1] = 0;
+    n->act[2] = 0;
+    n->act[3] = 0;
+    n->unkFB8[0] = 0;
+    n->unkFB7 = 0;
+    n->unkFCF = 1;
+    if (!(n->unkBA0 & 0x80000)) {
+        if ((u8)n->unkFB7 != 0) {
+            n->act[0] = 0;
+            n->act[1] = 0;
+            n->act[2] = 0;
+            n->act[3] = 0;
+            n->unkFB8[0] = 0;
+        }
+        n->unkFB7 = 0;
+        n->visible = 1;
+    }
+    n->unk1150 = 0;
+}
+
+/* State 1: on to state 2 (in the network modes once func_0064FD50 allows it). */
+void func_00689FE0(Npc *n) {
+    if (func_001AF510() == 1) {
+        if (func_0064FD50(1, n->slot)) {
+            n->unkFD0[3] = 0;
+            n->unkFD0[2] = 0;
+            n->unkFD0[1] = 0;
+            n->unkFD0[0] = 0;
+            n->act[3] = 0;
+            n->act[2] = 0;
+            n->act[1] = 0;
+            n->act[0] = 0;
+            n->unkFCF = 2;
+            n->visible = 1;
+            func_00652B50(n, 0);
+        }
+    } else {
+        n->unkFD0[3] = 0;
+        n->unkFD0[2] = 0;
+        n->unkFD0[1] = 0;
+        n->unkFD0[0] = 0;
+        n->act[3] = 0;
+        n->act[2] = 0;
+        n->act[1] = 0;
+        n->act[0] = 0;
+        n->unkFCF = 2;
+        n->visible = 1;
+    }
+    func_005F41F0(n, (u8 *)n + 0x10A4);
+}
+
+void func_005F4380(Npc *n);
+void func_005F46A0(Npc *n);
+void func_005F40C0(Npc *n);
+
+void func_0068A0A0(Npc *n) {
+    FIELD(n, u8, 0x32) = 0xFF;
+    func_005F4380(n);
+}
+
+void func_0068A0B0(Npc *n) {
+    func_005F46A0(n);
+}
+
+void func_0068A0C0(Npc *n) {
+    func_005F40C0(n);
+}
+
+void func_0068A0D0(Npc *n) {
+    func_005F41F0(n, (u8 *)n + 0x10A4);
+}
+
+void func_0068A0E0(Npc *n) {
+}
+
+/* State 2: alive (func_005F4080 0), or on to state 3 (1) or 4 (dead). */
+void func_0068A0F0(Npc *n) {
+    s32 r = func_005F4080(n);
+
+    if (r == 0) {
+        func_0068A170(n);
+        func_005F41F0(n, (u8 *)n + 0x10A4);
+        return;
+    }
+    if (r == 1) {
+        n->unkFCF = 3;
+    } else {
+        n->unkFCF = 4;
+        n->unk544 = 0;
+        func_005F4B30(n->slot);
+    }
+    func_00652B50(n, 0);
+}

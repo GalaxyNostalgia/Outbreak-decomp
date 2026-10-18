@@ -32,13 +32,16 @@ typedef struct {
     u8 unk31[3]; \
     ObjModel *model;    /* 0x034 */ \
     f32 unk38[3];       /* 0x038: position */ \
-    u8 unk44[0x80 - 0x44]; \
+    f32 unk44[3];       /* 0x044: the position before the last move */ \
+    u8 unk50[0x80 - 0x50]; \
     f32 unk80[3];       /* 0x080: the position last frame */ \
     u8 unk8C[0x90 - 0x8C]; \
     s16 unk90;          /* 0x090 */ \
     s16 unk92;          /* 0x092: heading */ \
     s16 unk94;          /* 0x094 */ \
-    u8 unk96[0xA8 - 0x96]; \
+    s16 unk96; \
+    u8 unk98[8]; \
+    s16 unkA0[4];       /* 0x0A0: unk90-96 before the last move */ \
     s32 unkA8;          /* 0x0A8 */ \
     s32 unkAC; \
     s32 unkB0; \
@@ -47,9 +50,15 @@ typedef struct {
     f32 unkD8[3];       /* 0x0D8 */ \
     f32 unkE4[3];       /* 0x0E4 */ \
     f32 unkF0;          /* 0x0F0 */ \
-    u8 unkF4[0x175 - 0xF4]; /* 0x0F4: per model part, drawn */ \
+    u8 unkF4[0x170 - 0xF4]; /* 0x0F4: per model part, drawn */ \
+    f32 unk170;         /* 0x170: the height it falls from */ \
+    u8 unk174;          /* 0x174: the floor's kind */ \
     u8 unk175; \
-    u8 unk176[0x198 - 0x176]; \
+    u16 unk176;         /* 0x176: the floor's id */ \
+    f32 unk178[3];      /* 0x178: the floor's normal */ \
+    f32 unk184;         /* 0x184 */ \
+    u8 unk188;          /* 0x188 */ \
+    u8 unk189[0x198 - 0x189]; \
     s8 drawn;           /* 0x198 */ \
     s8 unk199;          /* 0x199 */ \
     u8 unk19A[0x1A8 - 0x19A]; \

@@ -472,3 +472,60 @@ u8 func_00551690(u8 model) {
     }
     return (*(u8 **)(D_00306590.script + 0x8004))[model];
 }
+
+f32 func_005E5C20(const f32 *p, f32 *normal, f32 *m, u8 *kind, s32 want, u8 *sub, u16 *id,
+                  u8 doMtx);
+
+/* The floor under p for character o (its height, normal, kind, sub-kind and id). */
+void func_005E5AF0(DrawObjFull *o, f32 *p, s32 want) {
+    f32 m[16];
+
+    o->unk170 = func_005E5C20(p, o->unk178, m, &o->unk174, want, &o->unk175, &o->unk176, 0);
+}
+
+typedef struct {
+    s16 v[4];
+} Rot4;
+
+/* The floor under a character (50 above its feet), and its fall: on kind-3 ground the height it
+   falls from (0x170) is reset; when it is hit (status 0x88) there, it goes back to where it was
+   last frame (0x44, heading 0xA0). */
+void func_00634A10(DrawObjFull *o) {
+    Vec3 p;
+
+    p = *(Vec3 *)o->unk38;
+    p.y += 50.0f;
+    func_005E5AF0(o, &p.x, 0xFF);
+    switch (o->unk174) {
+    case 3:
+        o->unk174 = 3;
+        FIELD(o, u8, 0x553) = 0;
+        if (o->unk188 != 0) {
+            o->unk170 = o->unk184;
+        } else {
+            o->unk170 = 160.0f + o->unk38[1];
+        }
+        break;
+    default:
+        if (o->unk170 == p.y) {
+            o->unk170 = o->unk38[1];
+        }
+        break;
+    }
+    if ((o->unkBA0 & 0x88) && o->unk174 == 3) {
+        *(Vec3 *)o->unk38 = *(Vec3 *)o->unk44;
+        *(Rot4 *)&o->unk90 = *(Rot4 *)o->unkA0;
+    }
+}
+
+void func_0061E020(DrawObjFull *o);
+void func_0058C0C0(DrawObjFull *o);
+void func_005A61C0(DrawObjFull *o, f32 s);
+
+/* A character's per-frame movement, collision and animation steps. */
+void func_00639CE0(DrawObjFull *o) {
+    func_00634A10(o);
+    func_0061E020(o);
+    func_0058C0C0(o);
+    func_005A61C0(o, 1.0f);
+}
