@@ -46,7 +46,8 @@ typedef struct {
     s32 unkAC; \
     s32 unkB0; \
     f32 unkB4[3];       /* 0x0B4 */ \
-    u8 unkC0[0xD8 - 0xC0]; \
+    f32 unkC0[3];       /* 0x0C0: (a speed) */ \
+    u8 unkCC[0xD8 - 0xCC]; \
     f32 unkD8[3];       /* 0x0D8 */ \
     f32 unkE4[3];       /* 0x0E4 */ \
     f32 unkF0;          /* 0x0F0 */ \
@@ -113,7 +114,7 @@ typedef struct {
     u8 unkB9D[0xBA0 - 0xB9D]; \
     s32 unkBA0;         /* 0xBA0: status (2: danger, 8: poisoned...) */ \
     s32 unkBA4;         /* 0xBA4: flags */ \
-    u8 unkBA8[4]; \
+    f32 unkBA8;         /* 0xBA8: its motion's speed */ \
     s32 unkBAC;         /* 0xBAC */ \
     f32 unkBB0;         /* 0xBB0: D_00712280[kind] */ \
     u16 unkBB4;         /* 0xBB4: (NPCs) their model + 1 */ \
@@ -128,7 +129,9 @@ typedef struct {
     u8 unkBD0;          /* 0xBD0 */ \
     u8 unkBD1[0xC64 - 0xBD1]; \
     u8 unkC64;          /* 0xC64 */ \
-    u8 unkC65[0xC7C - 0xC65]; \
+    u8 unkC65;          /* 0xC65: what hit it (1-4) */ \
+    s16 unkC66;         /* 0xC66 */ \
+    u8 unkC68[0xC7C - 0xC68]; \
     u8 unkC7C;          /* 0xC7C: the item in hand (0xFF: none) */ \
     u8 unkC7D;          /* 0xC7D */ \
     u8 unkC7E[0xC84 - 0xC7E]; \
@@ -160,7 +163,12 @@ typedef struct DrawObjFull {
     OBJ_FIELDS(DrawObjFull)
     u8 unkDA2[0xFB4 - 0xDA2];
     u8 held;            /* 0xFB4: (enemies) what they hold, 0xFF nothing */
-    u8 unkFB5[0xFF0 - 0xFB5];
+    u8 unkFB5[2];
+    u8 way;             /* 0xFB7: how it moves (func_0058C240) */
+    u8 wayStep;         /* 0xFB8 */
+    u8 unkFB9[0xFCC - 0xFB9];
+    u8 unkFCC;          /* 0xFCC */
+    u8 unkFCD[0xFF0 - 0xFCD];
     u8 isNpc;           /* 0xFF0: (players) a computer-controlled partner */
     /* the partner's AI (SINGLE.BIN) */
     u8 unkFF1;          /* 0xFF1 */

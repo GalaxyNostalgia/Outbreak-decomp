@@ -1,1 +1,5 @@
 // symbols that live in the game overlay
+
+// functions reached only through tables of function pointers, right after a tail call
+func_00639D70 = 0x00639D70; // type:func
+func_00639E20 = 0x00639E20; // type:func

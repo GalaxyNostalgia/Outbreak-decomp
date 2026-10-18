@@ -130,7 +130,7 @@ s32 func_0055B6D0(DrawObjFull *o, MotionSet *ms, s32 motion, u16 layer, f32 star
             if (o->type != 1 && o->type != 0) {
                 scale = 1.0f;
             } else {
-                scale = *(f32 *)o->unkBA8;
+                scale = o->unkBA8;
             }
             func_00191F90(start - speed * scale, start, R(o), a->root);
             *(Vec3f *)&R(o)[9] = a->root->delta;

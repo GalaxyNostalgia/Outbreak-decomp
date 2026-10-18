@@ -518,7 +518,7 @@ void func_00634A10(DrawObjFull *o) {
     }
 }
 
-void func_0061E020(DrawObjFull *o);
+s32 func_0061E020(DrawObjFull *o);
 void func_0058C0C0(DrawObjFull *o);
 void func_005A61C0(DrawObjFull *o, f32 s);
 
@@ -529,3 +529,561 @@ void func_00639CE0(DrawObjFull *o) {
     func_0058C0C0(o);
     func_005A61C0(o, 1.0f);
 }
+
+s32 func_006350A0(DrawObjFull *o);
+void func_0061DF90(DrawObjFull *o, s32 k);
+s32 func_001AF510(void);
+s16 func_00635120(s32 k);
+void func_0064C620(DrawObjFull *o, s32 kind);
+s32 func_001AF540(DrawObjFull *o);
+void func_005C4260(void);
+void func_005A4490(DrawObjFull *o, s32 flags, f32 a, f32 b);
+void func_0055C4E0(DrawObjFull *o);
+
+/* A character's pending hit (unkC64 2): what hit it (unkC65) decides the reaction. */
+s32 func_0061E020(DrawObjFull *o) {
+    s32 k;
+
+    if (D_0048BF60.unk28 != 0) {
+        return 0;
+    }
+    if (o->unkC64 == 2) {
+        o->unkC64 = 0;
+        switch (o->unkC65) {
+        case 1:
+            k = func_006350A0(o);
+            if ((D_0048BF60.unkB8[1] & 2) || (o->unkB9B != 2 && !(o->unkBA0 & 8))
+                || (o->unkBA4 & 0x10000) || o->unkBD0 != 0) {
+                func_0061DF90(o, k);
+                return 1;
+            }
+            switch (o->act[0]) {
+            case 1:
+                switch (o->act[1]) {
+                case 0:
+                case 1:
+                case 2:
+                case 3:
+                case 4:
+                case 5:
+                case 6:
+                case 7:
+                case 8:
+                case 9:
+                case 0xA:
+                case 0xB:
+                case 0xC:
+                case 0xD:
+                case 0xE:
+                case 0x31:
+                case 0x32:
+                    if (func_001AF510() == 1) {
+                        switch (o->type) {
+                        case 0:
+                            o->unkC64 = 2;
+                            o->unkC65 = 3;
+                            o->unkC66 = func_00635120(k);
+                            func_0064C620(o, 8);
+                            break;
+                        case 1:
+                            break;
+                        }
+                    }
+                    o->unkC64 = 0;
+                    o->unkC65 = 0;
+                    o->unkC66 = func_00635120(k);
+                    o->unkBA0 |= 0x80000;
+                    o->act[0] = 1;
+                    o->act[1] = 0xAC;
+                    o->act[2] = 0;
+                    o->act[3] = 0;
+                    func_00635920(o);
+                    break;
+                default:
+                    func_0061DF90(o, k);
+                    return 1;
+                }
+                break;
+            default:
+                func_0061DF90(o, k);
+                return 1;
+            }
+            break;
+        case 2:
+            o->unkBA0 &= ~0x80000;
+            o->act[0] = 1;
+            o->act[1] = 0;
+            o->act[2] = 0;
+            o->act[3] = 0;
+            func_00635920(o);
+            func_0064C620(o, 1);
+            o->unk54F = 0;
+            o->unk548 &= ~1;
+            o->act[0] = 1;
+            o->act[1] = 0;
+            o->act[2] = 1;
+            o->act[3] = 0;
+            func_00635920(o);
+            func_005A4490(o, 0x2050, 0.0f, 10.0f);
+            func_0055C4E0(o);
+            return 1;
+        case 3:
+            if (o->unk54F == 0x16) {
+                o->act[0] = 1;
+                o->act[1] = 0xA1;
+                o->act[2] = 2;
+                o->act[3] = 0;
+                func_00635920(o);
+                func_0064C620(o, 1);
+            }
+            break;
+        case 4:
+            if (o->unk54F == 0x16 && o->act[1] != 0xA2) {
+                o->act[0] = 1;
+                o->act[1] = 0xA2;
+                o->act[2] = 0;
+                o->act[3] = 0;
+                func_00635920(o);
+                func_0064C620(o, 1);
+            }
+            break;
+        default:
+            return 0;
+        }
+        if (func_001AF540(o) == 1) {
+            func_005C4260();
+        }
+        return 1;
+    }
+    return 0;
+}
+
+void func_005C5A90(DrawObjFull *o, s32 a);
+void func_0062F130(DrawObjFull *o);
+void func_00639D50(DrawObjFull *o);
+void func_0058C240(DrawObjFull *o);
+
+/* Death (health 0: falls, action 4), then the action's step: actions 3 and up (dying, down)
+   on their own, else the usual movement. */
+#ifdef NON_MATCHING   /* branch to the epilogue (delay slot) */
+void func_0058C0C0(DrawObjFull *o) {
+    if (o->unk544 == 0) {
+        switch (o->act[0]) {
+        case 3:
+        case 4:
+        case 5:
+            break;
+        default:
+            if (o->unkBA4 & 2) {
+                o->unkBA0 |= 0x60;
+                func_005C5A90(o, 0);
+                o->unk54F = 0xA0;
+                o->act[0] = 4;
+                o->act[1] = 1;
+                o->act[2] = 0;
+                o->act[3] = 0;
+                func_00635920(o);
+            } else {
+                func_005C5A90(o, 0);
+                o->unk54F = 0xA0;
+                o->act[0] = 4;
+                o->act[1] = 0;
+                o->act[2] = 0;
+                o->act[3] = 0;
+                func_00635920(o);
+            }
+            break;
+        }
+    }
+    func_00637C60(o);
+    func_0062F130(o);
+    if (o->act[0] >= 3) {
+        o->unkBA0 |= 0x100000;
+        func_00639D50(o);
+        if (o->act[0] < 3) {
+            o->wayStep = 0;
+            o->unkFB9[0] = 0;
+            o->unkFB9[1] = 0;
+            o->unkFB9[2] = 0;
+        }
+    } else {
+        o->unkBA0 &= ~0x100000;
+        if (o->unkBA0 & 0x80000) {
+            func_00639D50(o);
+        } else {
+            func_0058C240(o);
+        }
+    }
+}
+#endif
+
+#include "item.h"
+
+s32 func_001AF340(u8 player);
+void func_0034B7D0(s32 a, s32 b, s32 c);
+void func_0062ED10(DrawObjFull *o, s32 a);
+void func_0064E360(DrawObjFull *o, s32 a, u8 b);
+void func_005C4EE0(DrawObjFull *o, s32 a, u8 b);
+void func_0062CDA0(DrawObjFull *o);
+void func_00634BE0(DrawObjFull *o);
+void func_00635340(DrawObjFull *o);
+void func_0062E6A0(DrawObjFull *o, u16 a, s32 b);
+void func_006AC7D0(DrawObjFull *o);
+void func_00636F90(DrawObjFull *o);
+s32 func_0062EFC0(DrawObjFull *o);
+void func_00634260(DrawObjFull *o, s32 a);
+s32 func_0062E5B0(DrawObjFull *o, u16 dmg, s32 a);
+extern s16 D_0023AE70[];
+extern s8 D_00389694;
+extern DrawObjFull D_00476DD0[];
+void *memset(void *p, s32 c, u32 n);
+
+/* A hit taken this frame (0x13F set): falls in a pit (kind-2 floor, 9), bleeds (status 0x80),
+   or takes the damage (0x138) and reacts with action 3 (or 5 for strong hits, 0x13D >= 0x80). */
+void func_0062F130(DrawObjFull *o);
+#ifdef NON_MATCHING   /* first draft */
+void func_0062F130(DrawObjFull *o) {
+    s16 hp;
+    s32 id;
+
+    if (D_0048BF60.unk28 != 0) {
+        FIELD(o, u8, 0x13F) = 0;
+        return;
+    }
+    if (FIELD(o, u8, 0x13F) == 0) {
+        return;
+    }
+    FIELD(o, u8, 0x13F) = 0;
+    FIELD(o, u8, 0x115) |= 1;
+    if (o->type == 0 && FIELD(o, u8, 0x150) == 2 && FIELD(o, u8, 0x13D) == 9) {
+        o->unkBA0 |= 0x40000800;
+        o->unk544 = 0;
+        o->unkBA0 |= 0x20;
+        func_005C5A90(o, 0);
+        o->unk54F = 0xA0;
+        o->act[0] = 4;
+        o->act[1] = 0;
+        o->act[2] = 0;
+        o->act[3] = 0;
+        func_00635920(o);
+        FIELD(o, u8, 0x115) |= 1;
+        func_0064C620(o, 5);
+        return;
+    }
+    if (o->unkBA0 & 0x200008) {
+        return;
+    }
+    if (o->type == 1 && func_001AF340(D_0048BF60.unk1D) == 0) {
+        return;
+    }
+    if (o->unkBD0 != 0 && FIELD(o, u8, 0x148) == 0) {
+        return;
+    }
+    if (o->unkBA0 & 0x80) {
+        if ((s16)FIELD(o, u16, 0xC5E) - D_0023AE70[FIELD(o, u8, 0x140)] <= 0) {
+            FIELD(o, u16, 0xC5E) = 1;
+        } else {
+            FIELD(o, u16, 0xC5E) -= D_0023AE70[FIELD(o, u8, 0x140)];
+        }
+        if (FIELD(o, u8, 0x13D) >= 0x10) {
+            FIELD(o, u8, 0x13D) = 1;
+        }
+        o->act[0] = 3;
+        o->act[1] = FIELD(o, u8, 0x13D);
+        o->act[2] = 0;
+        o->act[3] = 0;
+        func_00635920(o);
+        FIELD(o, u8, 0x115) |= 1;
+        return;
+    }
+    if (FIELD(o, u8, 0x148) == 0 && func_001AF540(o) == 1
+        && (D_00476DD0[FIELD(o, u8, 0x149) & 3].unkBA0 & 0x80)) {
+        func_0034B7D0(0x25, D_00476DD0[FIELD(o, u8, 0x149)].unkB98, 0);
+    }
+    if ((FIELD(o, u8, 0x143) & 2) && !(o->unkBA0 & 0x400000)) {
+        func_0062ED10(o, 1);
+    }
+    if ((FIELD(o, u8, 0x143) & 4) && !(o->unkBA0 & 0x400000)) {
+        func_0062ED10(o, 2);
+    }
+    o->unkC64 = 0;
+    o->unkAB8 = 0;
+    o->unkAD4 = 0;
+    if (func_001AF540(o) == 1) {
+        func_005C4260();
+    }
+    if (o->type == 0 && o->act[0] == 1 && o->act[1] == 0x16) {
+        if (o->type == 0) {
+            id = o->kind + 1;
+        } else {
+            id = o->unkBB4 + 5;
+        }
+        if ((u16)D_003967D0[FIELD(o, u8, 0xC7A)].owner != id) {
+            func_0064E360(o, 2, FIELD(o, u8, 0xC7A));
+        }
+    }
+    if (o->type == 0 && o->act[0] == 1 && o->act[1] == 0x24) {
+        func_0064E360(o, 1, FIELD(o, u8, 0xC7F));
+        func_005C4EE0(o, 0, FIELD(o, u8, 0xC7F));
+    }
+    if (o->type == 0 && o->act[0] == 2 && o->act[1] == 0xB) {
+        o->unkBA0 |= 0x80000000;
+        func_0062CDA0(o);
+    }
+    func_00634BE0(o);
+    func_00635340(o);
+    if (FIELD(o, u16, 0x14E) != 0) {
+        func_0062E6A0(o, FIELD(o, u16, 0x14E), 0);
+    }
+    if (func_001AF540(o) == 1) {
+        func_006AC7D0(o);
+    }
+    func_00636F90(o);
+    if (func_001AF540(o) == 1 && !(FIELD(o, u8, 0x143) & 1)) {
+        D_00389694 = 1;
+    }
+    if (FIELD(o, u8, 0x13D) >= 0x80) {
+        if (o->unkBA0 & 0x800000) {
+            return;
+        }
+        if (o->unkBA0 & 0xB8) {
+            return;
+        }
+        if (func_0062EFC0(o) != 0) {
+            return;
+        }
+        o->act[0] = 5;
+        o->act[1] = FIELD(o, s8, 0x13D) - 0x80;
+        o->act[2] = 0;
+        o->act[3] = 0;
+        func_00635920(o);
+        memset(&FIELD(o, u8, 0xB1C), 0, 0x18);
+    } else {
+        hp = o->unk544;
+        if (FIELD(o, s32, 0x138) > 0) {
+            func_00634260(o, 3);
+        }
+        if (func_0062E5B0(o, FIELD(o, s32, 0x138), 0) != 0) {
+            o->unk544 = 0;
+            if (func_0062EFC0(o) != 0) {
+                return;
+            }
+            if (hp >= 2) {
+                o->unk544 = 1;
+            }
+        } else if (func_0062EFC0(o) != 0) {
+            return;
+        }
+        o->act[0] = 3;
+        o->act[1] = FIELD(o, u8, 0x13D);
+        o->act[2] = 0;
+        o->act[3] = 0;
+        func_00635920(o);
+        func_0064C620(o, 5);
+    }
+    FIELD(o, u8, 0x115) |= 1;
+    if (func_001AF510() == 1 && o->type == 1) {
+        o->unkBA0 |= 0x10000000;
+        func_0064C620(o, 5);
+        o->unkBA0 &= ~0x10000000;
+    }
+}
+#endif
+
+void func_0058C380(DrawObjFull *o);
+void func_0058C6B0(DrawObjFull *o);
+void func_0058C880(DrawObjFull *o);
+void func_0058CA60(DrawObjFull *o);
+void func_0058CCB0(DrawObjFull *o);
+void func_0058CD90(DrawObjFull *o);
+void func_0058CE70(DrawObjFull *o);
+void func_0058CF40(DrawObjFull *o);
+void func_0058D170(DrawObjFull *o);
+void func_0058D250(DrawObjFull *o);
+void func_0058D300(DrawObjFull *o);
+void func_0058D420(DrawObjFull *o);
+void func_0058D500(DrawObjFull *o);
+void func_0058D740(DrawObjFull *o);
+void func_0058D8F0(DrawObjFull *o);
+
+/* The movement step of a character's current way of moving (0xFB7). */
+void func_0058C240(DrawObjFull *o) {
+    switch (o->way) {
+    case 0:
+        func_0058C380(o);
+        break;
+    case 1:
+        func_0058C6B0(o);
+        break;
+    case 2:
+        func_0058C880(o);
+        break;
+    case 3:
+        func_0058CA60(o);
+        break;
+    case 4:
+        func_0058CCB0(o);
+        break;
+    case 5:
+        func_0058CD90(o);
+        break;
+    case 6:
+        func_0058CE70(o);
+        break;
+    case 7:
+        func_0058CF40(o);
+        break;
+    case 8:
+        func_0058D170(o);
+        break;
+    case 9:
+        func_0058D250(o);
+        break;
+    case 10:
+        func_0058D300(o);
+        break;
+    case 11:
+        func_0058D420(o);
+        break;
+    case 12:
+        func_0058D500(o);
+        break;
+    case 13:
+        func_0058D740(o);
+        break;
+    case 14:
+        func_0058D500(o);
+        break;
+    case 15:
+        func_0058D8F0(o);
+        break;
+    case 16:
+        break;
+    }
+}
+
+/* A character's step, by its action (act[0]) and then the action's kind (act[1]): tables of
+   handlers, each reached by a tail call. */
+typedef void (*CharStep)(DrawObjFull *o);
+
+extern CharStep D_006DECD0[];
+extern CharStep D_006DED10[];
+void func_005E91A0(DrawObjFull *o);
+void func_001AF1C0(u8 player);
+s32 func_00635970(DrawObjFull *o);
+s32 func_0061DF00(DrawObjFull *o);
+void func_00635950(DrawObjFull *o);
+s8 func_0055C030(DrawObjFull *o, f32 speed);
+void func_00639DF0(DrawObjFull *o);
+
+void func_00639D50(DrawObjFull *o) {
+    D_006DECD0[o->act[0]](o);
+}
+
+/* Action 0: the character appears (then the action's kind runs at once). */
+void func_00639D70(DrawObjFull *o) {
+    o->act[0]++;
+    o->visible = 1;
+    func_005E91A0(o);
+    o->unkBA4 |= 0x8000000;
+    if (o->type == 0) {
+        o->unkBD0 = 0;
+    }
+    func_001AF1C0(o->kind);
+    func_00639DF0(o);
+}
+
+void func_00639DF0(DrawObjFull *o) {
+    o->unkBA0 &= ~0x200;
+    D_006DED10[o->act[1]](o);
+}
+
+/* Kind 0: standing (its motion started, then looped). */
+void func_00639E20(DrawObjFull *o);
+#ifdef NON_MATCHING   /* first draft: delay slots in the case tests */
+void func_00639E20(DrawObjFull *o) {
+    o->unkBA4 |= 0x100;
+    o->unk548 &= ~1;
+    if (func_00635970(o)) {
+        o->act[2] = 0;
+    }
+    if (func_0061DF00(o)) {
+        return;
+    }
+    switch (o->act[2]) {
+    case 0:
+        o->act[2]++;
+        o->unk54F = 0;
+        o->unkD10[0] = 0;
+        func_00635950(o);
+        o->unkC0[0] = 0.0f;
+        o->unkC0[1] = 0.0f;
+        o->unkC0[2] = 0.0f;
+        o->unkBA8 = 1.0f;
+        func_005A4490(o, 0x2050, 0.0f, 0.0f);
+        func_0055C4E0(o);
+        break;
+    case 1:
+        o->act[2] = 10;
+        o->unk54F = 0;
+        o->unkD10[0] = 0;
+        func_00635950(o);
+        o->unkBA8 = 1.0f;
+    case 10:
+        if (func_0055C030(o, 1.0f) == 1) {
+            o->act[2]++;
+            if (o->unk520 != 0x2001) {
+                func_005A4490(o, 0x2051, 0.0f, 8.0f);
+                func_0055C4E0(o);
+            }
+        }
+        break;
+    case 11:
+        func_0055C030(o, 1.0f);
+        break;
+    }
+}
+#endif
+
+/* Way 0 (standing about): after two frames, a character not busy with something (actions 3-5,
+   7) goes back to standing. */
+#ifdef NON_MATCHING   /* branch layout of the case-1 test and delay slots */
+void func_0058C380(DrawObjFull *o) {
+    switch (o->wayStep) {
+    case 0:
+        o->wayStep++;
+    case 1:
+        o->wayStep++;
+        switch (o->act[0]) {
+        case 1:
+            if (o->act[1] == 0) {
+                break;
+            }
+        default:
+            o->unk54F = 0;
+            o->unk548 &= ~1;
+            o->act[0] = 1;
+            o->act[1] = 0;
+            o->act[2] = 1;
+            o->act[3] = 0;
+            func_00635920(o);
+            func_005A4490(o, 0x2050, 0.0f, 10.0f);
+            func_0055C4E0(o);
+            func_00639DF0(o);
+            break;
+        case 3:
+        case 4:
+        case 5:
+        case 7:
+            break;
+        }
+        break;
+    case 2:
+        func_00639D50(o);
+        break;
+    case 3:
+        o->unkFCC = 0;
+        break;
+    }
+}
+#endif
