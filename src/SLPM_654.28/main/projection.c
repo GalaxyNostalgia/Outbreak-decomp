@@ -191,3 +191,16 @@ void func_0018FAB0(f32 *out, const Mat44 *m) {
     out[1] = m->m[3][1];
     out[2] = m->m[3][2];
 }
+
+/* Copies a matrix's 3x3 part. */
+void func_00190F00(Mat44 *dst, Mat44 *src) {
+    dst->m[0][0] = src->m[0][0];
+    dst->m[0][1] = src->m[0][1];
+    dst->m[0][2] = src->m[0][2];
+    dst->m[1][0] = src->m[1][0];
+    dst->m[1][1] = src->m[1][1];
+    dst->m[1][2] = src->m[1][2];
+    dst->m[2][0] = src->m[2][0];
+    dst->m[2][1] = src->m[2][1];
+    dst->m[2][2] = src->m[2][2];
+}

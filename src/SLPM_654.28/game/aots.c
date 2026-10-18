@@ -382,3 +382,26 @@ void func_005960A0(Aot *a) {
     }
 }
 #endif
+
+void func_00107B50(void *dst, const void *src, s32 n);
+
+/* A new item area (type 0x80): footprint c, heights top/bottom, for item slot index. */
+Aot *func_00595CD0(s32 index, s32 (*c)[2], s32 top, s32 bottom) {
+    Aot *a = func_00590BF0(0);
+
+    if (a == NULL) {
+        return a;
+    }
+    a->type = 0x80;
+    a->unk31 = 0;
+    a->unk3D = 0;
+    a->unk32 = 3;
+    func_00107B50(a->corner, c, 0x20);
+    a->unk20[0] = top;
+    a->unk20[1] = bottom;
+    memset(&a->p, 0, sizeof(a->p));
+    a->p.w[0] = index;
+    a->on = 1;
+    a->p.h[5] = 0xFFFF;
+    return a;
+}

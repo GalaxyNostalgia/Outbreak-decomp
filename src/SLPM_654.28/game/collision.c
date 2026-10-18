@@ -371,3 +371,13 @@ f32 func_005E5B40(const f32 *p, u8 *kind, s32 want) {
 
     return func_005E5C20(p, normal, m, kind, want, &sub, &id, 0);
 }
+
+/* The same, wanting the floor's sub-kind. */
+f32 func_005E5B80(const f32 *p, u8 *sub, s32 want) {
+    f32 m[16];
+    f32 normal[3];
+    u16 id;
+    u8 kind;
+
+    return func_005E5C20(p, normal, m, &kind, want, sub, &id, 0);
+}

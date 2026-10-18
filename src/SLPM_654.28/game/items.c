@@ -51,3 +51,15 @@ s8 func_00583D60(s16 id) {
     }
     return D_00716510[id];
 }
+
+extern ItemInfo D_00717580;     /* (for no type) */
+
+/* The type info of the item in slot i. */
+ItemInfo *func_00583E30(u8 i) {
+    ItemSlot *e = &D_003967D0[i];
+
+    if (e->active == 0 || e->type == 0xFF) {
+        return &D_00717580;
+    }
+    return &D_00716980[e->type];
+}

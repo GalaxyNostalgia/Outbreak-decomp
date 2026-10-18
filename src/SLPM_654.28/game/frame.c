@@ -282,3 +282,15 @@ void func_005AC1C0(s32 n) {
 void func_005AC1F0(s32 n) {
     D_003938E8[0] |= 0x1000 << (n + 0x10);
 }
+
+/* (In D_00470090) the room object models' matrices: model k's is copied to m, and m is
+   remembered (with a bit) as where k is drawn from. */
+extern u32 D_00472D00[];
+extern Mat44 *D_00472D10[];
+extern Mat44 D_00470BB0[];
+
+void func_005A79E0(u8 k, Mat44 *m) {
+    D_00472D00[k >> 5] |= 1 << (k & 0x1F);
+    D_00472D10[k] = m;
+    *m = D_00470BB0[k];
+}

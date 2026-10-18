@@ -136,3 +136,74 @@ void func_00341140(const f32 *a, const f32 *b, const f32 *p, f32 *out) {
     out[1] = a[1] + dy * t;
     out[2] = a[2] + dz * t;
 }
+
+/* Point-in-polygon tests in the x-z plane (points are (x, z) pairs). */
+
+/* Twice the signed area of the triangle a, b, c. */
+f32 func_00340AA0(const f32 *a, const f32 *b, const f32 *c) {
+    return (b[0] - a[0]) * (c[1] - a[1]) - (c[0] - a[0]) * (b[1] - a[1]);
+}
+
+/* Whether p is in the triangle a, b, c: 1 when it is and the triangle turns clockwise, 2 when
+   it is and it turns the other way, 0 when not (or it is flat). */
+u8 func_00340AE0(const f32 *a, const f32 *b, const f32 *c, const f32 *p) {
+    f32 t = func_00340AA0(a, b, c);
+
+    if (t == 0.0f) {
+        return 0;
+    }
+    if (t < 0.0f) {
+        if (func_00340AA0(a, b, p) > 0.0f) {
+            return 0;
+        }
+        if (func_00340AA0(b, c, p) > 0.0f) {
+            return 0;
+        }
+        return func_00340AA0(c, a, p) > 0.0f ? 0 : 1;
+    }
+    if (func_00340AA0(a, b, p) < 0.0f) {
+        return 0;
+    }
+    if (func_00340AA0(b, c, p) < 0.0f) {
+        return 0;
+    }
+    if (func_00340AA0(c, a, p) < 0.0f) {
+        return 0;
+    }
+    return 2;
+}
+
+/* Whether p is inside the n-sided polygon poly (counting the fan triangles it falls in). */
+s32 func_00340C50(const f32 (*poly)[2], const f32 *p, s32 n) {
+    s32 area = 0;
+    s32 i;
+    s8 in;
+    s32 cw;
+    s32 j;
+    u8 r;
+
+    for (i = 0; i < n - 2; i++) {
+        area += (s32)func_00340AA0(poly[i], poly[i + 1], poly[i + 2]);
+    }
+    cw = area <= 0;
+    in = 0;
+    for (i = 0, j = 1; i < n - 2; i++, j++) {
+        r = func_00340AE0(poly[0], poly[j], poly[j + 1], p);
+        if (r != 0) {
+            if (cw) {
+                if (r == 1) {
+                    in++;
+                } else {
+                    in--;
+                }
+            } else {
+                if (r == 2) {
+                    in++;
+                } else {
+                    in--;
+                }
+            }
+        }
+    }
+    return in > 0;
+}

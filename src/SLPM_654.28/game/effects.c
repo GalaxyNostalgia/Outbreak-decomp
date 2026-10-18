@@ -3,6 +3,7 @@
 #include "object.h"
 #include "effect.h"
 #include "thing.h"
+#include "item.h"
 
 /* Making effects. */
 
@@ -205,9 +206,9 @@ extern s16 D_00363BB0[];
 u16 func_001ADEF0(s32 n);
 
 /* Sets an effect's kind and its variant (-1: a random one of the kind's). */
-void func_00621600(Obj250L *p, s16 id, s16 variant);
+void func_00621600(Obj250L *p, u16 id, s16 variant);
 #ifdef NON_MATCHING   /* first draft */
-void func_00621600(Obj250L *p, s16 id, s16 variant) {
+void func_00621600(Obj250L *p, u16 id, s16 variant) {
     p->id = id;
     p->unk23A = func_003426E0(id);
     if (variant == -1) {
@@ -270,6 +271,39 @@ void func_00556BD0(DrawObjFull *player) {
 }
 #endif
 
+void func_00190ED0(Mat44 *dst, const Mat44 *src);
+
+/* A new effect id (variant) with flags and update, at ofs (from m when given: the effect keeps
+   a copy of it); mask says which of its parts show. */
+Obj250L *func_00620DB0(Mat44 *m, f32 *ofs, s32 mask, s16 id, s32 variant, s32 flags,
+                       void *update) {
+    void *def[2];
+    EffectDef *d;
+    EffectPartDef *parts;
+    Obj250L *p;
+
+    if ((p = func_00620B70(id)) != NULL) {
+        func_00621600(p, id, variant);
+        func_00560400((s32)p, def, (u16)p->unk206);
+        d = def[0];
+        parts = def[1];
+        p->update = update;
+        p->unk4 = 0;
+        p->draw = D_00343030;
+        p->ofs[0] = ofs[0];
+        p->ofs[1] = ofs[1];
+        p->ofs[2] = ofs[2];
+        p->mtx = NULL;
+        if (m != NULL) {
+            func_00190ED0(&p->unk50, m);
+            p->mtx = &p->unk50;
+        }
+        p->flags = flags | 0xA000;
+        func_00620C50(p, d, parts, mask);
+    }
+    return p;
+}
+
 extern u8 D_00341EB0[];
 void func_00622DD0(Obj250L *p);
 
@@ -292,6 +326,109 @@ void func_005AEDB0(DrawObjFull *player) {
     }
 }
 #endif
+
+void func_0018F7C0(Mat44 *m);
+void func_00190F00(Mat44 *dst, Mat44 *src);
+void func_00622F00(Obj250L *p);
+extern f32 D_00239CE8;
+extern f32 D_00239D00;
+extern f32 D_00239D04;
+extern f32 D_00239D08;
+extern f32 D_00239D0C;
+extern f32 D_00239D10;
+
+/* The effects some items carry (a glow and the like), started on their thing o. */
+void func_005AEA90(ItemObj *o, s8 quiet) {
+    Mat44 m;
+    f32 ofs[3];
+    s8 kind;
+    s16 n;
+    Obj250L *e;
+    Obj250L *e2;
+
+    e = NULL;
+    {   /* (an inlined byte-wise clear, as in many of the game's functions) */
+        u8 *q = (u8 *)ofs;
+        s32 k = sizeof(ofs);
+
+        if (q != NULL) {
+            do {
+                *q++ = 0;
+            } while (--k != 0);
+        }
+    }
+    n = 0;
+    if (o == NULL) {
+        return;
+    }
+    func_0018F7C0(&m);
+    func_00190F00(&m, (Mat44 *)o->mat);
+    switch (o->id) {
+    case 0x72:
+        ofs[1] = D_00239CE8;
+        e = func_00620DB0(&m, ofs, 0, 0x27, 0, 0x1A193, func_00622F00);
+        kind = 0;
+        n = 1;
+        break;
+    case 0x3200:
+        ofs[1] = -1.0f;
+        e = func_00620DB0(&m, ofs, 0xFFFF, 0x7F, 0, 0x1A193, func_00622F00);
+        kind = 6;
+        n = 1;
+        if (quiet == 0) {
+            e->unk10 = e->unkE;
+            e->unkE = 2;
+        }
+        break;
+    case 0x1C:
+        ofs[1] = D_00239D00;
+        ofs[2] = D_00239D04;
+        e = func_00620DB0(&m, ofs, 0, 0x44, 0, 0x1A193, func_00622F00);
+        kind = 3;
+        n = 0xE;
+        break;
+    case 0x1D:
+        ofs[1] = D_00239D08;
+        ofs[2] = 3.5f;
+        e2 = func_00620DB0(&m, ofs, 0, 0x40, 0, 0x1A193, func_00622F00);
+        if (e2 != NULL) {
+            e2->target = o;
+            e2->unk1FF = 4;
+            e2->unk234 = o->id;
+            e2->unk23C = 0x15;
+        }
+        ofs[1] = D_00239D00;
+        ofs[2] = D_00239D04;
+        e = func_00620DB0(&m, ofs, 0x20, 0x3F, 0, 0x1A193, func_00622F00);
+        kind = 3;
+        n = 0x4E;
+        break;
+    case 0x135:
+        ofs[1] = D_00239D00;
+        ofs[2] = D_00239D04;
+        e = func_00620DB0(&m, ofs, 0, 0x43, 0, 0x1A193, func_00622F00);
+        kind = 3;
+        n = 0xE;
+        break;
+    case 0x75:
+        ofs[0] = D_00239D0C;
+        ofs[1] = D_00239D10;
+        e = func_00620DB0(&m, ofs, 0, 0x91, 0, 0x1A193, func_00622F00);
+        kind = 5;
+        if (e != NULL) {
+            e->unkEC = 10.0f;
+        }
+        n = 0xA5;
+        break;
+    }
+    if (e != NULL) {
+        e->kind = 0x1C;
+        e->target = o;
+        e->unk1FF = kind;
+        e->unk234 = o->id;
+        e->unk23C = n;
+    }
+}
 
 void func_005B99B0(Obj250L *p);
 

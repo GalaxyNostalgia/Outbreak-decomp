@@ -1,5 +1,6 @@
 #include "common.h"
 #include "options.h"
+#include "item.h"
 
 /* The room's objects (doors and such): types from obj%03d.dat, placements from r%03d.sto. */
 
@@ -7,7 +8,7 @@ typedef struct {
     s8 active;          /* 0x00 */
     s8 unk1;
     s8 unk2;
-    s8 index;           /* 0x03 */
+    u8 index;           /* 0x03 */
     s16 type;           /* 0x04 */
     u8 unk6[0x14 - 6];
     s16 unk14;          /* 0x14 */
@@ -227,8 +228,85 @@ void func_0067B420(u16 room) {
 extern s8 D_0023BF50;           /* objects are on */
 extern s8 D_0023BF4C;           /* objects placed */
 void func_005E8600(void);
-void func_0067B7A0(RoomObj *o);
+ItemObj *func_0067B7A0(RoomObj *o);
 void func_0067CB00(RoomObj *o);
+
+/* The room objects' updates, by their type's kind. */
+typedef struct {
+    void *fn[4];
+} RoomObjFns;
+
+extern RoomObjFns D_006E57F0;
+extern u8 D_00341EB0[];
+ItemObj *func_00560900(s32 at);
+void func_0018F7C0(f32 *m);
+
+/* A new thing for a room object of type. */
+ItemObj *func_0067B6A0(u16 type) {
+    RoomObjFns fns = D_006E57F0;
+    ItemObj *o;
+
+    if ((o = func_00560900(1)) == NULL) {
+        return NULL;
+    }
+    o->active = 1;
+    o->unk1 = 0;
+    o->unk2 = 8;
+    o->id = type;
+    o->unk4 = 2;
+    o->update = fns.fn[D_00716000[type].unk2[1]];
+    o->draw = D_00341EB0;
+    o->model = (u8)D_00715FC0[type];
+    o->flags = 0;
+    o->pos[2] = 0.0f;
+    o->pos[1] = 0.0f;
+    o->pos[0] = 0.0f;
+    o->rot[2] = 0;
+    o->rot[1] = 0;
+    o->rot[0] = 0;
+    o->scale[2] = 1.0f;
+    o->scale[1] = 1.0f;
+    o->scale[0] = 1.0f;
+    func_0018F7C0(o->mat);
+    return o;
+}
+
+extern u8 D_00470930[];
+u8 func_00551690(u8 model);
+void func_005A79E0(u8 k, Mat44 *m);
+void func_00340310(s32 rx, s32 ry, s32 rz, f32 *m);
+void func_0067AF70(RoomObj *o);
+void func_0067BDD0(RoomObj *o);
+
+/* Makes room object o's thing, turned and set up. */
+ItemObj *func_0067B7A0(RoomObj *r) {
+    ItemObj *o;
+    u8 k;
+
+    if (r->flags & 4) {
+        return NULL;
+    }
+    o = func_0067B6A0(r->type);
+    if (o == NULL) {
+        return NULL;
+    }
+    r->unk28[0] = (s32)o;
+    o->rot[1] = (u16)r->unk14 << 14;
+    o->flags = r->flags;
+    o->index = r->index;
+    if (o->flags & 8) {
+        o->unk1 = 0;
+        k = func_00551690(o->model);
+        D_00470930[k] = 1;
+        if (k != 0xFF) {
+            func_005A79E0(k, (Mat44 *)o->mat);
+        }
+    }
+    func_00340310(0, o->rot[1], 0, o->mat);
+    func_0067AF70(r);
+    func_0067BDD0(r);
+    return o;
+}
 
 /* The room's objects when the room starts. */
 void func_0067B1F0(void) {
@@ -261,7 +339,12 @@ extern u8 D_00711080[4][0x480]; /* per floor: the walkable grid, 96 x 96 bits (0
 extern s8 D_0023AE60[4];        /* the floors */
 extern u8 D_003967B0[8][4];
 void func_0067C1A0(void);
-s8 *func_0067B020(RoomObj *o);
+#ifdef NON_MATCHING
+/* (roomsets.c's func_0067B020 is static there; this copy serves the drafts here) */
+static s8 *func_0067B020(RoomObj *o) {
+    return (s8 *)&D_006EF480[D_00716000[o->type].model] + (o->unk14 & 3) * 4;
+}
+#endif
 s8 func_0067D8B0(s8 x, s8 y);
 void *memset(void *p, s32 c, u32 n);
 

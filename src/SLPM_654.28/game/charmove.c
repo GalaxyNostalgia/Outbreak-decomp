@@ -464,3 +464,11 @@ void func_00635920(DrawObjFull *o) {
     *(Vec3 *)o->unkD94 = *(Vec3 *)o->unk38;
     o->unkDA0 = o->unk92;
 }
+
+/* The room script's second table (at its 0x8004): an entry per room object model (< 0x20). */
+u8 func_00551690(u8 model) {
+    if (model >= 0x20) {
+        return 0;
+    }
+    return (*(u8 **)(D_00306590.script + 0x8004))[model];
+}

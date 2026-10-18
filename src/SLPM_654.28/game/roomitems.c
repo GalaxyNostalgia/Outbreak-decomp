@@ -389,44 +389,6 @@ void func_00562100(void) {
 #endif
 
 void func_00560880(void);
-/* An item's thing in the room (func_00560E80's; 0x250 bytes from the pool D_00386950). */
-typedef struct ItemObj {
-    s8 active;          /* 0x000 */
-    u8 unk1;            /* 0x001: its model is loaded */
-    u8 unk2;            /* 0x002: (8: an item) */
-    u8 unk3;
-    u8 unk4;            /* 0x004 */
-    u8 unk5;
-    u8 slot;            /* 0x006: its place in the pool */
-    u8 unk7[0xE - 7];
-    s16 unkE;           /* 0x00E */
-    u8 unk10[2];
-    s16 unk12;          /* 0x012 */
-    void *update;       /* 0x014: by the item's kind (D_006D5C30) */
-    void *draw;         /* 0x018 */
-    struct ItemObj *prev;   /* 0x01C */
-    struct ItemObj *next;   /* 0x020 */
-    u8 unk24[0x30 - 0x24];
-    u8 partOn[6];       /* 0x030 */
-    s16 id;             /* 0x036 */
-    u8 unk38[8];
-    Mat44 parts[6];     /* 0x040: its bones (from the room's object model) */
-    f32 mat[16];        /* 0x1C0 */
-    f32 pos[3];         /* 0x200 */
-    u8 unk20C[0x218 - 0x20C];
-    f32 unk218;         /* 0x218 */
-    s16 rot[3];         /* 0x21C */
-    u8 unk222[0x22C - 0x222];
-    f32 scale[3];       /* 0x22C */
-    s16 unk238;         /* 0x238 */
-    u8 unk23A[2];
-    s32 flags;          /* 0x23C */
-    u8 index;           /* 0x240 */
-    u8 unk241[1];       /* 0x241 */
-    s16 model;          /* 0x242 */
-    u8 unk244[0x250 - 0x244];
-} ItemObj;
-
 extern ItemObj D_003C51B0[0x40];
 extern ItemObj *D_00386950[0x40];   /* the free ones */
 extern s16 D_0023BDB0;              /* how many */
@@ -592,7 +554,7 @@ typedef struct {
 
 extern Unk6EF3A0 D_006EF3A0[][7];
 ItemInfo *func_00583E30(u8 i);
-void func_005E5B80(f32 *pos, u8 *out, s32 c);
+f32 func_005E5B80(const f32 *p, u8 *sub, s32 want);
 u16 func_001ADEF0(s32 n);
 void func_005614B0(ItemSlot *e);
 
@@ -653,6 +615,60 @@ void *func_00561270(ItemSlot *e) {
     return o;
 }
 
+/* Per item shape (D_006EF080, 0x28 bytes): its footprint's corners (x, z) and its top and
+   bottom. */
+typedef struct {
+    s32 corner[4][2];
+    s32 top;            /* 0x20 */
+    s32 bottom;         /* 0x24 */
+} ItemShape;
+
+extern ItemShape D_006EF080[];
+void func_00340310(s32 rx, s32 ry, s32 rz, f32 *m);
+void func_00191410(f32 *v, const f32 *m);
+void func_00590CC0(s32 h);
+s32 func_00595CD0(s32 index, s32 (*corners)[2], s32 top, s32 bottom);
+
+/* Item e's footprint corners in the room (its shape turned by its heading, at its place). */
+void func_00562410(ItemSlot *e, s8 shape, s32 (*out)[2]);
+#ifdef NON_MATCHING   /* v[1]/v[2] addresses kept in s registers (the usual unsolved pattern) */
+void func_00562410(ItemSlot *e, s8 shape, s32 (*out)[2]) {
+    f32 m[16];
+    f32 v[3];
+    s32 i;
+
+    for (i = 0; i < 4; i++) {
+        func_00340310(0, e->unk16, 0, m);
+        v[0] = D_006EF080[shape].corner[i][0];
+        v[1] = 0.0f;
+        v[2] = D_006EF080[shape].corner[i][1];
+        func_00191410(v, m);
+        out[i][0] = e->pos[0] + v[0];
+        out[i][1] = e->pos[2] + v[2];
+    }
+}
+#endif
+
+/* (Re)makes item e's pick-up area. */
+void func_005614B0(ItemSlot *e) {
+    s32 c[4][2];
+    s32 top;
+    s32 bottom;
+    s32 y;
+
+    if (e == NULL) {
+        return;
+    }
+    func_00562410(e, e->unk2C, c);
+    y = e->pos[1];
+    top = y + D_006EF080[(s8)e->unk2C].top;
+    bottom = y + D_006EF080[(s8)e->unk2C].bottom;
+    if (e->unk20 != 0) {
+        func_00590CC0(e->unk20);
+    }
+    e->unk20 = func_00595CD0(e->index, c, top, bottom);
+}
+
 /* The slot of the item at place (> 0). */
 static ItemSlot *func_00562520(s16 place) {
     ItemSlot *e;
@@ -691,7 +707,6 @@ ItemSlot *func_00562630(s16 place) {
     }
 }
 
-void func_00590CC0(s32 h);
 
 void func_00581320(u8 i) {
     ItemSlot *e = &D_003967D0[i];

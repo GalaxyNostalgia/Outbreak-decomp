@@ -1,5 +1,6 @@
 #include "common.h"
 #include "options.h"
+#include "item.h"
 
 /* GAME.BIN: four room data records of 0x34-byte entries (kind unknown yet), and the tables reset
    with them. */
@@ -126,7 +127,8 @@ typedef struct {
     u8 room;            /* 0x01 */
     u8 unk2[2];
     u16 kind;           /* 0x04: D_00716000 entry */
-    u8 unk6[0x14 - 6];
+    u8 unk6[2];
+    f32 pos[3];         /* 0x08 */
     u16 dir;            /* 0x14: its turn (& 3) */
     u8 unk16[2];
     s8 x;               /* 0x18 */
@@ -137,7 +139,9 @@ typedef struct {
     s8 h;               /* 0x21 */
     u8 unk22[2];
     s32 flags;          /* 0x24: 1 placed, 4 own size (w, h) */
-    u8 unk28[0x3C - 0x28];
+    ItemObj *obj;       /* 0x28: its thing */
+    s32 unk2C;          /* 0x2C */
+    u8 unk30[0x3C - 0x30];
 } RoomExtraSlot;        /* 0x3C */
 
 typedef struct {
@@ -195,25 +199,74 @@ void func_0067B550(RoomExtraDef *d) {
 }
 #endif
 
-/* The cells (x0, y0, x1, y1) slot s takes for its turn. (Probably static in the original: its
-   callers, all near it, keep values in a/t registers across it, which only a static callee
-   gives here; it can be made static once they are all in C.) */
-s8 *func_0067B020(RoomExtraSlot *s) {
+/* The cells (x0, y0, x1, y1) slot s takes for its turn. (Static: its callers keep values in
+   a/t registers across it, which only a static callee gives. doors.c's callers, from the same
+   original file, use their own copy.) */
+static s8 *func_0067B020(RoomExtraSlot *s) {
     return D_006EF480[D_00716000[s->kind].shape].rect[s->dir & 3];
+}
+
+typedef struct {
+    f32 v[3];
+} SlotVec3;
+
+/* Where slot s's thing stands: the room's origin plus its cells (50 units each), centred on
+   what it takes up. */
+void func_0067B070(f32 *out, RoomExtraSlot *s) {
+    s8 *r;
+
+    if (s == NULL || s->used == 0) {
+        return;
+    }
+    if (out == NULL) {
+        return;
+    }
+    *(SlotVec3 *)out = *(SlotVec3 *)D_00395EA0.pos;
+    out[0] += 50.0f * s->x;
+    out[2] += 50.0f * s->y;
+    if (s->flags & 4) {
+        out[0] += 0.5f * (50.0f * s->w);
+        out[2] += 0.5f * (50.0f * s->h);
+    } else {
+        r = func_0067B020(s);
+        out[0] += 0.5f * (50.0f * (r[0] + r[2]));
+        out[2] += 0.5f * (50.0f * (r[1] + r[3]));
+    }
+}
+
+f32 func_005E5B80(const f32 *p, u8 *sub, s32 want);
+void func_0067B890(RoomExtraSlot *s, s32 a);
+
+/* Puts slot s (and its thing) where it stands. */
+void func_0067AF70(RoomExtraSlot *s) {
+    f32 p[3];
+
+    if (s == NULL || s->used == 0) {
+        return;
+    }
+    func_0067B070(p, s);
+    *(SlotVec3 *)s->pos = *(SlotVec3 *)p;
+    if (s->obj != NULL) {
+        *(SlotVec3 *)s->obj->pos = *(SlotVec3 *)p;
+        func_005E5B80(s->pos, s->obj->unk241, 0xFF);
+    }
+    if (s->unk2C != 0) {
+        func_0067B890(s, s->unk2C);
+    }
 }
 
 /* The room grid: the room's own cells (from the room data) plus what is placed. */
 void func_0067C1A0(void);
-#ifdef NON_MATCHING   /* the original keeps values in a/t registers across func_0067B020 */
+#ifdef NON_MATCHING   /* loop registers (the row pointer and y counter) */
 void func_0067C1A0(void) {
     RoomExtraSlot *s;
     s32 i;
     s32 x;
-    s32 x1;
-    s32 y;
-    s32 y0;
     s32 y1;
+    s32 x1;
     s8 *r;
+    s32 y0;
+    s32 y;
 
     memcpy(D_00711080, D_00395EA0.a, sizeof(D_00395EA0.a));
     for (i = 0, s = D_00395720; i < 32; i++, s++) {
@@ -242,12 +295,11 @@ void func_0067C1A0(void) {
 
 /* The slot that takes cell (x, y) of the room grid, or -1. */
 s8 func_0067D8B0(s8 x, s8 y);
-#ifdef NON_MATCHING   /* callers of func_0067B020 keep values across it in the original (it is probably static there) */
 s8 func_0067D8B0(s8 x, s8 y) {
-    RoomExtraSlot *s;
     s32 i;
-    s8 x0;
+    RoomExtraSlot *s;
     s8 x1;
+    s8 x0;
     s8 y0;
     s8 y1;
     s8 *r;
@@ -276,4 +328,3 @@ s8 func_0067D8B0(s8 x, s8 y) {
     }
     return -1;
 }
-#endif

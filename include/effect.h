@@ -31,7 +31,11 @@ typedef struct Obj250L {
     u8 nparts;          /* 0x031 */
     u8 unk32[0x38 - 0x32];
     Vec3 pos;           /* 0x038 */
-    u8 unk44[0x114 - 0x44];
+    f32 ofs[3];         /* 0x044: (with mtx) the offset from it */
+    Mat44 unk50;        /* 0x050: its own copy of the matrix it follows */
+    u8 unk90[0xEC - 0x90];
+    f32 unkEC;          /* 0x0EC */
+    u8 unkF0[0x114 - 0xF0];
     s16 partIds[16];    /* 0x114 */
     void *parts[16];    /* 0x134 */
     u8 unk174[0x1F0 - 0x174];
@@ -43,9 +47,12 @@ typedef struct Obj250L {
     u32 flags;          /* 0x200 */
     s16 id;             /* 0x204 */
     s16 unk206;         /* 0x206 */
-    u8 unk208[0x23A - 0x208];
+    u8 unk208[0x234 - 0x208];
+    s32 unk234;         /* 0x234: (on an item) its id */
+    u8 unk238[2];
     s16 unk23A;         /* 0x23A */
-    u8 unk23C[0x240 - 0x23C];
+    s16 unk23C;         /* 0x23C */
+    u8 unk23E[2];
     s16 unk240;         /* 0x240 */
     u8 unk242[0x250 - 0x242];
 } Obj250L;

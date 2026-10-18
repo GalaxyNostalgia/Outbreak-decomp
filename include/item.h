@@ -42,6 +42,45 @@ typedef struct {
     u8 unk15[3];
 } ItemInfo;
 
+
+/* An item's thing in the room (func_00560E80's; 0x250 bytes from the pool D_00386950). */
+typedef struct ItemObj {
+    s8 active;          /* 0x000 */
+    u8 unk1;            /* 0x001: its model is loaded */
+    u8 unk2;            /* 0x002: (8: an item) */
+    u8 unk3;
+    u8 unk4;            /* 0x004 */
+    u8 unk5;
+    u8 slot;            /* 0x006: its place in the pool */
+    u8 unk7[0xE - 7];
+    s16 unkE;           /* 0x00E */
+    u8 unk10[2];
+    s16 unk12;          /* 0x012 */
+    void *update;       /* 0x014: by the item's kind (D_006D5C30) */
+    void *draw;         /* 0x018 */
+    struct ItemObj *prev;   /* 0x01C */
+    struct ItemObj *next;   /* 0x020 */
+    u8 unk24[0x30 - 0x24];
+    u8 partOn[6];       /* 0x030 */
+    u16 id;             /* 0x036 */
+    u8 unk38[8];
+    Mat44 parts[6];     /* 0x040: its bones (from the room's object model) */
+    f32 mat[16];        /* 0x1C0 */
+    f32 pos[3];         /* 0x200 */
+    u8 unk20C[0x218 - 0x20C];
+    f32 unk218;         /* 0x218 */
+    s16 rot[3];         /* 0x21C */
+    u8 unk222[0x22C - 0x222];
+    f32 scale[3];       /* 0x22C */
+    s16 unk238;         /* 0x238 */
+    u8 unk23A[2];
+    s32 flags;          /* 0x23C */
+    u8 index;           /* 0x240 */
+    u8 unk241[1];       /* 0x241 */
+    s16 model;          /* 0x242 */
+    u8 unk244[0x250 - 0x244];
+} ItemObj;
+
 extern ItemSlot D_003967D0[0x100];
 extern ItemInfo D_00716980[];
 
