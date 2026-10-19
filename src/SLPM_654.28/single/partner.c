@@ -60,6 +60,70 @@ void func_00822290(void) {
     }
 }
 
+/* A stick as Ctrl keeps it. */
+typedef struct {
+    s16 mag;
+    s16 angle;
+    s16 x;
+    s16 y;
+} CtrlStick;
+
+void func_00822520(DrawObjFull *obj);
+void func_00823390(DrawObjFull *obj);
+void func_0082C150(DrawObjFull *obj);
+extern s32 (*D_00839240[])(DrawObjFull *obj);  /* the thinking steps (by unkFF4): 1 to go on */
+extern void (*D_008394D0[])(DrawObjFull *obj); /* the moving steps while unk105B (by unkFF8) */
+extern void (*D_00839460[])(DrawObjFull *obj); /* the moving steps (by unkFF8) */
+extern u8 D_0048C01D[];
+
+/* A partner's thinking: its steps until one says stop. */
+void func_008232F0(DrawObjFull *obj) {
+    do {
+        func_00823390(obj);
+    } while (D_00839240[obj->unkFF4](obj));
+}
+
+/* The partner's moves for this frame (unk105B set). */
+void func_0082BE60(DrawObjFull *obj) {
+    func_0082C150(obj);
+    D_008394D0[obj->unkFF8](obj);
+}
+
+/* The partner's moves for this frame. */
+void func_0082A6D0(DrawObjFull *obj) {
+    if (D_00306590.unk10[2] == 0) {
+        D_00839460[obj->unkFF8](obj);
+    }
+}
+
+/* A partner's frame: its controls cleared, then (unless paused or held) its AI drives them. */
+void func_00822440(DrawObjFull *obj) {
+    s32 i;
+
+    obj->ctrl.cur = 0;
+    obj->ctrl.pressed = 0;
+    obj->ctrl.prev[0] = 0;
+    for (i = 0; i < 2; i++) {
+        ((CtrlStick *)((u8 *)obj + i * 8 + 0xF98))->mag = 0;
+        ((CtrlStick *)((u8 *)obj + i * 8 + 0xF98))->angle = 0;
+        ((CtrlStick *)((u8 *)obj + i * 8 + 0xF98))->x = 0;
+        ((CtrlStick *)((u8 *)obj + i * 8 + 0xF98))->y = 0;
+    }
+    obj->unkFF2[0] = 1;
+    obj->unkFF2[1] = 0;
+    obj->unk1098 = 0;
+    if (D_00306590.unk10[2] == 0 && !obj->unkFF1 && !obj->unkBD0 && !D_0048C01D[0] &&
+        !(obj->unkBA0 & 0x20)) {
+        func_00822520(obj);
+        func_008232F0(obj);
+        if (obj->unk105B) {
+            func_0082BE60(obj);
+        } else {
+            func_0082A6D0(obj);
+        }
+    }
+}
+
 /* A partner's AI from the start (players that are partners only). */
 void func_008220A0(DrawObjFull *obj) {
     D_008534C0[0] = 0;

@@ -99,3 +99,19 @@ void func_00346990(void) {
 void func_00346B90(DrawObjFull *o) {
     func_001913A0((f32 *)((u8 *)o + 0x1CC), o->unk1AC, (f32 *)((u8 *)o + 0x50));
 }
+
+void func_00192BE0(void *b, f32 *parent);
+
+/* Poses o's skeleton from its matrix (0x50) and its motion. */
+void func_00346B30(void *p) {
+    DrawObjFull *o = p;
+    void **b = (void **)((u8 *)o->model + 0x820);
+
+    switch (o->type) {
+    case 0:
+    case 1:
+        func_00192BE0(*b, (f32 *)((u8 *)o + 0x50));
+        return;
+    }
+    func_00192BE0(*b, (f32 *)((u8 *)o + 0x50));
+}

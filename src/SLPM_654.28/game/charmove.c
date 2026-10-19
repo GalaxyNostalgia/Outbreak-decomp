@@ -155,7 +155,39 @@ extern u8 D_006DB4FF[];         /* per NPC model (from 1) */
 extern u8 D_006DB500[];
 extern u8 D_006DB5E0[];
 extern void *D_006DB880[];
-void func_005E9CF0(void *bones, void *face, u8 n);
+
+/* A bone link: bone's link kind (0 0xC8, 1 0xD0, 2 0xCC) to parent (0xFF none). */
+typedef struct {
+    u8 bone;
+    u8 kind;
+    u8 parent;
+} BoneLink;
+
+/* Links the face's bones (a list ended by 0xFF) to their parents. */
+void func_005E9CF0(void *bones, void *face, u8 n) {
+    u8 **b = bones;
+    BoneLink *l = face;
+    u8 *p;
+
+    for (; l->bone != 0xFF; l++) {
+        if (l->parent == 0xFF) {
+            p = NULL;
+        } else {
+            p = b[l->parent];
+        }
+        switch (l->kind) {
+        case 0:
+            *(u8 **)(b[l->bone] + 0xC8) = p;
+            break;
+        case 1:
+            *(u8 **)(b[l->bone] + 0xD0) = p;
+            break;
+        case 2:
+            *(u8 **)(b[l->bone] + 0xCC) = p;
+            break;
+        }
+    }
+}
 
 void func_005E9220(DrawObjFull *o);
 #ifdef NON_MATCHING   /* first draft */
@@ -1067,11 +1099,61 @@ extern s8 D_0048BF88[];
 /* The model's animation and two of its bones (0x60, 0x68). */
 typedef struct {
     void *anim;
-    u8 unk4[0x5C];
+    u8 *unk4;           /* 0x04: the root bone */
+    u8 unk8[0x54 - 8];
+    u8 *unk54;          /* 0x54: the head bone */
+    u8 unk58[8];
     u8 *unk60;
     u8 unk64[4];
     u8 *unk68;
 } ModelBones;
+
+typedef struct {
+    u8 unk0[8];
+    f32 scale;          /* 0x08 */
+    u8 unkC[8];
+} NpcModelScale;        /* 0x14 */
+
+extern NpcModelScale D_006E2490[];  /* per NPC model (from 1) */
+extern f32 D_006E6CB0[][3];         /* per character: its size */
+extern f32 D_00239E8C;
+extern f32 D_00239E90;
+
+/* Squashes the model when its head is under something low (0x874's height): the root's 0x74
+   by how far, scaled to the character. */
+void func_005A6720(DrawObjFull *o);
+#ifdef NON_MATCHING   /* close: one load hoisted into a delay slot the original leaves empty */
+void func_005A6720(DrawObjFull *o) {
+    ModelBones *b;
+    f32 h;
+    f32 s;
+    f32 v;
+
+    if (D_0048BF88[0] && o->unkB40 == 1) {
+        return;
+    }
+    b = (ModelBones *)&o->model->unk0[0x820];
+    s = 0.0f;
+    h = FIELD(b->unk54, f32, 0x34) - o->unk38[1] - D_00239E8C;
+    if (h <= 0.0f) {
+        return;
+    }
+    switch (o->type) {
+    case 0:
+    case 1:
+        s = o->unkAA8 * (o->unkB4[1] / (o->unkBB4 ? D_006E2490[o->unkBB4 - 1].scale : D_006E6CB0[o->unkB98][0]));
+        break;
+    case 2:
+        s = o->unkAA8;
+        break;
+    }
+    v = h * s / D_00239E90;
+    if (v < s) {
+        v = s;
+    }
+    FIELD(b->unk4, f32, 0x74) = v;
+}
+#endif
 
 /* Breathing: while alive and not busy, sets two bones' 0x74 from the curve at the timer, then
    advances it by s (looping). */
@@ -2128,6 +2210,154 @@ s32 func_0061C650(DrawObjFull *o, u8 set) {
     }
     return 0;
 }
+
+s32 func_006332D0(DrawObjFull *o);
+void func_006321D0(DrawObjFull *o);
+
+/* (Online) another player's push (0xD80 a frame for 0xD90 frames, ending at 0xD74 facing
+   0xD8C), while standing or walking: 2 while it lasts, 1 on its last frame, 0 when there's
+   none (out of those steps it is put at the end at once). 0x54A & 0x4000: func_006332D0 says it
+   can't be pushed (any push is dropped). */
+s32 func_00632DC0(DrawObjFull *o);
+#ifdef NON_MATCHING   /* same code; ours merges the two copies of the put-at-the-end tail and fills the case delay slots */
+s32 func_00632DC0(DrawObjFull *o) {
+    f32 *vy;
+    f32 *vz;
+
+    if (!func_001AF510()) {
+        return 0;
+    }
+    if (func_001AF4D0() == 1) {
+        return 0;
+    }
+    if (o->type != 0) {
+        return 0;
+    }
+    if (o->kind == D_0048BF7D[0]) {
+        return 0;
+    }
+    if (!(o->unk54A & 0x4000)) {
+        if (func_006332D0(o)) {
+            o->unk54A &= ~0x4000;
+        } else {
+            o->unk54A |= 0x4000;
+        }
+    }
+    if (o->unk54A & 0x4000) {
+        o->unkD90 = 0;
+        o->unkD80[0] = 0.0f;
+        o->unkD80[1] = 0.0f;
+        o->unkD80[2] = 0.0f;
+        o->unkD8E = 0;
+        return 0;
+    }
+    switch (o->act[0]) {
+    case 1:
+        switch (o->act[1]) {
+        case 0:
+        case 1:
+        case 0x2:
+        case 0x3:
+        case 0x4:
+        case 0x5:
+        case 0x6:
+        case 0x7:
+        case 0x8:
+        case 0x9:
+        case 0xA:
+        case 0xB:
+        case 0xC:
+        case 0xD:
+        case 0xE:
+        case 0x31:
+        case 0x32:
+        case 0x98:
+        case 0x99:
+        case 0x9A:
+        case 0x9B:
+        case 0x9C:
+        case 0x9D:
+        case 0x9E:
+        case 0x9F:
+        case 0xA0:
+        case 0x24:
+        case 0x74:
+        case 0x75:
+        case 0x76:
+        case 0x77:
+        case 0x78:
+        case 0x79:
+        case 0x7A:
+        case 0x7B:
+        case 0x7C:
+        case 0x4A:
+        case 0x4B:
+        case 0x4C:
+        case 0x4D:
+        case 0x4E:
+        case 0x4F:
+        case 0x50:
+        case 0x51:
+        case 0x52:
+        case 0x53:
+        case 0x54:
+        case 0x55:
+        case 0xCD:
+        case 0xD0:
+        case 0xD1:
+        case 0x81:
+        case 0x82:
+        case 0x83:
+            func_00632180(o);
+            vy = &o->unkD80[1];
+            vz = &o->unkD80[2];
+            o->unk38[0] += o->unkD80[0];
+            o->unk38[1] += *vy;
+            o->unk38[2] += *vz;
+            o->unk92 += o->unkD8E;
+            func_006321D0(o);
+            if (o->unkD90 == 0) {
+                return 0;
+            }
+            if (--o->unkD90 != 0) {
+                o->unk54A |= 1;
+                return 2;
+            }
+            *(Vec3 *)o->unk38 = *(Vec3 *)o->unkD74;
+            o->unk92 = o->unkD8C;
+            if (o->unkD90 == 0) {
+                o->unkD80[0] = 0.0f;
+                *vy = 0.0f;
+                *vz = 0.0f;
+                o->unkD8E = 0;
+            }
+            return 1;
+        default:
+            if (o->unkD90 != 0) {
+                *(Vec3 *)o->unk38 = *(Vec3 *)o->unkD74;
+                o->unk92 = o->unkD8C;
+                o->unkD90 = 0;
+                o->unkD80[0] = 0.0f;
+                o->unkD80[1] = 0.0f;
+                o->unkD80[2] = 0.0f;
+                o->unkD8E = 0;
+            }
+            return 0;
+        }
+    default:
+        if (o->unkD90 != 0) {
+            *(Vec3 *)o->unk38 = *(Vec3 *)o->unkD74;
+            o->unk92 = o->unkD8C;
+            o->unkD90 = 0;
+            o->unkD80[0] = 0.0f;
+            o->unkD80[1] = 0.0f;
+            o->unkD80[2] = 0.0f;
+            o->unkD8E = 0;
+        }
+        return 0;
+    }
+}
+#endif
 
 /* Action 1's standing step: the first of the player's possible actions that starts (each
    func_0061Cxxx-func_0061Exxx checks its buttons and starts it); 1 when one did. With the map

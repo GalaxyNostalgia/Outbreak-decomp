@@ -4,6 +4,24 @@
 #include "common.h"
 #include "ctrl.h"
 
+/* A two-bone chain (an arm or a leg) the model bends towards a target (game/ik.c). */
+typedef struct {
+    f32 m0[16];         /* 0x00: bone 0 relative to its aim */
+    f32 m1[16];         /* 0x40: bone 1 relative to its aim */
+    s16 mode;           /* 0x80 */
+    u16 on;             /* 0x82 */
+    f32 angle;          /* 0x84 */
+    u8 *b0;             /* 0x88 */
+    u8 *b1;             /* 0x8C */
+    f32 len0;           /* 0x90 */
+    f32 len1;           /* 0x94 */
+    u8 unk98[8];
+    f32 up[3];          /* 0xA0 */
+    f32 tgt[3];         /* 0xAC: where its end reaches */
+    u8 unkB8[4];
+    s32 unkBC;          /* 0xBC */
+} IkChain;              /* 0xC0 */
+
 /* The game's characters and things (players 0x10E0 bytes, enemies 0x1170, ...). Their layouts share
    this start. */
 
@@ -103,7 +121,10 @@ typedef struct {
     u8 unk54F;          /* 0x54F */ \
     u8 unk550[0x553 - 0x550]; \
     u8 unk553;          /* 0x553: casts a shadow */ \
-    u8 unk554[0xAA8 - 0x554]; \
+    u8 unk554[0x560 - 0x554]; \
+    IkChain ik[7];      /* 0x560: (players) legs (0, 1), arms, ... */ \
+    f32 unkAA0;         /* 0xAA0: (feet) the floor under the left foot */ \
+    f32 unkAA4;         /* 0xAA4: under the right */ \
     f32 unkAA8;         /* 0xAA8 */ \
     u8 unkAAC[4]; \
     s32 unkAB0;         /* 0xAB0 */ \
@@ -115,7 +136,9 @@ typedef struct {
     u8 unkAD4;          /* 0xAD4: a reaction pending */ \
     u8 unkAD5;          /* 0xAD5: which (D_006DDA80) */ \
     u8 unkAD6[0xAEC - 0xAD6]; \
-    u8 unkAEC[0xB90 - 0xAEC]; \
+    u8 unkAEC[0xB40 - 0xAEC]; \
+    s8 unkB40;          /* 0xB40 */ \
+    u8 unkB41[0xB90 - 0xB41]; \
     f32 unkB90;         /* 0xB90: how far tilted to the ground (0-1) */ \
     f32 unkB94;         /* 0xB94: its speed */ \
     u8 unkB98;          /* 0xB98: the character */ \

@@ -6,21 +6,6 @@
    bones' rest orientations relative to the plane they lie in, their lengths and the up vector,
    and hooks its three bones' update callbacks (0x178/0x17C). */
 
-typedef struct {
-    f32 m0[16];         /* 0x00: bone 0 relative to its aim */
-    f32 m1[16];         /* 0x40: bone 1 relative to its aim */
-    s16 mode;           /* 0x80 */
-    s16 on;             /* 0x82 */
-    f32 angle;          /* 0x84 */
-    u8 *b0;             /* 0x88 */
-    u8 *b1;             /* 0x8C */
-    f32 len0;           /* 0x90 */
-    f32 len1;           /* 0x94 */
-    u8 unk98[8];
-    f32 up[3];          /* 0xA0 */
-    u8 unkAC[0xBC - 0xAC];
-    s32 unkBC;          /* 0xBC */
-} IkChain;              /* 0xC0 */
 
 void func_0018F830(f32 x, f32 y, f32 z, f32 *m);
 void func_001913A0(f32 *out, const f32 *v, const f32 *m);
@@ -142,5 +127,133 @@ void func_005A5FC0(DrawObjFull *obj) {
                   *(u8 **)(bones + 0x24), obj->unkB4, D_00239E00, 1.0f, 0.0f, 0.0f);
     func_005A5740((IkChain *)((u8 *)obj + 0x620), 2, *(u8 **)(bones + 0x10), *(u8 **)(bones + 0x14),
                   *(u8 **)(bones + 0x18), obj->unkB4, D_00239E04, -1.0f, 0.0f, 0.0f);
+}
+#endif
+
+void func_00346B30(DrawObjFull *o);
+void func_0018FAB0(f32 *out, const f32 *m);
+f32 func_005E5B40(const f32 *p, u8 *kind, s32 want);
+void func_005A5250(void *anim, f32 *m);
+extern f32 D_006D7560[];        /* per character: its feet's height above the floor */
+extern f32 D_006D7580[];        /* (in danger) */
+extern f32 D_0023BE78;          /* the feet's height this frame */
+extern f32 D_0023BE74;
+extern s8 D_0048BF88[];
+
+typedef struct {
+    u8 unk0[8];
+    f32 scale;          /* 0x08 */
+    u8 unkC[8];
+} IkNpcModel;           /* 0x14 */
+
+extern IkNpcModel D_006E2490[];     /* per NPC model (from 1) */
+extern f32 D_006E6CB0[][3];         /* per character: its size */
+
+/* The feet on the floor: with any chain on, each leg's chain (0x560, 0x620) aims at its foot
+   and lifts it to the floor under it (0xAA0, 0xAA4), then the skeleton is posed again when
+   one moved. */
+void func_005A5BA0(DrawObjFull *o);
+#ifdef NON_MATCHING   /* close: the original keeps two branches for the same floor kind (0xFF) that ours folds */
+void func_005A5BA0(DrawObjFull *o) {
+    f32 m50[16];
+    f32 m90[16];
+    f32 mD0[16];
+    f32 m110[16];
+    f32 p[3];
+    u8 k;
+    u8 *bones = (u8 *)o->model + 0x820;
+    u32 i;
+    u8 n;
+    s32 want;
+    u8 r;
+    f32 *py;
+
+    if (D_0048BF88[0]) {
+        func_00346B30(o);
+        return;
+    }
+    n = 0;
+    for (i = 0; i < 7; i++) {
+        n += o->ik[i].on != 0;
+    }
+    if (!n) {
+        func_00346B30(o);
+        return;
+    }
+    switch (o->type) {
+    case 0:
+    case 1:
+        D_0023BE78 = o->unkB9B == 3 ? D_006D7580[o->unkB98] : D_006D7560[o->unkB98];
+        D_0023BE78 += o->unkAA8 * (o->unkB4[1] / (o->unkBB4 ? D_006E2490[o->unkBB4 - 1].scale : D_006E6CB0[o->unkB98][0]));
+        D_0023BE74 = 0.0f;
+        break;
+    default:
+        D_0023BE78 = 10.0f;
+        D_0023BE78 += o->unkAA8;
+        D_0023BE74 = 0.0f;
+        break;
+    }
+    func_00346B30(o);
+    if (!(o->ik[0].on | o->ik[1].on)) {
+        return;
+    }
+    func_00190ED0(m90, *(f32 **)(bones + 0x1C));
+    func_00190ED0(m110, *(f32 **)(bones + 0x24));
+    func_00190ED0(m50, *(f32 **)(bones + 0x10));
+    func_00190ED0(mD0, *(f32 **)(bones + 0x18));
+    func_0018FAB0(o->ik[0].tgt, m110);
+    o->ik[0].up[0] = m90[12] - 50.0f * m90[0];
+    o->ik[0].up[1] = m90[13] - 50.0f * m90[1];
+    o->ik[0].up[2] = m90[14] - 50.0f * m90[2];
+    func_0018FAB0(o->ik[1].tgt, mD0);
+    o->ik[1].up[0] = m50[12] + 50.0f * m50[0];
+    o->ik[1].up[1] = m50[13] + 50.0f * m50[1];
+    o->ik[1].up[2] = m50[14] + 50.0f * m50[2];
+    switch (o->type) {
+    case 0:
+        if (o->unk54F == 0) {
+            want = 0xFF;
+        } else {
+            want = 0xFF;
+        }
+        break;
+    case 1:
+        want = 0xFF;
+        break;
+    case 2:
+        want = 0xFF;
+        break;
+    }
+    py = &p[1];
+    *(Vec3 *)p = *(Vec3 *)o->ik[0].tgt;
+    *py = o->unk38[1];
+    if (o->unk174 == 1) {
+        o->unkAA0 = func_005E5B40(p, &k, want);
+        o->unkAA0 += D_0023BE78 + D_0023BE74;
+    } else {
+        o->unkAA0 = func_005E5B40(p, &k, 0xFF);
+        o->unkAA0 += D_0023BE78;
+    }
+    *(Vec3 *)p = *(Vec3 *)o->ik[1].tgt;
+    *py = o->unk38[1];
+    if (o->unk174 == 1) {
+        o->unkAA4 = func_005E5B40(p, &k, want);
+        o->unkAA4 += D_0023BE78 + D_0023BE74;
+    } else {
+        o->unkAA4 = func_005E5B40(p, &k, 0xFF);
+        o->unkAA4 += D_0023BE78;
+    }
+    r = 0;
+    if (o->ik[0].tgt[1] < o->unkAA0) {
+        o->ik[0].tgt[1] = o->unkAA0;
+        r = 1;
+    }
+    if (o->ik[1].tgt[1] < o->unkAA4) {
+        r |= 2;
+        o->ik[1].tgt[1] = o->unkAA4;
+    }
+    if (r) {
+        func_005A5250(*(void **)bones, (f32 *)((u8 *)o + 0x50));
+    }
 }
 #endif
