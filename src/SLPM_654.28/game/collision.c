@@ -386,6 +386,87 @@ s32 func_00549930(CollTri **list, const f32 *from, const f32 *to, u32 kind, u32 
 
 extern s32 D_0070E6D0[];        /* the objects' triangles (collgrid.c) */
 
+f32 func_001916E0(const f32 *a, const f32 *b);
+
+/* The nearest of a cell's triangles (of mask's kinds, not b's) the line from-to hits: how many
+   it hits; hit, normal and kind (0xFF none) for the nearest. */
+s32 func_00549020(CollTri **list, const f32 *from, f32 *to, f32 *hit, f32 *normal, s32 mask,
+                  s32 b, s32 *kind);
+#ifdef NON_MATCHING   /* close: the hit's last two coordinates go through an address register; s-register pairs */
+s32 func_00549020(CollTri **list, const f32 *from, f32 *to, f32 *hit, f32 *normal, s32 mask,
+                  s32 b, s32 *kind) {
+    f32 p[3];
+    u8 flag;
+    s32 i = 0;
+    s32 n = 0;
+    CollTri *t;
+    f32 best = 0.0f;
+    f32 d;
+
+    *kind = 0xFF;
+    for (; (t = list[i]) != (CollTri *)-1; i++) {
+        if (!func_005E6050(t, mask, b, 0)) {
+            continue;
+        }
+        flag = 0;
+        if (!func_005491E0(t, from, to, p, &flag)) {
+            continue;
+        }
+        if (n) {
+            d = func_001916E0(from, p);
+            if (!(best <= d)) {
+                best = d;
+                normal[0] = t->n[0];
+                normal[1] = t->n[1];
+                normal[2] = t->n[2];
+                hit[0] = p[0];
+                hit[1] = p[1];
+                hit[2] = p[2];
+                *kind = func_005E61E0(t->info);
+            }
+        } else {
+            normal[0] = t->n[0];
+            normal[1] = t->n[1];
+            normal[2] = t->n[2];
+            hit[0] = p[0];
+            hit[1] = p[1];
+            hit[2] = p[2];
+            best = func_001916E0(from, hit);
+            *kind = func_005E61E0(t->info);
+        }
+        n++;
+    }
+    return n;
+}
+#endif
+
+/* The nearest hit along from-to on grid 0 and the objects' triangles (of mask's kinds): 1 when
+   there is one (hit, normal and kind set). */
+s32 func_005494C0(const f32 *from, const f32 *to, f32 *hit, f32 *normal, s32 mask, s32 b,
+                  s32 *kind) {
+    s32 *cells[256];
+    Vec3 end;
+    Vec3 tmp;
+    s32 k;
+    s32 n;
+    s32 r = 0;
+    s32 i;
+
+    end = *(Vec3 *)to;
+    *kind = 0;
+    n = func_00549610(from, &end.x, cells);
+    cells[n] = D_0070E6D0;
+    for (i = 0; i < n + 1; i++) {
+        if (func_00549020((CollTri **)cells[i], from, &end.x, &tmp.x, normal, mask, b, &k)) {
+            r = 1;
+            *(Vec3 *)hit = tmp;
+            end = tmp;
+            *kind = k;
+        }
+    }
+    return r;
+}
+
 /* Whether anything blocks from-to on grid 0 (or among the objects' triangles). */
 s8 func_00549860(const f32 *from, const f32 *to, s32 kind, s32 a, s32 *which) {
     s32 *cells[256];

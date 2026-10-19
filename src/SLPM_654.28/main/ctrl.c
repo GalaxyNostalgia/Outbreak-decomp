@@ -5,22 +5,7 @@
 /* Each player's controls as the game logic reads them: button history, sticks as angles, menu
    auto-repeat. */
 
-typedef struct {
-    u32 pressed;        /* 0x00 */
-    u32 released;       /* 0x04 */
-    u32 cur;            /* 0x08 */
-    u32 prev[3];        /* 0x0C: the last three frames */
-    u32 repeat;         /* 0x18: pressed, plus held directions repeating */
-    s32 repeatTimer;    /* 0x1C */
-    s16 rmag;           /* 0x20 */
-    s16 rangle;         /* 0x22: 0x10000 per turn, 0 up */
-    s16 rx;             /* 0x24 */
-    s16 ry;
-    s16 lmag;           /* 0x28 */
-    s16 langle;
-    s16 lx;             /* 0x2C */
-    s16 ly;
-} Ctrl;                 /* 0x30 */
+#include "ctrl.h"
 
 typedef struct {
     u8 status;
@@ -217,7 +202,7 @@ void func_001AFC60(DrawObjFull *p) {
     if (n == -1) {
         return;
     }
-    c = (Ctrl *)&p->unkDA2[0xF78 - 0xDA2];
+    c = &p->ctrl;
     c->prev[2] = c->prev[1];
     c->prev[1] = c->prev[0];
     c->prev[0] = c->cur;

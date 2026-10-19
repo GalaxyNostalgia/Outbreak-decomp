@@ -118,6 +118,13 @@ void func_00340FC0(f32 s, const f32 *dir, const f32 *p, f32 *out) {
 f32 func_00191B70(f32 x);
 extern f32 D_00239CD4;          /* 2 pi / 65536 */
 
+f32 func_00191B60(f32 x);
+
+/* The sine of a game angle (0x10000 a turn). */
+f32 func_003400C0(u16 a) {
+    return func_00191B60(D_00239CD4 * (u32)a);
+}
+
 /* The cosine of a 16-bit angle. */
 f32 func_00340100(u16 a) {
     return func_00191B70(D_00239CD4 * (u32)a);

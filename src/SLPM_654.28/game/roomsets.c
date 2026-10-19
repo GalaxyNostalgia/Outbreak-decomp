@@ -133,7 +133,8 @@ typedef struct {
     u8 unk16[2];
     s8 x;               /* 0x18 */
     s8 y;               /* 0x19 */
-    u8 unk1A[5];
+    u8 sides;           /* 0x1A: which sides it is reached from (by turn) */
+    u8 unk1B[4];
     s8 w;               /* 0x1F */
     s8 d;               /* 0x20: (own size) its height */
     s8 h;               /* 0x21 */
@@ -322,7 +323,7 @@ void func_0067BDD0(RoomExtraSlot *s) {
     }
     y = s->obj->pos[1];
     top = y + D_006EF480[shape].height * 50 - 1;
-    if (D_00716000[s->kind].unk2 > 0 && (s->unk1A[0] & 0xF)) {
+    if (D_00716000[s->kind].unk2 > 0 && (s->sides & 0xF)) {
         func_0067B890(s, c);
         if (s->unk2C != 0) {
             func_00590CC0(s->unk2C);
@@ -526,3 +527,78 @@ s8 func_0067D8B0(s8 x, s8 y) {
     }
     return -1;
 }
+
+#include "object.h"
+
+void func_001913A0(f32 *out, const f32 *v, const f32 *m);
+void func_003404F0(f32 *out, const f32 *a, const f32 *b);
+/* The room grid's cell (50 units each from its origin) under p, into cell when given: whether
+   it is inside the grid. */
+s32 func_0067E490(s32 *cell, const f32 *p);
+#ifdef NON_MATCHING   /* close: the last test's branch sense */
+s32 func_0067E490(s32 *cell, const f32 *p) {
+    f32 x;
+    f32 z;
+
+    if (p == NULL) {
+        return 0;
+    }
+    x = (p[0] - D_00395EA0.pos[0]) / 50.0f;
+    z = (p[2] - D_00395EA0.pos[2]) / 50.0f;
+    if (cell != NULL) {
+        cell[0] = x;
+        cell[1] = z;
+    }
+    if (!(x < 0.0f) && x < D_00395EA0.unkC && !(z < 0.0f)) {
+        if (z < D_00395EA0.unkE) {
+            return 1;
+        }
+    }
+    return 0;
+}
+#endif
+
+/* Whether o, at the point it reaches (0x1AC through its matrix), is at a side of slot item's
+   thing it faces from (by its heading, the slot's sides) and not on a cell of the slot. */
+s32 func_0067E9C0(DrawObjFull *o, u8 item);
+#ifdef NON_MATCHING   /* close: delay slots in the side switch (the original leaves nops) */
+s32 func_0067E9C0(DrawObjFull *o, u8 item) {
+    s32 c[2];
+    Vec3 p;
+    s32 r;
+    RoomExtraSlot *s;
+    s32 lo;
+    s32 hi;
+
+    s = &D_00395720[item & 0x1F];
+    r = 0;
+
+    if (s == NULL || s->used == 0) {
+        return 0;
+    }
+    func_001913A0(&p.x, o->unk1AC, (f32 *)((u8 *)o + 0x50));
+    func_003404F0(&p.x, &p.x, o->unk38);
+    if (func_0067E490(c, &p.x) && item == (s8)func_0067D8B0((s8)c[0], (s8)c[1])) {
+        return 0;
+    }
+    switch ((1 << ((((u16)o->unk92 + 0x2000) / 0x4000) & 3)) & s->sides & 0xFF) {
+    case 2:
+    case 8:
+        lo = (s32)D_00395EA0.pos[2] + s->y * 50;
+        hi = lo + s->h * 50;
+        if (!(p.z < (f32)lo) && p.z <= (f32)hi) {
+            r = 1;
+        }
+        break;
+    case 1:
+    case 4:
+        lo = (s32)D_00395EA0.pos[0] + s->x * 50;
+        hi = lo + s->w * 50;
+        if (!(p.x < (f32)lo) && p.x <= (f32)hi) {
+            r = 1;
+        }
+        break;
+    }
+    return r;
+}
+#endif

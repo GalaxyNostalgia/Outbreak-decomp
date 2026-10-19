@@ -2,6 +2,7 @@
 #define OBJECT_H
 
 #include "common.h"
+#include "ctrl.h"
 
 /* The game's characters and things (players 0x10E0 bytes, enemies 0x1170, ...). Their layouts share
    this start. */
@@ -22,12 +23,14 @@ typedef struct {
     u8 unk6;            /* 0x006 */ \
     u8 unk7; \
     u8 act[4];          /* 0x008: action, its step and sub-steps */ \
-    u8 unkC[0x14 - 0xC]; \
+    s16 unkC;           /* 0x00C: (players) frames of a status left */ \
+    u8 unkE[0x14 - 0xE]; \
     void *update;       /* 0x014 */ \
     void (*draw)(struct T *o); /* 0x018 */ \
     struct T *next; /* 0x01C: next in its pool's list */ \
     struct T *prev;     /* 0x020 */ \
-    u8 unk24[0x30 - 0x24]; \
+    s32 unk24;          /* 0x024: (players) the aim's target */ \
+    u8 unk28[0x30 - 0x28]; \
     u8 unk30;           /* 0x030 */ \
     u8 unk31[3]; \
     ObjModel *model;    /* 0x034 */ \
@@ -85,7 +88,11 @@ typedef struct {
     s16 unk520;         /* 0x520 */ \
     u8 unk522[2]; \
     s8 unk524;          /* 0x524 */ \
-    u8 unk525[0x544 - 0x525]; \
+    u8 unk525[0x528 - 0x525]; \
+    f32 unk528[3];      /* 0x528: (players) where the probe hit */ \
+    f32 unk534[3];      /* 0x534: (players) the direction pushed against */ \
+    u8 unk540;          /* 0x540: (players) the probe hit something */ \
+    u8 unk541[3]; \
     s16 unk544;         /* 0x544: health */ \
     s16 unk546;         /* 0x546: maximum health */ \
     s16 unk548;         /* 0x548 */ \
@@ -102,7 +109,9 @@ typedef struct {
     s32 unkAB0;         /* 0xAB0 */ \
     u8 unkAB4[4]; \
     u8 unkAB8;          /* 0xAB8 */ \
-    u8 unkAB9[0xAD4 - 0xAB9]; \
+    u8 unkAB9;          /* 0xAB9 */ \
+    u8 unkABA;          /* 0xABA */ \
+    u8 unkABB[0xAD4 - 0xABB]; \
     u8 unkAD4;          /* 0xAD4: a reaction pending */ \
     u8 unkAD5;          /* 0xAD5: which (D_006DDA80) */ \
     u8 unkAD6[0xAEC - 0xAD6]; \
@@ -130,7 +139,8 @@ typedef struct {
     u8 unkBBF; \
     f32 unkBC0;         /* 0xBC0 */ \
     f32 unkBC4;         /* 0xBC4 */ \
-    u8 unkBC8[8]; \
+    u8 unkBC8[6]; \
+    s16 unkBCE;         /* 0xBCE: (players) the stick's heading in the world */ \
     u8 unkBD0;          /* 0xBD0 */ \
     u8 unkBD1[0xC50 - 0xBD1]; \
     u16 unkC50;         /* 0xC50: the breathing timer */ \
@@ -154,11 +164,16 @@ typedef struct {
     u8 unkC84[4];       /* 0xC84: effects on the character (script ops 0x39, 0x3A) */ \
     u8 unkC88[0x20];    /* 0xC88: (effects 400-420) */ \
     s16 unkCA8;         /* 0xCA8 */ \
-    u8 unkCAA[0xCB8 - 0xCAA]; \
+    u8 unkCAA[0xCB0 - 0xCAA]; \
+    u8 unkCB0;          /* 0xCB0 */ \
+    u8 unkCB1[0xCB8 - 0xCB1]; \
     s32 unkCB8;         /* 0xCB8 */ \
     u8 unkCBC[0xCCC - 0xCBC]; \
     u8 color[4];        /* 0xCCC: r, g, b, a */ \
-    u8 unkCD0[0xCE0 - 0xCD0]; \
+    u8 unkCD0[0xCDC - 0xCD0]; \
+    u8 unkCDC;          /* 0xCDC */ \
+    u8 unkCDD; \
+    u16 unkCDE;         /* 0xCDE: frames pushed against a wall */ \
     u8 unkCE0;          /* 0xCE0: (0xFF) its motion set is another character's */ \
     u8 unkCE1;          /* 0xCE1: which set (or that character's kind) */ \
     u8 unkCE2;          /* 0xCE2: 0x80 past frame unkCE3, 0x40 ... */ \
@@ -186,7 +201,11 @@ typedef struct {
 
 typedef struct DrawObjFull {
     OBJ_FIELDS(DrawObjFull)
-    u8 unkDA2[0xFB4 - 0xDA2];
+    u8 unkDA2[0xF78 - 0xDA2];
+    Ctrl ctrl;          /* 0xF78: (players) the controls */
+    s16 unkFA8;         /* 0xFA8: (players) the stick's angle when the camera cut */
+    s8 unkFAA;          /* 0xFAA: (players) keep the old direction since the cut */
+    u8 unkFAB[0xFB4 - 0xFAB];
     u8 held;            /* 0xFB4: (enemies) what they hold, 0xFF nothing */
     u8 unkFB5[2];
     u8 way;             /* 0xFB7: how it moves (func_0058C240) */
