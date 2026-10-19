@@ -725,9 +725,58 @@ void func_005F41F0(Npc *n, void *p);
 s32 func_005F4080(Npc *n);
 void func_0068A170(Npc *n);
 void func_00639CE0(Npc *n);
-void func_005F4BE0(Npc *n);
-void func_0058DD50(Npc *n);
-void func_005F4C10(Npc *n);
+
+/* Empty (a debug hook). */
+void func_005F4C10(Npc *n) {
+}
+
+extern u8 D_0048BF93[];         /* counts frames */
+
+/* Every 30 (2-frame) ticks, in its kind's slot: the NPC's idle func_00652B50 requests (3 in the
+   slot 15 later; 5 when 0xBA0 has 0x80000, else 7 in action 1 and 0 in most of action 2). */
+void func_0058DD50(Npc *n) {
+    s32 f = D_0048BF93[0] >> 1;
+    u8 k = n->kind;
+    s32 t = f % 30;
+
+    if (t == k + 15) {
+        func_00652B50(n, 3);
+        return;
+    }
+    if (t == k) {
+        if (n->unkBA0 & 0x80000) {
+            func_00652B50(n, 5);
+        } else {
+            switch (n->act[0]) {
+            case 1:
+                switch (n->act[1]) {
+                case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
+                case 8: case 9: case 10: case 11: case 12: case 13: case 14:
+                    func_00652B50(n, 7);
+                    break;
+                }
+                break;
+            case 2:
+                switch (n->act[1]) {
+                case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
+                case 10:
+                    func_00652B50(n, 0);
+                    break;
+                }
+                break;
+            }
+        }
+    }
+}
+
+/* Plays the NPC's queued func_00652B50 request (0x1139), once. */
+void func_005F4BE0(Npc *n) {
+    if (n->unk1138) {
+        n->unk1138 = 0;
+        func_00652B50(n, n->unk1139);
+    }
+}
+
 void func_00689F40(Npc *n);
 void func_00689FE0(Npc *n);
 void func_0068A0A0(Npc *n);

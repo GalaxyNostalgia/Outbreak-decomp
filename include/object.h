@@ -129,7 +129,10 @@ typedef struct {
     f32 unkBC4;         /* 0xBC4 */ \
     u8 unkBC8[8]; \
     u8 unkBD0;          /* 0xBD0 */ \
-    u8 unkBD1[0xC64 - 0xBD1]; \
+    u8 unkBD1[0xC50 - 0xBD1]; \
+    u16 unkC50;         /* 0xC50: the breathing timer */ \
+    u8 unkC52;          /* 0xC52: its key */ \
+    u8 unkC53[0xC64 - 0xC53]; \
     u8 unkC64;          /* 0xC64 */ \
     u8 unkC65;          /* 0xC65: what hit it (1-4) */ \
     s16 unkC66;         /* 0xC66 */ \
@@ -245,7 +248,9 @@ typedef struct Npc {
     s32 unk1040[3];     /* 0x1040 */
     u8 unk104C[0x1134 - 0x104C];
     u8 unk1134[4];      /* 0x1134 */
-    u8 unk1138[0x1150 - 0x1138];
+    s8 unk1138;         /* 0x1138: a func_00652B50 request pending */
+    u8 unk1139;         /* 0x1139: its argument */
+    u8 unk113A[0x1150 - 0x113A];
     s32 unk1150;        /* 0x1150 */
     u8 unk1154;         /* 0x1154 */
     u8 unk1155[0x1162 - 0x1155];

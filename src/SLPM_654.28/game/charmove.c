@@ -542,7 +542,57 @@ void func_00634A10(DrawObjFull *o) {
 
 s32 func_0061E020(DrawObjFull *o);
 void func_0058C0C0(DrawObjFull *o);
+/* The breathing curve: (value, time) keys, ended by a time of -1. */
+typedef struct {
+    f32 val;
+    f32 t;
+} BreathKey;
+
+extern BreathKey D_006D75A0[];  /* the own models' */
+extern BreathKey D_006D75D0[];  /* the shared models' */
+extern s8 D_0048BF88[];
+
+/* The model's animation and two of its bones (0x60, 0x68). */
+typedef struct {
+    void *anim;
+    u8 unk4[0x5C];
+    u8 *unk60;
+    u8 unk64[4];
+    u8 *unk68;
+} ModelBones;
+
+/* Breathing: while alive and not busy, sets two bones' 0x74 from the curve at the timer, then
+   advances it by s (looping). */
 void func_005A61C0(DrawObjFull *o, f32 s);
+#ifdef NON_MATCHING   /* close: the loop-around keeps a different address in a register */
+void func_005A61C0(DrawObjFull *o, f32 s) {
+    BreathKey *k;
+    ModelBones *b;
+
+    if (o->unk54D == 0 && D_0048BF88[0] == 0 && FIELD(o, u16, 0x232) == 0 && o->unk544 > 0) {
+        if ((u8)o->unkB99) {
+            k = D_006D75D0;
+        } else {
+            k = D_006D75A0;
+        }
+        b = (ModelBones *)&o->model->unk0[0x820];
+        FIELD(b->unk60, f32, 0x74) = ((f32)o->unkC50 - k[o->unkC52].t) *
+                                     (k[o->unkC52 + 1].val - k[o->unkC52].val) /
+                                     (k[o->unkC52 + 1].t - k[o->unkC52].t);
+        FIELD(b->unk60, f32, 0x74) += k[o->unkC52].val;
+        FIELD(b->unk68, f32, 0x74) = FIELD(b->unk60, f32, 0x74);
+        s *= D_00306590.unkC ? 2.0f : 1.0f;
+        o->unkC50 = (f32)o->unkC50 + s;
+        if (!((f32)o->unkC50 < k[o->unkC52 + 1].t)) {
+            o->unkC52++;
+            if (k[o->unkC52 + 1].t == -1.0f) {
+                o->unkC50 = (f32)o->unkC50 - k[o->unkC52].t;
+                o->unkC52 = 0;
+            }
+        }
+    }
+}
+#endif
 
 /* A character's per-frame movement, collision and animation steps. */
 void func_00639CE0(DrawObjFull *o) {

@@ -295,7 +295,117 @@ void func_00543410(DrawObjFull *o) {
         func_00578B30(o);
     }
 }
-s32 func_0055BE60(DrawObjFull *o, s32 layer, f32 speed);
+/* Advances layer l by speed (backwards when negative). 0 within the motion; 1 when it reached
+   an end (0x40), 2 when it wrapped round (looping layers; 0x20 too), 3 for an empty motion. */
+s8 func_0055BC80(ObjLayer *l, f32 speed);
+#ifdef NON_MATCHING   /* close: branch layout at the two ends and one add's operand order */
+s8 func_0055BC80(ObjLayer *l, f32 speed) {
+    f32 over;
+
+    l->flags &= ~0x60;
+    if (l->flags & 0x10) {
+        return 0;
+    }
+    if (l->unk4 == 0.0f) {
+        l->flags |= 0x40;
+        if (l->unkC) {
+            l->flags |= 0x20;
+        }
+        return 3;
+    }
+    if (!(speed < 0.0f)) {
+        l->start += speed;
+        over = l->start - l->unk4;
+        if (!(over <= 0.0f)) {
+            if (l->unkC) {
+                l->start = l->unk8 + over;
+                if (!(l->start <= l->unk4)) {
+                    l->start = l->unk4;
+                }
+                l->flags |= 0x20;
+                return 2;
+            }
+            l->start = l->unk4;
+            l->flags |= 0x40;
+            return 1;
+        }
+        if (over == 0.0f) {
+            l->flags |= 0x40;
+            return 1;
+        }
+        if (l->start + speed > l->unk4) {
+            l->flags |= 0x40;
+            return 1;
+        }
+        return 0;
+    }
+    l->start += speed;
+    if (l->start == 0.0f) {
+        l->start = l->unk4;
+        l->flags |= 0x40;
+        if (l->unkC) {
+            l->flags |= 0x20;
+        }
+        return 1;
+    }
+    if (l->start < 0.0f) {
+        l->start = l->start + l->unk4;
+        l->flags |= 0x40;
+        if (l->unkC) {
+            l->flags |= 0x20;
+        }
+        return 2;
+    }
+    return 0;
+}
+#endif
+
+/* Advances o's motion layer by speed (twice as fast at 30 fps) and poses the model; layer 0
+   also moves the root (0x4E4) by the motion's root travel. Returns func_0055BC80's result. */
+s32 func_0055BE60(DrawObjFull *o, u16 layer, f32 speed);
+#ifdef NON_MATCHING   /* close: two of the root adds load their operands in the other order */
+s32 func_0055BE60(DrawObjFull *o, u16 layer, f32 speed) {
+    ObjAnim **m;
+    ObjLayer *l;
+    f32 prev;
+    Vec3f tmp;
+    s32 r;
+
+    l = &((struct { u8 pad[0x1E4]; ObjLayer l[4]; } *)o)->l[layer];
+    m = (ObjAnim **)o->model;
+
+    if (D_00306590.unkC) {
+        speed *= 2.0f;
+    }
+    prev = l->start;
+    r = func_0055BC80(l, speed);
+    if (r >= 2 && layer == 0) {
+        if (l->start != 0.0f) {
+            func_00192BD0((*m)->anim, layer, l->start);
+            func_00191F90(prev, l->unk4, &tmp.x, (*m)->root);
+            func_00191F90(l->unk8, l->start, R(o), (*m)->root);
+            R(o)[0] += tmp.x;
+            R(o)[1] += tmp.y;
+            R(o)[2] += tmp.z;
+            *(Vec3f *)&R(o)[9] = (*m)->root->delta;
+            (*m)->root->delta.x = 0.0f;
+            (*m)->root->delta.y = 0.0f;
+            (*m)->root->delta.z = 0.0f;
+            func_0055C190(o, layer);
+            return r;
+        }
+        R(o)[9] = 0.0f;
+        R(o)[10] = 0.0f;
+        R(o)[11] = 0.0f;
+    }
+    func_00192BD0((*m)->anim, layer, l->start);
+    if (layer == 0) {
+        func_0055C3D0(o, *m);
+    }
+    func_0055C190(o, layer);
+    return r;
+}
+#endif
 
 /* Advances o's motion layers by speed (layer 0 last); the result is layer 0's (-1 when it is
    held). For players, 0xCE2 tells whether the motion is past its frame 0xCE3 (0x80) and, for
