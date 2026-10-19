@@ -1617,7 +1617,7 @@ s32 func_00660A70(u32 *args) {
         if (z->kind == 5 && z->u.id == id) {
             func_00593FA0(z);
             slot &= 7;
-            z->unk3C = 1;
+            z->on = 1;
             z->unk50 = v;
             z->unk59 |= 1 << slot;
             z->unk5A[slot] = v;

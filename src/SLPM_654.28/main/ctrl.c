@@ -181,6 +181,73 @@ void func_001AFA90(Ctrl *c) {
 }
 
 extern u32 D_002168C0[][3];     /* confirm/cancel/... buttons for each button layout */
+
+#include "object.h"
+
+s32 func_001AF500(void);
+s32 func_001AF4D0(void);
+extern s8 D_0023BB38[8];        /* per character: its pad */
+extern u8 D_0048BF7D[];         /* our player number */
+
+/* A player's controls for this frame (at 0xF78): online ours from pad 0, offline from the
+   character's pad (partners have none); confirm/cancel/... mapped by the button layout. */
+void func_001AFC60(DrawObjFull *p);
+#ifdef NON_MATCHING   /* close: the scheduling of the pad's address */
+void func_001AFC60(DrawObjFull *p) {
+    Ctrl *c;
+    u32 cur;
+    u32 v;
+    u32 m0;
+    u32 m1;
+    u32 m2;
+    s8 pad;
+    s32 n;
+
+    pad = 0;
+    if (func_001AF500() == 1) {
+        if (p->kind != D_0048BF7D[0]) {
+            return;
+        }
+    } else if (func_001AF4D0() == 0) {
+        pad = D_0023BB38[p->kind];
+    } else if (p->isNpc) {
+        return;
+    }
+    n = pad;
+    if (n == -1) {
+        return;
+    }
+    c = (Ctrl *)&p->unkDA2[0xF78 - 0xDA2];
+    c->prev[2] = c->prev[1];
+    c->prev[1] = c->prev[0];
+    c->prev[0] = c->cur;
+    cur = D_00306410[n].cur;
+    m0 = D_002168C0[D_00306590.unk2C][0];
+    m1 = D_002168C0[D_00306590.unk2C][1];
+    m2 = D_002168C0[D_00306590.unk2C][2];
+    v = 0;
+    if (cur & 0x100) {
+        v |= m0;
+    }
+    if (cur & 0x10) {
+        v |= m1;
+    }
+    if (cur & 0x20) {
+        v |= m2;
+    }
+    c->cur = (cur & ~0x130) | v;
+    c->pressed = c->cur & ~c->prev[0];
+    c->released = c->prev[0] & ~c->cur;
+    c->rx = D_00306410[n].rx;
+    c->ry = D_00306410[n].ry;
+    c->lx = D_00306410[n].lx;
+    c->ly = D_00306410[n].ly;
+    c->rmag = D_00306410[n].rmag;
+    c->lmag = D_00306410[n].lmag;
+    c->rangle = D_00306410[n].rangle;
+    c->langle = D_00306410[n].langle;
+}
+#endif
 extern u32 D_48C020[];          /* (SUBMAIN.BIN) menu buttons */
 
 #ifdef NON_MATCHING   /* first draft */

@@ -199,7 +199,7 @@ void func_005E9220(DrawObjFull *o) {
 
 extern u8 D_00470090[0x6D40];
 s32 func_00340940(Zone *z, s32 *xz, s32 n);
-void func_005910F0(Zone *z, s32 hit);
+void func_005910F0(Zone *z);
 
 /* The floor switches (zones of kind 0x85 whose switch is armed) a character steps on. */
 void func_005516D0(DrawObjFull *o);
@@ -240,11 +240,221 @@ void func_005516D0(DrawObjFull *o) {
         }
         if (hit) {
             z->who = o;
-            func_005910F0(z, hit);
+            func_005910F0(z);
         }
     }
 }
 #endif
+
+#include "item.h"
+
+s32 func_00340DB0(Zone *z, s32 *xz, s32 n, f32 r);
+s32 func_005924E0(Zone *z, DrawObjFull *o);
+s32 func_005953D0(Zone *z, DrawObjFull *o);
+
+/* Sets off the trigger zone (the lowest unk32 of those it is in, within 200 below to its
+   bottom) that who of the given kind (0 player, 2 ...) at pos sets off; r is the reach for
+   the round ones (0x80, 0x81). */
+void func_005ABBE0(f32 r, f32 *pos, DrawObjFull *o, u8 kind);
+#ifdef NON_MATCHING   /* close: s-register choices; one store through a pointer */
+void func_005ABBE0(f32 r, f32 *pos, DrawObjFull *o, u8 kind) {
+    s32 xz[2];
+    s32 oxz[2];
+    Zone *best = NULL;
+    Zone *z = D_0023BD90;
+    u8 *slot = &o->unkC82;
+    f32 *ox = &o->unk38[0];
+    f32 *oz = &o->unk38[2];
+    s32 hit;
+    f32 top;
+    f32 y;
+
+    xz[0] = pos[0];
+    xz[1] = pos[2];
+    while (z != NULL) {
+        if (!z->on) {
+            z = z->next;
+            continue;
+        }
+        if (z->unk3D) {
+            z = z->next;
+            continue;
+        }
+        switch (z->unk31) {
+        case 4:
+            if (kind == 0 || kind == 2 || kind == 5 || kind == 6 || kind == 4) {
+                break;
+            }
+            z = z->next;
+            continue;
+        case 2:
+            if (z->unk31 != kind) {
+                z = z->next;
+                continue;
+            }
+            if (z->unk48 != D_003967D0[*slot].unk6) {
+                z = z->next;
+                continue;
+            }
+            break;
+        case 6:
+            if (kind == 2 || kind == 6) {
+                if (D_003967D0[*slot].unk6 >= 0x19E && D_003967D0[*slot].unk6 < 0x1A2) {
+                    break;
+                }
+            }
+            z = z->next;
+            continue;
+        default:
+            if (z->unk31 != kind) {
+                z = z->next;
+                continue;
+            }
+            break;
+        }
+        switch (z->kind) {
+        case 2:
+            if (FIELD(z, s32, 0x58) != 2 && D_00470090[0x4731 + z->u.id * 0x60] != 0) {
+                z = z->next;
+                continue;
+            }
+            if (!func_00340940(z, xz, 4)) {
+                z = z->next;
+                continue;
+            }
+            break;
+        case 1:
+            if (!func_005924E0(z, o)) {
+                z = z->next;
+                continue;
+            }
+            if (!func_00340940(z, xz, 4)) {
+                z = z->next;
+                continue;
+            }
+            break;
+        case 0x80:
+            if (!func_00340DB0(z, xz, 4, r)) {
+                z = z->next;
+                continue;
+            }
+            break;
+        case 0x81:
+            if (!func_005953D0(z, o)) {
+                z = z->next;
+                continue;
+            }
+            if (!func_00340DB0(z, xz, 4, r)) {
+                z = z->next;
+                continue;
+            }
+            break;
+        case 0x85:
+            oxz[0] = *ox;
+            oxz[1] = *oz;
+            if (!func_00340940(z, oxz, 4)) {
+                z = z->next;
+                continue;
+            }
+            break;
+        default:
+            if (!func_00340940(z, xz, 4)) {
+                z = z->next;
+                continue;
+            }
+            break;
+        }
+        top = z->top;
+        y = pos[1];
+        hit = 0;
+        if (!(top <= y)) {
+            if (top <= y + 200.0f) {
+                hit = 1;
+            }
+        } else if (top < y) {
+            if (!(z->bottom < y)) {
+                hit = 1;
+            }
+        } else {
+            hit = 1;
+        }
+        if (hit) {
+            if (best != NULL) {
+                if (z->unk32 < best->unk32) {
+                    best = z;
+                }
+            } else {
+                best = z;
+            }
+        }
+        z = z->next;
+    }
+    if (best != NULL) {
+        best->who = o;
+        best->unk3E = kind;
+        func_005910F0(best);
+    }
+}
+#endif
+
+f32 func_00341860(f32 x);
+s16 func_00346F20(s32 from, s32 to, s32 n);
+
+/* The step that moves o to to in frames frames (none when it's further than 500: it is put
+   there). */
+void func_00631F60(DrawObjFull *o, f32 *to, f32 *step, u32 frames);
+#ifdef NON_MATCHING   /* close: the length's two loads go through the pointers */
+void func_00631F60(DrawObjFull *o, f32 *to, f32 *step, u32 frames) {
+    f32 d[3];
+    f32 *dy;
+    f32 *dz;
+
+    if (frames == 0) {
+        step[0] = 0.0f;
+        step[1] = 0.0f;
+        step[2] = 0.0f;
+        return;
+    }
+    dy = &d[1];
+    dz = &d[2];
+    d[0] = to[0] - o->unk38[0];
+    *dy = to[1] - o->unk38[1];
+    *dz = to[2] - o->unk38[2];
+    if (!(func_00341860(d[0] * d[0] + d[1] * d[1] + d[2] * d[2]) <= 500.0f)) {
+        o->unk38[0] = to[0];
+        o->unk38[1] = to[1];
+        o->unk38[2] = to[2];
+        d[0] = 0.0f;
+        *dy = 0.0f;
+        *dz = 0.0f;
+    }
+    d[0] /= (f32)frames;
+    *dy /= (f32)frames;
+    *dz /= (f32)frames;
+    *(Vec3 *)step = *(Vec3 *)d;
+}
+#endif
+
+/* The turn per frame from o's heading to to over frames frames. */
+void func_00632140(DrawObjFull *o, s16 *to, s16 *step, u32 frames);
+#ifdef NON_MATCHING   /* close: the two argument loads in the other order */
+void func_00632140(DrawObjFull *o, s16 *to, s16 *step, u32 frames) {
+    s16 t;
+
+    if (frames == 0) {
+        *step = 0;
+        return;
+    }
+    t = *to;
+    *step = func_00346F20(o->unk92, t, frames);
+}
+#endif
+
+/* Sets up o's push (0xD74 and 0xD8C over 0xD90 frames). */
+void func_00632180(DrawObjFull *o) {
+    func_00631F60(o, o->unkD74, o->unkD80, o->unkD90);
+    func_00632140(o, &o->unkD8C, &o->unkD8E, o->unkD90);
+}
 
 void func_00340210(s32 rx, s32 ry, s32 rz, f32 *m);
 s32 func_00633D80(DrawObjFull *o);

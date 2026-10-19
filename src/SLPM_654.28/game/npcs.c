@@ -451,7 +451,53 @@ void func_005E9220(Npc *n);
 void func_00346B90(void *o);
 void func_00652910(Npc *n);
 void func_005ABBE0(f32 r, f32 *pos, void *o, s32 a);
-s32 func_0058DC10(Npc *n);
+s32 func_001AF510(void);
+s32 func_0064FD50(s32 a, u8 slot);
+void func_00632180(Npc *n);
+
+/* An NPC being pushed (0xD80 a frame for 0xD90 frames, ending at 0xD74): 2 while it lasts, 1
+   on its last frame, 0 when there's none (or it can't be pushed now, which cancels it). */
+s32 func_0058DC10(Npc *n) {
+    f32 *vy;
+    f32 *vz;
+
+    if (!func_001AF510()) {
+        return 0;
+    }
+    if (n->type != 1) {
+        return 0;
+    }
+    if (func_0064FD50(1, n->slot) || (n->unk54A & 0x4000)) {
+        n->unkD90 = 0;
+        n->unkD80[0] = 0.0f;
+        n->unkD80[1] = 0.0f;
+        n->unkD80[2] = 0.0f;
+        n->unkD8E = 0;
+        return 0;
+    }
+    func_00632180(n);
+    vy = &n->unkD80[1];
+    vz = &n->unkD80[2];
+    n->unkD80[1] = 0.0f;
+    n->unk38[0] += n->unkD80[0];
+    n->unk38[1] += *vy;
+    n->unk38[2] += *vz;
+    if (n->unkD90 == 0) {
+        return 0;
+    }
+    if (--n->unkD90 != 0) {
+        n->unk54A |= 1;
+        return 2;
+    }
+    *(Vec3 *)n->unk38 = *(Vec3 *)n->unkD74;
+    if (n->unkD90 == 0) {
+        n->unkD80[0] = 0.0f;
+        *vy = 0.0f;
+        *vz = 0.0f;
+        n->unkD8E = 0;
+    }
+    return 1;
+}
 void func_0062CB30(void *o);
 void func_0062CA30(void *o);
 void func_0062CD00(void *o);

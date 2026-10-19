@@ -21,6 +21,45 @@ void func_00823340(DrawObjFull *obj, u16 v);
 void func_0082A690(DrawObjFull *obj, u16 v);
 void func_008223C0(DrawObjFull *obj, s32 mode);
 
+extern DrawObjFull D_00476DD0[8];   /* the players */
+extern u8 D_00838CD0[][2][9];       /* per character, partner or not: by unk1078 (0-3), unk107A
+                                       (4-7), and 8 for 0xBA0 & 3 */
+s32 func_005C6170(s32 player);
+s32 func_005C6240(s32 player);
+
+/* Every player's per-frame AI inputs: what changed since last frame and whether it is in
+   danger (unk1077). */
+void func_00822290(void) {
+    s32 i;
+    DrawObjFull *p;
+    u8 *t;
+
+    for (i = 0; i < 8; i++) {
+        p = &D_00476DD0[i];
+        p->unk1082 = 0;
+        p->unk1077 = 0;
+        if (p->unk1076 != p->unk1075) {
+            p->unk1082 = 1;
+        }
+        p->unk1076 = p->unk1075;
+        p->unk106F = p->unk54F;
+        p->unk1079 = p->unk1078;
+        p->unk107B = p->unk107A;
+        p->unk1078 = func_005C6170(i);
+        p->unk107A = func_005C6240(i);
+        t = &D_00838CD0[0][0][p->isNpc * 9 + p->unkB98 * 18];
+        if (t[p->unk1078]) {
+            p->unk1077 = 1;
+        }
+        if (t[4 + p->unk107A]) {
+            p->unk1077 = 1;
+        }
+        if (((p->unkBA0 & 1) || (p->unkBA0 & 2)) && t[8]) {
+            p->unk1077 = 1;
+        }
+    }
+}
+
 /* A partner's AI from the start (players that are partners only). */
 void func_008220A0(DrawObjFull *obj) {
     D_008534C0[0] = 0;

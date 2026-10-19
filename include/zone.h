@@ -11,17 +11,22 @@ typedef struct Zone {
     struct Zone *next;  /* 0x28 */
     u8 unk2C[4];
     u8 kind;            /* 0x30 */
-    u8 unk31[3];
+    u8 unk31;           /* 0x31: who may set it off */
+    u8 unk32;           /* 0x32: priority (the lowest wins) */
+    u8 unk33;
     void *who;          /* 0x34: who stepped in */
     u8 unk38[4];
-    s8 unk3C;           /* 0x3C */
-    u8 unk3D[3];
+    u8 on;              /* 0x3C */
+    u8 unk3D;           /* 0x3D */
+    u8 unk3E;           /* 0x3E: the kind of who */
+    u8 unk3F;
     union {
         s32 *def;       /* 0x40: (kind 0x85) def[0x10] its switch (D_00470090 + 0x4730) */
         s32 id;         /* (kind 5) */
     } u;
     s32 unk44;          /* 0x44: (kind 3) sub-kind; (kind 4, 13) id */
-    u8 unk48[0x50 - 0x48];
+    s32 unk48;          /* 0x48: (for 2) the item it wants in hand */
+    u8 unk4C[0x50 - 0x4C];
     u16 unk50;          /* 0x50 */
     u8 unk52[0x59 - 0x52];
     u8 unk59;           /* 0x59: which of unk5A are set */

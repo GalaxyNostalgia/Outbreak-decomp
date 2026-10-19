@@ -32,6 +32,21 @@ static s32 func_0064F620(u8 type, s16 id) {
     return 0;
 }
 
+extern u8 D_0048BF7D[];         /* our player number */
+
+/* Whether (type, id) is marked by us (unk3: the player + 1). */
+s32 func_0064FD50(s32 type, s32 id) {
+    Mark *m;
+    s32 i;
+
+    for (m = D_0070F9F8, i = 0; i < 0x40; i++, m++) {
+        if (m->used == 1 && m->type == type && m->id == id && m->unk3 == D_0048BF7D[0] + 1) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 void func_0064F690(u8 type, s16 id) {
     Mark *m;
     s32 i;

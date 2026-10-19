@@ -207,3 +207,87 @@ s32 func_00340C50(const f32 (*poly)[2], const f32 *p, s32 n) {
     }
     return in > 0;
 }
+
+/* Point-in-polygon tests on x-z integer points (a zone's corners). */
+
+/* The cross product of b - a and c - a: > 0 when c is to the left of a to b. */
+s32 func_00340750(const s32 *a, const s32 *b, const s32 *c) {
+    s32 az = a[1];
+    s32 ax = a[0];
+    s32 bz = b[1];
+    s32 bx = b[0];
+    s32 cx = c[0];
+    s32 cz = c[1];
+
+    return (bx - ax) * (cz - az) - (cx - ax) * (bz - az);
+}
+
+/* Whether p is in the triangle a b c: 1 inside a clockwise one, 2 an anticlockwise one, 0 not
+   (or a degenerate one). */
+s32 func_00340790(const s32 *a, const s32 *b, const s32 *c, const s32 *p) {
+    s32 s = func_00340750(a, b, c);
+
+    if (s == 0) {
+        return 0;
+    }
+    if (s < 0) {
+        if (func_00340750(a, b, p) > 0) {
+            return 0;
+        }
+        if (func_00340750(b, c, p) > 0) {
+            return 0;
+        }
+        if (func_00340750(c, a, p) > 0) {
+            return 0;
+        }
+        return 1;
+    }
+    if (func_00340750(a, b, p) < 0) {
+        return 0;
+    }
+    if (func_00340750(b, c, p) < 0) {
+        return 0;
+    }
+    if (func_00340750(c, a, p) < 0) {
+        return 0;
+    }
+    return 2;
+}
+
+/* Whether p is in the polygon of n points pts (x, z pairs): fans it into triangles from the
+   first point and counts the ones p is in, by their winding against the polygon's. */
+s32 func_00340940(s32 (*pts)[2], const s32 *p, s32 n) {
+    s32 j = 0;
+    s32 i;
+    s8 c;
+    s32 cw;
+    s32 r;
+
+    for (i = 0; i < n - 2; i++) {
+        j += func_00340750(pts[i], pts[i + 1], pts[i + 2]);
+    }
+    cw = j <= 0;
+    c = 0;
+    for (i = 0, j = 1; i < n - 2; i++, j++) {
+        r = (u8)func_00340790(pts[0], pts[j], pts[j + 1], p);
+        if (r) {
+            if (cw) {
+                if (r == 1) {
+                    c++;
+                } else {
+                    c--;
+                }
+            } else if (r == 2) {
+                c++;
+            } else {
+                c--;
+            }
+        }
+    }
+    return c > 0;
+}
+
+/* The per-frame turn from heading from to heading to over n frames (the short way round). */
+s16 func_00346F20(u16 from, u16 to, s16 n) {
+    return (s16)(to - from) / n;
+}

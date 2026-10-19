@@ -139,7 +139,9 @@ typedef struct {
     u8 unkC68[0xC7C - 0xC68]; \
     u8 unkC7C;          /* 0xC7C: the item in hand (0xFF: none) */ \
     u8 unkC7D;          /* 0xC7D */ \
-    u8 unkC7E[0xC84 - 0xC7E]; \
+    u8 unkC7E[0xC82 - 0xC7E]; \
+    u8 unkC82;          /* 0xC82: the item slot in hand */ \
+    u8 unkC83; \
     u8 unkC84[4];       /* 0xC84: effects on the character (script ops 0x39, 0x3A) */ \
     u8 unkC88[0x20];    /* 0xC88: (effects 400-420) */ \
     s16 unkCA8;         /* 0xCA8 */ \
@@ -163,8 +165,12 @@ typedef struct {
     s32 unkD2C;         /* 0xD2C */ \
     u8 unkD30[2]; \
     u8 unkD32;          /* 0xD32 */ \
-    u8 unkD33[0xD90 - 0xD33]; \
-    s16 unkD90;         /* 0xD90 */ \
+    u8 unkD33[0xD74 - 0xD33]; \
+    f32 unkD74[3];      /* 0xD74: where a push ends */ \
+    f32 unkD80[3];      /* 0xD80: the push per frame */ \
+    s16 unkD8C;         /* 0xD8C: the heading a push ends on */ \
+    s16 unkD8E;         /* 0xD8E: the turn per frame */ \
+    u16 unkD90;         /* 0xD90: the push's frames left */ \
     u8 unkD92[2]; \
     f32 unkD94[3];      /* 0xD94: the start position */ \
     s16 unkDA0;         /* 0xDA0: the start heading */
@@ -200,12 +206,21 @@ typedef struct DrawObjFull {
     u8 unk1064;         /* 0x1064 */
     u8 unk1065[2];
     s8 mode;            /* 0x1067: its D_00838860 entry */
-    u8 unk1068[0x1072 - 0x1068];
+    u8 unk1068[0x106F - 0x1068];
+    u8 unk106F;         /* 0x106F: unk54F last frame */
+    u8 unk1070[2];
     s16 unk1072;        /* 0x1072 */
     s8 unk1074;         /* 0x1074 */
-    u8 unk1075[0x107C - 0x1075];
+    u8 unk1075;         /* 0x1075 */
+    u8 unk1076;         /* 0x1076: unk1075 last frame */
+    u8 unk1077;         /* 0x1077: in danger (by D_00838CD0) */
+    u8 unk1078;         /* 0x1078: func_005C6170's */
+    u8 unk1079;         /* 0x1079: unk1078 last frame */
+    u8 unk107A;         /* 0x107A: func_005C6240's */
+    u8 unk107B;         /* 0x107B: unk107A last frame */
     u16 unk107C;        /* 0x107C */
-    u8 unk107E[0x1083 - 0x107E];
+    u8 unk107E[0x1082 - 0x107E];
+    u8 unk1082;         /* 0x1082: unk1075 changed */
     u8 unk1083;         /* 0x1083 */
     u8 unk1084[0x1098 - 0x1084];
     u8 unk1098;         /* 0x1098 */

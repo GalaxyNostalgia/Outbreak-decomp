@@ -102,6 +102,42 @@ DrawObjFull *func_00634C00(s32 i);
 void func_0018D630(void *dst, void *src, s32 size);
 extern u32 D_006E6C70[];        /* per character: the virus count that is 100% */
 
+/* Player i's health in four steps: 0 from 75%, 1 from 50%, 2 from 25%, 3 below. */
+s32 func_005C6170(s32 i);
+#ifdef NON_MATCHING   /* close: the last two returns are laid out the other way */
+s32 func_005C6170(s32 i) {
+    DrawObjFull *p = &D_00476DD0[i];
+    f32 v;
+
+    if (p->unk546 != 0) {
+        v = (f32)p->unk544 / (f32)p->unk546;
+    } else {
+        v = 1.0f;
+    }
+    if (!(v < 0.75f)) {
+        return 0;
+    }
+    if (!(v < 0.5f)) {
+        return 1;
+    }
+    return v < 0.25f ? 3 : 2;
+}
+#endif
+
+/* Player i's virus gauge in four steps: 0 below 50%, 1 below 80%, 2 below 90%, 3. */
+s32 func_005C6240(s32 i) {
+    DrawObjFull *p = &D_00476DD0[i];
+    s32 v = 100.0f * ((f32)(u32)p->unkBAC / (f32)D_006E6C70[p->unkB98]);
+
+    if (v >= 90) {
+        return 3;
+    }
+    if (v >= 80) {
+        return 2;
+    }
+    return v >= 50;
+}
+
 /* Our player's virus gauge, in % (o isn't used). */
 f32 func_00636540(DrawObjFull *o) {
     DrawObjFull *p = &D_00476DD0[D_0048BF60.unk1D];

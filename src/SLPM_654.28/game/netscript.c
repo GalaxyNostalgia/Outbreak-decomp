@@ -684,7 +684,7 @@ s32 func_006CEAA0(u32 *args) {
         while (z != NULL) {
             if (z->kind == 13) {
                 if (z->unk44 == id) {
-                    z->unk3C = 1;
+                    z->on = 1;
                     FIELD(z, s16, 0x62) = v;
                 }
                 z = z->next;
@@ -721,20 +721,20 @@ s32 func_006CEB20(u32 *args) {
                 switch (z->kind) {
                 case 0:
                     if (z->u.id == id) {
-                        z->unk3C = 1;
+                        z->on = 1;
                     }
                     z = z->next;
                     break;
                 case 1:
                     if (z->u.id == id) {
-                        z->unk3C = 1;
+                        z->on = 1;
                     }
                     z = z->next;
                     break;
                 case 2:
                     if (z->kind == 2) {
                         if (z->u.id == id && FIELD(z, s32, 0x50) == id2) {
-                            z->unk3C = 1;
+                            z->on = 1;
                         }
                         z = z->next;
                         break;
@@ -743,37 +743,37 @@ s32 func_006CEB20(u32 *args) {
                     break;
                 case 3:
                     if (z->u.id == id && (z->unk44 & 1) == id2) {
-                        z->unk3C = 1;
+                        z->on = 1;
                     }
                     z = z->next;
                     break;
                 case 4:
                     if (z->unk44 == id) {
-                        z->unk3C = 1;
+                        z->on = 1;
                     }
                     z = z->next;
                     break;
                 case 6:
                     if (FIELD(z, s32, 0x54) == id) {
-                        z->unk3C = 1;
+                        z->on = 1;
                     }
                     z = z->next;
                     break;
                 case 7:
                     if (FIELD(z, s32, 0x70) == id) {
-                        z->unk3C = 1;
+                        z->on = 1;
                     }
                     z = z->next;
                     break;
                 case 11:
                     if (z->u.id == id) {
-                        z->unk3C = 1;
+                        z->on = 1;
                     }
                     z = z->next;
                     break;
                 case 13:
                     if (z->unk44 == id) {
-                        z->unk3C = 1;
+                        z->on = 1;
                     }
                     z = z->next;
                     break;
@@ -819,20 +819,20 @@ s32 func_006CEDB0(u32 *args) {
                 switch (z->kind) {
                 case 0:
                     if (z->u.id == id) {
-                        z->unk3C = 0;
+                        z->on = 0;
                     }
                     z = z->next;
                     break;
                 case 1:
                     if (z->u.id == id) {
-                        z->unk3C = 0;
+                        z->on = 0;
                     }
                     z = z->next;
                     break;
                 case 2:     /* (the original re-tests the kind, falling into case 3) */
                     if (z->kind == 2) {
                         if (z->u.id == id && FIELD(z, s32, 0x50) == id2) {
-                            z->unk3C = 0;
+                            z->on = 0;
                         }
                         z = z->next;
                         break;
@@ -840,37 +840,37 @@ s32 func_006CEDB0(u32 *args) {
                     z = z->next;
                 case 3:
                     if (z->u.id == id && (z->unk44 & 1) == id2) {
-                        z->unk3C = 0;
+                        z->on = 0;
                     }
                     z = z->next;
                     break;
                 case 4:
                     if (z->unk44 == id) {
-                        z->unk3C = 0;
+                        z->on = 0;
                     }
                     z = z->next;
                     break;
                 case 6:
                     if (FIELD(z, s32, 0x54) == id) {
-                        z->unk3C = 0;
+                        z->on = 0;
                     }
                     z = z->next;
                     break;
                 case 7:
                     if (FIELD(z, s32, 0x70) == id) {
-                        z->unk3C = 0;
+                        z->on = 0;
                     }
                     z = z->next;
                     break;
                 case 11:
                     if (z->u.id == id) {
-                        z->unk3C = 0;
+                        z->on = 0;
                     }
                     z = z->next;
                     break;
                 case 13:
                     if (z->unk44 == id) {
-                        z->unk3C = 0;
+                        z->on = 0;
                     }
                     z = z->next;
                     break;
@@ -908,12 +908,12 @@ s32 func_006CDD80(u32 *args) {
         while (z != NULL) {
             if (z->kind == 3 && (z->unk44 == 0 || z->unk44 == 2)) {
                 if (z->u.id == id) {
-                    z->unk3C = 0;
+                    z->on = 0;
                 }
                 z = z->next;
             } else if (z->kind == 4 && FIELD(z, s32, 0x64) == 0) {
                 if (z->u.id == id) {
-                    z->unk3C = 0;
+                    z->on = 0;
                 }
                 z = z->next;
             } else {
@@ -949,7 +949,7 @@ s32 func_006CDC00(u32 *args) {
         while (z != NULL) {
             if (z->kind == 3 && (z->unk44 == 0 || z->unk44 == 2)) {
                 if (z->u.id == id) {
-                    z->unk3C = 1;
+                    z->on = 1;
                     if (z->unk44 == 2) {
                         FIELD(z, u16, 0x58) = v;
                     }
@@ -957,7 +957,7 @@ s32 func_006CDC00(u32 *args) {
                 z = z->next;
             } else if (z->kind == 4 && FIELD(z, s32, 0x64) == 0) {
                 if (z->u.id == id) {
-                    z->unk3C = 1;
+                    z->on = 1;
                 }
                 z = z->next;
             } else {
@@ -993,7 +993,7 @@ s32 func_006CDFF0(u32 *args) {
         while (z != NULL) {
             if (z->kind == 3 && (z->unk44 == 1 || z->unk44 == 3)) {
                 if (z->u.id == id) {
-                    z->unk3C = 1;
+                    z->on = 1;
                     if (z->unk44 == 3) {
                         FIELD(z, u16, 0x58) = v;
                     }
@@ -1001,7 +1001,7 @@ s32 func_006CDFF0(u32 *args) {
                 z = z->next;
             } else if (z->kind == 4 && FIELD(z, s32, 0x64) == 1) {
                 if (z->u.id == id) {
-                    z->unk3C = 1;
+                    z->on = 1;
                 }
                 z = z->next;
             } else {
