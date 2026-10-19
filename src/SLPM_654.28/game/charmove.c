@@ -494,15 +494,307 @@ void func_0062CB30(DrawObjFull *o) {
 }
 #endif
 
-void func_0062E950(void);
-void func_006359D0(DrawObjFull *o);
-void func_00636CF0(DrawObjFull *o);
-void func_00636D50(DrawObjFull *o);
+u16 func_001ADEF0(s32 n);
+void func_00634260(DrawObjFull *o, s32 a);
+s32 func_0062E5B0(DrawObjFull *o, u16 dmg, s32 a);
+extern s8 D_0048BF88[];
+s32 func_0062E880(DrawObjFull *o);
+void func_0062EBF0(DrawObjFull *o, s32 cond);
+extern u8 D_0048BF92[];
+extern u8 D_0048BF93[];
+
+/* Bleeding (0xBA0 & 1: 1 damage every 20 frames) and poison (& 2: 5 every 60, for a random
+   40-150 seconds, then it wears off), while above 1 health; 0x18 cleared while alive. Counts
+   are halved at 30 fps (Options.unkC). */
+void func_0062E950(DrawObjFull *o) {
+    u16 bleed = D_00306590.unkC ? 10 : 20;
+    u16 hurt = D_00306590.unkC ? 30 : 60;
+    s32 lo = D_00306590.unkC ? 1200 : 2400;
+    s32 hi = D_00306590.unkC ? 4500 : 9000;
+    u16 last = (D_00306590.unkC ? 1200 : 2400) + (u16)((func_001ADEF0(1) & 0xFFFF) % (u16)(hi - lo));
+
+    if (D_0048BF88[0] != 0) {
+        return;
+    }
+    if (o->unkBA0 & 0x400000) {
+        return;
+    }
+    if ((o->unkBA0 & 0x18) && o->unk544 != 0) {
+        o->unkBA0 &= ~0x18;
+    }
+    if ((o->unkBA0 & 1) && o->unk544 > 1) {
+        if (D_0048BF92[0] % 4 == 0 && D_0048BF93[0] == 0) {
+            func_00634260(o, 6);
+        }
+        if (o->unkC60 > bleed) {
+            o->unkC60 = bleed;
+        }
+        if (o->unkC60 != 0) {
+            if (--o->unkC60 == 0) {
+                func_0062E5B0(o, 1, 0);
+            }
+        } else {
+            o->unkC60 = bleed;
+        }
+    }
+    if (o->unkBA0 & 2) {
+        if (o->unkC5A > last) {
+            o->unkC5A = last;
+        }
+        if (o->unkC5A == 0) {
+            return;
+        }
+        if (o->unk544 > 1) {
+            if (o->unkC58 > hurt) {
+                o->unkC58 = hurt;
+            }
+            if (o->unkC58 != 0) {
+                if (--o->unkC58 == 0 && func_0062E880(o)) {
+                    func_0062E5B0(o, 5, 0);
+                    if (o->unk544 == 0) {
+                        o->unk544 = 1;
+                    }
+                    func_00634260(o, 6);
+                }
+            } else {
+                o->unkC58 = hurt;
+            }
+        }
+        if (--o->unkC5A == 0 || o->unk544 < 2) {
+            o->unkC5A = 0;
+            o->unkC58 = 0;
+            func_0062EBF0(o, 3);
+        }
+    }
+}
+s32 func_001AF540(DrawObjFull *o);
+s32 func_006AC4F0(DrawObjFull *o);
+void func_005C4260(void);
+void func_0062E2D0(DrawObjFull *o);
+void func_0062E2F0(DrawObjFull *o, s32 a);
+void func_00636440(DrawObjFull *o, u32 from, u32 to);
+void func_0034B7D0(s32 a, s32 b, s32 c);
+void func_006AC7D0(void);
+void func_0082C640(DrawObjFull *o);     /* SINGLE.BIN */
+extern u32 D_006E6C70[];        /* per character: the virus count that is 100% */
+extern u32 D_006E6C90[];        /* per character: its virus per second */
+extern f32 D_006E6BF0[];        /* (NPC models, by unkBBE & 7) its rate */
+extern f32 D_00239DC8;          /* the % at which the virus is full */
+extern s8 D_0048BF88[];
+extern u8 D_0048BF7D[];
+extern u8 D_0048BF93[];
+
+/* Our player's virus (0xBAC) for this frame: it grows by the character's rate once a second
+   (every frame, faster, while 0x10 or the character's grapple holds it), less what the three
+   anti-virus timers (0xBB6-0xBBA, set by 0xBA4 8, 0x10, 0x20) hold back. At 100% it turns:
+   1 when it did. */
+s32 func_006359D0(DrawObjFull *o);
+#ifdef NON_MATCHING   /* close: the rate's live ranges get other registers; daddiu for the step */
+s32 func_006359D0(DrawObjFull *o) {
+    f32 cur = (f32)(u32)o->unkBAC;
+    f32 hold1 = 100.0f;
+    f32 rate = 0.0f;
+    u32 step = 60;
+    f32 hold2 = hold1;
+    u32 add = D_006E6C90[o->unkB98];
+    f32 hold3 = hold1;
+    f32 t;
+    u32 max;
+
+    if (D_0048BF88[0] != 0) {
+        return 0;
+    }
+    if (o->type != 0) {
+        return 0;
+    }
+    if (o->kind != D_0048BF7D[0]) {
+        return 0;
+    }
+    if (o->unkBA0 & 0x400000) {
+        return 0;
+    }
+    if (o->unkBA0 & 0x10) {
+        rate = 60.0f;
+    }
+    if (o->unkB98 == 2 && o->unk54F == 0x41 && o->act[2] >= 3) {
+        rate = 10.0f;
+    }
+    if (o->unkBB4 != 0) {
+        rate *= D_006E6BF0[o->unkBBE & 7];
+    }
+    if (rate != 0.0f) {
+        if (func_001AF540(o) == 1) {
+            func_006AC7D0();
+        }
+        add = (f32)add * rate / (f32)(D_00306590.unkC ? 30 : 60);
+        step = 2;
+    } else if (D_0048BF93[0] != 0) {
+        return 0;
+    }
+    if (o->unkBA0 & 0x1E0) {
+        o->unkBB6 = 0;
+        o->unkBB8 = 0;
+        o->unkBBA = 0;
+        return 0;
+    }
+    if (o->unkBA0 & 0x400) {
+        o->unkBB6 = 0;
+        o->unkBB8 = 0;
+        o->unkBBA = 0;
+    }
+    if (o->unkBA4 & 0x80000) {
+        o->unkBA4 &= ~0x80000;
+        return 0;
+    }
+    if (o->unkBA4 & 8) {
+        o->unkBA4 &= ~8;
+        o->unkBB6 = 5400;
+    }
+    if (o->unkBB6 != 0) {
+        t = (f32)o->unkBB6 - (f32)step;
+        hold1 = 0.0f;
+        if (t <= hold1) {
+            t = hold1;
+        }
+        o->unkBB6 = t;
+    }
+    add = (f32)add * (hold1 / 100.0f);
+    if (o->unkBA4 & 0x10) {
+        o->unkBA4 &= ~0x10;
+        o->unkBB8 = 10800;
+    }
+    if (o->unkBB8 != 0) {
+        t = (f32)o->unkBB8 - (f32)step;
+        hold2 = 0.0f;
+        if (t <= hold2) {
+            t = hold2;
+        }
+        o->unkBB8 = t;
+    }
+    add = (f32)add * (hold2 / 100.0f);
+    if (o->unkBA4 & 0x20) {
+        o->unkBA4 &= ~0x20;
+        o->unkBBA = 1800;
+    }
+    if (o->unkBBA != 0) {
+        t = (f32)o->unkBBA - (f32)step;
+        hold3 = 0.0f;
+        if (t <= hold3) {
+            t = hold3;
+        }
+        o->unkBBA = t;
+    }
+    add = (f32)add * (hold3 / 100.0f);
+    cur += (f32)add;
+    max = D_006E6C70[o->unkB98];
+    if (!(100.0f * (cur / (f32)max) < D_00239DC8)) {
+        cur = (f32)max;
+    }
+    if (!(cur < (f32)max)) {
+        if (func_001AF540(o) == 1 && !func_006AC4F0(o)) {
+            func_005C4260();
+        }
+        func_0062E2D0(o);
+        o->unkBAC = D_006E6C70[o->unkB98];
+        if (!(o->unkBA4 & 0x100)) {
+            return 0;
+        }
+        o->unk544 = 0;
+        if (func_001AF540(o) == 1 && !(o->unkBA4 & 0x10000000)) {
+            o->unkBA4 |= 0x10000000;
+            func_0034B7D0(0x24, 0, 0);
+        }
+        if (o->unkBA0 & 0x18) {
+            o->unkBA0 &= ~0x18;
+            switch (o->type) {
+            case 0:
+                if (o->isNpc && o->unk1E2 != D_00306590.unk1C) {
+                    o->unkBA0 |= 0x60;
+                    func_005C5A90(o, 0);
+                    o->unk54F = 0xA0;
+                    o->act[0] = 4;
+                    o->act[1] = 1;
+                    o->act[2] = 0;
+                    o->act[3] = 0;
+                    func_00635920(o);
+                    func_0082C640(o);
+                } else {
+                    o->unkBA0 |= 0x20;
+                    if (func_001AF4D0() == 1) {
+                        o->unkBA0 |= 0x40000000;
+                    }
+                    func_005C5A90(o, 0);
+                    o->unk54F = 0xA0;
+                    o->act[0] = 4;
+                    o->act[1] = 0;
+                    o->act[2] = 0;
+                    o->act[3] = 0;
+                    func_00635920(o);
+                }
+                break;
+            case 1:
+                o->unkBA0 |= 0x40;
+                func_005C5A90(o, 0);
+                o->unk54F = 0xA0;
+                o->act[0] = 4;
+                o->act[1] = 1;
+                o->act[2] = 0;
+                o->act[3] = 0;
+                func_00635920(o);
+                break;
+            }
+        } else {
+            func_0062E2F0(o, 2);
+            if (o->type == 0 && o->isNpc && o->unk1E2 != D_00306590.unk1C) {
+                func_0082C640(o);
+            }
+        }
+        return 1;
+    }
+    add = cur;
+    func_00636440(o, o->unkBAC, add);
+    o->unkBAC = add;
+    return 0;
+}
+#endif
+s32 func_006AC490(void);
+s32 func_00585EF0(DrawObjFull *o);
+
+/* func_00585EF0 for o, unless it's ours and the map's request is on, or in motion 0x15. */
+void func_00636CF0(DrawObjFull *o) {
+    if ((func_001AF540(o) != 1 || !func_006AC490()) && o->unk54F != 0x15) {
+        func_00585EF0(o);
+    }
+}
+
+/* Infected for good (0xBA4 & 0x1000): no virus gauge, and once dying (0xBA0 & 0x18) it turns
+   after 3 (6 at 60 fps) minutes. */
+void func_00636D50(DrawObjFull *o) {
+    if ((o->unkBA4 & 0x1000) && o->act[0] != 4) {
+        o->unkBAC = 0;
+        if (o->unkBA0 & 0x18) {
+            if (o->unkC62 != 0) {
+                if (--o->unkC62 == 0) {
+                    o->unkBA0 |= 0x40000000;
+                    func_005C5A90(o, 0);
+                    o->unk54F = 0xA0;
+                    o->act[0] = 4;
+                    o->act[1] = 0;
+                    o->act[2] = 0;
+                    o->act[3] = 0;
+                    func_00635920(o);
+                }
+            } else {
+                o->unkC62 = D_00306590.unkC ? 10800 : 21600;
+            }
+        }
+    }
+}
 
 /* (Offline) a player not in our scenario: kept still. */
 void func_00637B40(DrawObjFull *o) {
     o->unkBA4 |= 0x100;
-    func_0062E950();
+    func_0062E950(o);
     func_006359D0(o);
     func_00636CF0(o);
     func_00636D50(o);
@@ -804,6 +1096,253 @@ void func_005A61C0(DrawObjFull *o, f32 s) {
 }
 #endif
 
+/* The kind 0x81 surface at o (looked for from 1000 above it): 0x188 whether there is one, 0x184
+   its height. */
+void func_00634B40(DrawObjFull *o) {
+    f32 p[3];
+    f32 *y;
+    u8 kind;
+
+    y = &p[1];
+    *(Vec3 *)p = *(Vec3 *)o->unk38;
+    *y += 1000.0f;
+    *y = func_005E5B40(p, &kind, 0x81);
+    if (kind == 0x81) {
+        o->unk184 = *y;
+        o->unk188 = 1;
+    } else {
+        o->unk184 = 0.0f;
+        o->unk188 = 0;
+    }
+}
+
+void func_0064C620(DrawObjFull *o, s32 kind);
+void func_0062F130(DrawObjFull *o);
+s32 func_001AF510(void);
+s32 func_001AF540(DrawObjFull *o);
+/* A player's frame counters (0xD2C, 0xD28): counting unless stopped (-1). */
+void func_00635310(DrawObjFull *o) {
+    if (o != NULL && o->type == 0 && o->unkD2C != -1) {
+        o->unkD2C++;
+    }
+}
+
+void func_00635360(DrawObjFull *o) {
+    if (o != NULL && o->type == 0 && o->unkD28 != -1) {
+        o->unkD28++;
+    }
+}
+extern u8 D_0048BF7E[];
+s32 func_006AC490(void);
+void func_006AE930(void);
+extern s16 D_0023BB98;
+
+/* (Ours, when 0x48BF7E holds our player number + 1, 1-4) the map's request: done once
+   func_006AC490 says so. */
+void func_005C41A0(DrawObjFull *o);
+#ifdef NON_MATCHING   /* close: register pair swapped; the outer default's branch */
+void func_005C41A0(DrawObjFull *o) {
+    s32 k;
+    u8 w;
+
+    if (o->type != 0) {
+        return;
+    }
+    w = D_0048BF7E[0];
+    k = o->kind + 1;
+    if (k != w) {
+        return;
+    }
+    switch (w) {
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+        switch (D_0023BB98) {
+        default:
+            if (k == w && !func_006AC490()) {
+                D_0048BF7E[0] = 0;
+                return;
+            }
+            break;
+        case 1:
+            if (w == 0) {
+                func_006AE930();
+            }
+            break;
+        }
+        break;
+    default:
+        break;
+    }
+}
+#endif
+void func_0062E1E0(DrawObjFull *o, s32 a);
+
+/* Out of health, standing or walking (action 1, 2): NPCs die at once (action 4/0); players
+   die (4/3, 0xBA0 |= 0x120) unless something holds them (0x1F0: 0x80 waits 0xC5E frames for
+   0xBA4 & 0x100, 0x10 stops it). */
+void func_0062EE10(DrawObjFull *o) {
+    s32 f;
+
+    if (D_0048BF88[0] == 0 && D_0023BB98 != 1 && o->unk544 == 0) {
+        switch (o->act[0]) {
+        case 1:
+        case 2:
+            f = o->unkBA0;
+            if (!(f & 0x1F0)) {
+                if (o->type == 1) {
+                    func_005C5A90(o, 0);
+                    o->unk54F = 0xA0;
+                    o->act[0] = 4;
+                    o->act[1] = 0;
+                    o->act[2] = 0;
+                    o->act[3] = 0;
+                    func_00635920(o);
+                } else if (o->unkBA4 & 0x100) {
+                    func_0062E1E0(o, 0);
+                }
+            } else if (f & 0x80) {
+                if (o->unkC5E != 0) {
+                    o->unkC5E--;
+                }
+                if (o->unkC5E == 0 && (o->unkBA4 & 0x100)) {
+                    o->unkBA0 |= 0x120;
+                    func_005C5A90(o, 0);
+                    o->unk54F = 0xA0;
+                    o->act[0] = 4;
+                    o->act[1] = 3;
+                    o->act[2] = 0;
+                    o->act[3] = 0;
+                    func_00635920(o);
+                }
+            } else if (!(f & 0x10)) {
+                o->unkBA0 = f | 0x120;
+                func_005C5A90(o, 0);
+                o->unk54F = 0xA0;
+                o->act[0] = 4;
+                o->act[1] = 3;
+                o->act[2] = 0;
+                o->act[3] = 0;
+                func_00635920(o);
+            }
+            break;
+        }
+    }
+}
+extern u8 D_0048AEA8[];
+
+/* Drops what the player was doing for a reaction: 0x200000 and the motion's hold cleared, and
+   (when 0xBD0 held the controls) the buttons let go. */
+void func_005F4C20(DrawObjFull *o) {
+    D_0048AEA8[0] = 0;
+    o->unkBA0 &= ~0x200000;
+    if (o->unkBD0) {
+        o->unkBD0 = 0;
+        FIELD(o, u32, 0xF84) = FIELD(o, u32, 0xF80);
+        FIELD(o, u32, 0xF90) = 0;
+        FIELD(o, u32, 0xF7C) = 0;
+        FIELD(o, u32, 0xF78) = 0;
+    }
+}
+
+extern void (*D_006DDA80[])(DrawObjFull *o);    /* the reactions */
+
+/* A pending reaction (0xAD4, which 0xAD5) starts, unless the player is busy (0xBA0 & 0x80). */
+void func_006196E0(DrawObjFull *o) {
+    if (o->unkAD4) {
+        o->unkAD4 = 0;
+        if (!(o->unkBA0 & 0x80)) {
+            func_005F4C20(o);
+            o->unkBA0 &= ~0x80000;
+            D_006DDA80[o->unkAD5](o);
+        }
+    }
+}
+void func_006307E0(DrawObjFull *o);
+void func_0061D9A0(DrawObjFull *o);
+s32 func_006337C0(DrawObjFull *o, u8 act, u8 step);
+void func_00633530(DrawObjFull *o);
+void func_005A6630(DrawObjFull *o, s32 a);
+extern void (*D_006DEC90[])(DrawObjFull *o);    /* per action: its step */
+extern void (*D_006DECD0[])(DrawObjFull *o);    /* per action: after the step */
+extern u8 D_0023BF14;           /* the action before the step */
+extern u8 D_0023BF10;           /* its sub-step */
+extern s8 D_0048BF88[];
+extern u8 D_0048BF7D[];         /* our player number */
+extern u8 D_0048BF7E[];
+
+/* A player's frame: the position and angles before the move kept, controls and the action's
+   step (for those we run), then the after-step, breathing and 0xBA0 & 0x80's func_005A6630. */
+void func_006399A0(DrawObjFull *o) {
+    func_00634B40(o);
+    func_00634A10(o);
+    *(Vec3 *)o->unk44 = *(Vec3 *)o->unk38;
+    *(Rot4 *)o->unkA0 = *(Rot4 *)&o->unk90;
+    func_00635310(o);
+    func_00635360(o);
+    if (o->type != 0 || (D_0048BF88[0] == 0 && (func_001AF510() != 1 || o->kind == D_0048BF7D[0]))) {
+        D_0023BF14 = o->act[0];
+        D_0023BF10 = o->act[1];
+        func_005C41A0(o);
+        func_0062E950(o);
+        func_0062EE10(o);
+        func_0062F130(o);
+        func_006359D0(o);
+        func_00636CF0(o);
+        func_00636D50(o);
+        if (o->type == 0) {
+            func_006196E0(o);
+            func_006307E0(o);
+            func_0061E020(o);
+            if (func_001AF540(o) == 1) {
+                if (D_0048BF7E[0] == 0) {
+                    D_006DEC90[o->act[0]](o);
+                } else {
+                    func_0061D9A0(o);
+                }
+            } else {
+                D_006DEC90[o->act[0]](o);
+            }
+            if (o->act[0] != D_0023BF14 || o->act[1] != D_0023BF10 || o->act[2] == 0xFF) {
+                if (o->act[2] == 0xFF) {
+                    func_00635920(o);
+                }
+                switch (o->act[0]) {
+                case 3:
+                case 4:
+                case 5:
+                    func_0064C620(o, 5);
+                    break;
+                default:
+                    if (!func_006337C0(o, D_0023BF14, D_0023BF10)) {
+                        func_0064C620(o, 1);
+                    }
+                    break;
+                }
+            }
+            func_00633530(o);
+        }
+    }
+    o->unkBA0 &= ~0x800000;
+    o->unkBA4 &= ~0x10100;
+    if (func_001AF510() == 1) {
+        if (o->unk1E2 == D_00306590.unk1C || D_0048BF88[0] != 0) {
+            D_006DECD0[o->act[0]](o);
+        }
+    } else {
+        D_006DECD0[o->act[0]](o);
+    }
+    o->unkBA4 &= ~0x400;
+    if (o->unkBD0) {
+        o->unkBA4 &= ~0x100;
+    }
+    func_005A61C0(o, 1.0f);
+    if (o->unkBA0 & 0x80) {
+        func_005A6630(o, 3);
+    }
+}
+
 /* A character's per-frame movement, collision and animation steps. */
 void func_00639CE0(DrawObjFull *o) {
     func_00634A10(o);
@@ -1041,7 +1580,7 @@ void func_0062CDA0(DrawObjFull *o);
 void func_00634BE0(DrawObjFull *o);
 void func_00635340(DrawObjFull *o);
 void func_0062E6A0(DrawObjFull *o, u16 a, s32 b);
-void func_006AC7D0(DrawObjFull *o);
+void func_006AC7D0(void);
 void func_00636F90(DrawObjFull *o);
 s32 func_0062EFC0(DrawObjFull *o);
 void func_00634260(DrawObjFull *o, s32 a);
@@ -1149,7 +1688,7 @@ void func_0062F130(DrawObjFull *o) {
         func_0062E6A0(o, FIELD(o, u16, 0x14E), 0);
     }
     if (func_001AF540(o) == 1) {
-        func_006AC7D0(o);
+        func_006AC7D0();
     }
     func_00636F90(o);
     if (func_001AF540(o) == 1 && !(FIELD(o, u8, 0x143) & 1)) {

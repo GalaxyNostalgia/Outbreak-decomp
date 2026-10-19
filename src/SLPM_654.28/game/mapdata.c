@@ -241,6 +241,29 @@ void func_001B6EB0(void);
 void func_006B9610(void);
 void func_006A5A10(s32 a);
 
+/* Whether the map screen is up (with 0x63 on; open 2 only when unk1E is set). */
+s32 func_006AC490(void);
+#ifdef NON_MATCHING   /* the compiler folds the last two returns into set-if-not-zero */
+s32 func_006AC490(void) {
+    u8 open;
+
+    if ((u8)D_0048BF60.unk63 == 0) {
+        return 0;
+    }
+    open = D_00720BE0.open;
+    if (open == 0) {
+        return 0;
+    }
+    if (open == 2) {
+        if (D_0048BF60.unk1E[0] != 0) {
+            return 1;
+        }
+        return 0;
+    }
+    return 1;
+}
+#endif
+
 /* Closes the map screen. */
 void func_006AE930(void);
 #ifdef NON_MATCHING   /* first draft */

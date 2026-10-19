@@ -103,8 +103,9 @@ typedef struct {
     u8 unkAB4[4]; \
     u8 unkAB8;          /* 0xAB8 */ \
     u8 unkAB9[0xAD4 - 0xAB9]; \
-    u8 unkAD4;          /* 0xAD4 */ \
-    u8 unkAD5[0xAEC - 0xAD5]; \
+    u8 unkAD4;          /* 0xAD4: a reaction pending */ \
+    u8 unkAD5;          /* 0xAD5: which (D_006DDA80) */ \
+    u8 unkAD6[0xAEC - 0xAD6]; \
     u8 unkAEC[0xB90 - 0xAEC]; \
     f32 unkB90;         /* 0xB90: how far tilted to the ground (0-1) */ \
     f32 unkB94;         /* 0xB94: its speed */ \
@@ -120,11 +121,13 @@ typedef struct {
     s32 unkBAC;         /* 0xBAC */ \
     f32 unkBB0;         /* 0xBB0: D_00712280[kind] */ \
     u16 unkBB4;         /* 0xBB4: (NPCs) their model + 1 */ \
-    s16 unkBB6;         /* 0xBB6 */ \
-    s16 unkBB8;         /* 0xBB8 */ \
+    u16 unkBB6;         /* 0xBB6: (players) the virus held back: 1 */ \
+    u16 unkBB8;         /* 0xBB8: 2 */ \
     u16 unkBBA;         /* 0xBBA */ \
     u8 costume;         /* 0xBBC */ \
-    u8 unkBBD[3]; \
+    u8 unkBBD; \
+    u8 unkBBE;          /* 0xBBE: (NPCs) the model's virus rate (D_006E6BF0, by its low 3 bits) */ \
+    u8 unkBBF; \
     f32 unkBC0;         /* 0xBC0 */ \
     f32 unkBC4;         /* 0xBC4 */ \
     u8 unkBC8[8]; \
@@ -132,7 +135,13 @@ typedef struct {
     u8 unkBD1[0xC50 - 0xBD1]; \
     u16 unkC50;         /* 0xC50: the breathing timer */ \
     u8 unkC52;          /* 0xC52: its key */ \
-    u8 unkC53[0xC64 - 0xC53]; \
+    u8 unkC53[0xC58 - 0xC53]; \
+    u16 unkC58;         /* 0xC58: (poison) frames to its next hurt */ \
+    u16 unkC5A;         /* 0xC5A: (poison) frames left */ \
+    u8 unkC5C[2]; \
+    u16 unkC5E;         /* 0xC5E: frames before a dying player falls */ \
+    u16 unkC60;         /* 0xC60: (bleeding) frames to its next hurt */ \
+    u16 unkC62;         /* 0xC62: (0xBA4 & 0x1000) frames before it turns */ \
     u8 unkC64;          /* 0xC64 */ \
     u8 unkC65;          /* 0xC65: what hit it (1-4) */ \
     s16 unkC66;         /* 0xC66 */ \

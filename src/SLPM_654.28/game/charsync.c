@@ -138,11 +138,47 @@ s32 func_005C6240(s32 i) {
     return v >= 50;
 }
 
+s32 func_001AF540(DrawObjFull *o);
+void func_0034B7D0(s32 a, s32 b, s32 c);
+f32 func_00636600(u32 n);
+
+/* (Online) the message for our virus passing 50, 70 or 90% (0x21-0x23) going from to to. */
+void func_00636440(DrawObjFull *o, u32 from, u32 to);
+#ifdef NON_MATCHING   /* close: three delay slots the original leaves empty */
+void func_00636440(DrawObjFull *o, u32 from, u32 to) {
+    f32 a;
+    f32 b;
+
+    if (func_001AF540(o)) {
+        a = func_00636600(from);
+        b = func_00636600(to);
+        if (a < 50.0f && !(b < 50.0f)) {
+            func_0034B7D0(0x21, 0, 0);
+            return;
+        }
+        if (a < 70.0f && !(b < 70.0f)) {
+            func_0034B7D0(0x22, 0, 0);
+            return;
+        }
+        if (a < 90.0f && !(b < 90.0f)) {
+            func_0034B7D0(0x23, 0, 0);
+        }
+    }
+}
+#endif
+
 /* Our player's virus gauge, in % (o isn't used). */
 f32 func_00636540(DrawObjFull *o) {
     DrawObjFull *p = &D_00476DD0[D_0048BF60.unk1D];
 
     return 100.0f * ((f32)(u32)p->unkBAC / (f32)D_006E6C70[p->unkB98]);
+}
+
+/* A virus count n as our player's %. */
+f32 func_00636600(u32 n) {
+    DrawObjFull *p = &D_00476DD0[D_0048BF60.unk1D];
+
+    return 100.0f * ((f32)n / (f32)D_006E6C70[p->unkB98]);
 }
 
 /* That in four steps: 0 below 50%, 1 below 80%, 2 below 90%, 3. */

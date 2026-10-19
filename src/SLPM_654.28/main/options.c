@@ -6,6 +6,7 @@
 
 #include "options.h"
 #include "game.h"
+#include "object.h"
 
 extern s8 D_00306390[0x10];        /* options as saved */
 extern s8 D_00231B30[0x10];        /* default saved options */
@@ -418,6 +419,26 @@ s32 func_001AF510(void) {
 s32 func_001AF4D0(void) {
     return func_001AF500() == 0;
 }
+
+/* Whether player o is played here: offline the first (the others are partners), online ours. */
+s32 func_001AF540(DrawObjFull *o);
+#ifdef NON_MATCHING   /* the compiler folds the returns into set-if-equal */
+s32 func_001AF540(DrawObjFull *o) {
+    if (o->type != 0) {
+        return 0;
+    }
+    if (func_001AF4D0() == 1) {
+        if (o->kind != 0) {
+            return 0;
+        }
+        return 1;
+    }
+    if (D_0048BF60.unk1D == o->kind) {
+        return 1;
+    }
+    return 0;
+}
+#endif
 
 void func_008201D0(s32 a);    /* SINGLE.BIN */
 void func_00821B50(s32 a);    /* NETAQ.BIN */
