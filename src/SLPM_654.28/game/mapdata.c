@@ -138,23 +138,294 @@ typedef struct {
 } MapView;
 
 extern DrawObjFull D_00476DD0[8];
-extern u8 D_00720AA0[0xD4];
 /* A floor record of the map file (0x5C bytes). */
 typedef struct {
     u8 unk0[0x40];
     u8 level;           /* 0x40: its level (func_00540A10 says whether it is shown) */
-    u8 unk41[0x5C - 0x41];
+    u8 group;           /* 0x41: floors of a group are stacked by height */
+    s16 nparts;         /* 0x42 */
+    u32 parts;          /* 0x44: in the map file, 6 bytes each (byte 0: its room record) */
+    u8 unk48[4];
+    s16 height;         /* 0x4C: the floor above starts here */
+    u8 unk4E[0x58 - 0x4E];
+    f32 scale;          /* 0x58 */
 } MapFloor;
 
-extern MapFloor *D_00720B18[];  /* the floor records */
+/* A room's record in the map file (0x58 bytes). */
+typedef struct {
+    u8 unk0;
+    u8 id;              /* 0x01: the room */
+    u8 unk2[0x58 - 2];
+} MapRoom;
+
+/* The map module's state (0xD4 bytes, cleared when the map opens). */
+typedef struct {
+    s32 unk0;
+    u32 width;          /* 0x04: the map texture's (0x100-0x400) */
+    u32 height;         /* 0x08 */
+    u8 unkC[0x14 - 0xC];
+    u32 nclut;          /* 0x14: palettes (3: the plain one and two highlighted) */
+    u8 *unk18;          /* 0x18 */
+    u8 *clut;           /* 0x1C: 16 colours each */
+    u8 *pkt[2];         /* 0x20: the two draw packets */
+    u8 *pktEnd[2];      /* 0x28 */
+    s32 unk30;          /* 0x30 */
+    u8 *unk34;          /* 0x34 */
+    s32 tbp;            /* 0x38 */
+    s32 tbp2;           /* 0x3C */
+    s32 used;           /* 0x40: bytes of the map buffer used */
+    s32 unk44;          /* 0x44: packet entries */
+    u8 unk48[0x58 - 0x48];
+    s32 unk58;          /* 0x58 */
+    s32 unk5C;          /* 0x5C */
+    s32 unk60;          /* 0x60 */
+    s32 unk64;          /* 0x64 */
+    u32 rgba;           /* 0x68 */
+    u32 nfloors;        /* 0x6C */
+    u32 unk70;          /* 0x70 */
+    MapRoom *rooms;     /* 0x74 */
+    MapFloor *floors;   /* 0x78 */
+    u8 unk7C[0x84 - 0x7C];
+    s32 tw;             /* 0x84: log2 of width (8-10) */
+    s32 th;             /* 0x88 */
+    u8 unk8C[0xD4 - 0x8C];
+} MapState;
+
+extern MapState D_00720AA0;
 void func_003478F0(void);
 void *memset(void *p, s32 c, u32 n);
-void func_006A69F0(s32 a, u8 *p, u16 b, MapView *m);
-s32 func_00540A10(u8 level);
-s32 func_006A8860(u8 room, s32 y);
-void func_006A8970(u8 *p);
-f32 func_006A89C0(u8 floor);
+s32 func_00540A10(s32 level);
+
+extern char D_0070D970[];   /* "data\\rom\\scene\\item_msg\\cp_back.img" */
+extern char D_0070D998[];   /* "%sfile%03d.dat" */
+extern char D_0070D9D0[];   /* "%sfile%03de.dat" */
+extern u8 *D_0023BFD4;      /* the files screen's background image */
+void func_006A6140(s32 a, u8 *img, s32 b, s32 tbp);
+
+/* Loads the files screen's background (once, into VRAM) and the room's file texts after it,
+   past the map in the map buffer: where they are, or 0. */
 s32 func_006A5A30(void);
+#ifdef NON_MATCHING   /* memset's argument is reloaded from the global in the original */
+s32 func_006A5A30(void) {
+    char name[0x100];
+    u8 *buf;
+    s32 n;
+
+    if (D_0048BF60.unkAE == 0) {
+        D_0023BFD4 = buf = (u8 *)(((s32)D_00306590.mapBuf + 0x8003F) / 64 * 64);
+        memset(D_0023BFD4, 0, 0x594);
+        buf = (u8 *)(((s32)buf + 0x5D3) / 64 * 64);
+        n = func_001CFBB0(D_0070D970, buf, 1, 0);
+        if (n == 0) {
+            D_0023BFD4 = NULL;
+        } else {
+            func_006A6140(0, buf, 0x20, FIELD(&D_00306590, u16, 0x56) + 0x400);
+            D_0048BF60.unkAE = 1;
+        }
+        if (D_0023BFD4 != NULL) {
+            buf += (*(s32 *)(D_0023BFD4 + 0x40) + 0x3F) & ~0x3F;
+        }
+        if (D_00306590.unk3D == 0) {
+            sprintf(name, D_0070D998, D_0070D9B0, D_00306590.unk1A);
+        } else {
+            sprintf(name, D_0070D9D0, D_0070D9B0, D_00306590.unk1A);
+        }
+        if (func_001CFBB0(name, buf, 0x10001, 0) == 0) {
+            buf = NULL;
+        }
+    } else {
+        buf = (u8 *)D_0023BFB4;
+    }
+    return (s32)buf;
+}
+#endif
+
+extern u32 D_006FF640[16];      /* the map's palette */
+u32 *func_001B56E0(u32 *p, u32 src, s32 dbp, s32 dbw, s32 psm, s32 dx, s32 dy, s32 w, s32 h);
+
+/* Packets uploading the map's palettes. */
+u8 *func_006A9550(MapState *st, u8 *p) {
+    u32 i;
+
+    for (i = 0; i < st->nclut; i++) {
+        p = (u8 *)func_001B56E0((u32 *)p, (u32)&st->clut[i * 64], st->tbp2 + i, 1, 0, 0, 0, 8, 2);
+    }
+    return p;
+}
+
+/* And its texture. */
+u8 *func_006A95D0(MapState *st, u8 *p);
+#ifdef NON_MATCHING   /* argument scheduling (the original copies st aside first) */
+u8 *func_006A95D0(MapState *st, u8 *p) {
+    return (u8 *)func_001B56E0((u32 *)p, (u32)st->unk18, st->tbp, st->width >> 6, 0x14, 0, 0,
+                               st->width, st->height);
+}
+#endif
+
+/* Sets the map module up from the opened map: its tables, its palettes (the second colour
+   lit in the two other copies) and its two draw packets after them in p. */
+void func_006A69F0(s32 a, u8 *p, u16 tbp, MapView *m);
+#ifdef NON_MATCHING   /* register allocation */
+void func_006A69F0(s32 a, u8 *p, u16 tbp, MapView *m) {
+    MapState *st = &D_00720AA0;
+    u8 *c;
+    u32 *src;
+    u8 *q;
+    u32 i;
+    s32 j;
+    s32 k;
+    s32 size;
+
+    D_00720AA0.nfloors = m->nfloors;
+    D_00720AA0.unk70 = m->unk34;
+    D_00720AA0.rooms = (MapRoom *)m->unk38;
+    D_00720AA0.floors = (MapFloor *)m->unk3C;
+    D_00720AA0.width = (u16)m->unk40 << 8;
+    D_00720AA0.height = (u16)m->unk42 << 8;
+    switch (D_00720AA0.width) {
+    case 0x100:
+        st->tw = 8;
+        break;
+    case 0x200:
+        st->tw = 9;
+        break;
+    case 0x300:
+        st->tw = 10;
+        break;
+    case 0x400:
+        st->tw = 10;
+        break;
+    default:
+        st->tw = 8;
+        break;
+    }
+    switch (st->height) {
+    case 0x100:
+        st->th = 8;
+        break;
+    case 0x200:
+        st->th = 9;
+        break;
+    case 0x300:
+        st->th = 10;
+        break;
+    case 0x400:
+        st->th = 10;
+        break;
+    default:
+        st->th = 8;
+        break;
+    }
+    st->unk18 = m->unk44;
+    st->nclut = 3;
+    st->unk44 = 0x80;
+    st->clut = p;
+    c = st->clut;
+    for (i = 0; i < st->nclut; i++) {
+        src = D_006FF640;
+        for (j = 0; j < 16; j++, src++, c += 4) {
+            if (j == 1 && i != 0) {
+                if (i == 1) {
+                    c[3] = 7;
+                    c[0] = 0;
+                    c[1] = 0x15;
+                    c[2] = 0;
+                } else {
+                    c[3] = 7;
+                    c[0] = 0x15;
+                    c[1] = 0;
+                    c[2] = 0;
+                }
+            } else {
+                c[3] = (*src & 0xFF000000) >> 24;
+                c[2] = (*src & 0xFF0000) >> 16;
+                c[1] = (*src & 0xFF00) >> 8;
+                c[0] = *src;
+            }
+        }
+    }
+    p += st->nclut * 64;
+    size = (st->unk44 * 0x90 + (st->nclut * 0x90 + 0x11F)) & ~0x3F;
+    st->tbp = tbp;
+    st->tbp2 = tbp + 0x600;
+    for (k = 0; k < 2; k++) {
+        q = p;
+        st->pkt[k] = p;
+        p += size;
+        ((u32 *)q)[0] = 0x10000003;
+        ((u32 *)q)[1] = 0;
+        ((u32 *)q)[2] = 0;
+        ((u32 *)q)[3] = 0x51000003;
+        ((u64 *)q)[2] = 0x1000000000000002;
+        ((u64 *)q)[3] = 0xE;
+        ((u64 *)q)[4] = 0x0000008000000068;
+        ((u64 *)q)[5] = 0x42;
+        ((u64 *)q)[6] = 5;
+        ((u64 *)q)[7] = 8;
+        st->pktEnd[k] = func_006A95D0(st, func_006A9550(st, q + 0x40));
+    }
+    st->unk30 = 0;
+    st->unk34 = st->pktEnd[0];
+    st->used = p - m->file;
+    st->unk58 = 0;
+    st->unk5C = 0;
+    st->unk60 = -2;
+    st->unk64 = 0;
+    st->rgba = 0x80808080;
+}
+#endif
+
+/* The floor of room at height y: the first whose parts include the room, among those of its
+   group y is below the next one of; -1 if none. */
+s32 func_006A8860(u8 room, s16 y);
+#ifdef NON_MATCHING   /* the next floor is recomputed from its index in the original */
+s32 func_006A8860(u8 room, s16 y) {
+    u8 *buf = D_00306590.mapBuf;
+    MapState *st = &D_00720AA0;
+    u32 n = D_00720AA0.nfloors;
+    MapFloor *f;
+    u8 *p;
+    u32 i;
+    s32 k;
+
+    for (i = 0; i < n; i++) {
+        f = &st->floors[i];
+        if (i == n - 1 || st->floors[i + 1].group != f->group || y < st->floors[i + 1].height) {
+            p = f->parts + buf;
+            for (k = 0; k < f->nparts; p += 6, k++) {
+                if (st->rooms[p[0]].id == room) {
+                    return i;
+                }
+            }
+        }
+    }
+    return -1;
+}
+#endif
+
+/* The floors' levels, at most 16. */
+void func_006A8970(u8 *out) {
+    u32 i;
+    MapFloor *f = D_00720AA0.floors;
+    MapState *st = &D_00720AA0;
+
+    for (i = 0; i < st->nfloors; i++, f++) {
+        *out++ = f->level;
+        if (i == 15) {
+            break;
+        }
+    }
+}
+
+/* Floor n's scale. */
+f32 func_006A89C0(s32 n) {
+    s32 i;
+    MapFloor *f = D_00720AA0.floors;
+
+    for (i = 0; i < n; i++, f++) {
+    }
+    return f->scale;
+}
 
 /* Opens the map: loads its file (once per room), reads its header, and sets up the floors
    with the one we are on shown. */
@@ -175,7 +446,7 @@ s32 func_006A6710(MapView *m) {
         return 0;
     }
     buf = D_00306590.mapBuf;
-    memset(D_00720AA0, 0, 0xD4);
+    memset(&D_00720AA0, 0, 0xD4);
     if (D_0048BF60.unkAD == 0) {
         if (func_006A6620(buf) == 0) {
             return 0;
@@ -193,7 +464,7 @@ s32 func_006A6710(MapView *m) {
     m->unk42 = hdr[6];
     m->unk44 = m->file + hdr[7];
     func_006A69F0(0, q, FIELD(&D_00306590, u16, 0x56), m);
-    r = D_00720B18[0];
+    r = D_00720AA0.floors;
     m->nused = 0;
     for (i = 0; i < m->nfloors; r++, i++) {
         if (func_00540A10(r->level) == 1) {
@@ -233,7 +504,7 @@ s32 func_006A6710(MapView *m) {
     m->scroll[3] = 0;
     func_006A8970(m->unk48);
     m->unk20 = func_006A89C0(m->floor);
-    m->unk37 = D_00720B18[0][m->floor].level;
+    m->unk37 = D_00720AA0.floors[m->floor].level;
     return func_006A5A30();
 }
 #endif

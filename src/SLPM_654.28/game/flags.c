@@ -83,3 +83,10 @@ void func_00540700(s32 row, s32 bit, s32 col) {
     func_00540620(row, bit, col);
     func_0064C0A0(row, bit, 0, col);
 }
+
+extern u16 D_0048BDE0[];        /* the map levels shown, a bit each */
+
+/* Whether the map shows level n. */
+s32 func_00540A10(s32 n) {
+    return (D_0048BDE0[0] & (1 << (n & 0xF))) != 0;
+}
