@@ -29,6 +29,7 @@ void func_00190BF0(Mat44 *m);
 f32 func_00191950(u32 a);
 void func_001903E0(f32 rx, f32 ry, f32 rz, Mat44 *m);
 
+void func_00340210(s32 rx, s32 ry, s32 rz, Mat44 *m);
 #ifdef NON_MATCHING   /* a float move is scheduled one slot earlier */
 /* Rotates m by three 16-bit angles (x, then y, then z). */
 void func_00340210(s32 rx, s32 ry, s32 rz, Mat44 *m) {
@@ -954,3 +955,61 @@ f32 func_00341860(f32 x) {
     }
     return func_00191BF0(x);
 }
+
+#include "drawcb.h"
+extern Slot1468 D_00389750;     /* the shadow model */
+extern s16 D_0038A774[][16];    /* (0x20 bytes each) [0]: the model part */
+extern f32 D_00239D14;          /* the shadow's least size */
+void func_006BE3B0(DrawObjFull *o);
+f32 func_005E5B40(const f32 *p, u8 *kind, s32 want);
+void func_0018F9B0(Mat44 *m, f32 sx, f32 sy, f32 sz);
+s16 func_003426E0(s32 n);
+
+/* Draws a character's blob shadow (a draw callback): the shadow model's part scaled to the
+   shadow's size and length, turned its way, on the floor under its shadow point. */
+void func_00343340(DrawCb *cb);
+#ifdef NON_MATCHING   /* the original keeps the stores of an unused copy of the point; scheduling */
+void func_00343340(DrawCb *cb) {
+    DrawObjFull *o = cb->arg;
+    Mat44 m;
+    f32 q[4];
+    f32 p[3];
+    u8 kind;
+    s16 size;
+    s16 id;
+    s32 k;
+    ModelPart *part;
+
+    func_006BE3B0(o);
+    p[0] = o->unk19C;
+    p[2] = o->unk1A0;
+    p[1] = 50.0f + o->unk38[1];
+    p[1] = 3.0f + func_005E5B40(p, &kind, 0xFF);
+    func_0018F7C0(&m);
+    size = ((s16 *)o->unk1A8)[1];
+    func_0018F9B0(&m, 2.0f * size / 100.0f + D_00239D14, 1.0f,
+                  ((f32)(u32)o->unk1A4 + 2.0f * size) / 100.0f + D_00239D14);
+    func_00340210(0, o->unk1A6, 0, &m);
+    q[0] = p[0];
+    q[1] = p[1];
+    q[2] = p[2];
+    func_00344FF0();
+    id = D_0038A774[func_003426E0(5)][0];
+    func_001AE9C0(0x1A, &m);
+    part = &((ModelPart *)D_00389750.buf)[id];
+    if (part->group == -1 || part->group == 0) {
+        return;
+    }
+    for (k = 0; k < part->nmats; k++) {
+        func_001AE9C0((u8)(k + 0x3A), D_004BEEF0[D_00389750.ids[part->mats[k]]]);
+    }
+    if (part->lit) {
+        func_00344960((RoomPart *)part, NULL);
+    } else {
+        func_00344A40();
+    }
+    func_001AE9C0(0x6C, (void *)0);
+    func_0018BC50(part->group, 0);
+    func_001AE9C0(0x6C, (void *)1);
+}
+#endif

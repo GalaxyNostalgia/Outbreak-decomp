@@ -70,13 +70,7 @@ void func_001B13D0(void) {
 
 /* Depth-sorted draw callbacks: 0xA0 buckets threaded into one list (D_002FAAE0); an entry is
    linked in after its bucket (func_001A5130), so walking the list visits them far to near. */
-typedef struct DrawCb {
-    u32 next;
-    u32 depth;          /* 0x04: its bucket (0-127, by distance from the camera) */
-    f32 pos[4];         /* 0x08 */
-    void *arg;          /* 0x18 */
-    void (*fn)(struct DrawCb *cb); /* 0x1C */
-} DrawCb;
+#include "drawcb.h"
 
 u32 func_001A5150(u32 *list);  /* util.c */
 

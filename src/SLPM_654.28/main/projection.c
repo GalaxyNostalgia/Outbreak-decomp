@@ -211,3 +211,14 @@ void func_00190F00(Mat44 *dst, Mat44 *src) {
     dst->m[2][1] = src->m[2][1];
     dst->m[2][2] = src->m[2][2];
 }
+
+void func_0018F880(f32 x, f32 y, f32 z, f32 *m);   /* VU0: a scale into rows 0-2 */
+void func_00190DB0(f32 *a, const f32 *b);          /* VU0 */
+
+/* Scales m by (x, y, z). */
+void func_0018F9B0(Mat44 *m, f32 x, f32 y, f32 z) {
+    Mat44 s;
+
+    func_0018F880(x, y, z, (f32 *)&s);
+    func_00190DB0((f32 *)m, (f32 *)&s);
+}

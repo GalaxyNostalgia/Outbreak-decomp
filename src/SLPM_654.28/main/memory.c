@@ -1673,6 +1673,36 @@ u32 func_0019B290(FlPacketGroup *g, u32 code, u32 buf) {
 }
 #endif
 
+/* The smallest header (the shadow programs): the light scale, the matrices, no Mat44 copy. */
+u32 func_001997A0(FlPacketGroup *g, u32 code, u32 buf);
+#ifdef NON_MATCHING   /* the original keeps p in v0 across its asm VU0 leaves */
+u32 func_001997A0(FlPacketGroup *g, u32 code, u32 buf) {
+    f32 m[16];
+    u32 *p = (u32 *)func_0018D850(0xF0, 0x10);
+    f32 *f = (f32 *)p;
+
+    p[0] = 0x2000000E;
+    p[1] = buf;
+    ((u64 *)p)[1] = 0;
+    p[4] = 0x13000000;
+    p[5] = 0;
+    p[6] = 0x01000404;
+    p[7] = 0x6C0C0000;
+    f[8] = D_002772B0[0] * ((VuProg *)g->unk4C)->unk24;
+    f[9] = D_002772B0[1] * ((VuProg *)g->unk4C)->unk24;
+    f[10] = D_002772B0[2] * ((VuProg *)g->unk4C)->unk24;
+    f[11] = D_002772B0[3];
+    func_00198B60(f + 12, m, PS2_SPR(0x70003700), PS2_SPR(0x70003F40), (f32 *)&D_002771A0);
+    func_00198AE0(f + 28, m, (f32 *)&D_00277160);
+    func_00199430(f + 44);
+    p[56] = code | 0x15000000;
+    p[57] = 0;
+    p[58] = 0;
+    p[59] = 0;
+    return (u32)p;
+}
+#endif
+
 /* The same for the unlit programs: the matrices only. */
 u32 func_0019BDE0(FlPacketGroup *g, u32 code, u32 buf);
 #ifdef NON_MATCHING   /* the original keeps p in v0 across its VU0 helpers (asm leaves) */
