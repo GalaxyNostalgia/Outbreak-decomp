@@ -1224,7 +1224,50 @@ extern s32 D_002821A4[];        /* drawing is off */
 extern u32 D_002821A0[];        /* the VU1 program's ... (in doublewords) */
 extern s32 D_0028219C[];        /* the program last sent */
 void func_001899D0(FlPacketGroup *g, void *mesh);
-void func_0018B590(s32 count, s32 matKind, u32 buf, s32 *tex);
+#define TEX_REGS(p) (u64 *)((p) + 0x40), (u64 *)((p) + 0x50), (u64 *)((p) + 0x60), (u64 *)((p) + 0x70), \
+                    (u64 *)((p) + 0x80), (u64 *)((p) + 0x90)
+
+/* Each matrix block's texture registers (count blocks from buf, one texture each from tex). */
+void func_0018B590(s32 count, u32 matKind, u32 buf, s32 *tex) {
+    s32 size = D_002122C0[matKind];
+    s32 i;
+
+    switch (matKind) {
+    case 0:
+        for (i = 0; i < count; i++) {
+            func_0018B750(*tex, TEX_REGS(buf));
+            buf += size;
+            tex++;
+        }
+        return;
+    case 1:
+        break;
+    case 2:
+        for (i = 0; i < count; i++) {
+            func_0018B750(*tex, TEX_REGS(buf));
+            buf += size;
+            tex++;
+        }
+        break;
+    case 3:
+        for (i = 0; i < count; i++) {
+            func_0018B750(*tex, TEX_REGS(buf));
+            buf += size;
+            tex++;
+        }
+        break;
+    case 4:
+        break;
+    case 5:
+        for (i = 0; i < count; i++) {
+            func_0018B840(*tex, TEX_REGS(buf), D_0023BA54, (u64 *)(buf + 0xA0), (u64 *)(buf + 0xB0),
+                          (u64 *)(buf + 0xC0), (u64 *)(buf + 0xD0), (u64 *)(buf + 0xE0));
+            buf += size;
+            tex++;
+        }
+        break;
+    }
+}
 s32 func_0019CD70(s32 n, s32 *handles);
 u32 func_0018D850(u32 size, s32 align);
 void func_00189618(u128 *src, u128 *dst, s32 n);
@@ -1335,6 +1378,10 @@ void func_00198B60(f32 *out, f32 *ab, const f32 *a, const f32 *b, const f32 *c) 
 
 void func_00190E00(f32 *out, const f32 *m);
 extern f32 D_00276648;
+extern f32 D_0027664C;
+extern f32 D_00276650;
+extern f32 D_002766CC[4], D_002766EC[4], D_00276734[4], D_00276754[4];
+f32 sqrtf(f32 x);
 
 #ifdef NON_MATCHING   /* VU0 in the original */
 /* The point v in m's inverse, as three rows (x, 0, 0, 1), (y, ...), (z, ...); *f its scale. */
@@ -1489,6 +1536,139 @@ u32 func_0019B760(FlPacketGroup *g, u32 code, u32 buf) {
     p[101] = 0;
     p[102] = 0;
     p[103] = 0;
+    return (u32)p;
+}
+#endif
+
+#ifdef NON_MATCHING   /* VU0 in the original */
+/* m = a * b; n = m's 3x3 rows normalized (w 0). */
+void func_00198C40(f32 *n, f32 *m, const f32 *a, const f32 *b) {
+    s32 i;
+    f32 l;
+
+    func_00198AE0(m, a, b);
+    for (i = 0; i < 3; i++) {
+        l = 1.0f / sqrtf(m[i * 4] * m[i * 4] + m[i * 4 + 1] * m[i * 4 + 1] + m[i * 4 + 2] * m[i * 4 + 2]);
+        n[i * 4 + 0] = m[i * 4 + 0] * l;
+        n[i * 4 + 1] = m[i * 4 + 1] * l;
+        n[i * 4 + 2] = m[i * 4 + 2] * l;
+        n[i * 4 + 3] = 0.0f;
+    }
+}
+
+/* Three lights into m's frame, as columns: the first a direction (normalized, through the 3x3
+   part), the other two through all of m; f the lighting constants. */
+void func_00198FD0(f32 *out, f32 *f, const f32 *m, const f32 *l) {
+    f32 d[3];
+    f32 a[4];
+    f32 b[4];
+    f32 k;
+    s32 i;
+
+    for (i = 0; i < 3; i++) {
+        d[i] = l[0] * m[i] + l[1] * m[4 + i] + l[2] * m[8 + i];
+    }
+    k = 1.0f / sqrtf(d[0] * d[0] + d[1] * d[1] + d[2] * d[2]);
+    for (i = 0; i < 4; i++) {
+        a[i] = l[4] * m[i] + l[5] * m[4 + i] + l[6] * m[8 + i] + l[7] * m[12 + i];
+        b[i] = l[8] * m[i] + l[9] * m[4 + i] + l[10] * m[8 + i] + l[11] * m[12 + i];
+    }
+    for (i = 0; i < 3; i++) {
+        out[i * 4 + 3] = m[i * 4 + 3];
+        out[i * 4 + 0] = d[i] * k;
+        out[i * 4 + 1] = a[i];
+        out[i * 4 + 2] = b[i];
+    }
+    f[0] = 0.0f;
+    f[1] = D_0027664C;
+    f[2] = D_00276650;
+}
+
+/* The three lights' colours: the ambient parts (w 0), then the light parts times s, at most s
+   (alpha 128). */
+void func_001991F0(f32 *out, f32 s) {
+    const f32 *amb[3];
+    const f32 *col[3];
+    s32 i;
+    s32 j;
+
+    amb[0] = D_00276664;
+    col[0] = D_00276684;
+    amb[1] = D_002766CC;
+    col[1] = D_002766EC;
+    amb[2] = D_00276734;
+    col[2] = D_00276754;
+    for (i = 0; i < 3; i++) {
+        for (j = 0; j < 3; j++) {
+            out[i * 4 + j] = amb[i][j];
+            out[12 + i * 4 + j] = col[i][j] * s < s ? col[i][j] * s : s;
+        }
+        out[i * 4 + 3] = 0.0f;
+        out[12 + i * 4 + 3] = 128.0f;
+    }
+}
+#endif
+
+extern f32 D_00276694[3];       /* the three lights: the first's direction */
+extern f32 D_00276708[3];
+extern f32 D_00276770[3];
+
+/* The skinned lit programs' header: as func_0019B550's, with up to 32 bone matrices (and their
+   normal matrices) and three lights. */
+u32 func_0019B290(FlPacketGroup *g, u32 code, u32 buf);
+#ifdef NON_MATCHING   /* the original keeps registers across its asm VU0 helpers */
+u32 func_0019B290(FlPacketGroup *g, u32 code, u32 buf) {
+    f32 l[12];
+    u32 *p = (u32 *)func_0018D850(0xFB0, 0x10);
+    f32 *f = (f32 *)p;
+    s32 i;
+
+    p[0] = 0x200000FA;
+    p[1] = buf;
+    ((u64 *)p)[1] = 0;
+    p[4] = 0x13000000;
+    p[5] = 0;
+    p[6] = 0x01000404;
+    p[7] = 0x6CF80000;
+    f[8] = D_002772B0[0] * ((VuProg *)g->unk4C)->unk24;
+    f[9] = D_002772B0[1] * ((VuProg *)g->unk4C)->unk24;
+    f[10] = D_002772B0[2] * ((VuProg *)g->unk4C)->unk24;
+    f[11] = D_002772B0[3];
+    f[12] = D_002772A0[0];
+    f[13] = D_002772A0[1];
+    f[14] = D_002772A0[2];
+    f[15] = D_002772A0[3];
+    f[16] = D_0023BA84;
+    f[17] = 1.0f / (D_0023BA84 - D_0023BA88);
+    p[18] = 0;
+    p[19] = 0;
+    *(Mat44 *)(f + 20) = D_002771A0;
+    *(Mat44 *)(f + 36) = D_00277160;
+    for (i = 0; i < 32; i++) {
+        if (g->unk54 & (1 << i)) {
+            func_00198C40(f + 616 + i * 12, f + 104 + i * 16, (f32 *)PS2_SPR(0x70003700) + i * 16,
+                          PS2_SPR(0x70003F40));
+        }
+    }
+    func_00199430(f + 52);
+    l[0] = -D_00276694[0];
+    l[1] = -D_00276694[1];
+    l[2] = -D_00276694[2];
+    l[3] = 1.0f;
+    l[4] = D_00276708[0];
+    l[5] = D_00276708[1];
+    l[6] = D_00276708[2];
+    l[7] = 1.0f;
+    l[8] = D_00276770[0];
+    l[9] = D_00276770[1];
+    l[10] = D_00276770[2];
+    l[11] = 1.0f;
+    func_00198FD0(f + 64, f + 76, PS2_SPR(0x70003F40), l);
+    func_001991F0(f + 80, ((VuProg *)g->unk4C)->unk24);
+    p[1000] = code | 0x15000000;
+    p[1001] = 0;
+    p[1002] = 0;
+    p[1003] = 0;
     return (u32)p;
 }
 #endif
