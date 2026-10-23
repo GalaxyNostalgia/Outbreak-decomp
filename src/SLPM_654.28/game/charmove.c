@@ -1363,10 +1363,15 @@ typedef struct {
                            10, 11, 13, 14 turning in the other motions */
 } StepSet;
 
-/* Per weapon (0x44 bytes): what it allows. */
+/* Per weapon (0x44 bytes): what it allows, and how it sits in the hand. */
 typedef struct {
     u32 flags;          /* 0x00: 1 aiming, 4 its run */
-    u8 unk4[0x40];
+    u8 unk4;
+    u8 hold;            /* 0x05: how it is held (0xC: two-handed, its own way in motion 0x80) */
+    u8 unk6[0xA];
+    f32 ofs[2][3];      /* 0x10: in the hand (own, shared motions) */
+    u16 rot[2][4];      /* 0x28: its turn in the hand (0x10000 a turn) */
+    u8 unk38[0xC];
 } WeaponInfo;
 
 extern StepSet D_006DD930[];
@@ -2356,6 +2361,109 @@ s32 func_00632DC0(DrawObjFull *o) {
         }
         return 0;
     }
+}
+#endif
+
+u16 func_005C1210(u8 item);
+void func_0018F7C0(f32 *m);
+void func_00191750(f32 *v);
+void func_00190C50(f32 *out, const f32 *a, const f32 *b);
+void func_0018FAB0(f32 *out, const f32 *m);
+extern f32 D_00239D30;          /* 2 pi */
+extern f32 D_00239D84;          /* (two-handed in motion 0x80) its turn */
+extern f32 D_00239D88;
+extern f32 D_00239D8C;
+extern f32 D_00239D90;          /* and place */
+extern f32 D_00239D94;
+extern f32 D_00239D98;
+
+/* Puts the item in o's hand on bone bone (15: the left hand, mirrored): its matrix from the
+   bone's, turned and moved as the weapon table says for the character. */
+void func_006313A0(DrawObjFull *o, u8 item, s32 bone);
+#ifdef NON_MATCHING   /* close: the item slot's address operand order; the three angles' evaluation order */
+void func_006313A0(DrawObjFull *o, u8 item, s32 bone) {
+    f32 m[16];
+    f32 p[3];
+    ItemObj *it;
+    u8 **b;
+    WeaponInfo *e;
+    u16 *r;
+    f32 *py;
+    f32 *pz;
+
+    if (item == 0) {
+        return;
+    }
+    it = D_003967D0[item].obj;
+    if (it == NULL) {
+        return;
+    }
+    if (o->model == NULL) {
+        return;
+    }
+    b = (u8 **)((u8 *)o->model + bone * 4 + 0x820);
+    if (*b == NULL) {
+        return;
+    }
+    func_0018F7C0(m);
+    *(Mat44 *)it->mat = *(Mat44 *)*b;
+    func_00191750(&it->mat[0]);
+    func_00191750(&it->mat[4]);
+    func_00191750(&it->mat[8]);
+    e = &D_006E5940[func_005C1210(item)];
+    if (e == NULL) {
+        return;
+    }
+    py = &p[1];
+    pz = &p[2];
+    r = e->rot[(u8)o->unkB99];
+    *(Vec3 *)p = *(Vec3 *)e->ofs[(u8)o->unkB99];
+    p[0] *= o->unkB4[0];
+    *py *= o->unkB4[1];
+    *pz *= o->unkB4[2];
+    if (bone == 15) {
+        p[0] *= -1.0f;
+    }
+    if (o->unk54F == 0x80) {
+        switch (o->act[1]) {
+        case 0:
+        case 7:
+            if (D_006E5940[(u16)o->unkCA8].hold == 0xC) {
+                func_00190C50(it->mat, it->parts[5].m[0], it->mat);
+                func_0018FAB0(it->pos, it->mat);
+                return;
+            }
+            break;
+        default:
+            if (D_006E5940[(u16)o->unkCA8].hold == 0xC) {
+                func_0018FCA0(D_00239D84, D_00239D88, D_00239D8C, m);
+                m[12] = D_00239D90;
+                m[13] = D_00239D94;
+                m[14] = D_00239D98;
+                if (bone == 15) {
+                    m[0] *= -1.0f;
+                    m[4] *= -1.0f;
+                    m[8] *= -1.0f;
+                }
+                func_00190C50(it->mat, m, it->mat);
+                func_0018FAB0(it->pos, it->mat);
+                return;
+            }
+            break;
+        }
+    }
+    func_0018FCA0(D_00239D30 * (s32)r[0] / 65536.0f, D_00239D30 * (s32)r[1] / 65536.0f,
+                  D_00239D30 * (s32)r[2] / 65536.0f, m);
+    m[12] = p[0];
+    m[13] = *py;
+    m[14] = *pz;
+    if (bone == 15) {
+        m[0] *= -1.0f;
+        m[4] *= -1.0f;
+        m[8] *= -1.0f;
+    }
+    func_00190C50(it->mat, m, it->mat);
+    func_0018FAB0(it->pos, it->mat);
 }
 #endif
 

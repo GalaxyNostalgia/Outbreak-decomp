@@ -19,7 +19,7 @@ typedef struct {
     f32 up[3];          /* 0xA0 */
     f32 tgt[3];         /* 0xAC: where its end reaches */
     u8 unkB8[4];
-    s32 unkBC;          /* 0xBC */
+    f32 unkBC;          /* 0xBC: the end's twist */
 } IkChain;              /* 0xC0 */
 
 /* The game's characters and things (players 0x10E0 bytes, enemies 0x1170, ...). Their layouts share

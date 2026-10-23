@@ -18,9 +18,10 @@ void func_00190C50(f32 *out, const f32 *a, const f32 *b);
 void func_00191030(f32 *m, const f32 *a, const f32 *b);
 void func_00190E00(f32 *out, const f32 *m);
 f32 func_00341860(f32 x);
-void func_005A5140(void);
-void func_005A5370(void);
-void func_005A5380(void);
+void func_005A5140(u8 *bone, f32 *parent, f32 *scale, f32 px, f32 py, f32 pz);
+void func_005A5250(void *root, f32 *m);
+void func_005A5370(IkChain *ik, u8 *bone, f32 *parent);
+void func_005A5380(IkChain *ik, u8 *bone, f32 *parent);
 
 /* The world matrix of a bone: scale, then the bone's position moved by the scale's translation. */
 #define BONE_MATRIX(out, b)                                                         \
@@ -97,7 +98,7 @@ void func_005A5740(IkChain *ik, s32 mode, u8 *b0, u8 *b1, u8 *b2, f32 *scale, f3
     ik->b1 = b1;
     ik->len0 = len0;
     ik->len1 = len1;
-    ik->unkBC = 0;
+    ik->unkBC = 0.0f;
     *(void **)(b0 + 0x178) = func_005A5380;
     *(void **)(b0 + 0x17C) = ik;
     *(void **)(b1 + 0x178) = func_005A5370;
@@ -133,7 +134,6 @@ void func_005A5FC0(DrawObjFull *obj) {
 void func_00346B30(DrawObjFull *o);
 void func_0018FAB0(f32 *out, const f32 *m);
 f32 func_005E5B40(const f32 *p, u8 *kind, s32 want);
-void func_005A5250(void *anim, f32 *m);
 extern f32 D_006D7560[];        /* per character: its feet's height above the floor */
 extern f32 D_006D7580[];        /* (in danger) */
 extern f32 D_0023BE78;          /* the feet's height this frame */
@@ -155,10 +155,10 @@ extern f32 D_006E6CB0[][3];         /* per character: its size */
 void func_005A5BA0(DrawObjFull *o);
 #ifdef NON_MATCHING   /* close: the original keeps two branches for the same floor kind (0xFF) that ours folds */
 void func_005A5BA0(DrawObjFull *o) {
-    f32 m50[16];
-    f32 m90[16];
-    f32 mD0[16];
     f32 m110[16];
+    f32 mD0[16];
+    f32 m90[16];
+    f32 m50[16];
     f32 p[3];
     u8 k;
     u8 *bones = (u8 *)o->model + 0x820;
@@ -255,5 +255,186 @@ void func_005A5BA0(DrawObjFull *o) {
     if (r) {
         func_005A5250(*(void **)bones, (f32 *)((u8 *)o + 0x50));
     }
+}
+#endif
+
+/* Updates bone and its children and siblings from parent: each with an IK chain on it runs its
+   callback (0x178; func_005A5140 also gets the scale and may change it for the children). */
+void func_005A5270(u8 *bone, f32 *parent, f32 sx, f32 sy, f32 sz) {
+    IkChain *ik;
+    void (*cb)();
+    f32 *pz;
+    f32 *py;
+    f32 s[3];
+
+    py = &s[1];
+    pz = &s[2];
+    s[0] = sx;
+    *py = sy;
+    *pz = sz;
+    ik = *(IkChain **)(bone + 0x17C);
+    if (ik != NULL && ik->on) {
+        cb = *(void (**)())(bone + 0x178);
+        if (cb == (void (*)())func_005A5140) {
+            func_005A5140(bone, parent, s, sx, sy, sz);
+        } else {
+            cb(ik, bone, parent);
+        }
+    }
+    if (*(u8 **)(bone + 0xD0) != NULL) {
+        func_005A5270(*(u8 **)(bone + 0xD0), (f32 *)bone, s[0], *py, *pz);
+    }
+    if (*(u8 **)(bone + 0xCC) != NULL) {
+        func_005A5270(*(u8 **)(bone + 0xCC), parent, sx, sy, sz);
+    }
+}
+
+/* Updates the skeleton from its root bone under the world matrix m. */
+void func_005A5250(void *root, f32 *m) {
+    func_005A5270(root, m, 1.0f, 1.0f, 1.0f);
+}
+
+void func_00190D50(f32 *out, const f32 *a, const f32 *b);
+void func_00190CD0(f32 *a, const f32 *b);
+extern Vec3 D_006D7550;         /* (1, 1, 1) */
+
+/* A bone's world matrix from its parent's (whose scale px, py, pz it takes back out): its own
+   scale (0x104, also into scale for its children), turn (0x40) and place (0x70). */
+#ifdef NON_MATCHING   /* stack slot order of the four matrices; trailing nop */
+void func_005A5140(u8 *bone, f32 *parent, f32 *scale, f32 px, f32 py, f32 pz) {
+    f32 m50[16];
+    f32 m90[16];
+    f32 mD0[16];
+    f32 m110[16];
+
+    func_0018F7C0(m110);
+    scale[0] = *(f32 *)(bone + 0x104);
+    scale[1] = *(f32 *)(bone + 0x108);
+    scale[2] = *(f32 *)(bone + 0x10C);
+    func_0018F830(scale[0], scale[1], scale[2], m110);
+    func_0018F7C0(mD0);
+    mD0[0] = 1.0f / px;
+    mD0[5] = 1.0f / py;
+    mD0[10] = 1.0f / pz;
+    mD0[12] = *(f32 *)(bone + 0x70);
+    mD0[13] = *(f32 *)(bone + 0x74);
+    mD0[14] = *(f32 *)(bone + 0x78);
+    func_0018F7C0(m90);
+    func_00190D50(m90, m110, (f32 *)(bone + 0x40));
+    func_00190C50(m50, m90, mD0);
+    func_00190C50((f32 *)bone, m50, parent);
+}
+#endif
+
+/* The chain's middle bone: posed with its first (func_005A5380). */
+void func_005A5370(IkChain *ik, u8 *bone, f32 *parent) {
+}
+
+/* The chain's first bone: aims the two bones at the target (0xAC), bending at the middle by
+   the cosine rule, or straight when it is out of reach; the up vector by mode (0 none, 1 in
+   the parent's frame, 2 a point). */
+#ifdef NON_MATCHING   /* register allocation and scheduling differ; logic follows the asm */
+void func_005A5380(IkChain *ik, u8 *bone, f32 *parent) {
+    f32 m70[16];
+    f32 mB0[16];
+    f32 mF0[16];
+    f32 m130[16];
+    f32 m170[16];
+    f32 m1B0[16];
+    f32 m1F0[16];
+    f32 m230[16];
+    Vec3 sc;
+    f32 d[3];
+    f32 u[3];
+    f32 *dy;
+    f32 *dz;
+    f32 *r1;
+    f32 *r4;
+    f32 *r5;
+    f32 len0;
+    f32 len1;
+    f32 l2;
+    f32 a2;
+    f32 b2;
+    f32 c;
+    f32 sn;
+
+    func_0018F7C0(m70);
+    func_0018FAD0(ik->unkBC, m70);
+    sc = D_006D7550;
+    func_005A5140(bone, parent, &sc.x, *(f32 *)(*(u8 **)(bone + 0xC8) + 0x104),
+                  *(f32 *)(*(u8 **)(bone + 0xC8) + 0x108), *(f32 *)(*(u8 **)(bone + 0xC8) + 0x10C));
+    func_00190ED0(m1F0, (f32 *)bone);
+    dy = &d[1];
+    dz = &d[2];
+    d[0] = ik->tgt[0] - m1F0[12];
+    *dy = ik->tgt[1] - m1F0[13];
+    *dz = ik->tgt[2] - m1F0[14];
+    switch (ik->mode) {
+    case 0:
+        break;
+    case 1:
+        func_001913A0(u, ik->up, parent);
+        break;
+    case 2:
+        u[0] = ik->up[0] - m1F0[12];
+        u[1] = ik->up[1] - m1F0[13];
+        u[2] = ik->up[2] - m1F0[14];
+        break;
+    }
+    func_00190F50(m1F0, d, u);
+    func_0018F7C0(m1B0);
+    func_0018FAD0(ik->angle, m1B0);
+    func_00190CD0(m1B0, m1F0);
+    func_00190ED0(m1F0, m1B0);
+    len0 = ik->len0;
+    len1 = ik->len1;
+    l2 = d[0] * d[0] + *dy * *dy + *dz * *dz;
+    a2 = len0 * len0;
+    b2 = len1 * len1;
+    c = func_00341860(l2);
+    if (!(c < len0 + len1)) {
+        func_00190C50(m1B0, m70, m1F0);
+        func_00190ED0(m1F0, m1B0);
+        func_00190C50((f32 *)ik->b0, ik->m0, m1F0);
+        func_00190C50((f32 *)ik->b1, ik->m1, m1F0);
+        *(f32 *)(ik->b1 + 0x30) += m1F0[0] * len0;
+        *(f32 *)(ik->b1 + 0x34) += m1F0[1] * len0;
+        *(f32 *)(ik->b1 + 0x38) += m1F0[2] * len0;
+        return;
+    }
+    func_0018F7C0(m230);
+    c = (a2 + l2 - b2) / (2.0f * c * len0);
+    if (c == 1.0f) {
+        sn = 0.0f;
+    } else {
+        sn = func_00341860(1.0f - c * c);
+    }
+    m230[0] = c;
+    r1 = &m230[1];
+    *r1 = sn;
+    r4 = &m230[4];
+    *r4 = -sn;
+    r5 = &m230[5];
+    *r5 = c;
+    func_00190C50(m170, m230, m1F0);
+    func_00190C50(mF0, m70, m170);
+    func_00190C50((f32 *)ik->b0, ik->m0, mF0);
+    c = (b2 + a2 - l2) / (2.0f * len0 * len1);
+    if (c == 1.0f) {
+        sn = 0.0f;
+    } else {
+        sn = func_00341860(1.0f - c * c);
+    }
+    m230[0] = -c;
+    *r1 = -sn;
+    *r4 = sn;
+    *r5 = -c;
+    m230[12] = ik->len0;
+    m230[13] = 0.0f;
+    m230[14] = 0.0f;
+    func_00190C50(m130, m230, m170);
+    func_00190C50(mB0, m70, m130);
+    func_00190C50((f32 *)ik->b1, ik->m1, mB0);
 }
 #endif
