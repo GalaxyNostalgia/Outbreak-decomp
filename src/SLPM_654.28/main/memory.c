@@ -1,5 +1,6 @@
 #include "system.h"
 #include "model.h"
+#include "ps2mem.h"
 
 #define ALIGN_UP(x, a) (~((a) - 1) & ((x) + (a) - 1))
 
@@ -206,12 +207,16 @@ s32 func_0018BF70(u32 n);
 void func_001983E0(FlPacketGroup *g);
 /* A VU1 program's description (D_00212760... picked by func_001983E0). */
 typedef struct {
-    u8 unk0[0x14];
+    u32 unk0;           /* 0x00: sent (as a VIF code) when the program changes */
+    u32 unk4;           /* 0x04: the program's end */
+    u32 unk8;           /* 0x08: its start */
+    u32 unkC;           /* 0x0C */
+    u32 (*draw)(FlPacketGroup *g, u32 size, u32 buf); /* 0x10: adds the draw packets after buf */
     s32 matKind;        /* 0x14: index into D_002122C0 (bytes per matrix) */
     s32 vtxKind;        /* 0x18: index into D_002122E0 ({bytes per vertex, what it has}) */
     s32 primKind;       /* 0x1C: index into D_00212340 ({GS PRIM, GIF REGS, NREG}) */
     u32 batch;          /* 0x20: the most bytes of vertices a batch can take */
-    u8 unk24[4];
+    f32 unk24;          /* 0x24: the light scale */
     s32 *mtx;           /* 0x28: {VU address of the matrices, ..., bytes per matrix} */
 } VuProg;
 
@@ -1212,6 +1217,314 @@ s32 func_00189790(u32 *mesh, u32 layout) {
         return 0;
     }
     return i + 1;
+}
+#endif
+
+extern s32 D_002821A4[];        /* drawing is off */
+extern u32 D_002821A0[];        /* the VU1 program's ... (in doublewords) */
+extern s32 D_0028219C[];        /* the program last sent */
+void func_001899D0(FlPacketGroup *g, void *mesh);
+void func_0018B590(s32 count, s32 matKind, u32 buf, s32 *tex);
+s32 func_0019CD70(s32 n, s32 *handles);
+u32 func_0018D850(u32 size, s32 align);
+void func_00189618(u128 *src, u128 *dst, s32 n);
+s32 func_0018CA60(s32 mode, u32 entry, u32 *tag, DmaQueue *q);
+
+/* Draws packet group n (1-based): its matrices (rebuilt when the drawing flags changed, copied
+   or rebuilt when the group keeps none), its textures, then its VU1 program's packets, queued
+   for DMA (the program itself first when it changed). */
+s32 func_0018BC50(u32 n, s32 unused);
+#ifdef NON_MATCHING   /* the end pointer and the draw result trade s0/s1; delay slots */
+s32 func_0018BC50(u32 n, s32 unused) {
+    u8 mesh[0x30];
+    FlPacketGroup *g = &D_0023BA2C[n - 1];
+    u32 buf;
+    u32 base = g->base;
+    u32 *q;
+    VuProg *vp;
+
+    if (D_002821A4[0] != 0) {
+        return 1;
+    }
+    if (!(g->layout & 4)) {
+        if (g->drawFlags != D_0023BA90) {
+            func_0018D150();
+            g->drawFlags = D_0023BA90;
+            if (g->mem != 0) {
+                func_0018D710(g->mem);
+            }
+            func_001899D0(g, mesh);
+            if (func_00189920(g, mesh) == 0) {
+                return 0;
+            }
+            func_0018D730();
+            buf = g->base + g->heads;
+        } else if (g->layout & 2) {
+            buf = base + g->heads;
+        } else {
+            buf = func_0018D850(g->unk28, 0x10);
+            func_0018AEA0(g, g->count, ((VuProg *)g->unk4C)->matKind, (u8 *)buf, g->unk60);
+            func_0018BA20(g, 0);
+        }
+        if (g->ntex != 0) {
+            func_0019CD70(g->ntex, g->texList);
+            func_0018B590(g->count, ((VuProg *)g->unk4C)->matKind, buf, g->tex);
+        }
+    } else if (g->layout & 2) {
+        buf = func_0018D850(g->unk28, 0x10);
+        func_00189618((u128 *)(base + g->heads), (u128 *)buf, (u32)g->unk28 >> 4);
+        if (g->ntex != 0) {
+            func_0019CD70(g->ntex, g->texList);
+            func_0018B590(g->count, ((VuProg *)g->unk4C)->matKind, buf, g->tex);
+        }
+    } else {
+        buf = func_0018D850(g->unk28, 0x10);
+        func_0018BA20(g, 0);
+        if (g->ntex != 0) {
+            func_0019CD70(g->ntex, g->texList);
+        }
+        func_0018AEA0(g, g->count, ((VuProg *)g->unk4C)->matKind, (u8 *)buf, g->unk60);
+    }
+    vp = (VuProg *)g->unk4C;
+    base = buf + D_002122C0[vp->matKind] * g->count;
+    D_002821A0[0] = (vp->unkC - vp->unk8) >> 3;
+    vp = (VuProg *)g->unk4C;
+    buf = vp->draw(g, (vp->unk4 - vp->unk8) >> 3, buf);
+    if (D_0028219C[0] != g->unk48) {
+        D_0028219C[0] = g->unk48;
+        q = (u32 *)func_0018D850(0x40, 0x10);
+        q[0] = 0x50000001;
+        q[1] = ((VuProg *)g->unk4C)->unk0;
+        ((u64 *)q)[1] = 0;
+        q[8] = 0xF0000001;
+        q[9] = 0;
+        ((u64 *)q)[5] = 0;
+        ((u128 *)q)[3] = U128_ZERO;
+        ((u128 *)q)[1] = U128_ZERO;
+        func_0018CA60(0, (u32)q & 0x0FFFFFFF, q + 8, &D_00281AF0);
+    }
+    func_0018CA60(0, (buf & 0x0FFFFFFF) | 0x50000000, (u32 *)base, &D_00281AF0);
+    return 1;
+}
+#endif
+
+#ifdef NON_MATCHING   /* VU0 in the original */
+/* out = a * b (4x4, rows). */
+void func_00198AE0(f32 *out, const f32 *a, const f32 *b) {
+    f32 t[16];
+    s32 i;
+    s32 j;
+
+    for (i = 0; i < 4; i++) {
+        for (j = 0; j < 4; j++) {
+            t[i * 4 + j] = a[i * 4 + 0] * b[0 * 4 + j] + a[i * 4 + 1] * b[1 * 4 + j] +
+                           a[i * 4 + 2] * b[2 * 4 + j] + a[i * 4 + 3] * b[3 * 4 + j];
+        }
+    }
+    for (i = 0; i < 16; i++) {
+        out[i] = t[i];
+    }
+}
+
+/* ab = a * b, out = ab * c. */
+void func_00198B60(f32 *out, f32 *ab, const f32 *a, const f32 *b, const f32 *c) {
+    func_00198AE0(ab, a, b);
+    func_00198AE0(out, ab, c);
+}
+#endif
+
+void func_00190E00(f32 *out, const f32 *m);
+extern f32 D_00276648;
+
+#ifdef NON_MATCHING   /* VU0 in the original */
+/* The point v in m's inverse, as three rows (x, 0, 0, 1), (y, ...), (z, ...); *f its scale. */
+void func_00198E00(f32 *out, f32 *f, const f32 *m, const f32 *v) {
+    f32 inv[16];
+    f32 w[4];
+    s32 i;
+
+    func_00190E00(inv, m);
+    for (i = 0; i < 4; i++) {
+        w[i] = v[0] * inv[i] + v[1] * inv[4 + i] + v[2] * inv[8 + i] + v[3] * inv[12 + i];
+    }
+    for (i = 0; i < 3; i++) {
+        out[i * 4 + 0] = w[i];
+        out[i * 4 + 1] = 0.0f;
+        out[i * 4 + 2] = 0.0f;
+        out[i * 4 + 3] = 1.0f;
+    }
+    *f = D_00276648;
+}
+#endif
+
+extern f32 D_00276664[4];       /* the ambient colour */
+extern f32 D_00276684[3];       /* the light colour */
+
+/* The ambient colour into a, the light's (times s, at most s; alpha 128) into b. */
+void func_00199380(f32 *a, f32 *b, f32 s) {
+    a[0] = D_00276664[0];
+    a[1] = D_00276664[1];
+    a[2] = D_00276664[2];
+    a[3] = D_00276664[3];
+    b[0] = D_00276684[0] * s;
+    b[1] = D_00276684[1] * s;
+    b[2] = D_00276684[2] * s;
+    b[3] = 128.0f;
+    if (!(b[0] <= s)) {
+        b[0] = s;
+    }
+    if (!(b[1] <= s)) {
+        b[1] = s;
+    }
+    if (!(b[2] <= s)) {
+        b[2] = s;
+    }
+}
+
+#ifdef NON_MATCHING   /* VU0 in the original */
+/* Rows 0, 1 and 3 of the scratchpad matrix at 0x3FC0. */
+void func_00199430(f32 *out) {
+    f32 *m = (f32 *)PS2_SPR(0x70003FC0);
+    s32 i;
+
+    for (i = 0; i < 4; i++) {
+        out[i] = m[i];
+        out[4 + i] = m[4 + i];
+        out[8 + i] = m[12 + i];
+    }
+}
+#endif
+
+extern f32 D_002772A0[4];
+extern f32 D_002772B0[4];
+extern f32 D_0023BA84;          /* the far plane */
+extern f32 D_0023BA88;          /* the near plane */
+extern Mat44 D_00277120;
+extern Mat44 D_00277160;
+extern Mat44 D_002771A0;
+extern f32 D_002766A0[3];       /* the light's direction */
+
+/* The draw packets' header for the lit VU1 programs: the matrices, the light and the fog, then
+   a call into buf and the program's start (MSCAL code). */
+u32 func_0019B550(FlPacketGroup *g, u32 code, u32 buf);
+#ifdef NON_MATCHING   /* the original keeps a1 across its VU0 helpers (asm leaves in the same file) */
+u32 func_0019B550(FlPacketGroup *g, u32 code, u32 buf) {
+    f32 m[16];
+    f32 v[4];
+    u32 *p = (u32 *)func_0018D850(0x1B0, 0x10);
+    f32 *f = (f32 *)p;
+
+    p[0] = 0x2000001A;
+    p[1] = buf;
+    ((u64 *)p)[1] = 0;
+    p[4] = 0x13000000;
+    p[5] = 0;
+    p[6] = 0x01000404;
+    p[7] = 0x6C180000;
+    f[8] = D_002772B0[0] * ((VuProg *)g->unk4C)->unk24;
+    f[9] = D_002772B0[1] * ((VuProg *)g->unk4C)->unk24;
+    f[10] = D_002772B0[2] * ((VuProg *)g->unk4C)->unk24;
+    f[11] = D_002772B0[3];
+    f[12] = D_002772A0[0];
+    f[13] = D_002772A0[1];
+    f[14] = D_002772A0[2];
+    f[15] = D_002772A0[3];
+    f[16] = D_0023BA84;
+    f[17] = 1.0f / (D_0023BA84 - D_0023BA88);
+    p[18] = 0;
+    p[19] = 0;
+    func_00198B60(f + 20, m, PS2_SPR(0x70003700), PS2_SPR(0x70003F40), (f32 *)&D_002771A0);
+    func_00198AE0(f + 36, m, (f32 *)&D_00277160);
+    *(Mat44 *)(f + 52) = D_00277120;
+    func_00199430(f + 68);
+    v[0] = D_002766A0[0];
+    v[3] = 1.0f;
+    v[1] = D_002766A0[1];
+    v[2] = D_002766A0[2];
+    func_00198E00(f + 80, f + 92, PS2_SPR(0x70003700), v);
+    func_00199380(f + 96, f + 100, ((VuProg *)g->unk4C)->unk24);
+    p[104] = code | 0x15000000;
+    p[105] = 0;
+    p[106] = 0;
+    p[107] = 0;
+    return (u32)p;
+}
+#endif
+
+/* The lit programs' header without fog. */
+u32 func_0019B760(FlPacketGroup *g, u32 code, u32 buf);
+#ifdef NON_MATCHING   /* the original keeps a1 across its VU0 helpers (asm leaves) */
+u32 func_0019B760(FlPacketGroup *g, u32 code, u32 buf) {
+    f32 m[16];
+    f32 v[4];
+    u32 *p = (u32 *)func_0018D850(0x1A0, 0x10);
+    f32 *f = (f32 *)p;
+
+    p[0] = 0x20000019;
+    p[1] = buf;
+    ((u64 *)p)[1] = 0;
+    p[4] = 0x13000000;
+    p[5] = 0;
+    p[6] = 0x01000404;
+    p[7] = 0x6C170000;
+    f[8] = D_002772B0[0] * ((VuProg *)g->unk4C)->unk24;
+    f[9] = D_002772B0[1] * ((VuProg *)g->unk4C)->unk24;
+    f[10] = D_002772B0[2] * ((VuProg *)g->unk4C)->unk24;
+    f[11] = D_002772B0[3];
+    f[12] = D_002772A0[0];
+    f[13] = D_002772A0[1];
+    f[14] = D_002772A0[2];
+    f[15] = D_002772A0[3];
+    func_00198B60(f + 16, m, PS2_SPR(0x70003700), PS2_SPR(0x70003F40), (f32 *)&D_002771A0);
+    func_00198AE0(f + 32, m, (f32 *)&D_00277160);
+    *(Mat44 *)(f + 48) = D_00277120;
+    func_00199430(f + 64);
+    v[0] = D_002766A0[0];
+    v[3] = 1.0f;
+    v[1] = D_002766A0[1];
+    v[2] = D_002766A0[2];
+    func_00198E00(f + 76, f + 88, PS2_SPR(0x70003700), v);
+    func_00199380(f + 92, f + 96, ((VuProg *)g->unk4C)->unk24);
+    p[100] = code | 0x15000000;
+    p[101] = 0;
+    p[102] = 0;
+    p[103] = 0;
+    return (u32)p;
+}
+#endif
+
+/* The same for the unlit programs: the matrices only. */
+u32 func_0019BDE0(FlPacketGroup *g, u32 code, u32 buf);
+#ifdef NON_MATCHING   /* the original keeps p in v0 across its VU0 helpers (asm leaves) */
+u32 func_0019BDE0(FlPacketGroup *g, u32 code, u32 buf) {
+    f32 m[16];
+    u32 *p = (u32 *)func_0018D850(0x140, 0x10);
+    f32 *f = (f32 *)p;
+
+    p[0] = 0x20000013;
+    p[1] = buf;
+    ((u64 *)p)[1] = 0;
+    p[4] = 0x13000000;
+    p[5] = 0;
+    p[6] = 0x01000404;
+    p[7] = 0x6C110000;
+    f[8] = D_002772B0[0] * ((VuProg *)g->unk4C)->unk24;
+    f[9] = D_002772B0[1] * ((VuProg *)g->unk4C)->unk24;
+    f[10] = D_002772B0[2] * ((VuProg *)g->unk4C)->unk24;
+    f[11] = D_002772B0[3];
+    f[12] = D_002772A0[0];
+    f[13] = D_002772A0[1];
+    f[14] = D_002772A0[2];
+    f[15] = D_002772A0[3];
+    func_00198B60(f + 16, m, PS2_SPR(0x70003700), PS2_SPR(0x70003F40), (f32 *)&D_002771A0);
+    func_00198AE0(f + 32, m, (f32 *)&D_00277160);
+    func_00199430(f + 48);
+    *(Mat44 *)(f + 60) = D_00277120;
+    p[76] = code | 0x15000000;
+    p[77] = 0;
+    p[78] = 0;
+    p[79] = 0;
+    return (u32)p;
 }
 #endif
 
