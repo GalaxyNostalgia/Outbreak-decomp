@@ -39,7 +39,8 @@ typedef struct {
     s32 unk324;
     s32 unk328;
     s16 unk32C;
-    s16 unk32E;
+    u16 shadows;        /* 0x32E: 2 bits per kind (own player, other players, NPCs, enemies): 0 the
+                           model's shadow (when it has character data), 2 a blob */
     s8 offset0[4];      /* 0x330: added to ambient[] */
 } Scene;                /* 0x334 */
 

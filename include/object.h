@@ -83,8 +83,12 @@ typedef struct {
     u8 unk189[0x198 - 0x189]; \
     s8 drawn;           /* 0x198 */ \
     s8 unk199;          /* 0x199 */ \
-    u8 unk19A[0x1A8 - 0x19A]; \
-    s32 unk1A8;         /* 0x1A8 */ \
+    u8 unk19A[2]; \
+    f32 unk19C;         /* 0x19C: where the shadow falls (x, z) */ \
+    f32 unk1A0;         /* 0x1A0 */ \
+    u16 unk1A4;         /* 0x1A4: the shadow's length (two-point shadows) */ \
+    s16 unk1A6;         /* 0x1A6: and its direction */ \
+    s32 unk1A8;         /* 0x1A8: the blob shadow (s16 [1]: its size) */ \
     f32 unk1AC[2];      /* 0x1AC */ \
     f32 unk1B4[2]; \
     f32 unk1BC[2]; \

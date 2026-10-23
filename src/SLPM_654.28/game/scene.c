@@ -1,6 +1,9 @@
 #include "common.h"
 #include "options.h"
 #include "scene.h"
+#include "object.h"
+#include "model.h"
+#include "enemy.h"
 
 f32 func_00680D70(f32 *l, f32 *p);
 
@@ -301,6 +304,191 @@ void func_0067F290(s32 mode) {
 /* out = a + b, each component kept within 0..1 (light colours). */
 extern f32 D_00239CA8;          /* the strength of a light right at its source */
 f32 func_001916E0(const f32 *a, const f32 *b);
+
+void func_00347830(DrawObjFull *o);
+extern s8 D_0048BF88[];
+extern u8 D_00343340[];         /* (SUBMAIN.BIN) the blob shadow's draw callback */
+f32 func_00341860(f32 x);
+s32 func_00346C50(const f32 *a, const f32 *b);
+
+void func_003404F0(Vec3 *out, Vec3 *a, Vec3 *b);
+
+/* Clears n bytes (the game's inline loop). */
+#define CLEAR(p, n)                                                                         \
+    {                                                                                       \
+        u8 *q_ = (u8 *)(p);                                                                 \
+        s32 n_ = (n);                                                                       \
+        if (q_ != NULL) {                                                                   \
+            do {                                                                            \
+                *q_++ = 0;                                                                  \
+            } while (--n_ != 0);                                                            \
+        }                                                                                   \
+    }
+
+/* A point of o's: the offset va from bone a, vb from bone b, or halfway between them (moved by
+   o's last step); o's position with neither (0xFF). */
+void func_006BCAA0(DrawObjFull *o, f32 *out, u8 a, u8 b, f32 *va, f32 *vb);
+#ifdef NON_MATCHING   /* two address adds take their operands the other way round */
+void func_006BCAA0(DrawObjFull *o, f32 *out, u8 a, u8 b, f32 *va, f32 *vb) {
+    Vec3 pa;
+    Vec3 pb;
+    Vec3 d;
+
+    CLEAR(&pa, sizeof(Vec3));
+    CLEAR(&pb, sizeof(Vec3));
+    if (a == 0xFF && b == 0xFF) {
+        *(Vec3 *)out = *(Vec3 *)o->unk38;
+        return;
+    }
+    if (a != 0xFF) {
+        func_001913A0(&pa, (Vec3 *)va, (Mat44 *)((FlBone **)((Slot1468 *)o->model)->unk820)[a]);
+        func_003404F0(&pa, &pa, (Vec3 *)((FlBone **)((Slot1468 *)o->model)->unk820)[a]->world[3]);
+        if (b == 0xFF) {
+            *(Vec3 *)out = *&pa;
+            return;
+        }
+    }
+    if (b != 0xFF) {
+        func_001913A0(&pb, (Vec3 *)vb, (Mat44 *)((FlBone **)((Slot1468 *)o->model)->unk820)[b]);
+        func_003404F0(&pb, &pb, (Vec3 *)((FlBone **)((Slot1468 *)o->model)->unk820)[b]->world[3]);
+        if (a == 0xFF) {
+            *(Vec3 *)out = *&pb;
+            return;
+        }
+    }
+    out[0] = 0.5f * (pa.x + pb.x);
+    out[1] = 0.5f * (pa.y + pb.y);
+    out[2] = 0.5f * (pa.z + pb.z);
+    func_00340560(&d, (Vec3 *)o->unk38, (Vec3 *)o->unk44);
+    func_003404F0((Vec3 *)out, (Vec3 *)out, &d);
+}
+#endif
+
+/* A character's blob shadow, as its shadow def says: kind 0 under one point between two bones,
+   kind 1 stretched between two such points. */
+typedef struct {
+    s16 kind;           /* 0x00 */
+    s16 size;           /* 0x02 */
+    u8 b0, b1;          /* 0x04: the first point's bones */
+    u8 b2, b3;          /* 0x06: the second's */
+    f32 v0[3];          /* 0x08 */
+    f32 v1[3];          /* 0x14 */
+    f32 v2[3];          /* 0x20 */
+    f32 v3[3];          /* 0x2C */
+} ShadowDef;
+
+void func_006BE3B0(DrawObjFull *o);
+#ifdef NON_MATCHING   /* the missing-def return's branch layout */
+void func_006BE3B0(DrawObjFull *o) {
+    f32 p[4];
+    f32 a[4];
+    f32 b[4];
+    ShadowDef *d;
+    f32 dx;
+    f32 dz;
+
+    if (o != NULL) {
+        d = (ShadowDef *)o->unk1A8;
+        if (d == NULL) {
+            return;
+        }
+        if (d->kind == 0) {
+            func_006BCAA0(o, p, d->b0, d->b1, d->v0, d->v1);
+            o->unk19C = p[0];
+            o->unk1A0 = p[2];
+            o->unk1A4 = 0;
+            o->unk1A6 = 0;
+        } else if (d->kind == 1) {
+            func_006BCAA0(o, a, d->b0, d->b1, d->v0, d->v1);
+            func_006BCAA0(o, b, d->b2, d->b3, d->v2, d->v3);
+            o->unk19C = 0.5f * (a[0] + b[0]);
+            o->unk1A0 = 0.5f * (a[2] + b[2]);
+            dx = a[0] - o->unk19C;
+            dz = a[2] - o->unk1A0;
+            o->unk1A4 = func_00341860(dx * dx + dz * dz);
+            o->unk1A6 = func_00346C50(a, b);
+        }
+    }
+}
+#endif
+f32 func_005E5B40(const f32 *p, u8 *kind, s32 want);
+void func_001B1460(void *fn, void *a, void *b);
+
+/* A blob shadow under o, on the floor below its shadow point when that is close under it. */
+void func_00680790(DrawObjFull *o) {
+    f32 p[3];
+    u8 kind;
+
+    if (o->unk1A8 != 0 && (f32)((s16 *)o->unk1A8)[1] > 0.0f && D_0048BF88[0] == 0) {
+        func_006BE3B0(o);
+        p[0] = o->unk19C;
+        p[2] = o->unk1A0;
+        p[1] = 50.0f + o->unk38[1];
+        p[1] = func_005E5B40(p, &kind, 0xFF);
+        if (p[1] < 10.0f + o->unk38[1]) {
+            p[1] += 3.0f;
+            func_001B1460(D_00343340, o, p);
+        }
+    }
+}
+
+/* Draws o's shadow as the scene says for its kind: the model's own (func_00347830, needing its
+   character data) or a blob (func_00680790). */
+void func_00680590(DrawObjFull *o) {
+    s32 m;
+
+    switch (o->type) {
+    case 0:
+        if (o->unkBB4 != 0) {
+            m = D_00305FA0.shadows & 3;
+            if (m == 0 || m == 2) {
+                func_00680790(o);
+            }
+        } else if (o->kind == D_0048BF60.unk1D) {
+            m = D_00305FA0.shadows & 3;
+            if (m == 0) {
+                if (((Slot1468 *)o->model)->unk1460 != NULL) {
+                    func_00347830(o);
+                }
+            } else if (m == 2) {
+                func_00680790(o);
+            }
+        } else {
+            m = (D_00305FA0.shadows & 0xC) >> 2;
+            if (m == 0) {
+                if (((Slot1468 *)o->model)->unk1460 != NULL) {
+                    func_00347830(o);
+                }
+            } else if (m == 2) {
+                func_00680790(o);
+            }
+        }
+        break;
+    case 1:
+        if (((Slot1468 *)o->model)->unk1460 != NULL) {
+            m = (D_00305FA0.shadows & 0x30) >> 4;
+            if (m == 0) {
+                func_00347830(o);
+            } else if (m == 2) {
+                func_00680790(o);
+            }
+        }
+        break;
+    case 2:
+        m = (D_00305FA0.shadows & 0xC0) >> 6;
+        if (m == 0) {
+            if (D_00357500[o->kind].defs[o->unkBBA].hasData == 0 ||
+                ((Slot1468 *)o->model)->unk1460 == NULL) {
+                func_00680790(o);
+            } else {
+                func_00347830(o);
+            }
+        } else if (m == 2) {
+            func_00680790(o);
+        }
+        break;
+    }
+}
 
 /* Makes room light i (out of range or off: none) the characters' light. */
 void func_006809B0(s32 i) {

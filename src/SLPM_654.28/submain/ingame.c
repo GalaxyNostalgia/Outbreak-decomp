@@ -480,7 +480,7 @@ extern s8 D_0048AEA0;
 extern s8 D_0048AEA1;
 extern s8 D_0048AEA3;
 s32 func_005902F0(void *a, s32 b);
-void func_00680590(void *obj);
+void func_00680590(DrawObjFull *o);
 
 #ifdef NON_MATCHING   /* first draft */
 /* An object's shadow, unless a debug switch or the camera says otherwise. */
