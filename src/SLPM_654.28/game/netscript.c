@@ -518,6 +518,33 @@ s32 func_006CF700(u32 *args) {
     return 0;
 }
 
+void func_00827130(f32 *out, u16 id, s8 place);
+s32 func_008270C0(f32 r, f32 *pos, f32 *to);
+
+/* if partner args[0] is player args[1] at place args[2] and within 30 of it */
+s32 func_006CF790(u32 *args) {
+    s32 id = args[1];
+    s32 place = args[2];
+    DrawObjFull *p = &D_00476DD0[args[0]];
+    s32 r = 2;
+    f32 pos[4];
+
+    if (p->active == 0 || p->isNpc == 0) {
+        func_0065AAF0();
+        return 2;
+    }
+    if (p->unk1E2 == id && p->unk100C == place) {
+        func_00827130(pos, p->unk1E2, p->unk100C);
+        if (func_008270C0(30.0f, p->unk38, pos) == 0) {
+            r = 0;
+        }
+    }
+    if (r != 0) {
+        func_0065AAF0();
+    }
+    return r;
+}
+
 /* Our partner leaves when event flag args[1] (args[0] 0: the shared one, else this player's)
    is args[2]. */
 s32 func_006CF860(u32 *args);

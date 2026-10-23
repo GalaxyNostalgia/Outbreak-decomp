@@ -63,14 +63,7 @@ void func_005ABB80(void) {
 }
 
 /* Per player, ten timed jobs (offline: players 1 and 2's too, each as "us"). */
-typedef struct Job {
-    u8 active;          /* 0x00 */
-    u8 unk1[0x1C - 1];
-    void (*fn)(struct Job *j); /* 0x1C */
-    u8 unk20[0x110 - 0x20];
-} Job;
-
-extern Job D_00387670[3][10];
+#include "job.h"
 s32 func_001AF4D0(void);
 
 void func_00588C30(void) {
@@ -95,6 +88,27 @@ void func_00588C30(void) {
             }
         }
         D_0048BF60.unk1D = 0;
+    }
+}
+
+/* Start job `slot` of the given kind for `player` (offline) or for us. */
+void func_00588D30(u8 slot, u8 kind, void (*fn)(Job *j), u8 player) {
+    u8 me;
+    s32 p;
+
+    if (fn != NULL) {
+        if (func_001AF4D0() == 1) {
+            me = player;
+            p = me;
+        } else {
+            p = 0;
+            me = D_0048BF60.unk1D;
+        }
+        D_00387670[p][slot].active = 1;
+        D_00387670[p][slot].slot = slot;
+        D_00387670[p][slot].fn = fn;
+        D_00387670[p][slot].kind = kind;
+        D_00387670[p][slot].player = me;
     }
 }
 
@@ -242,6 +256,15 @@ s32 func_001B6980(s32 flag);
 void func_00663560(void);
 void func_006833D0(u8 i);
 void func_005A7660(void);
+
+/* Clears byte 2 of the room's 16 texture animations (0x60 each at 0x4730). */
+void func_005A7630(void) {
+    s32 i;
+
+    for (i = 0xF; i >= 0; i--) {
+        (D_00470090 + 0x4730 + i * 0x60)[2] = 0;
+    }
+}
 
 void func_005A78C0(void);
 #ifdef NON_MATCHING   /* first draft */

@@ -270,7 +270,8 @@ typedef struct DrawObjFull {
     s8 unkFFC[4];       /* 0xFFC */
     s16 unk1000[4];     /* 0x1000 */
     s8 unk1008[4];      /* 0x1008 */
-    u8 unk100C[0x1034 - 0x100C];
+    s8 unk100C;         /* 0x100C: (partners) the place they wait at */
+    u8 unk100D[0x1034 - 0x100D];
     s32 unk1034;        /* 0x1034 */
     u8 unk1038[2];
     s8 unk103A;         /* 0x103A */

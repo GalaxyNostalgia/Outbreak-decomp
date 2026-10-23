@@ -33,7 +33,8 @@ typedef struct Zone {
     u16 unk5A[8];       /* 0x5A */
     u8 unk6A[2];
     s32 unk6C;          /* 0x6C */
-    u8 unk70[2];
+    u8 unk70;
+    u8 unk71;           /* 0x71: (kinds 0, 2) set by script op func_0065E880 */
     u8 unk72;           /* 0x72 */
 } Zone;
 

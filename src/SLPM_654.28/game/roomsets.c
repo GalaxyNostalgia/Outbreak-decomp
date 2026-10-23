@@ -5,13 +5,22 @@
 /* GAME.BIN: four room data records of 0x34-byte entries (kind unknown yet), and the tables reset
    with them. */
 
+/* A light as the records give it (scene.c's RoomLight from 0x04). */
 typedef struct {
-    u16 unk0;           /* 0x000 */
+    f32 color[4];       /* 0x00 */
+    f32 unk10[4];       /* 0x10 */
+    f32 pos[3];         /* 0x20 */
+    f32 range;          /* 0x2C */
+    f32 reach;          /* 0x30 */
+} LightDef;
+
+typedef struct {
+    u16 unk0;           /* 0x000: (non-zero: present) */
     u16 n;              /* 0x002 */
     u8 unk4[0x34];      /* 0x004 */
     u8 unk38[0x38];     /* 0x038 */
-    u8 entries[32][0x34]; /* 0x070 */
-    u8 pad[4];
+    LightDef entries[32]; /* 0x070 */
+    u32 lit;            /* 0x6F0: the entries made lights */
 } RoomSet;              /* 0x6F4 */
 
 typedef struct {
@@ -40,7 +49,7 @@ extern u8 D_0030629C[];
 extern u8 D_003062A4[];
 extern u8 D_003062B0[];
 extern s32 D_007122A0[32];
-extern u8 D_00712320[];
+extern void *D_00712320[32];   /* the lights made from the entries */
 extern u8 D_007123A0[];
 extern u8 D_007131A0[];
 void *memset(void *p, s32 c, u32 n);
@@ -89,11 +98,59 @@ void func_0067FB70(RoomSetFile *f) {
             memcpy(s->unk4, d->unk8, 0x34);
             memcpy(s->unk38, d->unk3C, 0x38);
             for (j = 0; j < s->n; j++) {
-                memcpy(s->entries[j], d->entries[j], 0x34);
+                memcpy(&s->entries[j], d->entries[j], 0x34);
             }
         }
         func_0067FA80();
     }
+}
+
+/* Picks record n (when it's there). */
+void func_0067FC90(u8 n) {
+    if (n < 4 && D_003AD380[n].unk0 != 0) {
+        D_003062BE[0] = n;
+    }
+}
+
+void func_0067FE20(u8 i);
+void *func_00680D00(void *def, u8 group, u8 kind);
+s32 func_00680CA0(void *l);
+
+/* Makes entry i of the picked record a light (the second set, kind 1). */
+void func_0067FCD0(u8 i);
+#ifdef NON_MATCHING   /* the original's early return jumps to ld ra with the index masked in its delay slot */
+void func_0067FCD0(u8 i) {
+    RoomSet *s = &D_003AD380[D_003062BE[0]];
+    LightDef l;
+
+    if (D_003062BE[0] < 0) {
+        return;
+    }
+    if (s->unk0 == 0) {
+        return;
+    }
+    if (s->entries[i].range <= 0.0f) {
+        return;
+    }
+    func_0067FE20(i);
+    memcpy(l.color, s->entries[i].color, 0x10);
+    memcpy(l.unk10, s->entries[i].unk10, 0x10);
+    memcpy(l.pos, s->entries[i].pos, 0xC);
+    l.range = s->entries[i].range;
+    l.reach = s->entries[i].reach;
+    D_00712320[i] = func_00680D00(&l, 0, 1);
+    s->lit |= 1 << i;
+}
+#endif
+
+/* Takes entry i's light away again. */
+void func_0067FE20(u8 i) {
+    RoomSet *s = &D_003AD380[D_003062BE[0]];
+
+    if (D_00712320[i] != NULL) {
+        func_00680CA0(D_00712320[i]);
+    }
+    s->lit &= ~(1 << i);
 }
 
 /* Another room data block (kind unknown yet): a position, two 0x480-byte tables and eight

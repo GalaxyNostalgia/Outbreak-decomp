@@ -665,6 +665,35 @@ s32 func_00661850(u32 *args) {
     return 0;
 }
 
+#ifdef PLATFORM_PC
+u8 func_00634640(DrawObjFull *p, s32 a);
+#else
+s32 func_00634640(DrawObjFull *p, s32 a);   /* (returns u8, but this file saw s32: no masking) */
+#endif
+
+/* if character args[0] (4: ours) is (args[2] != 0) or isn't player args[1], and alive */
+s32 func_00661320(u32 *args) {
+    s32 n = args[0];
+    u16 id = args[1];
+    s32 v = args[2];
+
+    if (n == 4) {
+        n = D_0048BF60.unk1D;
+    }
+    D_0048BE70.unk78[CUR]++;
+    if (v != 0) {
+        if ((u8)func_00634640(&D_00476DD0[n], 0) == 0 && id == D_00476DD0[n].unk1E2) {
+            return 0;
+        }
+    } else {
+        if ((u8)func_00634640(&D_00476DD0[n], 0) != 0 || id != D_00476DD0[n].unk1E2) {
+            return 0;
+        }
+    }
+    func_0065AAF0();
+    return 2;
+}
+
 /* 0xE5: an if that's always true */
 s32 func_0065F2C0(u32 *args) {
     D_0048BE70.unk78[CUR]++;
@@ -1301,6 +1330,53 @@ s32 func_0065FD70(s32 *args) {
 }
 
 /* Sets bit args[1] of entry args[0]'s flags. */
+#include "job.h"
+extern void (*D_006D67A0[])(Job *j);      /* the jobs' functions by kind (us) */
+extern void (*D_006D67D0[])(Job *j);      /* (the other players, offline) */
+s32 func_001AF4D0(void);
+void func_00588D30(u8 slot, u8 kind, void (*fn)(Job *j), u8 player);
+
+/* Script op: start job args[1] of kind args[0] for us (offline: for player 1 or 2 when they
+   are "us") with args[2..6], unless it runs already. */
+s32 func_0065F070(u32 *args);
+#ifdef NON_MATCHING   /* the original compares with sltiu at (an expanded bgeu) after a nop; registers differ */
+s32 func_0065F070(u32 *args) {
+    u32 p = 0;
+    u8 slot;
+    u8 kind;
+    Job *j;
+    u32 me;
+
+    if (func_001AF4D0() == 1) {
+        me = D_0048BF60.unk1D;
+        if (me != 0) {
+            if (me >= 3) {
+                return 0;
+            }
+            p = me;
+        }
+    }
+    slot = *(u8 *)&args[1];
+    j = &D_00387670[p][slot];
+    kind = *(u8 *)&args[0];
+    if (j->active != 0) {
+        return 0;
+    }
+    memset(j, 0, sizeof(Job));
+    if (p == 0) {
+        func_00588D30(slot, kind, D_006D67A0[kind], D_0048BF60.unk1D);
+    } else {
+        func_00588D30(slot, kind, D_006D67D0[kind], D_0048BF60.unk1D);
+    }
+    j->args[0] = args[2];
+    j->args[1] = args[3];
+    j->args[2] = args[4];
+    j->args[3] = args[5];
+    j->args[4] = args[6];
+    return 0;
+}
+#endif
+
 extern u16 D_0048AFB0[][6];
 
 s32 func_0065FEC0(s32 *args);
@@ -1646,36 +1722,101 @@ s32 func_00660A30(u32 *args) {
 
 void func_00593FA0(Zone *z);
 
-/* The kind-5 zones with id args[0]: armed (unk3C), with args[1] for its slot args[2] & 7. */
-s32 func_00660A70(u32 *args);
-#ifdef NON_MATCHING   /* the loop's shape */
-s32 func_00660A70(u32 *args) {
+/* The zone of kind 0 with id `id`, or of kind 2 with id `id` and sub-id `sub` (the last one
+   first), or NULL. */
+Zone *func_005518B0(u8 id, u8 sub) {
+    Zone *z;
+
+    if (D_0023BD88 == 0x80) {
+        return NULL;
+    }
+    z = D_0023BD90;
+    while (z != NULL) {
+        if (z->kind == 0) {
+            if (z->u.id == id) {
+                return z;
+            }
+            z = z->next;
+        } else if (z->kind == 2) {
+            if (z->u.id == id && *(s32 *)&z->unk50 == sub) {
+                return z;
+            }
+            z = z->next;
+        } else {
+            z = z->next;
+        }
+    }
+    return NULL;
+}
+
+void func_00683A80(u8 id);
+
+/* The zones of kind 0 with id args[0], and of kind 2 (when unk50 is set): unk71 = args[1],
+   and func_00683A80 on their id. */
+s32 func_0065E880(u32 *args) {
     Zone *z;
     s32 id;
-    s32 slot;
-    u16 v;
+    u8 v;
 
-    v = args[1];
-    slot = args[2];
     id = args[0];
+    v = *(u8 *)&args[1];
     if (D_0023BD88 == 0x80) {
         return 0;
     }
     z = D_0023BD90;
     while (z != NULL) {
-        if (z->kind == 5 && z->u.id == id) {
-            func_00593FA0(z);
-            slot &= 7;
-            z->on = 1;
-            z->unk50 = v;
-            z->unk59 |= 1 << slot;
-            z->unk5A[slot] = v;
+        if (z->kind == 0) {
+            if (z->u.id == id) {
+                z->unk71 = v;
+                func_00683A80(*(u8 *)&z->u.id);
+            }
+            z = z->next;
+        } else if (z->kind == 2) {
+            if (z->u.id == id) {
+                z->unk71 = v;
+                if (*(s32 *)&z->unk50 != 0) {
+                    func_00683A80(*(u8 *)&z->u.id);
+                }
+            }
+            z = z->next;
+        } else {
+            z = z->next;
         }
-        z = z->next;
     }
     return 0;
 }
-#endif
+
+/* The kind-5 zones with id args[0]: armed (unk3C), with args[1] for its slot args[2] & 7. */
+s32 func_00660A70(u32 *args) {
+    Zone *z;
+    s32 id;
+    u16 v;
+    s32 slot;
+
+    id = args[0];
+    v = args[1];
+    slot = args[2];
+    if (D_0023BD88 == 0x80) {
+        return 0;
+    }
+    z = D_0023BD90;
+    while (z != NULL) {
+        if (z->kind == 5) {
+            if (z->u.id == id) {
+                func_00593FA0(z);
+                slot &= 7;
+                z->on = 1;
+                z->unk50 = v;
+                z->unk59 |= 1 << slot;
+                z->unk5A[slot] = v;
+            }
+            z = z->next;
+        } else {
+            z = z->next;
+        }
+    }
+    return 0;
+}
 
 s32 func_00652370(s32 model, s32 x, s32 y, s32 z);
 
@@ -1709,11 +1850,6 @@ s32 func_00662460(u32 *args) {
 
 s32 func_001AF440(s32 room);
 
-#ifdef PLATFORM_PC
-u8 func_00634640(DrawObjFull *p, s32 a);
-#else
-s32 func_00634640(DrawObjFull *p, s32 a);   /* (returns u8, but this file saw s32: no masking) */
-#endif
 
 /* if every player still in the game is in room args[0] (args[1] 1) / none is (args[1] 0);
    false when nobody is left */
@@ -1814,5 +1950,21 @@ void func_001B2C80(void);
 /* (does nothing in the release either) */
 s32 func_00662E60(u32 *args) {
     func_001B2C80();
+    return 0;
+}
+
+extern s32 D_0048AE9C[];
+
+/* resets D_0048AE9C to -1 (as lights.c does on some frames) */
+s32 func_0065E410(u32 *args) {
+    D_0048AE9C[0] = -1;
+    return 0;
+}
+
+s32 func_001B87F0(s32 n, s32 bgm, s32 c);
+
+/* plays music args[0] */
+s32 func_0065D5F0(u32 *args) {
+    func_001B87F0(0, args[0], 0);
     return 0;
 }

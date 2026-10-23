@@ -542,6 +542,63 @@ void func_00680AB0(f32 *p, s32 group) {
     func_006809B0(best);
 }
 
+/* A free light of the second set (marked on), or NULL. */
+RoomLight *func_00680C30(void) {
+    s32 i;
+    RoomLight *l;
+    RoomLight *r = NULL;
+
+    if (D_0023BF60 >= 0x40) {
+        return r;
+    }
+    for (i = 0; i < 0x40; i++) {
+        l = &D_007123A0[i];
+        if (l->on == 0) {
+            r = l;
+            l->on = 1;
+            D_0023BF60++;
+            break;
+        }
+    }
+    return r;
+}
+
+/* Frees a light of the second set; 1 when it was on. */
+s32 func_00680CA0(RoomLight *l);
+#ifdef NON_MATCHING   /* the original sets the not-on return 0 after the branch, not in its delay slot */
+s32 func_00680CA0(RoomLight *l) {
+    if (D_0023BF60 <= 0) {
+        return 0;
+    }
+    if (l != NULL) {
+        if (l->on != 0) {
+            memset(l, 0, sizeof(RoomLight));
+            D_0023BF60--;
+            return 1;
+        }
+        return 0;
+    }
+    return 0;
+}
+#endif
+
+/* Adds a light of the second set from def (0x34 bytes: color on), of the group and kind. */
+RoomLight *func_00680D00(void *def, u8 group, u8 kind);
+#ifdef NON_MATCHING   /* the original tests the saved result (s0) with a nop in the delay slot */
+RoomLight *func_00680D00(void *def, u8 group, u8 kind) {
+    RoomLight *l = func_00680C30();
+
+    if (l != NULL) {
+        if (def != NULL) {
+            memcpy(l->color, def, 0x34);
+        }
+        l->group = group;
+        l->kind = kind;
+    }
+    return l;
+}
+#endif
+
 /* How bright light l (from its colour) is at p: its brightest channel, falling off with the
    distance; -1 without either. */
 f32 func_00680D70(f32 *l, f32 *p) {
