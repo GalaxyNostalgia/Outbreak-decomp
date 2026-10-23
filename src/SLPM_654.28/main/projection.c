@@ -178,6 +178,13 @@ void func_0018FA40(Mat44 *m, f32 x, f32 y, f32 z) {
     m->m[3][2] += z;
 }
 
+/* Moves a matrix by v. */
+void func_0018FA70(Mat44 *m, f32 *v) {
+    m->m[3][0] += v[0];
+    m->m[3][1] += v[1];
+    m->m[3][2] += v[2];
+}
+
 /* Sets the translation row. */
 void func_0018FA30(f32 x, f32 y, f32 z, f32 *m) {
     m[12] = x;

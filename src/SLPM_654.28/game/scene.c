@@ -2,12 +2,26 @@
 #include "options.h"
 #include "scene.h"
 
+f32 func_00680D70(f32 *l, f32 *p);
+
 /* GAME.BIN: the scene's lights, fog and camera defaults. */
 
 extern s8 D_0023BF64;
 extern s8 D_0023BF60;
 extern s32 D_0023BF5C;
-extern u8 D_007131A0[0xE00];
+/* A light of the room (0x38 bytes). */
+typedef struct {
+    u8 on;              /* 0x00 */
+    u8 group;           /* 0x01: 0: any */
+    u8 pad2[2];
+    f32 color[4];       /* 0x04 */
+    f32 unk14[4];       /* 0x14 */
+    f32 pos[3];         /* 0x24 */
+    f32 range;          /* 0x30: its falloff (0: off) */
+    f32 unk34;
+} RoomLight;
+
+extern RoomLight D_007131A0[64];
 extern u8 D_007123A0[0xE00];
 extern u8 D_00712320[0x80];
 void func_001AE9C0(s32 cmd, u32 arg);
@@ -285,6 +299,86 @@ void func_0067F290(s32 mode) {
 
 
 /* out = a + b, each component kept within 0..1 (light colours). */
+extern f32 D_00239CA8;          /* the strength of a light right at its source */
+f32 func_001916E0(const f32 *a, const f32 *b);
+
+/* Makes room light i (out of range or off: none) the characters' light. */
+void func_006809B0(s32 i) {
+    RoomLight *l;
+
+    if (i >= 0 && i < 64) {
+        l = &D_007131A0[i];
+        if (l->on) {
+            memcpy(&D_00305FA0.a[0].w[1], l->color, 0x10);
+            memcpy(&D_00305FA0.a[0].w[9], l->unk14, 0x10);
+            memcpy(&D_00305FA0.a[0].w[16], l->pos, 0xC);
+            D_00305FA0.a[0].w[20] = l->range;
+        } else {
+            memset(&D_00305FA0.a[0], 0, 0x68);
+        }
+    } else {
+        memset(&D_00305FA0.a[0], 0, 0x68);
+    }
+    if (D_00305FA0.enable[0] != 0) {
+        func_001AE9C0(0x5A, (u32)&D_00305FA0.a[0]);
+    }
+    D_00305FA0.mode = -1;
+}
+
+/* The brightest room light at p (of the group, or of any with 0) becomes the characters'. */
+void func_00680AB0(f32 *p, s32 group) {
+    RoomLight *l;
+    f32 max;
+    f32 v;
+    s16 best;
+    s16 i;
+
+    best = -1;
+    i = 0;
+    max = 0.0f;
+    for (; i < 64; i++) {
+        l = &D_007131A0[i];
+        if (l->on == 0 || l->range == 0.0f) {
+            continue;
+        }
+        if (group != 0 && l->group != 0 && (group & 0xFF) != (l->group & 0xFF)) {
+            continue;
+        }
+        v = func_00680D70(l->color, p);
+        if (max < v) {
+            max = v;
+            best = i;
+        }
+    }
+    func_006809B0(best);
+}
+
+/* How bright light l (from its colour) is at p: its brightest channel, falling off with the
+   distance; -1 without either. */
+f32 func_00680D70(f32 *l, f32 *p) {
+    f32 k;
+    f32 d;
+    f32 m;
+
+    if (l == NULL || p == NULL) {
+        return -1.0f;
+    }
+    d = func_001916E0(l + 8, p);
+    if (d == 0.0f) {
+        k = D_00239CA8;
+    } else {
+        k = 1.0f / (l[11] * d);
+    }
+    m = l[0];
+    if (m < l[1]) {
+        m = l[1];
+    }
+    if (m < l[2]) {
+        m = l[2];
+    }
+    return k * m;
+}
+
 static void func_00681340(Vec3 *out, Vec3 *a, Vec3 *b) {
     out->x = a->x + b->x;
     out->y = a->y + b->y;

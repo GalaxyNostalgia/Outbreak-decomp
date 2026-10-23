@@ -403,9 +403,28 @@ void func_00344FF0(void) {
     func_0018F7C0(&D_0035C7D0);
     func_001AE9C0(0x19, &D_0035C7D0);
 }
-void func_00680AB0(Vec3 *v, u8 a);
+void func_00680AB0(f32 *v, s32 group);
 void func_0018FA70(Mat44 *m, f32 *v);
-void func_00344960(RoomPart *p, s32 *a);
+/* The renderer state a room part is drawn with (and the texture word a, -1 without). */
+void func_00344960(RoomPart *p, s32 *a) {
+    func_001AE9C0(0x5E, (void *)(p->unk89 | (p->unk8A << 4)));
+    func_001AE9C0(0xD, (void *)(p->unk8B << 10));
+    if (p->unk8D) {
+        func_001AE9C0(0x5F, (void *)2);
+        func_001AE9C0(0x60, (void *)0xFF);
+    } else {
+        func_001AE9C0(0x5F, (void *)5);
+        func_001AE9C0(0x60, (void *)0);
+    }
+    if (a != NULL) {
+        func_001AE9C0(0x67, (void *)*a);
+    } else {
+        func_001AE9C0(0x67, (void *)-1);
+    }
+    func_001AE9C0(0x63, (void *)(p->unk8C << 16));
+    func_001AE9C0(0x6C, (void *)p->unk8F);
+}
+
 void func_0018BC50(s32 model, s32 a);
 extern u8 D_004BEEF0[][0x4C];
 
@@ -425,7 +444,7 @@ void func_003421D0(void *obj) {
     }
     func_00344FF0();
     for (g = 0; g < r->nGroups; g++) {
-        func_00680AB0(&D_00470090.groupPos[g], D_00470090.groupArg[g]);
+        func_00680AB0((f32 *)&D_00470090.groupPos[g], D_00470090.groupArg[g]);
         for (j = 0; j < r->groupCount[g]; j++) {
             part = r->groupFirst[g] + j;
             f = r->partFlags[part];

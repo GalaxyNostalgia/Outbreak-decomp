@@ -11,7 +11,14 @@ typedef struct {
     s32 nTex;           /* 0x04 */
     s32 tex[0x20];      /* 0x08: texture slots, as indices into texId */
     u8 unk88;           /* 0x88 */
-    u8 unk89[0x98 - 0x89];
+    u8 unk89;           /* 0x89: renderer 0x5E, low nibble */
+    u8 unk8A;           /* 0x8A: and high */
+    u8 unk8B;           /* 0x8B: renderer 0xD (<< 10) */
+    u8 unk8C;           /* 0x8C: renderer 0x63 (<< 16) */
+    u8 unk8D;           /* 0x8D: renderer 0x5F/0x60: 2/0xFF when set, else 5/0 */
+    u8 unk8E;
+    u8 unk8F;           /* 0x8F: renderer 0x6C */
+    u8 unk90[0x98 - 0x90];
 } RoomPart;             /* 0x98 */
 
 typedef struct {
