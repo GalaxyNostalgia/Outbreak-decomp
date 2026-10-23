@@ -85,7 +85,7 @@ extern DrawObjFull D_00476DD0[8];   /* the players */
 extern u8 D_003AEF74;
 extern Vec3 D_006D5C00[];
 
-s32 func_00562B70(Effect *e, u32 flag);
+u32 func_00562B70(void *o, u32 mask);   /* roomitems.c (an ItemObj) */
 void func_001B1460(void (*fn)(void *), void *a, void *b);
 void func_00560D70(void *e);
 void func_001AE9C0(s32 cmd, u32 arg);

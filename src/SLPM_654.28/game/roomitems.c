@@ -909,3 +909,17 @@ void func_005811A0(void) {
         }
     }
 }
+
+/* The item type flags of mask that item thing o's type has. */
+u32 func_00562B70(ItemObj *o, u32 mask) {
+    u8 t;
+
+    if (o == NULL) {
+        return 0;
+    }
+    t = D_00716510[func_00583D60(o->id)];
+    if (t == 0xFF) {
+        return 0;
+    }
+    return mask & D_00716980[t].flags;
+}

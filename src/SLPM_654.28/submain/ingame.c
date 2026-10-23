@@ -350,6 +350,57 @@ void func_00663DC0(void *obj, u16 i, AnimEntry *anim);
 void func_003421D0(void *obj);
 void func_003445C0(void *obj);
 void func_003424B0(void *obj);
+#include "item.h"
+extern RoomObjModel D_0039A3D0;
+extern u8 D_004BEEF0[][0x4C];
+void func_00190D50(f32 *out, const f32 *a, const f32 *b);
+void func_001913A0(f32 *out, const f32 *v, const f32 *m);
+s32 func_0018BC50(u32 n, s32 unused);
+void func_00344FF0(void);
+
+/* Draws an item thing: its bones (into world matrices from the room's object model's poses),
+   then its model part. */
+#ifdef NON_MATCHING   /* the original keeps the stores of an unused point (p); stack layout */
+void func_003424B0(void *obj) {
+    ItemObj *o = obj;
+    s16 model = o->model;
+    s16 n;
+    s16 i;
+    s32 k;
+    Mat44 m;
+    Mat44 b;
+    f32 v[4];
+    f32 w[4];
+    f32 p[4];
+    ModelPart *part;
+
+    if (model == -1) {
+        return;
+    }
+    n = D_0039A3D0.count[model];
+    func_0018F7C0(&m);
+    func_00344FF0();
+    for (i = 0; i < n; i++) {
+        func_00190D50((f32 *)&m, (f32 *)&o->parts[i], o->mat);
+        func_0018FAB0(v, (u32)&o->parts[i]);
+        v[0] -= o->unk218;
+        func_001913A0(w, v, o->mat);
+        p[0] = o->pos[0] + w[0];
+        p[1] = o->pos[1] + w[1];
+        p[2] = o->pos[2] + w[2];
+        func_00190C50(&b, &D_0039A3D0.pose[model][i], &m);
+        func_001AE9C0((u8)(i + 0x1A), &b);
+    }
+    part = &((ModelPart *)((Slot1468 *)&D_0039A3D0)->buf)[model];
+    if (part->group == -1 || part->group == 0) {
+        return;
+    }
+    for (k = 0; k < part->nmats; k++) {
+        func_001AE9C0((u8)(k + 0x3A), D_004BEEF0[((Slot1468 *)&D_0039A3D0)->ids[part->mats[k]]]);
+    }
+    func_0018BC50(part->group, 0);
+}
+#endif
 
 void func_00344960(RoomPart *p, s32 *a);
 /* The glow pass n's 8 KiB of the work area (0xFF: the current pass); 0 past 8. */
