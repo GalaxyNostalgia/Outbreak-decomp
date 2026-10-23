@@ -244,7 +244,9 @@ typedef struct DrawObjFull {
     Ctrl ctrl;          /* 0xF78: (players) the controls */
     s16 unkFA8;         /* 0xFA8: (players) the stick's angle when the camera cut */
     s8 unkFAA;          /* 0xFAA: (players) keep the old direction since the cut */
-    u8 unkFAB[0xFB4 - 0xFAB];
+    u8 unkFAB;
+    s32 unkFAC;         /* 0xFAC: (players, online) */
+    u8 unkFB0[0xFB4 - 0xFB0];
     u8 held;            /* 0xFB4: (enemies) what they hold, 0xFF nothing */
     u8 unkFB5[2];
     u8 way;             /* 0xFB7: how it moves (func_0058C240) */

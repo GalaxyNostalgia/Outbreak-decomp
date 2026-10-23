@@ -60,8 +60,76 @@ extern f32 D_00239E18;          /* 2 pi */
 void func_00340310(s16 rx, s16 ry, s16 rz, Mat44 *m);
 f32 func_00191A70(f32 x);
 
+#include "model.h"
+#include "thing.h"
+#include "relation.h"
+
 /* A character's skeleton: its bones by number (0x14 the neck, 0x15 the head); none when [0] is. */
 #define OBJ_BONES(o) ((FlBone **)((u8 *)(o)->model + 0x820))
+
+extern Thing D_003FFCA0[50];
+f32 func_00191A70(f32 x);
+s32 func_00346C50(const f32 *a, const f32 *b);
+
+/* The nth thing (enemy) in o's view: active, posed, not hidden (0xC94 bit 0), within range, at
+   most 300 above and 100 below, in sight, and within fov/2 of o's heading (by the heading kept
+   in the relation tables, or with mode 1 by the line from o's bone 11 to its watched bone). Goes
+   by o's list of things, nearest first. */
+Thing *func_0062D700(DrawObjFull *o, s32 mode, s16 fov, u8 nth, f32 range);
+#ifdef NON_MATCHING   /* register allocation; the original places the loop's setup after the loop */
+Thing *func_0062D700(DrawObjFull *o, s32 mode, s16 fov, u8 nth, f32 range) {
+    Vec3 eye;
+    Vec3 to;
+    s32 half;
+    u8 n;
+    u8 i;
+    Relation *rel;
+    Thing *t;
+    u8 *list;
+
+    i = 0;
+    n = 0;
+    if (o->type == 0) {
+        list = D_003840E0[o->kind];
+        rel = D_00385490[o->kind];
+    } else {
+        list = D_00383D50[o->kind];
+        rel = D_003844F0[o->kind];
+    }
+    for (half = fov / 2; list[i] != 0xFF && i < 50; i++) {
+        t = &D_003FFCA0[list[i]];
+        if (t == NULL || t->active == 0 || t->model == NULL || (t->unkC94 & 1)) {
+            continue;
+        }
+        if (!(rel[list[i]].dist <= range) || !(t->pos[1] - o->unk38[1] <= 300.0f) ||
+            !(o->unk38[1] - t->pos[1] <= 100.0f) || (u8)rel[list[i]].hidden != 0) {
+            continue;
+        }
+        if (mode != 1) {
+            if (!(func_00191A70((s16)(rel[list[i]].angle - o->unk92)) <= func_00191A70(half))) {
+                continue;
+            }
+        } else {
+            eye = *(Vec3 *)OBJ_BONES(o)[0xB]->world[3];
+            if (((FlBone **)t->model->unk820)[0] != NULL) {
+                to = *(Vec3 *)((FlBone **)t->model->unk820)[t->unk552]->world[3];
+            } else {
+                to = *(Vec3 *)t->pos;
+            }
+            if (!(func_00191A70((s16)((s16)func_00346C50(&eye.x, &to.x) - o->unk92)) <=
+                  func_00191A70(half))) {
+                continue;
+            }
+        }
+        if (n == nth) {
+            return t;
+        }
+        n++;
+    }
+    return NULL;
+}
+#endif
+
 
 /* An angle in radians as the game's (0x10000 a turn), rounded. */
 #define ANG(r) ((s16)(0.5f + 65536.0f * (r) / D_00239E18) & 0xFFFF)
@@ -140,7 +208,6 @@ extern u32 D_0023ACC0;          /* how long it keeps looking at someone: the ran
 extern u32 D_0023ACC4;          /* and the fixed part */
 extern f32 D_00477EE8[3];      /* a point in the room (mode 2 looks 170 above it) */
 extern s8 D_0048BF88[];
-DrawObjFull *func_0062D700(DrawObjFull *o, s32 a, s32 b, s32 c, f32 dist);
 void func_0055C480(DrawObjFull *o, s32 bone, s16 *ang);
 s32 func_00346C50(const f32 *a, const f32 *b);
 void func_00346CD0(s16 *ang, const f32 *from, const f32 *to);
@@ -219,7 +286,7 @@ void func_0062F9B0(DrawObjFull *o, u8 mode) {
         }
         break;
     case 1:
-        near = func_0062D700(o, 1, -0x8000, 0, 1000.0f);
+        near = (DrawObjFull *)func_0062D700(o, 1, -0x8000, 0, 1000.0f);
         if (o->unkBD1 == 0) {
             if (o->unkBD2 != 0) {
                 func_0062F9B0(o, 0);
@@ -263,11 +330,11 @@ void func_0062F9B0(DrawObjFull *o, u8 mode) {
         }
         if (o->unkBD2 == 0) {
             if (o->unkC30 == 0) {
-                near = func_0062D700(o, 1, -0x8000, 1, 1000.0f);
+                near = (DrawObjFull *)func_0062D700(o, 1, -0x8000, 1, 1000.0f);
                 if (near == o->unkBE0) {
-                    near = func_0062D700(o, 1, -0x8000, 0, 1000.0f);
+                    near = (DrawObjFull *)func_0062D700(o, 1, -0x8000, 0, 1000.0f);
                 } else if (near == NULL) {
-                    near = func_0062D700(o, 1, -0x8000, 0, 1000.0f);
+                    near = (DrawObjFull *)func_0062D700(o, 1, -0x8000, 0, 1000.0f);
                 }
                 o->unkBD1 = 0;
                 o->unkBE0 = near;
@@ -486,8 +553,8 @@ void func_00637C60(DrawObjFull *o) {
 }
 
 /* The character's expression (its face's motion table, by kind or NPC model). */
-extern u8 D_0023ABA0[];         /* per character kind */
-extern u8 D_0023ABA8[];         /* (the zombie forms) */
+extern u8 D_0023ABA0[8];        /* per character kind */
+extern u8 D_0023ABA8[8];        /* (the zombie forms) */
 extern u8 D_006DB4FF[];         /* per NPC model (from 1) */
 extern u8 D_006DB500[];
 extern u8 D_006DB5E0[];
@@ -560,6 +627,331 @@ void func_005E9220(DrawObjFull *o) {
     }
     if (n != 0xFF) {
         func_005E9CF0((u8 *)o->model + 0x820, D_006DB880[n], n);
+    }
+}
+#endif
+
+/* A capsule (a segment and its radius), as func_005E9DA0 builds a matrix for. */
+typedef struct {
+    f32 p0[3];
+    f32 p1[3];
+    f32 r;
+} Capsule;
+
+extern s8 D_0023ABE8[8];        /* Cindy's: the four bones the pairs hang from, then the four */
+extern s8 D_0023ABF0[8];        /* (her zombie form) */
+extern f32 D_006DB8A0[2][3];    /* where the pairs hang, from the bones */
+extern f32 D_00239E98;          /* how far the first of a pair hangs */
+extern f32 D_00239E9C;          /* and the second */
+/* A capsule ready for tests: the segment, its radius, direction and middle, and a sphere about
+   the middle that holds it all. */
+typedef struct {
+    f32 p0[3];          /* 0x00 */
+    f32 p1[3];          /* 0x0C */
+    f32 r;              /* 0x18 */
+    f32 dir[3];         /* 0x1C: p1 - p0 */
+    f32 mid[3];         /* 0x28 */
+    f32 bound;          /* 0x34: the sphere's radius */
+} CapsuleInfo;
+
+extern f32 D_00239E88;          /* how close to the axis counts as on it */
+void func_001918A0(f32 *dst, const f32 *src);
+
+void func_005E9DA0(Capsule *c, CapsuleInfo *out) {
+    func_001918A0(out->p0, c->p0);
+    func_001918A0(out->p1, c->p1);
+    out->r = c->r;
+    out->dir[0] = c->p1[0] - c->p0[0];
+    out->dir[1] = c->p1[1] - c->p0[1];
+    out->dir[2] = c->p1[2] - c->p0[2];
+    out->mid[0] = 0.5f * (c->p0[0] + c->p1[0]);
+    out->mid[1] = 0.5f * (c->p0[1] + c->p1[1]);
+    out->mid[2] = 0.5f * (c->p0[2] + c->p1[2]);
+    out->bound = func_001916E0(c->p0, out->mid);
+    out->bound += c->r;
+}
+
+/* Whether spheres (a, ra) and (b, rb) touch. */
+u8 func_005E9E80(f32 *a, f32 *b, f32 ra, f32 rb) {
+    f32 r = ra + rb;
+    f32 dx = a[0] - b[0];
+    f32 dy = a[1] - b[1];
+    f32 dz = a[2] - b[2];
+
+    if (dx * dx + dy * dy + dz * dz <= r * r) {
+        return 1;
+    }
+    return 0;
+}
+
+/* Whether a sphere at p of radius r touches capsule c; if so out is where p is pushed out to
+   (c's radius from its axis, or from the end it is past). */
+s32 func_005E9EE0(f32 *p, CapsuleInfo *c, f32 *out, f32 r);
+#ifdef NON_MATCHING   /* register allocation (radius and distance swap f20/f21) */
+s32 func_005E9EE0(f32 *p, CapsuleInfo *c, f32 *out, f32 r) {
+    f32 dist;
+    f32 n[3];
+    f32 t[3];
+    f32 u[3];
+    f32 w[3];
+    f32 q[3];
+    f32 e[3];
+    u8 hit;
+
+    hit = func_005E9E80(p, c->mid, r, c->bound);
+    if (!hit) {
+        return 0;
+    }
+    func_001918A0(n, c->dir);
+    t[0] = c->p0[0] - p[0];
+    t[1] = c->p0[1] - p[1];
+    t[2] = c->p0[2] - p[2];
+    func_00191820(u, n, t);
+    func_00191820(w, n, u);
+    func_00191750(w);
+    dist = func_001917C0(w, t);
+    r += c->r;
+    if (!(func_00191A70(dist) <= r)) {
+        return 0;
+    }
+    u[0] = dist * w[0];
+    u[1] = dist * w[1];
+    u[2] = dist * w[2];
+    q[0] = p[0] + u[0];
+    q[1] = p[1] + u[1];
+    q[2] = p[2] + u[2];
+    t[0] = q[0] - c->p0[0];
+    t[1] = q[1] - c->p0[1];
+    t[2] = q[2] - c->p0[2];
+    if (func_001917C0(t, n) < 0.0f) {
+        if (!(func_001916E0(c->p0, p) <= r)) {
+            return 0;
+        }
+        t[0] = p[0] - c->p0[0];
+        t[1] = p[1] - c->p0[1];
+        t[2] = p[2] - c->p0[2];
+        func_00191750(t);
+        t[0] *= c->r;
+        t[1] *= c->r;
+        t[2] *= c->r;
+        out[0] = c->p0[0] + t[0];
+        out[1] = c->p0[1] + t[1];
+        out[2] = c->p0[2] + t[2];
+        return 1;
+    }
+    t[0] = q[0] - c->p1[0];
+    t[1] = q[1] - c->p1[1];
+    t[2] = q[2] - c->p1[2];
+    n[0] = -n[0];
+    n[1] = -n[1];
+    n[2] = -n[2];
+    if (func_001917C0(t, n) < 0.0f) {
+        if (!(func_001916E0(c->p1, p) <= r)) {
+            return 0;
+        }
+        t[0] = p[0] - c->p1[0];
+        t[1] = p[1] - c->p1[1];
+        t[2] = p[2] - c->p1[2];
+        func_00191750(t);
+        t[0] *= c->r;
+        t[1] *= c->r;
+        t[2] *= c->r;
+        out[0] = c->p1[0] + t[0];
+        out[1] = c->p1[1] + t[1];
+        out[2] = c->p1[2] + t[2];
+        return 1;
+    }
+    if (func_00191A70(dist) < D_00239E88) {
+        /* On the axis: any direction across it will do. */
+        func_001918A0(e, q);
+        e[0] += 5.0f;
+        t[0] = e[0] - c->p1[0];
+        t[1] = e[1] - c->p1[1];
+        t[2] = e[2] - c->p1[2];
+        func_00191820(u, t, n);
+        if (func_001917C0(u, u) < D_00239E88) {
+            q[1] += 5.0f;
+            t[0] = e[0] - c->p1[0];
+            t[1] = e[1] - c->p1[1];
+            t[2] = e[2] - c->p1[2];
+            func_00191820(u, t, n);
+        }
+        func_00191820(t, u, n);
+        func_00191750(t);
+    } else {
+        t[0] = p[0] - q[0];
+        t[1] = p[1] - q[1];
+        t[2] = p[2] - q[2];
+        func_00191750(t);
+    }
+    t[0] *= c->r;
+    t[1] *= c->r;
+    t[2] *= c->r;
+    out[0] = q[0] + t[0];
+    out[1] = q[1] + t[1];
+    out[2] = q[2] + t[2];
+    return 1;
+}
+#endif
+
+/* Cindy's hanging bones (kind 7 in her first costume): two pairs, each hung from two points on
+   bones 0 and 2 toward the matching points on the other one, and kept out of the capsules
+   between bones 0-1 and 2-3. */
+void func_005EA470(DrawObjFull *o);
+#ifdef NON_MATCHING   /* register allocation (the original spills bone 2 to the stack) */
+void func_005EA470(DrawObjFull *o) {
+    f32 d[3];
+    f32 v[3];
+    FlBone *a[4];
+    FlBone *b[4];
+    f32 p[4][3];
+    Capsule cap;
+    CapsuleInfo m0;
+    CapsuleInfo m1;
+    s32 i;
+    s8 *ids;
+    s32 j;
+
+    if (o->unkB98 == 7 && o->costume == 0 && o->unkBB4 == 0) {
+        ids = D_0023ABE8;
+        if (o->unk54D == 1) {
+            ids = D_0023ABF0;
+        }
+        for (i = 0; i < 4; i++) {
+            a[i] = ((FlBone **)((Slot1468 *)o->model)->unk820)[ids[i]];
+            b[i] = ((FlBone **)((Slot1468 *)o->model)->unk820)[ids[i + 4]];
+        }
+        for (i = 0; i < 2; i++) {
+            for (j = 0; j < 2; j++) {
+                func_001913A0(p[j + i * 2], D_006DB8A0[j], a[i * 2]->world[0]);
+                p[j + i * 2][0] += a[i * 2]->world[3][0];
+                p[j + i * 2][1] += a[i * 2]->world[3][1];
+                p[j + i * 2][2] += a[i * 2]->world[3][2];
+            }
+        }
+        v[0] = 0.0f;
+        cap.r = 10.5f;
+        v[1] = -100.0f;
+        v[2] = 0.0f;
+        func_001918A0(cap.p0, a[0]->world[3]);
+        func_001918A0(cap.p1, a[1]->world[3]);
+        func_005E9DA0(&cap, &m0);
+        func_001918A0(cap.p0, a[2]->world[3]);
+        func_001918A0(cap.p1, a[3]->world[3]);
+        func_005E9DA0(&cap, &m1);
+        for (i = 0; i < 2; i++) {
+            d[0] = p[i + 2][0] - p[i][0];
+            d[1] = p[i + 2][1] - p[i][1];
+            d[2] = p[i + 2][2] - p[i][2];
+            func_00191750(d);
+            v[0] = D_00239E98 * d[0];
+            v[1] = D_00239E98 * d[1];
+            v[2] = D_00239E98 * d[2];
+            func_00190ED0(b[i]->world[0], a[0]->world[0]);
+            b[i]->world[3][0] = v[0] + p[i][0];
+            b[i]->world[3][1] = v[1] + p[i][1];
+            b[i]->world[3][2] = v[2] + p[i][2];
+            if (func_005E9EE0(b[i]->world[3], &m0, v, 1.0f)) {
+                b[i]->world[3][0] = v[0];
+                b[i]->world[3][1] = v[1];
+                b[i]->world[3][2] = v[2];
+            }
+            v[0] = D_00239E9C * d[0];
+            v[1] = D_00239E9C * d[1];
+            v[2] = D_00239E9C * d[2];
+            func_00190ED0(b[i + 2]->world[0], a[2]->world[0]);
+            b[i + 2]->world[3][0] = v[0] + p[i + 2][0];
+            b[i + 2]->world[3][1] = v[1] + p[i + 2][1];
+            b[i + 2]->world[3][2] = v[2] + p[i + 2][2];
+            if (func_005E9EE0(b[i + 2]->world[3], &m1, v, 1.0f)) {
+                b[i + 2]->world[3][0] = v[0];
+                b[i + 2]->world[3][1] = v[1];
+                b[i + 2]->world[3][2] = v[2];
+            }
+        }
+    }
+}
+#endif
+
+extern void *D_006DB890[];      /* the faces' other links (by the same number) */
+void func_005E9600(DrawObjFull *o, u8 n);
+
+/* Sets up the character's face for its expression table (as func_005E9220, with the other
+   links; online players by 0xFAC, the zombie forms by 0x54D). */
+void func_005E9390(DrawObjFull *o);
+#ifdef NON_MATCHING   /* the early returns' branch layout */
+void func_005E9390(DrawObjFull *o) {
+    u8 n;
+    u8 k;
+
+    if (o->active != 0 && o->visible != 0 && !(o->unk54A & 0x40)) {
+        if (D_0023BB98 == 1 && D_0048BF88[0] == 0) {
+            k = 0;
+            switch (o->unkFAC) {
+            case 0:
+            case 1:
+            case 3:
+                k = 0;
+                break;
+            case 4:
+                break;
+            default:
+                k = 0xFF;
+                break;
+            }
+        } else {
+            k = o->type;
+        }
+        switch (k) {
+        case 0:
+            k = 1;
+            if (o->unkBB4 == 0) {
+                k = (o->unk54D == 1) ? 3 : 0;
+            }
+            switch (k) {
+            case 0:
+                func_005EA470(o);
+                n = D_0023ABA0[o->unkB98];
+                if (n == 0xFF || o->costume != 0) {
+                    return;
+                }
+                break;
+            case 1:
+                n = D_006DB500[o->unkB98];
+                if (n == 0xFF) {
+                    return;
+                }
+                break;
+            case 3:
+                func_005EA470(o);
+                n = D_0023ABA8[o->unkB98];
+                if (n == 0xFF) {
+                    return;
+                }
+                break;
+            case 4:
+                n = D_006DB5E0[o->unkB98];
+                if (n == 0xFF) {
+                    return;
+                }
+                break;
+            }
+            break;
+        case 1:
+            if (o->unk54D == 1) {
+                n = D_006DB5E0[o->unkBB4];
+            } else {
+                n = D_006DB500[o->unkBB4];
+            }
+            if (n == 0xFF) {
+                return;
+            }
+            break;
+        default:
+            return;
+        }
+        func_005E9600(o, n);
+        func_005E9CF0((u8 *)o->model + 0x820, D_006DB890[n], n);
     }
 }
 #endif
