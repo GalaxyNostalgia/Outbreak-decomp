@@ -1621,6 +1621,68 @@ void func_0018F7C0(f32 *m);
 void func_00190DB0(f32 *a, const f32 *b);
 void func_00190CD0(f32 *a, const f32 *b);
 
+void func_00190C50(f32 *out, const f32 *a, const f32 *b);
+
+void func_001896F0(u128 *src, u128 *dst, s32 n);   /* copies n matrices (assembly) */
+
+/* Each bone's skinning matrix (its bind pose's inverse times its world matrix) into out, by its
+   number, for the tree from root. */
+void func_001922B0(f32 *out, FlBone *b) {
+    FlBone *root = b;
+
+top:
+    func_00190C50(out + b->id * 16, b->pose[0], b->world[0]);
+    if (b->child != NULL) {
+        b = b->child;
+        goto top;
+    }
+    if (b->next != NULL) {
+        b = b->next;
+        goto top;
+    }
+    while (b != root) {
+        if (b->next != NULL) {
+            b = b->next;
+            goto top;
+        }
+        b = b->parent;
+    }
+}
+
+/* The same into the scratchpad's matrix area. */
+void func_00192210(FlBone *b) {
+    FlBone *root = b;
+
+top:
+    func_00190C50((f32 *)PS2_SPR(0x70003700) + b->id * 16, b->pose[0], b->world[0]);
+    if (b->child != NULL) {
+        b = b->child;
+        goto top;
+    }
+    if (b->next != NULL) {
+        b = b->next;
+        goto top;
+    }
+    while (b != root) {
+        if (b->next != NULL) {
+            b = b->next;
+            goto top;
+        }
+        b = b->parent;
+    }
+}
+
+/* The matrices a part uses (list: a count, then their numbers) into the scratchpad's area. */
+void func_00192350(s16 *list, f32 *mats) {
+    s32 i = 0;
+    s32 n = list[0];
+    s16 *p = list + 1;
+
+    for (; i < n; p++, i++) {
+        func_001896F0((u128 *)(mats + *p * 16), (u128 *)((u8 *)PS2_SPR(0x70003700) + i * 64), 1);
+    }
+}
+
 /* World matrices of the tree from b at scale 1, under parent. */
 void func_00192BE0(FlBone *b, f32 *parent) {
     func_00192C00(b, parent, 1.0f, 1.0f, 1.0f);
