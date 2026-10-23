@@ -144,7 +144,7 @@ typedef struct {
     u8 level;           /* 0x40: its level (func_00540A10 says whether it is shown) */
     u8 group;           /* 0x41: floors of a group are stacked by height */
     s16 nparts;         /* 0x42 */
-    u32 parts;          /* 0x44: in the map file, 6 bytes each (byte 0: its room record) */
+    s32 parts;          /* 0x44: in the map file, 6 bytes each (byte 0: its room record) */
     u8 unk48[4];
     s16 height;         /* 0x4C: the floor above starts here */
     u8 unk4E[0x58 - 0x4E];
@@ -199,8 +199,152 @@ s32 func_00540A10(s32 level);
 extern char D_0070D970[];   /* "data\\rom\\scene\\item_msg\\cp_back.img" */
 extern char D_0070D998[];   /* "%sfile%03d.dat" */
 extern char D_0070D9D0[];   /* "%sfile%03de.dat" */
-extern u8 *D_0023BFD4;      /* the files screen's background image */
-void func_006A6140(s32 a, u8 *img, s32 b, s32 tbp);
+/* The files screen's background (0x594 bytes; its start is laid out as MapState's). */
+typedef struct {
+    u8 unk0[0x14];
+    u32 nclut;          /* 0x14 */
+    u8 *src;            /* 0x18: the image file */
+    u8 *clut;           /* 0x1C */
+    u8 *pkt[2];         /* 0x20 */
+    u8 *pktEnd[2];      /* 0x28 */
+    s32 unk30;          /* 0x30 */
+    u8 *unk34;          /* 0x34 */
+    s32 tbp;            /* 0x38 */
+    s32 tbp2;           /* 0x3C */
+    s32 used;           /* 0x40 */
+    s32 unk44;          /* 0x44 */
+    u8 unk48[0x68 - 0x48];
+    s32 unk68[6];       /* 0x68 */
+    u8 unk80[0xAC - 0x80];
+    u32 ang[32];        /* 0xAC: the sparks' */
+    f32 vel[32][2];     /* 0x12C */
+    s32 unk22C[32][2];  /* 0x22C */
+    f32 pos[32][2];     /* 0x32C */
+    s32 unk42C[32];     /* 0x42C */
+    s32 unk4AC[32];     /* 0x4AC */
+    s8 ofs[32][2];      /* 0x52C */
+    s8 unk56C[32];      /* 0x56C */
+    u8 unk58C[0x594 - 0x58C];
+} FileBg;
+
+/* An upload of part of the image: where in the file, its size and where in VRAM. */
+typedef struct {
+    s32 ofs;
+    s32 w;
+    s32 h;
+    s32 tbp;
+} FileBgPart;
+
+extern FileBg *D_0023BFD4;      /* the files screen's background */
+extern u32 D_006FF680[];         /* palettes 0-2 (16 words each), then for 3-12 a colour and the one for the other 15 */
+extern u8 D_006FF790[32];       /* palettes 13-15: alphas */
+extern FileBgPart D_006FF7C0[]; /* ended by w 0 */
+extern f32 D_00239D30;          /* 2 pi */
+extern void *D_006FF8A4[];
+f32 func_00191B60(f32 x);
+f32 func_00191B70(f32 x);
+u16 func_001ADEF0(s32 n);
+u8 *func_006A9550(MapState *st, u8 *p);
+u32 *func_001B56E0(u32 *p, u32 src, s32 dbp, s32 dbw, s32 psm, s32 dx, s32 dy, s32 w, s32 h);
+
+void func_006AA0E0(void) {
+    D_006FF8A4[0] = (u8 *)D_0023BFD4 + 0x50;
+}
+
+/* Sets the files screen's background up from its image file: 16 palettes after the image, two
+   upload packets after them, and 32 sparks at random. */
+void func_006A6140(s32 a, u8 *img, s32 count, s32 tbp, s32 size);
+#ifdef NON_MATCHING   /* register allocation; logic follows the asm */
+void func_006A6140(s32 a, u8 *img, s32 count, s32 tbp, s32 size) {
+    FileBg *bg = D_0023BFD4;
+    u32 *c;
+    u32 *src;
+    u8 *b;
+    u8 *p;
+    u8 *q;
+    FileBgPart *e;
+    s32 i;
+    s32 j;
+    s32 bw;
+    s32 x;
+
+    if (bg == NULL) {
+        return;
+    }
+    bg->nclut = 16;
+    bg->unk44 = count;
+    bg->src = img;
+    bg->clut = (u8 *)(((u32)img + size + 0x3F) & ~0x3F);
+    c = (u32 *)bg->clut;
+    p = (u8 *)(((u32)bg->clut + bg->nclut * 64 + 0x3F) & ~0x3F);
+    memset(c, 0, 4);
+    src = D_006FF680;
+    for (i = 0; i < 3; i++) {
+        for (j = 0; j < 16; j++) {
+            *c++ = *src++;
+        }
+    }
+    for (; i < 13; i++) {
+        *c++ = src[0];
+        for (j = 1; j < 16; j++) {
+            *c++ = src[1];
+        }
+        src += 2;
+    }
+    b = D_006FF790;
+    for (; i < 14; i++) {
+        for (j = 0; j < 16; j++) {
+            *c++ = (*b++ << 24) | 0xFFFFFF;
+        }
+    }
+    for (; i < 16; i++) {
+        for (j = 0; j < 16; j++) {
+            *c++ = *b++ << 24;
+        }
+    }
+    bg->tbp = tbp;
+    bg->tbp2 = tbp + 0x140;
+    for (i = 0; i < 2; i++) {
+        bg->pkt[i] = p;
+        q = func_006A9550((MapState *)bg, p);
+        p += 0x8000;
+        for (e = D_006FF7C0; e->w != 0; e++) {
+            bw = e->w / 64;
+            if (bw == 0) {
+                bw = 1;
+            }
+            q = (u8 *)func_001B56E0((u32 *)q, (u32)(bg->src + e->ofs), bg->tbp + e->tbp, bw, 0x14, 0, 0,
+                                    e->w, e->h);
+        }
+        bg->pktEnd[i] = q;
+    }
+    func_006AA0E0();
+    bg->unk30 = 0;
+    bg->unk34 = bg->pktEnd[0];
+    bg->used = (p - bg->src + 0x612) & ~0x3F;
+    bg->unk68[0] = 0x7F0;
+    bg->unk68[1] = 0x3F0;
+    bg->unk68[2] = 0x9D0;
+    bg->unk68[3] = 0x5A0;
+    bg->unk68[4] = 0x1F0;
+    bg->unk68[5] = -0x40;
+    for (i = 0; i < 32; i++) {
+        bg->ang[i] = (u16)((func_001ADEF0(1) & 0xFFFF) % 16 << 12);
+        bg->unk42C[i] = 0;
+        bg->unk4AC[i] = 0;
+        bg->unk22C[i][0] = 0;
+        bg->unk22C[i][1] = 0;
+        bg->unk56C[i] = (func_001ADEF0(1) & 0xFFFF) % 2;
+        bg->vel[i][0] = 0.5f * func_00191B60(D_00239D30 * (func_001ADEF0(1) & 0xFFFF) / 65536.0f);
+        bg->vel[i][1] = 0.5f * func_00191B70(D_00239D30 * (func_001ADEF0(1) & 0xFFFF) / 65536.0f);
+        bg->ofs[i][0] = (s32)(16.0f * func_00191B60(D_00239D30 * (func_001ADEF0(1) & 0xFFFF) / 65536.0f)) + 4;
+        bg->ofs[i][1] = (s32)(16.0f * func_00191B70(D_00239D30 * (func_001ADEF0(1) & 0xFFFF) / 65536.0f)) - 8;
+        x = 0x21E;
+        bg->pos[i][0] = x + bg->ofs[i][0];
+        bg->pos[i][1] = 368.0f + bg->ofs[i][1];
+    }
+}
+#endif
 
 /* Loads the files screen's background (once, into VRAM) and the room's file texts after it,
    past the map in the map buffer: where they are, or 0. */
@@ -212,18 +356,18 @@ s32 func_006A5A30(void) {
     s32 n;
 
     if (D_0048BF60.unkAE == 0) {
-        D_0023BFD4 = buf = (u8 *)(((s32)D_00306590.mapBuf + 0x8003F) / 64 * 64);
+        D_0023BFD4 = (FileBg *)(buf = (u8 *)(((s32)D_00306590.mapBuf + 0x8003F) / 64 * 64));
         memset(D_0023BFD4, 0, 0x594);
         buf = (u8 *)(((s32)buf + 0x5D3) / 64 * 64);
         n = func_001CFBB0(D_0070D970, buf, 1, 0);
         if (n == 0) {
             D_0023BFD4 = NULL;
         } else {
-            func_006A6140(0, buf, 0x20, FIELD(&D_00306590, u16, 0x56) + 0x400);
+            func_006A6140(0, buf, 0x20, FIELD(&D_00306590, u16, 0x56) + 0x400, n);
             D_0048BF60.unkAE = 1;
         }
         if (D_0023BFD4 != NULL) {
-            buf += (*(s32 *)(D_0023BFD4 + 0x40) + 0x3F) & ~0x3F;
+            buf += (D_0023BFD4->used + 0x3F) & ~0x3F;
         }
         if (D_00306590.unk3D == 0) {
             sprintf(name, D_0070D998, D_0070D9B0, D_00306590.unk1A);
@@ -425,6 +569,47 @@ f32 func_006A89C0(s32 n) {
     for (i = 0; i < n; i++, f++) {
     }
     return f->scale;
+}
+
+s32 func_001AF500(void);
+
+/* The map parts (byte 1 of each) of the floor room is on that belong to this scenario's
+   variant of it, for the rooms with such parts. */
+void func_006A7BE0(s32 room, s32 *parts) {
+    MapState *st = &D_00720AA0;
+    MapFloor *f;
+    DrawObjFull *p;
+    u8 *q;
+    s32 n;
+    s32 k;
+    s32 cnt;
+    u8 id;
+
+    if (D_00720AA0.unk18 == NULL) {
+        return;
+    }
+    if (D_00306590.unk1A == 1 || D_00306590.unk1A == 0x1C || D_00306590.unk1A == 2 ||
+        D_00306590.unk1A == 0x29 || D_00306590.unk1A == 0 || D_00306590.unk1A == 0x23) {
+        if (func_001AF500() == 1) {
+            p = &D_00476DD0[D_0048BF60.unk1D];
+        } else {
+            p = &D_00476DD0[0];
+        }
+        f = st->floors;
+        n = func_006A8860(room, p->unk38[1]);
+        if (n == -1) {
+            return;
+        }
+        f += n;
+        q = (u8 *)(f->parts + (s32)D_00306590.mapBuf);
+        cnt = f->nparts;
+        for (k = 0; k < cnt; k++, q += 6) {
+            id = st->rooms[q[0]].id;
+            if (id != 0 && D_00306590.unk1C == id) {
+                *parts++ = q[1];
+            }
+        }
+    }
 }
 
 /* Opens the map: loads its file (once per room), reads its header, and sets up the floors
