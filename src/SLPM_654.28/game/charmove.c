@@ -631,6 +631,204 @@ void func_005E9220(DrawObjFull *o) {
 }
 #endif
 
+/* An eye (or a pair of them) of a face: a chain of bones turned to look at a point ahead. */
+typedef struct {
+    u16 bones;          /* 0x0: D_006DB730's (first bone, end) */
+    u16 flags;          /* 0x2: 1: clamp every bone, not just the first */
+    s16 aim;            /* 0x4: D_006DB780: how far ahead */
+    s16 pos;            /* 0x6: D_006DB790: the point, in the head's frame */
+    s16 reach;          /* 0x8: D_006DB850: the head sphere's radius per bone */
+    s16 ofs;            /* 0xA: D_006DB740 (-1: none) */
+    s16 lim;            /* 0xC: D_006DB7D0: the turn's limits (-1: none) */
+    s16 decay;          /* 0xE: D_0023ABB0 */
+    s16 pull;           /* 0x10: D_006DB7C0 */
+} EyeDef;
+
+extern s16 D_006DB6C0[][4];     /* per face: its eyes, -1 ended */
+extern EyeDef D_006DB6E0[];
+extern u16 D_006DB730[][2];
+extern f32 D_006DB740[][3];
+extern f32 D_006DB780[];
+extern f32 D_006DB790[][3];
+extern f32 D_006DB7C0[];
+extern f32 D_006DB7D0[][6];
+extern f32 D_006DB850[][2];
+void func_001918A0(f32 *dst, const f32 *src);
+extern f32 D_0023ABB0[2];
+void func_00340410(f32 *out, f32 *a, f32 *b);
+void func_003404F0(f32 *out, const f32 *a, const f32 *b);
+void func_003405D0(f32 s, f32 *out, const f32 *v);
+void func_0018FAB0(f32 *out, const f32 *m);
+f32 func_00191B50(f32 y, f32 x);
+f32 func_00341860(f32 x);
+void func_00192BE0(FlBone *b, f32 *parent);
+void func_00340560(f32 *out, const f32 *a, const f32 *b);
+
+/* How far p lies inside a sphere of radius r about c along the direction dir: when it is (or
+   is behind it), out is the push along dir (dot + r) and 1. */
+s32 func_006BDDF0(f32 *p, f32 *c, f32 *dir, f32 *out, f32 r) {
+    f32 t[3];
+    f32 n[3];
+    f32 dot;
+
+    func_00340560(t, c, p);
+    func_001918A0(n, dir);
+    func_00191750(n);
+    dot = func_001917C0(n, t);
+    if (dot <= 0.0f && !(-dot <= r)) {
+        return 0;
+    }
+    dot += r;
+    func_003405D0(dot, out, n);
+    return 1;
+}
+
+/* Turns face n's eyes: each bone of each eye toward a point ahead of the head, pulled by its
+   motion and drifting (0xE58), within its limits. */
+void func_005E9600(DrawObjFull *o, u8 n);
+#ifdef NON_MATCHING   /* stack layout and register allocation; logic follows the asm */
+void func_005E9600(DrawObjFull *o, u8 n) {
+    f32 m[16];
+    f32 pm[16];
+    f32 hm[16];
+    EyeDef *defs[4];
+    f32 wpos[3];
+    f32 v[3];
+    f32 y[3];
+    f32 x[3];
+    f32 out[3];
+    f32 c[3];
+    f32 d[3];
+    f32 a[3];
+    f32 tgt[3];
+    f32 pos[3];
+    f32 dir[3];
+    s16 *l;
+    s16 i;
+    s16 cnt;
+    s16 k;
+    s16 j;
+    s16 b;
+    u16 first;
+    s32 end;
+    FlBone **bones;
+    FlBone **bp;
+    EyeDef **dp;
+    f32 *e;
+    s32 count;
+    f32 rx;
+    f32 ry;
+    u8 *eyes;
+
+    l = D_006DB6C0[n];
+    cnt = 0;
+    for (i = 0; i < 4; i++) {
+        if (*l == -1) {
+            break;
+        }
+        defs[i] = &D_006DB6E0[*l++];
+        cnt++;
+    }
+    count = cnt;
+    if (count == 0) {
+        return;
+    }
+    bones = OBJ_BONES(o);
+    func_00190ED0(hm, bones[0x15]->world[0]);
+    for (k = 0; k < count; k++) {
+        if (defs[k]->ofs != -1) {
+            func_001918A0(c, D_006DB740[defs[k]->ofs]);
+            func_00191410(c, OBJ_BONES(o)[0xA]->world[0]);
+        }
+        dp = &defs[k];
+        a[0] = 0.0f;
+        a[1] = D_006DB780[(*dp)->aim];
+        a[2] = 0.0f;
+        v[0] = D_006DB790[(*dp)->pos][0];
+        v[1] = D_006DB790[(*dp)->pos][1];
+        v[2] = D_006DB790[(*dp)->pos][2];
+        func_00191410(v, hm);
+        func_003404F0(a, a, v);
+        eyes = (u8 *)o + k * 0x48;
+        first = D_006DB730[(*dp)->bones][0];
+        end = D_006DB730[(*dp)->bones][1];
+        for (j = 0, b = first; b < end; b++, j++) {
+            bp = &bones[b];
+            func_0018FAB0(pos, (*bp)->world[0]);
+            func_0018FAB0(v, (*bp)->local[0]);
+            if (j == 0) {
+                func_00190ED0(pm, hm);
+            } else {
+                func_00190C50(m, (*bp)->parent->local[0], pm);
+                func_00190ED0(pm, m);
+            }
+            func_00191410(v, pm);
+            func_003404F0(wpos, &pm[12], v);
+            v[1] = -10.0f;
+            v[2] = 0.0f;
+            v[0] = 0.0f;
+            func_001913A0(dir, v, (*bp)->world[0]);
+            func_00340410(d, pos, wpos);
+            func_003405D0(D_006DB7C0[(*dp)->pull], d, d);
+            func_003404F0(dir, dir, d);
+            func_00191820(x, dir, a);
+            func_00191820(y, x, dir);
+            func_00191750(y);
+            func_003405D0(func_001917C0(y, a), y, y);
+            e = (f32 *)(eyes + 0xE58 + j * 0x24);
+            func_003404F0(e, e, y);
+            func_003404F0(dir, dir, e);
+            func_003404F0(tgt, wpos, dir);
+            func_00190E00(m, pm);
+            if ((*dp)->ofs == -1) {
+                d[0] = -dir[0];
+                d[1] = -dir[1];
+                d[2] = -dir[2];
+                func_00191410(d, m);
+                func_00191750(d);
+            } else {
+                if (func_006BDDF0(tgt, bones[0x15]->world[3], c, out,
+                                  D_006DB850[(*dp)->reach][j])) {
+                    func_003404F0(tgt, tgt, out);
+                }
+                func_00340410(d, wpos, tgt);
+                func_00191410(d, m);
+                func_00191750(d);
+            }
+            if ((j == 0 || ((*dp)->flags & 1)) && (*dp)->lim != -1) {
+                f32 *lim = D_006DB7D0[(*dp)->lim];
+
+                if (d[0] < lim[0]) {
+                    d[0] = lim[0];
+                } else if (!(d[0] <= lim[1])) {
+                    d[0] = lim[1];
+                }
+                if (d[1] < lim[2]) {
+                    d[1] = lim[2];
+                } else if (!(d[1] <= lim[3])) {
+                    d[1] = lim[3];
+                }
+                if (d[2] < lim[4]) {
+                    d[2] = lim[4];
+                } else if (!(d[2] <= lim[5])) {
+                    d[2] = lim[5];
+                }
+            }
+            ry = func_00191B50(d[2], d[1]);
+            rx = func_00191B50(-d[0], func_00341860(d[1] * d[1] + d[2] * d[2]));
+            func_0018F7C0(m);
+            func_0018FC10(rx, m);
+            func_0018FAD0(ry, m);
+            func_001918A0((*bp)->local[0], &m[0]);
+            func_001918A0((*bp)->local[1], &m[4]);
+            func_001918A0((*bp)->local[2], &m[8]);
+            func_003405D0(D_0023ABB0[(*dp)->decay], e, e);
+        }
+    }
+    func_00192BE0(bones[first], hm);
+}
+#endif
+
 /* A capsule (a segment and its radius), as func_005E9DA0 builds a matrix for. */
 typedef struct {
     f32 p0[3];
@@ -874,7 +1072,6 @@ void func_005EA470(DrawObjFull *o) {
 #endif
 
 extern void *D_006DB890[];      /* the faces' other links (by the same number) */
-void func_005E9600(DrawObjFull *o, u8 n);
 
 /* Sets up the character's face for its expression table (as func_005E9220, with the other
    links; online players by 0xFAC, the zombie forms by 0x54D). */

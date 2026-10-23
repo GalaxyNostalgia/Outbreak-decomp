@@ -74,7 +74,8 @@ typedef struct {
     u8 *unk84;          /* 0x84: 0xA8 entries of 0x70 bytes */
     u8 unk88[0x8C - 0x88];
     u8 *roomBuf;        /* 0x8C */
-    u8 unk90[0x98 - 0x90];
+    u8 *mapBuf;         /* 0x90: the room map file (func_006A6620) */
+    u8 unk94[0x98 - 0x94];
     u8 *door;           /* 0x98: the room's door%03d.dat (0x4000 bytes) */
     u8 unk9C[0xA0 - 0x9C];
     u8 *fontBuf;        /* 0xA0: where the font file is loaded */

@@ -54,7 +54,11 @@ typedef struct {
     u8 unkA1[5];        /* 0xA1: per player, its voice bank (character kind + 1; 0: none) */
     s8 unkA6;           /* 0xA6 */
     s8 unkA7;           /* 0xA7 */
-    u8 unkA8[0xB6 - 0xA8];
+    u8 unkA8[0xAC - 0xA8];
+    u8 unkAC;           /* 0xAC: the common item messages are loaded */
+    u8 unkAD;           /* 0xAD: the room's map (and its messages) are loaded */
+    s8 unkAE;           /* 0xAE */
+    u8 unkAF[0xB6 - 0xAF];
     u8 unkB6;           /* 0xB6: (offline) a bit per ... */
     s8 unkB7;           /* 0xB7 */
     u8 unkB8[2];
