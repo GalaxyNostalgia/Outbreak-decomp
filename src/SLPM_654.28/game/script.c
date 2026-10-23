@@ -372,6 +372,27 @@ void func_0065A620(void) {
     D_0048BE70.wait[5] = 0;
 }
 
+extern u32 D_00719628[];        /* the script's own flags */
+
+/* Script flag n on. */
+void func_006850F0(s32 n) {
+    D_00719628[n / 32] |= 1 << (n % 32);
+}
+
+/* Script flag n off. */
+void func_00685140(s32 n) {
+    D_00719628[n / 32] &= ~(1 << (n % 32));
+}
+
+/* Script flag n on or off. */
+void func_00687E60(s32 n, s32 on) {
+    if (on) {
+        func_006850F0(n);
+    } else {
+        func_00685140(n);
+    }
+}
+
 /* The scene variant: the script's table 0x18 (offsets, ending with -1) entry D_0048AEA5, at
    Options.unk1C; -1 when there's none. */
 extern u8 D_0048AEA5[];

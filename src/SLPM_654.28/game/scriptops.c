@@ -1349,6 +1349,55 @@ s32 func_0065C2B0(s32 *args) {
 }
 #endif
 
+extern u16 D_0048AFB0[][6];
+
+/* if flag word args[0]'s bit args[1] (column 0) is args[2] */
+s32 func_0065EA10(u32 *args);
+#ifdef NON_MATCHING   /* the bit test's and takes its operands the other way round */
+s32 func_0065EA10(u32 *args) {
+    s32 row = args[0];
+    s32 bit = args[1];
+    s32 v = args[2];
+
+    D_0048BE70.unk78[CUR]++;
+    if (v != 0) {
+        if (!((1 << bit) & D_0048AFB0[row][0])) {
+            func_0065AAF0();
+            return 2;
+        }
+    } else {
+        if ((1 << bit) & D_0048AFB0[row][0]) {
+            func_0065AAF0();
+            return 2;
+        }
+    }
+    return 0;
+}
+#endif
+
+extern u16 D_0048BF28[8];
+extern s16 D_0048BF18[8];
+
+/* Script op: entry args[2] (of 8) of a table: args[1] (| 0x8000 with args[0]) and args[3]. */
+s32 func_0065C300(s32 *args) {
+    s32 f = args[0];
+    s32 a = args[1];
+    u32 i = args[2];
+    s32 w = args[3];
+    u16 v;
+
+    if (i >= 8) {
+        return 0;
+    }
+    v = a;
+    if (f != 0) {
+        v |= 0x8000;
+    }
+    D_0048BF28[i] = v;
+    D_0048BF18[i] = w;
+    return 0;
+}
+
 /* For the players playing character args[0]: their 3-byte state in the scene (0x280) = {0,
    args[1], args[2]}; when that's us, a flag for the script. */
 s32 func_0065D270(u32 *args) {

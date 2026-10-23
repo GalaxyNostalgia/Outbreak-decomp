@@ -340,6 +340,27 @@ s32 func_006CD950(u32 *args) {
 }
 #endif
 
+/* Script op: flag args[1] of the second event set on or off (args[2]), locally (args[0] 0) or
+   told to the others too. */
+s32 func_006CD9E0(u32 *args) {
+    s32 shared = args[0];
+    u32 n = args[1];
+    s32 on = args[2];
+
+    if (shared == 0) {
+        if (on == 0) {
+            D_0048ADD0[n >> 5] &= ~(1 << (n & 0x1F));
+        } else {
+            D_0048ADD0[n >> 5] |= 1 << (n & 0x1F);
+        }
+    } else if (on == 0) {
+        func_006CD690(n);
+    } else {
+        func_006CD530(n);
+    }
+    return 0;
+}
+
 extern u32 D_0023BE14;          /* players */
 void func_008223C0(DrawObjFull *p, s32 mode);   /* SINGLE.BIN */
 
