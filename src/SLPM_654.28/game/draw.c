@@ -10,7 +10,7 @@ extern DrawObjFull *D_0023BE04;     /* enemies in use */
 extern u8 D_0048AEA3[];
 extern s8 D_003B9490[][0x824];      /* what each enemy holds */
 extern AnimEntry D_00355A40[];      /* (SUBMAIN.BIN) */
-s8 func_005902F0(void *a, s32 b);
+s8 func_005902F0(f32 *pos, s8 range);
 void func_00343E10(s8 *held, AnimEntry *anim, void *obj);
 
 void func_00651720(void) {

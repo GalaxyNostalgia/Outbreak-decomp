@@ -72,7 +72,7 @@ void func_001B13D0(void) {
    linked in after its bucket (func_001A5130), so walking the list visits them far to near. */
 typedef struct DrawCb {
     u32 next;
-    s32 depth;          /* 0x04 */
+    u32 depth;          /* 0x04: its bucket (0-127, by distance from the camera) */
     f32 pos[4];         /* 0x08 */
     void *arg;          /* 0x18 */
     void (*fn)(struct DrawCb *cb); /* 0x1C */
@@ -91,4 +91,91 @@ void func_001B17C0(void) {
         }
         ((DrawCb *)p)->fn((DrawCb *)p);
     }
+}
+
+
+typedef struct {
+    f32 v[4];
+} F4;
+
+extern f32 D_00306338[3];       /* the camera */
+f32 func_001916E0(const f32 *a, const f32 *b);
+
+/* Takes a callback from the pool (cleared), NULL when none is left. */
+DrawCb *func_001B1810(void) {
+    DrawCb *e;
+    u16 id;
+
+    if (D_0023BB78 == 0) {
+        return NULL;
+    }
+    id = *D_0023BB70++;
+    D_0023BB78--;
+    e = &((DrawCb *)D_002F8AE0)[id];
+    memset(e, 0, sizeof(DrawCb));
+    return e;
+}
+
+/* Gives back the one just taken. */
+void func_001B1880(void) {
+    if (D_0023BB78 < 0x100) {
+        D_0023BB70--;
+        D_0023BB78++;
+    }
+}
+
+/* Links e into the list at head, before the first farther-or-equal one. */
+void func_001B18B0(DrawCb *e, u32 *head) {
+    u32 t;
+    DrawCb *n;
+
+    for (;;) {
+        t = *head;
+        if (t == 0 || !(t & 1)) {
+            *head = (u32)e | 1;
+            e->next = t;
+            return;
+        }
+        n = (DrawCb *)(t & ~1);
+        if (n->pos[2] <= e->pos[2]) {
+            *head = (u32)e | 1;
+            e->next = t;
+            return;
+        }
+        head = &n->next;
+    }
+}
+
+/* Queues fn(arg) to be drawn back to front by the distance of pos from the camera (within
+   50000): its bucket, or -1. */
+s32 func_001B1460(void *fn, void *arg, f32 *pos) {
+    F4 d;
+    f32 c[3];
+    f32 p[3];
+    DrawCb *e;
+    s32 far = 50000;
+
+    if ((e = func_001B1810()) == NULL) {
+        return -1;
+    }
+    c[0] = D_00306338[0];
+    c[1] = D_00306338[1];
+    c[2] = D_00306338[2];
+    p[0] = pos[0];
+    p[1] = pos[1];
+    p[2] = pos[2];
+    d.v[2] = func_001916E0(c, p);
+    if (d.v[2] < 0.0f) {
+        d.v[2] = 0.0f;
+    }
+    if (!(d.v[2] <= (f32)far)) {
+        func_001B1880();
+        return -1;
+    }
+    e->fn = (void (*)(DrawCb *))fn;
+    e->arg = arg;
+    *(F4 *)e->pos = d;
+    e->depth = 128.0f * (d.v[2] / (f32)far);
+    func_001B18B0(e, &D_002FAAE0[127 - e->depth]);
+    return e->depth;
 }

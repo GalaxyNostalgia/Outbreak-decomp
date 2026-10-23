@@ -64,6 +64,23 @@ Aot *func_00595AE0(Aot *a);
 void func_00593FA0(Aot *a);
 void func_005960A0(Aot *a);
 
+extern s8 D_0048BF88[];
+extern f32 D_00306338[3];       /* the camera */
+extern f32 D_006D6CF0[];        /* draw distances */
+f32 func_001916E0(const f32 *a, const f32 *b);
+
+/* Whether pos (100 up) is within draw distance range of the camera; never while D_0048BF88. */
+s8 func_005902F0(f32 *pos, s8 range) {
+    Vec3 p;
+
+    if (D_0048BF88[0] != 0) {
+        return 0;
+    }
+    p = *(Vec3 *)pos;
+    p.y += 100.0f;
+    return func_001916E0(&p.x, D_00306338) < D_006D6CF0[range];
+}
+
 /* A new (cleared) area, put first in the list (last when at is 0); NULL when none is free. */
 Aot *func_00590BF0(s32 at) {
     Aot *a;

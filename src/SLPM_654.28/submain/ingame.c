@@ -479,7 +479,11 @@ extern u8 D_003AEF74;           /* (GAME.BIN) */
 extern s8 D_0048AEA0;
 extern s8 D_0048AEA1;
 extern s8 D_0048AEA3;
-s32 func_005902F0(void *a, s32 b);
+#ifdef PLATFORM_PC
+s8 func_005902F0(f32 *pos, s8 range);
+#else
+s32 func_005902F0(f32 *pos, s8 range);  /* as the original declared it here (s8 in GAME.BIN) */
+#endif
 void func_00680590(DrawObjFull *o);
 
 #ifdef NON_MATCHING   /* first draft */
@@ -521,6 +525,19 @@ void func_00345020(void *obj) {
     func_00680590(o);
 }
 #endif
+
+#include "enemy.h"
+extern u8 D_0048AEA2[];         /* the enemies' shadows are off */
+
+/* An enemy's shadow, unless switched off or out of its draw distance. */
+void func_00345170(void *obj) {
+    DrawObjFull *o = obj;
+
+    if (o != NULL && o->active != 0 && o->visible != 0 && o->unk553 != 0 && D_0048AEA2[0] == 0 &&
+        func_005902F0(o->unk38, D_00357500[o->kind].defs[o->unk54D].unkC) == 0) {
+        func_00680590(o);
+    }
+}
 
 /* Screen effects: a GS packet built in the frame's scratch area and sent straight to the GS. */
 
