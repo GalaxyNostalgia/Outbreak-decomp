@@ -351,12 +351,30 @@ void func_00588A80(void) {
     }
 }
 
-typedef struct { u8 unk0[0xC0]; } ObjC0;
+/* The tasks: 0x20 objects of 0xC0 bytes (D_003E6A30) with a free stack, in a list from
+   D_0023BDE8 (run by func_005437C0) to D_0023BDE4. */
+typedef struct Task {
+    s8 active;          /* 0x00 */
+    u8 unk1;
+    u8 kind;            /* 0x02 */
+    u8 unk3[3];
+    u8 index;           /* 0x06: in D_003E6A30 */
+    u8 unk7[0x14 - 7];
+    void (*update)(struct Task *t); /* 0x14 */
+    s32 unk18;          /* 0x18 */
+    struct Task *next;  /* 0x1C */
+    struct Task *prev;  /* 0x20 */
+    u8 unk24[4];
+    void *owner;        /* 0x28 */
+    u8 unk2C[0xC0 - 0x2C];
+} Task;
+
+typedef Task ObjC0;
 extern ObjC0 D_003E6A30[0x20];
 extern ObjC0 *D_00386A50[0x20];
-extern s16 D_0023BDE0;
-extern s32 D_0023BDE4;
-extern s32 D_0023BDE8;
+extern s16 D_0023BDE0;          /* how many are free */
+extern Task *D_0023BDE4;        /* the list's last */
+extern Task *D_0023BDE8;        /* its first */
 
 void func_00543580(void) {
     u8 i;
@@ -368,6 +386,86 @@ void func_00543580(void) {
     for (i = 0; i < 0x20; i++) {
         D_00386A50[i] = &D_003E6A30[i];
     }
+}
+
+/* A cleared task, put first in the list (last when last != 0); NULL when none is free. */
+Task *func_00543600(s32 last) {
+    Task *t;
+
+    if (D_0023BDE0 == 0) {
+        return NULL;
+    }
+    D_0023BDE0--;
+    t = D_00386A50[D_0023BDE0];
+    memset(t, 0, sizeof(Task));
+    t->index = (u32)((u8 *)t - (u8 *)D_003E6A30) / sizeof(Task);
+    if (D_0023BDE8 == NULL) {
+        D_0023BDE4 = t;
+        D_0023BDE8 = t;
+        t->prev = NULL;
+        t->next = NULL;
+    } else if (last == 0) {
+        t->next = D_0023BDE8;
+        t->prev = NULL;
+        D_0023BDE8->prev = t;
+        D_0023BDE8 = t;
+    } else {
+        t->next = NULL;
+        t->prev = D_0023BDE4;
+        D_0023BDE4->next = t;
+        D_0023BDE4 = t;
+    }
+    return t;
+}
+
+/* Frees task t (takes it out of the list). */
+s32 func_005436F0(void *p) {
+    Task *t = p;
+
+    if (D_0023BDE0 == 0x20) {
+        return 0;
+    }
+    t->active = 0;
+    D_00386A50[D_0023BDE0] = t;
+    D_0023BDE0++;
+    if (D_0023BDE8 == t) {
+        if (t->next == NULL) {
+            D_0023BDE4 = NULL;
+            D_0023BDE8 = NULL;
+        } else {
+            t->next->prev = NULL;
+            D_0023BDE8 = t->next;
+        }
+        return 1;
+    }
+    if (D_0023BDE4 == t) {
+        if (t->prev == NULL) {
+            D_0023BDE4 = NULL;
+            D_0023BDE8 = NULL;
+        } else {
+            t->prev->next = NULL;
+            D_0023BDE4 = t->prev;
+        }
+        return 1;
+    }
+    t->prev->next = t->next;
+    t->next->prev = t->prev;
+    return 1;
+}
+
+/* A task of kind 5 running fn for owner. */
+void *func_00543800(void *owner, void *fn) {
+    Task *t = func_00543600(1);
+
+    if (t == NULL) {
+        return NULL;
+    }
+    t->active = 1;
+    t->kind = 5;
+    t->update = fn;
+    t->unk18 = 0;
+    t->owner = owner;
+    return t;
 }
 
 extern u8 D_003939E0[0x7C0];

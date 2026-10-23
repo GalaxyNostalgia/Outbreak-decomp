@@ -317,3 +317,192 @@ void func_005A79E0(u8 k, Mat44 *m) {
     D_00472D10[k] = m;
     *m = D_00470BB0[k];
 }
+
+/* The room's switches (16 of 0x60 bytes at D_00470090 + 0x4730), each worked by a zone of
+   kind 0 or 2 with its number. */
+typedef struct {
+    u8 unk0;
+    u8 unk1;            /* 0x01: (D_006ED780) */
+    u8 unk2;
+    u8 state;           /* 0x03: 2 running */
+    u8 unk4;            /* 0x04 */
+    u8 unk5;
+    u8 model;           /* 0x06: its room model */
+    u8 anim;            /* 0x07: D_006ED840 entry */
+    u8 step;            /* 0x08: in the anim */
+    u8 unk9;            /* 0x09 */
+    u8 unkA;            /* 0x0A */
+    u8 unkB;            /* 0x0B */
+    u8 unkC[0x20 - 0xC];
+    Mat44 mtx;          /* 0x20 */
+} RoomSwitch;
+
+/* The zones' fields for switches (kinds 0 and 2). */
+typedef struct {
+    u8 unk0[0x30];
+    u8 kind;            /* 0x30 */
+    u8 unk31[0x40 - 0x31];
+    s32 id;             /* 0x40 */
+    u8 model2;          /* 0x44: (kind 2) */
+    u8 unk45[3];
+    s32 base2;          /* 0x48: (kind 2) D_0023A8F0 entry */
+    u8 model0;          /* 0x4C: (kind 0) */
+    u8 unk4D[0x54 - 0x4D];
+    s32 base0;          /* 0x54: (kind 0) */
+    u8 type2;           /* 0x58: (kind 2) */
+    u8 unk59[0x60 - 0x59];
+    u8 type0;           /* 0x60: (kind 0) */
+    u8 unk61[0x71 - 0x61];
+    u8 dir;             /* 0x71: (script op func_0065E880) */
+} SwitchZone;
+
+extern u16 D_0048AFB4[][6];      /* (D_0048AFB0 column 2: the room's switches) */
+extern u8 D_0023A8F0[];
+extern u8 *D_006ED840[];        /* the switch animations */
+extern u8 D_006ED780[][2];
+void *func_00551820(u8 id);
+void func_00682CC0(RoomSwitch *e, u8 *anim);
+
+/* Starts switch n (when the room has it) as its zone says. */
+void func_00683A80(u8 n);
+#ifdef NON_MATCHING   /* regalloc in the flag test; kind 0's loads scheduled differently */
+void func_00683A80(u8 n) {
+    RoomSwitch *e;
+    SwitchZone *z;
+    u8 model;
+    u8 base;
+    u8 type;
+    u8 dir;
+    u8 *a;
+
+    if (!(D_0048AFB4[D_00306590.unk1C][0] & (1 << n))) {
+        return;
+    }
+    e = (RoomSwitch *)(D_00470090 + n * 0x60 + 0x4730);
+    z = func_00551820(n);
+    if (z == NULL) {
+        return;
+    }
+    switch (z->kind) {
+    case 0:
+        type = z->type0;
+        dir = z->dir;
+        base = D_0023A8F0[z->base0];
+        model = z->model0;
+        break;
+    case 2:
+        model = z->model2;
+        type = z->type2;
+        dir = z->dir;
+        base = D_0023A8F0[z->base2];
+        break;
+    }
+    switch (type) {
+    case 0:
+        e->anim = base + (dir * 2 + 0x12);
+        break;
+    case 1:
+        e->anim = 0x1A;
+        break;
+    case 2:
+        e->anim = 0x11;
+        break;
+    case 3:
+        e->anim = 0x1B;
+        break;
+    default:
+        return;
+    }
+    func_005A79E0(model, &e->mtx);
+    e->model = model;
+    e->state = 2;
+    e->unk4 = 0;
+    a = D_006ED840[e->anim];
+    e->step = 0;
+    e->unkA = a[e->step];
+    e->step++;
+    e->unk1 = D_006ED780[a[e->step]][0];
+    e->unk9 = a[e->step] << 2;
+    func_00682CC0(e, a);
+}
+#endif
+
+/* A task (func_00543800's, kind 5 in D_0023BDE8's list) that makes a kind-5 zone's effect
+   at its point until event flag (or flag, bit 15) unk52 is set. */
+#include "zone.h"
+
+typedef struct {
+    s8 active;          /* 0x00 */
+    u8 unk1;
+    u8 kind;            /* 0x02 */
+    u8 unk3[5];
+    u8 state;           /* 0x08 */
+    u8 unk9[3];
+    s16 timer;          /* 0x0C */
+    s16 unkE;           /* 0x0E: (func_005AD2D0's) the next wait, low 12 bits */
+    u8 unk10[4];
+    void (*update)(void *t); /* 0x14 */
+    s32 unk18;          /* 0x18 */
+    u8 unk1C[0x28 - 0x1C];
+    void *owner;        /* 0x28 */
+    u8 unk2C[0x70 - 0x2C];
+    f32 pos[3];         /* 0x70 */
+} ZoneTask;
+
+void *func_00543800(void *owner, void *fn);
+s32 func_005436F0(void *t);
+s32 func_005409B0(u16 id);
+s32 func_00540A10(s32 n);
+void func_005AD2D0(f32 *pos, s16 *wait);
+void func_005A8DA0(ZoneTask *t);
+
+typedef struct {
+    f32 v[3];
+} F3;
+
+void func_005A8D50(Zone *z) {
+    ZoneTask *t = func_00543800(z, func_005A8DA0);
+
+
+    if (t != NULL) {
+        *(F3 *)t->pos = *(F3 *)&z->unk44;
+    }
+}
+
+void func_005A8DA0(ZoneTask *t) {
+    Zone *z = t->owner;
+    u16 f = z->unk52;
+
+    if (f & 0x8000) {
+        if (func_00540A10(f & 0x3FFF)) {
+            t->state = 3;
+        }
+    } else {
+        if (func_005409B0(f)) {
+            t->state = 3;
+        }
+    }
+    switch (t->state) {
+    case 0:
+        t->state++;
+        t->timer = 0;
+        t->unkE = 0;
+    case 1:
+        if (--t->timer < 0) {
+            func_005AD2D0(t->pos, &t->unkE);
+            t->state++;
+            t->timer = 0;
+        }
+        break;
+    case 2:
+        t->timer++;
+        if (t->timer >= 4) {
+            t->timer = t->unkE & 0xFFF;
+            t->state = 1;
+        }
+        break;
+    default:
+        func_005436F0(t);
+        break;
+    }
+}

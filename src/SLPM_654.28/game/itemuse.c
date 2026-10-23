@@ -29,7 +29,7 @@ typedef struct {
 
 extern ItemUse D_003AEF50;
 extern DrawObjFull D_00476DD0[];
-u8 *func_00543800(s32 a, void *update);
+void *func_00543800(void *owner, void *fn);
 void func_005A9080(void);
 void func_005A8EB0(void);
 void func_005A94E0(void);

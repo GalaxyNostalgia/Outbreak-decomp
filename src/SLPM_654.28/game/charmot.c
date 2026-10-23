@@ -401,7 +401,7 @@ void func_001B7410(DrawObjFull *o, s8 se);
 void func_001B7250(DrawObjFull *o, s32 se);
 void func_001B71C0(DrawObjFull *o, s32 se);
 void func_001B7310(DrawObjFull *o, u16 se);
-void *func_00543800(DrawObjFull *o, void *fn);
+void *func_00543800(void *owner, void *fn);
 void func_005A81A0(void);
 void func_00565B30(DrawObjFull *o, s32 a);
 void func_005A9960(DrawObjFull *o, u8 a, s32 b);
@@ -5019,3 +5019,69 @@ L0056F214:;
     return;
 }
 #endif
+
+/* Motion events of one character's own motions (layer 1's, then layer 0's). */
+void func_005BB880(DrawObjFull *o, f32 speed) {
+    switch (FIELD(o, u16, 0x212)) {
+    case 0x65:
+        func_00565790(0x1E, o, 0, speed);
+        func_00565790(0x48, o, 0, speed);
+        func_00565790(0x7C, o, 0, speed);
+        func_00565DA0(0x1E, o, 6, 0x81, 0, speed);
+        func_00565DA0(0x48, o, 6, 0x82, 0, speed);
+        func_00565DA0(0x7C, o, 6, 0x81, 0, speed);
+        break;
+    case 0x66:
+        func_00565790(0x1A, o, 0, speed);
+        func_00565790(0x48, o, 0, speed);
+        func_00565790(0x76, o, 0, speed);
+        func_00565790(0xA2, o, 0, speed);
+        func_00565DA0(0x1A, o, 6, 0x41, 0, speed);
+        func_00565DA0(0x48, o, 6, 0x42, 0, speed);
+        func_00565DA0(0x76, o, 6, 0x41, 0, speed);
+        func_00565DA0(0xA2, o, 6, 0x42, 0, speed);
+        break;
+    case 0x67:
+        func_00565790(0x1C, o, 1, speed);
+        func_00565790(0x32, o, 1, speed);
+        func_005658B0(0x3A, o, 2, 8, speed);
+        func_00565DA0(0x1C, o, 6, 0x81, 0, speed);
+        func_00565DA0(0x32, o, 6, 0x82, 0, speed);
+        break;
+    case 0x68:
+        func_00565790(0x8, o, 0, speed);
+        func_00565790(0x12, o, 0, speed);
+        break;
+    case 0x6B:
+    case 0x122:
+    case 0x123:
+    case 0x124:
+    case 0x173:
+    case 0x175:
+    case 0x176:
+    case 0x177:
+    case 0x178:
+    case 0x179:
+        break;
+    case 0x12D:
+        func_00565790(0x34, o, 0, speed);
+        func_005658B0(0x10, o, 2, 3, speed);
+        func_00565C80(0xE, o, 0, 0x78, speed);
+        func_00565C80(0x16, o, 3, 0, speed);
+        break;
+    case 0x172:
+        func_00565790(0x10, o, 0, speed);
+        break;
+    case 0x174:
+        func_00565790(0x10, o, 0, speed);
+        break;
+    }
+    switch (FIELD(o, u16, 0x1F2)) {
+    case 0x17A:
+        func_00565790(0xA, o, 0, speed);
+        break;
+    case 0x17B:
+        func_00565790(0x8, o, 0, speed);
+        break;
+    }
+}

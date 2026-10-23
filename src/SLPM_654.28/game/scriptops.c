@@ -1338,6 +1338,45 @@ void func_00588D30(u8 slot, u8 kind, void (*fn)(Job *j), u8 player);
 
 /* Script op: start job args[1] of kind args[0] for us (offline: for player 1 or 2 when they
    are "us") with args[2..6], unless it runs already. */
+extern void (*D_006D66F0[])(Job *j); /* the room's job, by room */
+
+/* Script op: start job args[1] (kind args[0]) running the room's function with args[2..6],
+   unless it runs. */
+s32 func_0065EF50(u32 *args);
+#ifdef NON_MATCHING   /* the original compares with slti at (as func_0065F070), ours with sltiu v0 */
+s32 func_0065EF50(u32 *args) {
+    s32 p = 0;
+    u8 slot;
+    u8 kind;
+    Job *j;
+    s32 me;
+
+    if (func_001AF4D0() == 1) {
+        me = D_0048BF60.unk1D;
+        if (me != 0) {
+            if (me >= 3) {
+                return 0;
+            }
+            p = me;
+        }
+    }
+    slot = *(u8 *)&args[1];
+    j = &D_00387670[p][slot];
+    kind = *(u8 *)&args[0];
+    if (j->active != 0) {
+        return 0;
+    }
+    memset(j, 0, sizeof(Job));
+    func_00588D30(slot, kind, D_006D66F0[D_00306590.unk1A], D_0048BF60.unk1D);
+    j->args[0] = args[2];
+    j->args[1] = args[3];
+    j->args[2] = args[4];
+    j->args[3] = args[5];
+    j->args[4] = args[6];
+    return 0;
+}
+#endif
+
 s32 func_0065F070(u32 *args);
 #ifdef NON_MATCHING   /* the original compares with sltiu at (an expanded bgeu) after a nop; registers differ */
 s32 func_0065F070(u32 *args) {
@@ -1722,6 +1761,102 @@ s32 func_00660A30(u32 *args) {
 
 void func_00593FA0(Zone *z);
 
+/* The zones of kind 0 and 2 with id args[0]: flag 0x73 (kind 0) or 0x72 (kind 2) set and
+   0x74 = args[1] << 12 | args[2]. */
+s32 func_0065C570(u32 *args) {
+    Zone *z;
+    s32 id = args[0];
+    s32 a = args[1];
+    s32 b = args[2];
+
+    if (D_0023BD88 == 0x80) {
+        return 0;
+    }
+    for (z = D_0023BD90; z != NULL; z = z->next) {
+        if (z->kind == 0) {
+            if (z->u.id == id) {
+                z->unk73 = 1;
+                *(u16 *)&z->unk74 = (a << 12) | b;
+            }
+        } else if (z->kind == 2) {
+            if (z->u.id == id) {
+                z->unk72 = 1;
+                *(u16 *)&z->unk74 = (a << 12) | b;
+            }
+        }
+    }
+    return 0;
+}
+
+/* The zones of kind 0 and 2 with id args[0]: 0x68 (unk5A[7]) = args[1]. */
+s32 func_0065CF50(u32 *args) {
+    Zone *z;
+    s32 id = args[0];
+    u16 v = args[1];
+
+    if (D_0023BD88 == 0x80) {
+        return 0;
+    }
+    z = D_0023BD90;
+    while (z != NULL) {
+        if (z->kind == 0) {
+            if (z->u.id == id) {
+                z->unk5A[7] = v;
+            }
+            z = z->next;
+        } else if (z->kind == 2) {
+            if (z->u.id == id) {
+                z->unk5A[7] = v;
+            }
+            z = z->next;
+        } else {
+            z = z->next;
+        }
+    }
+    return 0;
+}
+
+void func_00685140(s32 n);
+
+/* Runs the script routines of the kind-11 zones that ask for it. */
+void func_00551D40(void) {
+    Zone *z;
+
+    if (D_0023BD88 != 0x80) {
+        for (z = D_0023BD90; z != NULL; z = z->next) {
+            if (z->kind == 11 && z->unk4C == 1) {
+                func_00685140(z->unk48);
+            }
+        }
+    }
+}
+
+/* The zone of kind 0 or 2 with id `id` (the last one first), or NULL. */
+void *func_00551820(u8 id) {
+    Zone *z;
+
+    if (D_0023BD88 == 0x80) {
+        return NULL;
+    }
+    z = D_0023BD90;
+    while (z != NULL) {
+        if (z->kind == 0) {
+            if (z->u.id == id) {
+                return z;
+            }
+            z = z->next;
+        } else if (z->kind == 2) {
+            if (z->u.id == id) {
+                return z;
+            }
+            z = z->next;
+        } else {
+            z = z->next;
+        }
+    }
+    return NULL;
+}
+
 /* The zone of kind 0 with id `id`, or of kind 2 with id `id` and sub-id `sub` (the last one
    first), or NULL. */
 Zone *func_005518B0(u8 id, u8 sub) {
@@ -1777,6 +1912,169 @@ s32 func_0065E880(u32 *args) {
                 if (*(s32 *)&z->unk50 != 0) {
                     func_00683A80(*(u8 *)&z->u.id);
                 }
+            }
+            z = z->next;
+        } else {
+            z = z->next;
+        }
+    }
+    return 0;
+}
+
+extern u8 D_006E3860[][4];      /* by difficulty: which of four choices, by a random 0-3 */
+extern u8 D_0048C01A[];         /* the difficulty */
+extern u8 D_0048AEA9[];         /* (in D_0048AC10) how many of ids are set */
+typedef struct {
+    u8 unk0[0x11F2];
+    u16 ids[8];         /* 0x11F2: (of the zones func_00661040 armed) */
+} SceneArmed;           /* (D_0048AC10's view here) */
+u16 func_001ADEF0(s32 n);
+s32 func_001AF540(DrawObjFull *o);
+
+/* The kind-5 zone with id args[0] armed with one of args[1..4] (picked at random by the
+   difficulty's table): none when it's -1, already among the scene's (up to 8) or meant for
+   another character (high half: 8 any). */
+s32 func_00661040(u32 *args) {
+    Zone *z;
+    s32 id = args[0];
+    s32 c[4];
+    s32 *e;
+    s32 i;
+    u32 k;
+
+    c[0] = args[1];
+    c[1] = args[2];
+    c[2] = args[3];
+    c[3] = args[4];
+    if (D_0023BD88 == 0x80) {
+        return 0;
+    }
+    if (func_001AF540(&D_00476DD0[D_0048BF60.unk1D]) == 0) {
+        return 0;
+    }
+    z = D_0023BD90;
+    while (z != NULL) {
+        if (z->kind == 5) {
+            if (z->u.id != id) {
+                z = z->next;
+            } else {
+                if (D_0048AEA9[0] >= 8) {
+                    return 0;
+                }
+                e = &c[D_006E3860[D_0048C01A[0]][func_001ADEF0(2) & 3]];
+                if (*e == -1) {
+                    return 0;
+                }
+                for (i = 0; i < D_0048AEA9[0]; i++) {
+                    if (((SceneArmed *)D_0048AC10)->ids[i] == *(u16 *)e) {
+                        return 0;
+                    }
+                }
+                k = (*e & 0xFFFF0000) >> 16;
+                if (k != 8 && k != D_00476DD0[D_0048BF60.unk1D].unkB98) {
+                    return 0;
+                }
+                func_00593FA0(z);
+                z->on = 1;
+                z->unk32--;
+                z->unk52 = *(u16 *)e | 0x4000;
+                return 0;
+            }
+        } else {
+            z = z->next;
+        }
+    }
+    return 0;
+}
+
+void func_005A8D50(Zone *z);
+
+/* The kind-5 zones with id args[0]: armed (unk3C) with args[1..3]. */
+s32 func_00660B40(u32 *args) {
+    Zone *z;
+    s32 id;
+    u16 b;
+    u16 a;
+    u16 c;
+
+    id = args[0];
+    a = args[1];
+    b = args[2];
+    c = args[3];
+    if (D_0023BD88 == 0x80) {
+        return 0;
+    }
+    z = D_0023BD90;
+    while (z != NULL) {
+        if (z->kind == 5) {
+            if (z->u.id == id) {
+                func_00593FA0(z);
+                z->on = 1;
+                z->unk32--;
+                z->unk50 = a;
+                z->unk52 = b;
+                z->unk54 = c;
+                func_005A8D50(z);
+            }
+            z = z->next;
+        } else {
+            z = z->next;
+        }
+    }
+    return 0;
+}
+
+/* The kind-5 zones with id args[0]: armed (unk3C) with args[1], byte 0x6E set. */
+s32 func_00661250(u32 *args) {
+    Zone *z;
+    s32 id;
+    u16 v;
+
+    id = args[0];
+    v = args[1];
+    if (D_0023BD88 == 0x80) {
+        return 0;
+    }
+    z = D_0023BD90;
+    while (z != NULL) {
+        if (z->kind == 5) {
+            if (z->u.id == id) {
+                func_00593FA0(z);
+                z->on = 1;
+                z->unk50 = v;
+                ((u8 *)&z->unk6C)[2] = 1;
+            }
+            z = z->next;
+        } else {
+            z = z->next;
+        }
+    }
+    return 0;
+}
+
+/* The kind-5 zones with id args[0]: armed (unk3C) afresh, with args[1] and args[2]. */
+s32 func_0065CA10(u32 *args) {
+    Zone *z;
+    s32 id;
+    u16 v;
+    s16 w;
+
+    id = args[0];
+    v = args[1];
+    w = args[2];
+    if (D_0023BD88 == 0x80) {
+        return 0;
+    }
+    z = D_0023BD90;
+    while (z != NULL) {
+        if (z->kind == 5) {
+            if (z->u.id == id) {
+                func_00593FA0(z);
+                z->on = 1;
+                z->unk50 = v;
+                z->unk6A = w;
+                *(s16 *)&z->unk6C = 0;
+                z->unk74 = -1;
             }
             z = z->next;
         } else {
@@ -1966,5 +2264,13 @@ s32 func_001B87F0(s32 n, s32 bgm, s32 c);
 /* plays music args[0] */
 s32 func_0065D5F0(u32 *args) {
     func_001B87F0(0, args[0], 0);
+    return 0;
+}
+
+u8 func_00551690(u8 model);
+
+/* hides the room part of model args[0] */
+s32 func_0065E6B0(u32 *args) {
+    D_00470090[0x8A0 + func_00551690(*(u8 *)args)] |= 0x80;
     return 0;
 }

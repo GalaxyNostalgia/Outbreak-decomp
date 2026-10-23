@@ -26,16 +26,20 @@ typedef struct Zone {
     } u;
     s32 unk44;          /* 0x44: (kind 3) sub-kind; (kind 4, 13) id */
     s32 unk48;          /* 0x48: (for 2) the item it wants in hand */
-    u8 unk4C[0x50 - 0x4C];
+    s32 unk4C;          /* 0x4C: (kind 11) 1: run script routine unk48 */
     u16 unk50;          /* 0x50 */
-    u8 unk52[0x59 - 0x52];
+    u16 unk52;          /* 0x52: (kind 5) */
+    u16 unk54;          /* 0x54: (kind 5) */
+    u8 unk56[0x59 - 0x56];
     u8 unk59;           /* 0x59: which of unk5A are set */
     u16 unk5A[8];       /* 0x5A */
-    u8 unk6A[2];
-    s32 unk6C;          /* 0x6C */
+    s16 unk6A;          /* 0x6A: (kind 5) */
+    s32 unk6C;          /* 0x6C: (kind 5: an s16) */
     u8 unk70;
     u8 unk71;           /* 0x71: (kinds 0, 2) set by script op func_0065E880 */
     u8 unk72;           /* 0x72 */
+    u8 unk73;
+    s32 unk74;          /* 0x74: (kind 5) */
 } Zone;
 
 extern Zone *D_0023BD90;
