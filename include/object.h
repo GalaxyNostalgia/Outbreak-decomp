@@ -119,7 +119,8 @@ typedef struct {
     u8 unk54D;          /* 0x54D */ \
     u8 unk54E;          /* 0x54E */ \
     u8 unk54F;          /* 0x54F */ \
-    u8 unk550[0x553 - 0x550]; \
+    u8 unk550[2]; \
+    u8 unk552;          /* 0x552: the bone others look at */ \
     u8 unk553;          /* 0x553: casts a shadow */ \
     u8 unk554[0x560 - 0x554]; \
     IkChain ik[7];      /* 0x560: (players) legs (0, 1), arms, ... */ \
@@ -138,7 +139,13 @@ typedef struct {
     u8 unkAD6[0xAEC - 0xAD6]; \
     u8 unkAEC[0xB40 - 0xAEC]; \
     s8 unkB40;          /* 0xB40 */ \
-    u8 unkB41[0xB90 - 0xB41]; \
+    u8 unkB41[0xB48 - 0xB41]; \
+    s32 unkB48;         /* 0xB48: what look mode 4 looks at: 0 the point 0xB54, 1 0xB4C */ \
+    struct DrawObjFull *unkB4C; /* 0xB4C: the character (its bone 2, at bone 0's height + 0xB50) */ \
+    s32 unkB50;         /* 0xB50 */ \
+    f32 unkB54[3];      /* 0xB54 */ \
+    s32 unkB60;         /* 0xB60: look mode 4's frames */ \
+    u8 unkB64[0xB90 - 0xB64]; \
     f32 unkB90;         /* 0xB90: how far tilted to the ground (0-1) */ \
     f32 unkB94;         /* 0xB94: its speed */ \
     u8 unkB98;          /* 0xB98: the character */ \
@@ -165,7 +172,16 @@ typedef struct {
     u8 unkBC8[6]; \
     s16 unkBCE;         /* 0xBCE: (players) the stick's heading in the world */ \
     u8 unkBD0;          /* 0xBD0 */ \
-    u8 unkBD1[0xC50 - 0xBD1]; \
+    u8 unkBD1;          /* 0xBD1: the head's look mode (func_0062F9B0) */ \
+    s16 unkBD2;         /* 0xBD2: frames left of its turn */ \
+    s16 unkBD4[2];      /* 0xBD4: the turn per frame (x, y) */ \
+    s16 unkBD8[2];      /* 0xBD8: the head's angles (x, y; 0x10000 a turn) */ \
+    s16 unkBDC[2];      /* 0xBDC: the same, as last set */ \
+    struct DrawObjFull *unkBE0; /* 0xBE0: who it looks at */ \
+    u8 unkBE4[0xBF0 - 0xBE4]; \
+    f32 unkBF0[16];     /* 0xBF0: the head bone's matrix */ \
+    s16 unkC30;         /* 0xC30: frames before it looks for someone else */ \
+    u8 unkC32[0xC50 - 0xC32]; \
     u16 unkC50;         /* 0xC50: the breathing timer */ \
     u8 unkC52;          /* 0xC52: its key */ \
     u8 unkC53[0xC58 - 0xC53]; \

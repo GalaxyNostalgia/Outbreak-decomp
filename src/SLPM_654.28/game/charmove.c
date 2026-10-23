@@ -55,6 +55,72 @@ void func_0062CC50(DrawObjFull *o) {
 
 extern f32 D_00239E18;          /* 2 pi */
 
+#include "model.h"
+#include "vu0.h"
+void func_00340310(s16 rx, s16 ry, s16 rz, Mat44 *m);
+f32 func_00191A70(f32 x);
+
+/* A character's skeleton: its bones by number (0x14 the neck, 0x15 the head); none when [0] is. */
+#define OBJ_BONES(o) ((FlBone **)((u8 *)(o)->model + 0x820))
+
+/* An angle in radians as the game's (0x10000 a turn), rounded. */
+#define ANG(r) ((s16)(0.5f + 65536.0f * (r) / D_00239E18) & 0xFFFF)
+
+/* Where o's bone b is (its position when it has no skeleton). */
+void func_0062F740(DrawObjFull *o, u8 b, f32 *out) {
+    FlBone **bones = OBJ_BONES(o);
+    Vec3 *p;
+
+    if (bones[0] != NULL) {
+        p = (Vec3 *)bones[b]->world[3];
+    } else {
+        p = (Vec3 *)o->unk38;
+    }
+    *(Vec3 *)out = *p;
+}
+
+void func_00192C00(FlBone *b, f32 *parent, f32 sx, f32 sy, f32 sz);
+
+/* Turns the head toward ang (x, y; limited to +-0x17FF and +-0x1FFF) over the frames left in
+   unkBD2, a step a call, and poses the head bone (its matrix kept at 0xBF0). */
+void func_0062F790(DrawObjFull *o, s16 *ang);
+#ifdef NON_MATCHING   /* the head bone is loaded once where the original reloads it */
+void func_0062F790(DrawObjFull *o, s16 *ang) {
+    FlBone **bones = OBJ_BONES(o);
+    s16 x;
+    s16 y = ang[1];
+
+    x = ang[0];
+
+    if (y >= 0x2000) {
+        y = 0x1FFF;
+    }
+    if (y < -0x1FFF) {
+        y = -0x1FFF;
+    }
+    if (x >= 0x1800) {
+        x = 0x17FF;
+    }
+    if (x < -0x17FF) {
+        x = -0x17FF;
+    }
+    if (o->unkBD2 == 0) {
+        o->unkBD2 = 1;
+    }
+    o->unkBD4[0] = (x - o->unkBD8[0]) / o->unkBD2;
+    o->unkBD4[1] = (y - o->unkBD8[1]) / o->unkBD2;
+    o->unkBD2--;
+    o->unkBD8[0] += o->unkBD4[0];
+    o->unkBD8[1] += o->unkBD4[1];
+    func_00340310(o->unkBDC[0] = o->unkBD8[0], o->unkBDC[1] = o->unkBD8[1],
+                  ANG(bones[0x15]->cur[1][2]),
+                  (Mat44 *)bones[0x15]->local);
+    func_00192C00(bones[0x15], bones[0x14]->world[0], bones[0x14]->cur[0][0],
+                  bones[0x14]->cur[0][1], bones[0x14]->cur[0][2]);
+    func_00190ED0(o->unkBF0, bones[0x15]->local[0]);
+}
+#endif
+
 /* The head's turn (from the skeleton's head bone) as angles. */
 void func_0062F930(DrawObjFull *o) {
     u8 *m = (u8 *)o->model;
@@ -63,11 +129,282 @@ void func_0062F930(DrawObjFull *o) {
     FIELD(o, s16, 0xBDA) = 0.5f + 65536.0f * FIELD(FIELD(m, u8 *, 0x874), f32, 0x114) / D_00239E18;
     FIELD(o, s16, 0xBD6) = 0;
     FIELD(o, s16, 0xBD4) = 0;
-    o->unkBD1[0] = 0;
+    o->unkBD1 = 0;
     FIELD(o, s16, 0xBD2) = 0;
     FIELD(o, s16, 0xC30) = 0;
     FIELD(o, s32, 0xBE0) = 0;
 }
+
+extern s16 D_0023BB98;
+extern u32 D_0023ACC0;          /* how long it keeps looking at someone: the random part */
+extern u32 D_0023ACC4;          /* and the fixed part */
+extern f32 D_00477EE8[3];      /* a point in the room (mode 2 looks 170 above it) */
+extern s8 D_0048BF88[];
+DrawObjFull *func_0062D700(DrawObjFull *o, s32 a, s32 b, s32 c, f32 dist);
+void func_0055C480(DrawObjFull *o, s32 bone, s16 *ang);
+s32 func_00346C50(const f32 *a, const f32 *b);
+void func_00346CD0(s16 *ang, const f32 *from, const f32 *to);
+u16 func_001ADEF0(s32 n);
+
+/* Where the head looks (mode, from the caller; forced to 0 while hurt (0xBA0 0x8038), and on
+   motions with 0x211 bits 0x18 it is taken as already done): 0 back to the motion's own turn,
+   1 at the nearest character in view within 1000 (0xBE0; another one after unkC30 frames), 2
+   along the room's point D_00477EE8 (170 up), 4 at 0xB48's target for 0xB60 frames, 5 by the
+   left stick, 6 at the room's origin (170 up). */
+void func_0062F9B0(DrawObjFull *o, u8 mode);
+#ifdef NON_MATCHING   /* register allocation; ang[1] through a pointer in the original */
+void func_0062F9B0(DrawObjFull *o, u8 mode) {
+    f32 m[4][4];
+    s16 ang[3];
+    Vec3 from;
+    Vec3 tgt;
+    Vec3 tmp;
+    Vec3 d;
+    Vec3 eye;
+    Vec3 to;
+    s16 dir;
+    FlBone **bones;
+    DrawObjFull *t;
+    DrawObjFull *near;
+    f32 dist;
+    f32 a;
+    s16 hx;
+    s16 hy;
+    u32 div;
+    f32 rate = D_00306590.unkC ? 6 : 12;
+
+    if (D_0023BB98 == 1 && D_0048BF88[0] == 0) {
+        return;
+    }
+    bones = OBJ_BONES(o);
+    if (o->unkBA0 & 0x8000) {
+        mode = 0;
+    }
+    if (o->unkBA0 & 0x38) {
+        mode = 0;
+    }
+    if ((((s8 *)o->unk204)[0xD] & 0x18) && mode != 0) {
+        mode = 0;
+        o->unkBD1 = 1;
+    }
+    t = o->unkBE0;
+    hx = ANG(bones[0x15]->cur[1][0]);
+    hy = ANG(bones[0x15]->cur[1][1]);
+    if (t != NULL && (t->active == 0 || t->model == NULL)) {
+        o->unkBE0 = NULL;
+    }
+    switch (mode) {
+    case 0:
+        if (o->unkBD1 != 0) {
+            o->unkBD1 = 0;
+            if (D_0048BF88[0] != 0) {
+                if (o->unkB60 > 0) {
+                    o->unkBD2 = o->unkB60;
+                    o->unkBD2 = (D_00306590.unkC ? o->unkBD2 / 2 : o->unkBD2) + 1;
+                } else {
+                    o->unkBD2 = 10;
+                }
+            } else {
+                o->unkBD2 = 10;
+            }
+        }
+        if (o->unkBD1 == 0 && o->unkBD2 != 0) {
+            ang[0] = 0.5f + 65536.0f * bones[0x15]->cur[1][0] / D_00239E18;
+            ang[1] = 0.5f + 65536.0f * bones[0x15]->cur[1][1] / D_00239E18;
+            ang[2] = 0.5f + 65536.0f * bones[0x15]->cur[1][2] / D_00239E18;
+            func_0062F790(o, ang);
+            if (o->unkBD2 == 0) {
+                func_0062F930(o);
+            }
+        }
+        break;
+    case 1:
+        near = func_0062D700(o, 1, -0x8000, 0, 1000.0f);
+        if (o->unkBD1 == 0) {
+            if (o->unkBD2 != 0) {
+                func_0062F9B0(o, 0);
+                break;
+            }
+            if (o->unkC30 == 0) {
+                if (o->unkBE0 == NULL && near == NULL) {
+                    break;
+                }
+                o->unkBE0 = near;
+                o->unkBD2 = 1;
+                div = D_00306590.unkC ? 2 : 1;
+                o->unkC30 = (D_0023ACC4 + (func_001ADEF0(1) & 0xFFFF) % D_0023ACC0) / div;
+            } else {
+                o->unkC30--;
+                break;
+            }
+        }
+        t = o->unkBE0;
+        if (t != NULL) {
+            eye = *(Vec3 *)OBJ_BONES(o)[0x14]->world[3];
+            if (OBJ_BONES(t)[0] != NULL) {
+                to = *(Vec3 *)OBJ_BONES(t)[t->unk552]->world[3];
+            } else {
+                to = *(Vec3 *)t->unk38;
+            }
+            d.x = to.x - eye.x;
+            d.y = to.y - eye.y;
+            d.z = to.z - eye.z;
+            dir = func_00346C50(&eye.x, &to.x);
+            dist = func_00191690(&d.x);
+            a = func_00191A70((s16)(dir - o->unk92));
+            if (a > func_00191A70(16384.0f)) {
+                o->unkBD2 = 0;
+                o->unkC30 = 0;
+            }
+            if (dist > 1000.0f) {
+                o->unkBD2 = 0;
+                o->unkC30 = 0;
+            }
+        }
+        if (o->unkBD2 == 0) {
+            if (o->unkC30 == 0) {
+                near = func_0062D700(o, 1, -0x8000, 1, 1000.0f);
+                if (near == o->unkBE0) {
+                    near = func_0062D700(o, 1, -0x8000, 0, 1000.0f);
+                } else if (near == NULL) {
+                    near = func_0062D700(o, 1, -0x8000, 0, 1000.0f);
+                }
+                o->unkBD1 = 0;
+                o->unkBE0 = near;
+                div = D_00306590.unkC ? 2 : 1;
+                o->unkC30 = (D_0023ACC4 + (func_001ADEF0(1) & 0xFFFF) % D_0023ACC0) / div;
+            } else {
+                o->unkC30--;
+            }
+        }
+        t = o->unkBE0;
+        if (t == NULL) {
+            o->unkBD1 = 1;
+            func_0062F9B0(o, 0);
+            break;
+        }
+        func_0062F740(t, t->unk552, &tgt.x);
+        func_00190E00(m[0], bones[0x14]->world[0]);
+        from.x = bones[0x15]->cur[2][0];
+        from.y = bones[0x15]->cur[2][1];
+        from.z = bones[0x15]->cur[2][2];
+        func_00191410(&tgt.x, m[0]);
+        tgt.x += m[3][0];
+        tgt.y += m[3][1];
+        tgt.z += m[3][2];
+        func_00346CD0(ang, &from.x, &tgt.x);
+        ang[0] = -ang[0];
+        ang[1] -= ANG(bones[0x15]->cur[1][1]);
+        ang[2] = 0.5f + 65536.0f * bones[0x15]->cur[1][2] / D_00239E18;
+        if (o->unkBD1 != 1) {
+            if (func_00191A70(ang[0] - o->unkBD8[0]) > func_00191A70(ang[1] - o->unkBD8[1])) {
+                o->unkBD2 = 1.0f + func_00191A70(ang[0] - o->unkBD8[0]) / (6144.0f / rate);
+            } else {
+                o->unkBD2 = 1.0f + func_00191A70(ang[1] - o->unkBD8[1]) / (8192.0f / rate);
+            }
+        }
+        o->unkBD1 = 1;
+        func_0062F790(o, ang);
+        break;
+    case 2:
+        if (o->unkBD1 == 2 && o->unkBD2 != 0) {
+            o->unkBD2--;
+            o->unkBD8[0] += o->unkBD4[0];
+            o->unkBD8[1] += o->unkBD4[1];
+            ang[0] = o->unkBD8[0];
+            ang[1] = o->unkBD8[1];
+            ang[2] = 0.5f + 65536.0f * bones[0x15]->bind[1][2] / D_00239E18;
+            func_0055C480(o, 0x15, ang);
+            break;
+        }
+        tgt = *(Vec3 *)D_00477EE8;
+        tgt.y += 170.0f;
+        func_0062F740(o, 0x15, &from.x);
+        func_00346CD0(ang, &from.x, &tgt.x);
+        ang[0] = -ang[0];
+        ang[1] -= o->unk92;
+        o->unkBD1 = 2;
+        break;
+    case 4:
+        if (o->unkB60 > 0) {
+            o->unkBD2 = o->unkB60;
+            o->unkBD2 = (D_00306590.unkC ? o->unkBD2 / 2 : o->unkBD2) + 1;
+            o->unkBD1 = 4;
+        }
+        if (o->unkB60 != 0) {
+            switch (o->unkB48) {
+            case 0:
+                tgt = *(Vec3 *)o->unkB54;
+                break;
+            case 1:
+                func_0062F740(o->unkB4C, 0, &tmp.x);
+                func_0062F740(o->unkB4C, 2, &tgt.x);
+                tgt.y = tmp.y + o->unkB50;
+                break;
+            }
+            func_0062F740(o, 0x15, &from.x);
+            func_00190E00(m[0], bones[0x14]->world[0]);
+            func_00191410(&from.x, m[0]);
+            from.x += m[3][0];
+            from.y += m[3][1];
+            from.z += m[3][2];
+            func_00191410(&tgt.x, m[0]);
+            tgt.x += m[3][0];
+            tgt.y += m[3][1];
+            tgt.z += m[3][2];
+            func_00346CD0(ang, &from.x, &tgt.x);
+            ang[0] = -ang[0];
+            ang[1] -= ANG(bones[0x15]->cur[1][1]);
+            ang[2] = 0.5f + 65536.0f * bones[0x15]->cur[1][2] / D_00239E18;
+            func_0062F790(o, ang);
+            break;
+        }
+        func_0062F9B0(o, 0);
+        break;
+    case 5:
+        if (o->unkBD1 != 5) {
+            o->unkBD1 = 5;
+            o->unkBD2 = 1;
+            o->unkBD8[0] = hx;
+            o->unkBD8[1] = hy;
+        }
+        ang[0] = hx + (s16)((f32)(o->ctrl.ly * 0x1800) / 127.0f);
+        ang[1] = hy - (s16)((f32)(o->ctrl.lx << 13) / 127.0f);
+        ang[2] = 0.5f + 65536.0f * bones[0x15]->bind[1][2] / D_00239E18;
+        func_0062F790(o, ang);
+        break;
+    case 6:
+        if (o->unkBD1 == 6 && o->unkBD2 != 0) {
+            o->unkBD2--;
+            o->unkBD8[0] += o->unkBD4[0];
+            o->unkBD8[1] += o->unkBD4[1];
+            ang[0] = o->unkBD8[0];
+            ang[1] = o->unkBD8[1];
+            ang[2] = 0.5f + 65536.0f * bones[0x15]->bind[1][2] / D_00239E18;
+            func_0062F790(o, ang);
+            break;
+        }
+        tgt.y = 0.0f;
+        tgt.x = 0.0f;
+        tgt.z = 0.0f;
+        tgt.y += 170.0f;
+        func_0062F740(o, 0x15, &from.x);
+        func_00346CD0(ang, &from.x, &tgt.x);
+        ang[0] = -ang[0];
+        ang[1] -= o->unk92;
+        if (o->unkBD1 != 6) {
+            if (func_00191A70(ang[0]) > func_00191A70(ang[1])) {
+                o->unkBD2 = 1.0f + func_00191A70(ang[0] - o->unkBD8[0]) / (6144.0f / rate);
+            } else {
+                o->unkBD2 = 1.0f + func_00191A70(ang[1] - o->unkBD8[1]) / (8192.0f / rate);
+            }
+        }
+        o->unkBD1 = 6;
+        func_0062F790(o, ang);
+        break;
+    }
+}
+#endif
 
 void func_00633C10(DrawObjFull *o, s32 flags);
 void func_00633C60(DrawObjFull *o, s32 flags);
@@ -88,7 +425,7 @@ void func_00633BC0(DrawObjFull *o) {
 #endif
 
 #include "vu0.h"
-void func_00340310(s32 rx, s32 ry, s32 rz, Mat44 *m);
+void func_00340310(s16 rx, s16 ry, s16 rz, Mat44 *m);
 
 /* Moves a character by its velocity (0x4E4, in its own frame: through its rotation and its
    x/z scale, times its speed factor). */
@@ -989,6 +1326,126 @@ s32 func_00633D80(DrawObjFull *o) {
 }
 #endif
 
+/* Action 1's step tables (0x20 bytes per set, by func_0061C490's a). */
+typedef struct {
+    u16 s[16];          /* 1, 2 turning (left, right); 3 forward; 4, 5 turning on the spot (or
+                           walking: 8 and 4); 6 running; 9 backing away (5: while aiming); 7, 8,
+                           10, 11, 13, 14 turning in the other motions */
+} StepSet;
+
+typedef struct {
+    s16 v[4];
+} Rot4;
+
+extern StepSet D_006DD930[];   /* [0] on ordinary floors, [1] on kind 3 */
+
+void func_00635920(DrawObjFull *o);
+
+/* Walking from one kind of floor onto the other: a character in action 1 (and without 0x54A
+   bit 1) whose step is in the other floor's table takes the same step from this one's (set 1 on
+   kind 3). Stepping onto kind 3 with no such step starts step 0's; when hit (0xBA0 0x88) it goes
+   back to where it was instead. */
+void func_00634670(DrawObjFull *o);
+#ifdef NON_MATCHING   /* delay slots and the loops' index masking differ */
+void func_00634670(DrawObjFull *o) {
+    Vec3 p;
+    u8 kind;
+    u8 was;
+    u8 i;
+
+    if (!(o->unk54A & 2) && o->act[0] == 1) {
+        p = *(Vec3 *)o->unk38;
+        p.y += 50.0f;
+        was = o->unk174;
+        func_005E5B40(&p.x, &kind, 0xFF);
+        switch (was) {
+        case 2:
+        case 0:
+        case 1:
+            switch (kind) {
+            case 2:
+            case 0:
+            case 1:
+                for (i = 0; i < 16; i++) {
+                    if (D_006DD930[1].s[i] == o->act[1]) {
+                        break;
+                    }
+                }
+                if (i == 16) {
+                    return;
+                }
+                o->act[0] = 1;
+                o->act[1] = D_006DD930[0].s[i];
+                o->act[2] = 0;
+                o->act[3] = 0;
+                func_00635920(o);
+                o->unkCE2 |= 0x20;
+                return;
+            case 3:
+                if (o->unkBA0 & 0x88) {
+                    *(Vec3 *)o->unk38 = *(Vec3 *)o->unk44;
+                    *(Rot4 *)&o->unk90 = *(Rot4 *)o->unkA0;
+                    return;
+                }
+                for (i = 0; i < 16; i++) {
+                    if (o->act[1] == D_006DD930[0].s[i]) {
+                        break;
+                    }
+                }
+                if (i == 16) {
+                    i = 0;
+                }
+                o->act[0] = 1;
+                o->act[1] = D_006DD930[1].s[i];
+                o->act[2] = 0;
+                o->act[3] = 0;
+                func_00635920(o);
+                o->unkCE2 |= 0x20;
+                return;
+            }
+            return;
+        case 3:
+            switch (kind) {
+            case 2:
+            case 0:
+            case 1:
+                for (i = 0; i < 16; i++) {
+                    if (D_006DD930[1].s[i] == o->act[1]) {
+                        break;
+                    }
+                }
+                if (i == 16) {
+                    i = 0;
+                }
+                o->act[0] = 1;
+                o->act[1] = D_006DD930[0].s[i];
+                o->act[2] = 0;
+                o->act[3] = 0;
+                func_00635920(o);
+                o->unkCE2 |= 0x20;
+                return;
+            case 3:
+                for (i = 0; i < 16; i++) {
+                    if (o->act[1] == D_006DD930[0].s[i]) {
+                        break;
+                    }
+                }
+                if (i == 16) {
+                    return;
+                }
+                o->act[0] = 1;
+                o->act[1] = D_006DD930[1].s[i];
+                o->act[2] = 0;
+                o->act[3] = 0;
+                func_00635920(o);
+                o->unkCE2 |= 0x20;
+                return;
+            }
+        }
+    }
+}
+#endif
+
 /* Remembers o's position and heading as where it started. */
 /* Whether the character is out of the game (gone, or status 0x5E0); with a != 0 always 0. */
 u8 func_00634640(DrawObjFull *p, s32 a) {
@@ -1048,10 +1505,6 @@ void func_005E5AF0(DrawObjFull *o, f32 *p, s32 want) {
 
     o->unk170 = func_005E5C20(p, o->unk178, m, &o->unk174, want, &o->unk175, &o->unk176, 0);
 }
-
-typedef struct {
-    s16 v[4];
-} Rot4;
 
 /* The floor under a character (50 above its feet), and its fall: on kind-3 ground the height it
    falls from (0x170) is reset; when it is hit (status 0x88) there, it goes back to where it was
@@ -1356,13 +1809,6 @@ s32 func_0061CF40(DrawObjFull *o);
 s32 func_0061D000(DrawObjFull *o);
 s32 func_0061C580(DrawObjFull *o, s32 a);
 
-/* Action 1's step tables (0x20 bytes per set, by func_0061C490's a). */
-typedef struct {
-    u16 s[16];          /* 1, 2 turning (left, right); 3 forward; 4, 5 turning on the spot (or
-                           walking: 8 and 4); 6 running; 9 backing away (5: while aiming); 7, 8,
-                           10, 11, 13, 14 turning in the other motions */
-} StepSet;
-
 /* Per weapon (0x44 bytes): what it allows, and how it sits in the hand. */
 typedef struct {
     u32 flags;          /* 0x00: 1 aiming, 4 its run */
@@ -1374,7 +1820,6 @@ typedef struct {
     u8 unk38[0xC];
 } WeaponInfo;
 
-extern StepSet D_006DD930[];
 extern WeaponInfo D_006E5940[];
 s32 func_0062D6A0(DrawObjFull *o);
 s32 func_005561A0(DrawObjFull *o, u8 item);
@@ -2558,7 +3003,6 @@ void func_006196E0(DrawObjFull *o) {
 }
 void *memset(void *p, s32 c, u32 n);
 s32 func_00346C50(const f32 *a, const f32 *b);
-s32 func_0062D700(DrawObjFull *o, s32 a, s32 b, s32 c, f32 dist);
 extern u8 D_0048C01D[];
 extern u8 D_003AEF54[];         /* the camera cut this frame */
 extern f32 D_00306338[3];       /* the camera */
@@ -2736,7 +3180,7 @@ void func_006307E0(DrawObjFull *o) {
         if (o->unkFAA) {
             hold = 1;
         }
-        r = func_0062D700(o, 0, -0x8000, 0, o->unk54F == 2 ? 320.0f : 300.0f);
+        r = (s32)func_0062D700(o, 0, -0x8000, 0, o->unk54F == 2 ? 320.0f : 300.0f);
         if (r && !(o->ctrl.cur & 0x10)) {
             walk = 1;
             hold = 0;

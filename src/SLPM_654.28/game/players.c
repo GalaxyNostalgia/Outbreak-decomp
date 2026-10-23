@@ -401,7 +401,7 @@ void func_005516D0(void *o);
 void func_00634670(void *o);
 void func_0062D2C0(void *o);
 void func_0062F930(DrawObjFull *p, s32 a);
-void func_0062F9B0(DrawObjFull *p, s32 a);
+void func_0062F9B0(DrawObjFull *p, u8 mode);
 void func_005E9390(void *o);
 s32 func_001AF540(DrawObjFull *p);
 f32 func_00191A70(f32 x);
