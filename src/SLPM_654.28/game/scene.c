@@ -16,16 +16,17 @@ extern s32 D_0023BF5C;
 typedef struct {
     u8 on;              /* 0x00 */
     u8 group;           /* 0x01: 0: any */
-    u8 pad2[2];
+    u8 kind;            /* 0x02: (the second set) 0 point, 2 off, 3/4 ... */
+    u8 pad3;
     f32 color[4];       /* 0x04 */
     f32 unk14[4];       /* 0x14 */
     f32 pos[3];         /* 0x24 */
     f32 range;          /* 0x30: its falloff (0: off) */
-    f32 unk34;
+    f32 reach;          /* 0x34: (the second set) how far it reaches */
 } RoomLight;
 
 extern RoomLight D_007131A0[64];
-extern u8 D_007123A0[0xE00];
+extern RoomLight D_007123A0[64];     /* the second set (the two strongest light the characters) */
 extern u8 D_00712320[0x80];
 void func_001AE9C0(s32 cmd, u32 arg);
 
@@ -566,6 +567,136 @@ f32 func_00680D70(f32 *l, f32 *p) {
     }
     return k * m;
 }
+
+extern f32 D_00239CDC;          /* pi / 2 */
+extern f32 D_00239CE0;
+extern s16 D_0023AE8C;          /* -1, -1 */
+f32 func_00191B70(f32 x);
+
+/* How bright light l (from its colour) is at p: falling off to 0 at l[12] by a quarter cosine,
+   times its brightest channel; -1 without either. */
+f32 func_00680E20(f32 *l, f32 *p) {
+    f32 r = 0.0f;
+    f32 d;
+    f32 m;
+
+    if (l == NULL || p == NULL) {
+        return -1.0f;
+    }
+    if (l[12] == 0.0f) {
+        return r;
+    }
+    d = func_001916E0(l + 8, p);
+    if (d <= l[12]) {
+        r = func_00191B70(D_00239CDC * (d / l[12]));
+        m = l[0];
+        if (m < l[1]) {
+            m = l[1];
+        }
+        if (m < l[2]) {
+            m = l[2];
+        }
+        r *= m;
+    }
+    return r;
+}
+
+/* The two strongest lights of the second set at p (of the group, or any with 0) become the
+   characters' other two lights (Scene b[1], b[2]); kind 0 lights over D_00239CE0 count 0.5,
+   kind 4 1, kind 2 none; the others' colours are scaled to their strength and added to the
+   ambient (unk310). */
+void func_00680EF0(f32 *p, s32 group);
+#ifdef NON_MATCHING   /* register allocation and the lights' address arithmetic */
+void func_00680EF0(f32 *p, s32 group) {
+    s8 idx[2];
+    f32 best[2];
+    f32 c2[4];
+    f32 c1[4];
+    RoomLight *l;
+    f32 *c;
+    f32 v;
+    f32 m;
+    s32 i;
+
+    CLEAR(best, 8);
+    *(s16 *)idx = D_0023AE8C;
+    if (p == NULL) {
+        return;
+    }
+    for (i = 0; i < 64; i++) {
+        l = &D_007123A0[i];
+        if (l->on == 0 || l->range <= 0.0f) {
+            continue;
+        }
+        if (group != 0 && l->group != 0 && (group & 0xFF) != (l->group & 0xFF)) {
+            continue;
+        }
+        c = l->color;
+        if (l->kind == 2) {
+            continue;
+        }
+        if (l->kind == 0) {
+            v = func_00680E20(c, p);
+            if (v > 0.0f && c[11] > D_00239CE0) {
+                v = 0.5f;
+            }
+        } else if (l->kind == 4) {
+            v = 1.0f;
+        } else {
+            v = func_00680E20(c, p);
+        }
+        if (!(v <= best[0])) {
+            best[1] = best[0];
+            idx[1] = idx[0];
+            best[0] = v;
+            idx[0] = i;
+        } else if (!(v <= best[1])) {
+            best[1] = v;
+            idx[1] = i;
+        }
+    }
+    for (i = 0; i < 2; i++) {
+        if (idx[i] >= 0) {
+            l = &D_007123A0[idx[i]];
+            c = l->color;
+            if (l->kind == 0 || l->kind == 3 || l->kind == 4) {
+                memcpy(&D_00305FA0.b[i + 1].w[1], c, 0x10);
+                memcpy(&D_00305FA0.b[i + 1].w[9], c + 4, 0x10);
+                memcpy(&D_00305FA0.b[i + 1].w[16], c + 8, 0xC);
+                D_00305FA0.b[i + 1].w[20] = c[11];
+            } else {
+                m = c[0];
+                if (m < c[1]) {
+                    m = c[1];
+                }
+                if (m < c[2]) {
+                    m = c[2];
+                }
+                best[i] = best[i] / m;
+                c1[0] = c[0] * best[i];
+                c1[1] = c[1] * best[i];
+                c1[2] = c[2] * best[i];
+                c2[0] = c[4] * best[i];
+                c2[1] = c[5] * best[i];
+                c2[2] = c[6] * best[i];
+                func_00681340((Vec3 *)&D_00305FA0.b[i + 1].w[1], (Vec3 *)c1, &D_00305FA0.unk310);
+                func_00681340((Vec3 *)&D_00305FA0.b[i + 1].w[9], (Vec3 *)c2, &D_00305FA0.unk310);
+                memcpy(&D_00305FA0.b[i + 1].w[16], c + 8, 0xC);
+                D_00305FA0.b[i + 1].w[20] = c[11];
+            }
+        } else {
+            memset(&D_00305FA0.b[i + 1], 0, sizeof(Light));
+        }
+    }
+    if (D_00305FA0.enable[4] != 0) {
+        func_001AE9C0(0x5B, (u32)&D_00305FA0.b[1]);
+    }
+    if (D_00305FA0.enable[5] != 0) {
+        func_001AE9C0(0x5C, (u32)&D_00305FA0.b[2]);
+    }
+    D_00305FA0.mode = -1;
+}
+#endif
 
 static void func_00681340(Vec3 *out, Vec3 *a, Vec3 *b) {
     out->x = a->x + b->x;
