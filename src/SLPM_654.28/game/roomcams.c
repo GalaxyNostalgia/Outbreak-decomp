@@ -66,11 +66,11 @@ typedef struct {
     u8 unk4;
     u8 cur;             /* 0x05 */
     s16 unk6;           /* 0x06 */
-    s32 unk8;           /* 0x08 */
-    s32 unkC;           /* 0x0C */
-    s32 unk10;          /* 0x10 */
-    s32 unk14;          /* 0x14 */
-    s32 unk18;          /* 0x18 */
+    f32 unk8;           /* 0x08: the camera's place along its path (eased toward unk10) */
+    f32 unkC;           /* 0x0C: its target's (toward unk14) */
+    f32 unk10;          /* 0x10 */
+    f32 unk14;          /* 0x14 */
+    struct RoomCam *unk18; /* 0x18: the camera last set */
     u8 unk1C[8];
     u8 unk24;           /* 0x24: our player */
     u8 unk25;           /* 0x25 */
@@ -355,7 +355,138 @@ s8 func_0058F720(u16 i, RoomCam *c) {
 #endif
 void func_0067FEB0(u8 n);
 void func_0058EC70(RoomCam *c);
-void func_0058ED80(RoomCam *c);
+#include "camera.h"
+
+f32 func_00590280(f32 *ends, s32 which, f32 x, f32 z);
+
+/* How far our player is from camera c's end which (0 or 1) toward the other side: 0-1. */
+f32 func_00590240(RoomCam *c, s32 which) {
+    CamPlayer *p = &D_00476DD0[D_003AEF50.unk24];
+
+    return func_00590280(c->ends[0][0], which, p->pos[0], p->pos[2]);
+}
+
+/* For point (x, z): its distance in from end which's first edge over the sum of that and its
+   distance in from the second (each along its edge direction). */
+#ifdef NON_MATCHING   /* the multiply-adds take their operands the other way round */
+f32 func_00590280(f32 *ends, s32 which, f32 x, f32 z) {
+    f32 *e = ends + which * 6;
+    f32 a = e[12] * (x - e[0]) + e[14] * (z - e[2]);
+    f32 b = e[15] * (x - e[3]) + e[17] * (z - e[5]);
+
+    return a / (a + b);
+}
+#endif
+/* The point at t:u between camera c's points pair (out). */
+void func_0058F5A0(u8 pair, f32 *out, f32 t, RoomCam *c, f32 u) {
+    f32 sum = t + u;
+
+    out[0] = (u * c->pts[pair][0][0] + t * c->pts[pair][1][0]) / sum;
+    out[1] = (u * c->pts[pair][0][1] + t * c->pts[pair][1][1]) / sum;
+    out[2] = (u * c->pts[pair][0][2] + t * c->pts[pair][1][2]) / sum;
+}
+void func_00345480(void);
+
+/* Sets the camera for room camera c (types 2-9): its eye along its first pair of points (or
+   fixed), its roll and field of view blended the same way, and what it looks at by its type. */
+void func_0058ED80(RoomCam *c) {
+    CamPlayer *p = &D_00476DD0[D_003AEF50.unk24];
+    f32 v[3];
+    f32 a;
+    f32 b;
+    f32 a2;
+    f32 b2;
+
+    func_00345480();
+    D_003AEF50.unk10 = func_00590240(c, 0);
+    if (c->type == 6 || c->type == 7) {
+        D_003AEF50.unk14 = func_00590240(c, 1);
+    }
+    if (D_003AEF50.unk18 != c) {
+        D_003AEF50.unk18 = c;
+        D_003AEF50.unk8 = D_003AEF50.unk10;
+        D_003AEF50.unkC = D_003AEF50.unk14;
+    } else {
+        D_003AEF50.unk8 += (D_003AEF50.unk10 - D_003AEF50.unk8) / 6.0f;
+        D_003AEF50.unkC += (D_003AEF50.unk14 - D_003AEF50.unkC) / 6.0f;
+    }
+    a = (f32)100000 * D_003AEF50.unk8;
+    b = (f32)100000 - a;
+    if (c->type == 6 || c->type == 7) {
+        a2 = (f32)100000 * D_003AEF50.unkC;
+        b2 = (f32)100000 - a2;
+    }
+    switch (c->type) {
+    case 2:
+    case 4:
+    case 5:
+    case 6:
+    case 7:
+    case 9:
+        func_0058F5A0(1, v, a, c, b);
+        D_00306320.pos.x = c->unk1C[0] = v[0];
+        D_00306320.pos.y = c->unk1C[1] = v[1];
+        D_00306320.pos.z = c->unk1C[2] = v[2];
+        if (c->unk4[2] != c->unk4[3]) {
+            D_00306320.roll = c->unk4[2] + (s32)(a * (c->unk4[3] - c->unk4[2]) / (f32)100000);
+        } else {
+            D_00306320.roll = c->unk4[2];
+        }
+        if (c->unk14 != c->unk18) {
+            D_00306320.fov = (b * c->unk14 + a * c->unk18) / (a + b);
+        } else {
+            D_00306320.fov = c->unk14;
+        }
+        break;
+    case 3:
+        D_00306320.pos.x = c->pts[1][0][0];
+        D_00306320.pos.y = c->pts[1][0][1];
+        D_00306320.pos.z = c->pts[1][0][2];
+        D_00306320.roll = c->unk4[2];
+        D_00306320.fov = c->unk14;
+        break;
+    }
+    switch (c->type) {
+    case 2:
+    case 3:
+    case 4:
+        func_0058F5A0(2, v, a, c, b);
+        if (c->type == 4) {
+            D_00306320.target.x = p->pos[0];
+            D_00306320.target.z = p->pos[2];
+        } else {
+            D_00306320.target.x = v[0];
+            D_00306320.target.z = v[2];
+        }
+        D_00306320.target.y = v[1];
+        break;
+    case 9:
+        D_00306320.target.x = p->pos[0];
+        D_00306320.target.z = p->pos[2];
+        D_00306320.target.y = 100.0f + p->pos[1];
+        break;
+    case 6:
+    case 7:
+        func_0058F5A0(2, v, a2, c, b2);
+        D_00306320.target.x = v[0];
+        D_00306320.target.y = v[1];
+        D_00306320.target.z = v[2];
+        if (c->type == 7) {
+            c->unk1C[0] += v[0] - c->pts[2][0][0];
+            c->unk1C[1] += v[1] - c->pts[2][0][1];
+            c->unk1C[2] += v[2] - c->pts[2][0][2];
+            D_00306320.pos.x = c->unk1C[0];
+            D_00306320.pos.y = c->unk1C[1];
+            D_00306320.pos.z = c->unk1C[2];
+        }
+        break;
+    case 5:
+        D_00306320.target.x = c->pts[2][0][0];
+        D_00306320.target.y = c->pts[2][0][1];
+        D_00306320.target.z = c->pts[2][0][2];
+        break;
+    }
+}
 void func_0058F230(RoomCam *c);
 void func_00345740(void);
 
@@ -440,7 +571,7 @@ void func_0058E7B0(void) {
     }
     switch (c->type) {
     case 1:
-        t->unk18 = (s32)c;
+        t->unk18 = c;
         func_0058EC70(c);
         break;
     case 8:
