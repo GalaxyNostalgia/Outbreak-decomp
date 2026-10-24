@@ -1,5 +1,6 @@
 #include "common.h"
 #include "game.h"
+#include "room.h"
 
 /* GAME.BIN: the room's cameras (as script ops 0x11-0x16 treat them), set up from the room data.
    Cameras of type 8 chain (prev/next) into paths. */
@@ -218,7 +219,7 @@ void func_0058DE60(RoomCamFile *f) {
 extern u8 D_006D6CD0[4][4];     /* the corners of end 0, by unkF0 & 3 */
 extern u8 D_006D6CE0[4][4];     /* end 1, by (unkF0 >> 16) & 3 */
 void func_00341140(f32 *a, f32 *b, f32 *c, f32 *out);
-void func_00340410(f32 *out, f32 *a, f32 *b);
+void func_00340410(f32 *out, const f32 *a, const f32 *b);
 void func_00191750(f32 *v);
 
 /* Works out end which of c: its four corners (on the ground), and from them the edges. */
@@ -259,5 +260,196 @@ void func_0058FDB0(RoomCam *c, s32 which) {
     func_00341140(p[2], p[3], p[0], n);
     func_00340410(c->dirs[which * 2 + 1], p[0], n);
     func_00191750(c->dirs[which * 2 + 1]);
+}
+#endif
+
+extern u8 D_0048AC10[];         /* (0x290-0x293: the camera's four switches) */
+f32 func_001917C0(const f32 *a, const f32 *b);
+void func_00191820(f32 *out, const f32 *a, const f32 *b);
+f32 func_00191690(const f32 *v);
+
+typedef struct {
+    f32 v[3];
+} CamVec;
+
+typedef struct {
+    u8 unk0[0x38];
+    f32 pos[3];         /* 0x38 */
+    u8 unk44[0x10E0 - 0x44];
+} CamPlayer;
+
+extern CamPlayer D_00476DD0[];
+
+/* The unit normal of triangle b a p (as SUBMAIN's func_00340630). */
+s32 func_0058F630(const f32 *a, const f32 *b, const f32 *p, f32 *out) {
+    f32 u[4];
+    f32 w[4];
+
+    func_00340410(u, a, b);
+    func_00340410(w, p, b);
+    func_00191820(out, w, u);
+    func_00191750(out);
+    return func_00191690(out) != 0.0f;
+}
+
+/* Whether p is in front of the plane through q with normal n. */
+s32 func_0058F6C0(f32 *p, f32 *q, f32 *n) {
+    f32 w[4];
+
+    func_00340410(w, p, q);
+    return func_001917C0(w, n) > 0.0f;
+}
+
+/* One face (corners a, b, c of camera c's zone) of func_0058F720's test. */
+#define CAM_FACE(k, a, b, c_)                                                               \
+    t[0][0] = box[a][0];                                                                    \
+    t[0][1] = box[a][1];                                                                    \
+    t[0][2] = box[a][2];                                                                    \
+    t[1][0] = box[b][0];                                                                    \
+    t[1][1] = box[b][1];                                                                    \
+    t[1][2] = box[b][2];                                                                    \
+    t[2][0] = box[c_][0];                                                                   \
+    t[2][1] = box[c_][1];                                                                   \
+    t[2][2] = box[c_][2];                                                                   \
+    if (func_0058F630(t[0], t[1], t[2], n[k]) == 0) {                                       \
+        return 0;                                                                           \
+    }                                                                                       \
+    q[k] = *(CamVec *)t[0];                                                                 \
+    pt = *(CamVec *)p->pos;                                                                 \
+    pt.v[1] += 10.0f
+
+/* Whether our player (10 up) is inside camera c's zone (eight corners). */
+s8 func_0058F720(u16 i, RoomCam *c);
+#ifdef NON_MATCHING   /* as pools.c func_00543F60 */
+s8 func_0058F720(u16 i, RoomCam *c) {
+    CamVec pt;
+    f32 n[6][3];
+    CamVec q[6];
+    f32 t[3][3];
+    s32 (*box)[3] = c->unk28;
+    CamPlayer *p = &D_00476DD0[D_003AEF50.unk24];
+
+    CAM_FACE(0, 0, 3, 1);
+    if (func_0058F6C0(pt.v, q[0].v, n[0])) {
+        return 0;
+    }
+    CAM_FACE(1, 0, 1, 4);
+    if (func_0058F6C0(pt.v, q[1].v, n[1])) {
+        return 0;
+    }
+    CAM_FACE(2, 0, 4, 3);
+    if (func_0058F6C0(pt.v, q[2].v, n[2])) {
+        return 0;
+    }
+    CAM_FACE(3, 6, 7, 5);
+    if (func_0058F6C0(pt.v, q[3].v, n[3])) {
+        return 0;
+    }
+    CAM_FACE(4, 6, 2, 7);
+    if (func_0058F6C0(pt.v, q[4].v, n[4])) {
+        return 0;
+    }
+    CAM_FACE(5, 6, 5, 2);
+    return func_0058F6C0(pt.v, q[5].v, n[5]) == 0;
+}
+#endif
+void func_0067FEB0(u8 n);
+void func_0058EC70(RoomCam *c);
+void func_0058ED80(RoomCam *c);
+void func_0058F230(RoomCam *c);
+void func_00345740(void);
+
+/* Once a frame: picks the camera (the one held by unk6, else the highest-priority one whose
+   zone our player is in, keeping the current one among equals); a new camera waits up to 8
+   frames when it ranks below the old one, then gets its lights, the room parts it shows and its
+   switches, and starts by its type. */
+void func_0058E7B0(void);
+#ifdef NON_MATCHING   /* first draft */
+void func_0058E7B0(void) {
+    RoomCams *t = &D_003AEF50;
+    RoomCam *c;
+    u16 i;
+    u16 k;
+    u8 sel;
+    u8 best;
+
+    D_003AEF50.unk4 = 0;
+    if (D_003AEF50.unk0 == 0) {
+        return;
+    }
+    sel = 0xFF;
+    if (D_003AEF50.unk6 != 0) {
+        sel = D_003AEF50.cur;
+    } else {
+        for (i = 0, best = sel; i < t->count; i++) {
+            c = &t->cams[i];
+            if (c->off == 0 || func_0058F720(i, c) != 1) {
+                continue;
+            }
+            if (best == 0xFF) {
+                best = c->unk167;
+                sel = i;
+            } else if (best == c->unk167) {
+                if (t->unk3 == i) {
+                    sel = i;
+                }
+            } else if (best < c->unk167) {
+                best = c->unk167;
+                sel = i;
+            }
+        }
+    }
+    if (sel == 0xFF) {
+        sel = 0;
+        if (t->unk3 != 0xFF) {
+            func_00345740();
+            return;
+        }
+    }
+    if (t->unk3 == sel) {
+        if (t->unk26 < 0xFF) {
+            t->unk26++;
+        }
+    } else {
+        if (t->unk3 != 0xFF) {
+            if (t->cams[sel].unk167 < t->cams[t->unk3].unk167 && t->unk26 < 8) {
+                t->unk26++;
+                func_00345740();
+                return;
+            }
+            t->unk4 = 1;
+        }
+        t->unk3 = sel;
+        t->unk26 = 0;
+        func_0067FEB0(t->cams[sel].unk3);
+        for (k = 0; k < D_00470090.nParts; k++) {
+            D_00470090.partFlags[k] &= ~1;
+            if (((s32 *)t->cams[sel].unk154)[k >> 5] & (1 << (k & 0x1F))) {
+                D_00470090.partFlags[k] |= 1;
+            }
+        }
+        memcpy(t->unk1C, t->cams[sel].unk188, 8);
+    }
+    c = &t->cams[sel];
+    for (k = 0; k < 4; k++) {
+        if (c->unk190 & (1 << k)) {
+            D_0048AC10[0x290 + k] = 1;
+        } else {
+            D_0048AC10[0x290 + k] = 0;
+        }
+    }
+    switch (c->type) {
+    case 1:
+        t->unk18 = (s32)c;
+        func_0058EC70(c);
+        break;
+    case 8:
+        func_0058F230(c);
+        break;
+    default:
+        func_0058ED80(c);
+        break;
+    }
+    func_00345740();
 }
 #endif

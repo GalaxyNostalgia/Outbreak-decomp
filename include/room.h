@@ -30,7 +30,9 @@ typedef struct {
     u8 unk20[0x68 - 0x20];
     u16 texId[0x400];   /* 0x0068: texture slots (into D_004BEEF0, 0x4C each) */
     RoomPart *parts;    /* 0x0868 */
-    u8 unk86C[0x880 - 0x86C];
+    u8 unk86C[0x872 - 0x86C];
+    u16 nParts;         /* 0x0872 */
+    u8 unk874[0x880 - 0x874];
     f32 offset[4];      /* 0x0880: the room's position */
     u8 unk890[0x8A0 - 0x890];
     u8 partFlags[0x80]; /* 0x08A0: 1 shown, 0x80 hidden */
