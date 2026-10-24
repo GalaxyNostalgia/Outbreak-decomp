@@ -205,3 +205,94 @@ void func_005A9DB0(void) {
     D_0023BE08 = 0;
 }
 #endif
+
+extern u8 *D_003937A0[0x40];    /* the objects that can be hit this frame */
+
+/* Clears o's hits for the frame and, unless it is still in its hit wait (0x32; 0xFF: never),
+   lists it among the targets (when it has a hit shape, 0x1D8). */
+void func_005ABA30(u8 *o);
+#ifdef NON_MATCHING   /* the original leaves nops in its branch delay slots */
+void func_005ABA30(u8 *o) {
+    u8 w;
+
+    *(s32 *)(o + 0x138) = 0;
+    *(s16 *)(o + 0x14E) = 0;
+    o[0x13C] = 0;
+    o[0x13F] = 0;
+    o[0x116] = 0;
+    w = o[0x32];
+    if (w != 0) {
+        if ((w & 0xFF) != 0xFF) {
+            o[0x32] = w - 1;
+        }
+    } else if ((u16)D_0023BE08 < 0x40 && *(s32 *)(o + 0x1D8) != 0) {
+        D_003937A0[(u16)D_0023BE08] = o;
+        (*(u16 *)&D_0023BE08)++;
+    }
+}
+#endif
+
+/* A character's hit spheres (0x1D8, ended by radius -1): offset from a bone, radius, bone. */
+typedef struct {
+    f32 off[3];         /* 0x00 */
+    f32 r;              /* 0x0C */
+    s32 bone;           /* 0x10 */
+} HitSphere;
+
+void func_001913A0(f32 *out, const f32 *v, const f32 *m);
+
+typedef struct {
+    f32 x, y, z;
+} Vec3f;
+
+/* Where o's hit spheres are this frame (into 0x1DC, their number into 0x1E0), by its bones. */
+void func_005AB840(u8 *o);
+#ifdef NON_MATCHING   /* the original keeps &p.y and &p.z in s registers */
+void func_005AB840(u8 *o) {
+    HitSphere *h = *(HitSphere **)(o + 0x1D8);
+    f32 *out;
+    s32 n;
+    f32 *m;
+    Vec3f p;
+
+    if (h == NULL) {
+        return;
+    }
+    out = *(f32 **)(o + 0x1DC);
+    for (n = 0; h->r != -1.0f; h++, out += 3) {
+        m = *(f32 **)(*(u8 **)(o + 0x34) + 0x820 + h->bone * 4);
+        func_001913A0(&p.x, h->off, m);
+        n++;
+        out[0] = p.x + m[12];
+        out[1] = p.y + m[13];
+        out[2] = p.z + m[14];
+    }
+    o[0x1E0] = n;
+}
+#endif
+
+/* The same for a thing, by its own matrix (0x50). */
+void func_005AB930(u8 *o);
+#ifdef NON_MATCHING   /* the original keeps &p.y and &p.z in s registers; loop layout */
+void func_005AB930(u8 *o) {
+    HitSphere *h = *(HitSphere **)(o + 0x1D8);
+    f32 *out;
+    s32 n;
+    f32 *m;
+    Vec3f p;
+
+    if (h == NULL) {
+        return;
+    }
+    out = *(f32 **)(o + 0x1DC);
+    m = (f32 *)(o + 0x50);
+    for (n = 0; h->r != -1.0f; h++, out += 3) {
+        func_001913A0(&p.x, h->off, m);
+        n++;
+        out[0] = p.x + m[12];
+        out[1] = p.y + m[13];
+        out[2] = p.z + m[14];
+    }
+    o[0x1E0] = n;
+}
+#endif

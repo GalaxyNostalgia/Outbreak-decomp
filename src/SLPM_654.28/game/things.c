@@ -568,3 +568,157 @@ void func_006897A0(void) {
     }
 }
 #endif
+
+extern Thing *D_0023BDF4;       /* the things in use */
+void func_005A9AC0(Thing *t);
+void func_005E5AF0(Thing *t, f32 *p, s32 want);
+f32 func_005E5B40(const f32 *p, u8 *kind, s32 want);
+typedef struct {
+    f32 v[3];
+} ThingVec;
+
+void func_00340310(s32 rx, s32 ry, s32 rz, f32 *m);
+void func_001913A0(f32 *out, const f32 *v, const f32 *m);
+
+/* v turned by thing t's rotation, into out. */
+void func_006037B0(Thing *t, f32 *v, f32 *out) {
+    f32 m[16];
+    ThingVec a;
+    ThingVec r;
+
+    a = *(ThingVec *)v;
+    func_00340310(t->rot[0], t->rot[1], t->rot[2], m);
+    func_001913A0(r.v, a.v, m);
+    *(ThingVec *)out = r;
+}
+void func_005E5BC0(const f32 *p, f32 *m, s32 want);
+f32 func_00191B50(f32 y, f32 x);
+u32 func_001918C0(f32 rad);
+f32 func_00191A70(f32 x);
+extern u16 D_0023AC80[2];       /* the slope's headings: across, then down */
+extern f32 D_00239CE4;          /* a tiny x */
+
+/* How thing t stands on the slope of the floor under p: -1 across it, 0 along it, 1 facing down
+   it (by the turn from its heading to the slope's, D_0023AC80); 0 off a kind-1 floor. */
+s8 func_006062C0(Thing *t, f32 *p) {
+    f32 v[3];
+    f32 n[4];
+    f32 m[16];
+    u32 i;
+    s32 d;
+    u8 kind;
+    u8 r = 0xFF;
+
+    func_005E5B40(p, &kind, 1);
+    if (kind != 1) {
+        return 0;
+    }
+    func_005E5BC0(p, m, 0xFF);
+    v[1] = 1.0f;
+    v[0] = 0.0f;
+    v[2] = 0.0f;
+    func_001913A0(n, v, m);
+    if (n[0] == 0.0f) {
+        n[0] = D_00239CE4;
+    }
+    d = (s16)func_00191A70((s16)(t->rot[1] - (s16)func_001918C0(func_00191B50(n[0], n[2])))) & 0xFFFF;
+    for (i = 0; i < 2; i++) {
+        if (d < D_0023AC80[i]) {
+            break;
+        }
+    }
+    switch (i) {
+    case 0:
+        r = 0xFF;
+        break;
+    case 1:
+        r = 0;
+        break;
+    case 2:
+        r = 1;
+        break;
+    }
+    return r;
+}
+
+/* The floor of a thing that may stand on an edge (s[1]: 0 its front, -1 its back, 1 its middle):
+   its height, then whether that point is over the floor (func_006062C0; 0x174 = 1). */
+void func_00606150(Thing *t, s8 *s) {
+    f32 p[3];
+    f32 v[4];
+    f32 w[3];
+    u8 kind;
+
+    func_005E5AF0(t, t->pos, 0xFF);
+    if (t->unk174 == 1) {
+        t->unk170 = func_005E5B40(t->pos, &kind, 1);
+    }
+    if (t->unkBA5 == 0) {
+        t->pos[1] = t->unk170;
+    }
+    switch (s[1]) {
+    case 0:
+        v[2] = 18.0f;
+        v[0] = 0.0f;
+        v[1] = 0.0f;
+        func_006037B0(t, v, w);
+        p[0] = t->pos[0] + w[0];
+        p[1] = t->pos[1];
+        p[2] = t->pos[2] + w[2];
+        break;
+    case 1:
+        *(ThingVec *)p = *(ThingVec *)t->pos;
+        break;
+    case -1:
+        v[2] = -18.0f;
+        v[0] = 0.0f;
+        v[1] = 0.0f;
+        func_006037B0(t, v, w);
+        p[0] = t->pos[0] + w[0];
+        p[1] = t->pos[1];
+        p[2] = t->pos[2] + w[2];
+        break;
+    }
+    if ((s[1] = func_006062C0(t, p)) == 0) {
+        t->unk174 = 0;
+    } else {
+        t->unk174 = 1;
+    }
+}
+
+/* The things' moves: carried (0x54A bit 5) or into the walls (func_005A9AC0), then their floor
+   (kinds 1, 0x29 and 0x2D their own way). */
+void func_00606030(void) {
+    Thing *t;
+    u8 kind;
+
+    for (t = D_0023BDF4; t != NULL; t = t->next) {
+        if (t->unk54A & 0x20) {
+            t->pos[0] += t->unkB28[0];
+            t->pos[1] += t->unkB28[1];
+            t->pos[2] += t->unkB28[2];
+        } else {
+            func_005A9AC0(t);
+        }
+        switch (t->kind) {
+        case 1:
+            func_00606150(t, (s8 *)t + 0xD44);
+            break;
+        case 0x29:
+            func_00606150(t, (s8 *)t + 0xD38);
+            break;
+        case 0x2D:
+            func_00606150(t, (s8 *)t + 0xD24);
+            break;
+        default:
+            func_005E5AF0(t, t->pos, 0xFF);
+            if (t->unk174 == 1) {
+                t->unk170 = func_005E5B40(t->pos, &kind, 1);
+            }
+            if (t->unkBA5 == 0) {
+                t->pos[1] = t->unk170;
+            }
+            break;
+        }
+    }
+}

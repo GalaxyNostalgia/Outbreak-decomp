@@ -62,8 +62,10 @@ typedef struct Thing {
     f32 unkD0; /* 0x0D0 */
     u8 pad0D4[0x0F0 - 0x0D4];
     f32 unkF0; /* 0x0F0 */
-    u8 parts[0x80]; /* 0x0F4: per model part, drawn */
-    u8 pad174[0x190 - 0x174];
+    u8 parts[0x7C]; /* 0x0F4: per model part, drawn */
+    f32 unk170; /* 0x170: the floor's height */
+    u8 unk174; /* 0x174: the floor's kind */
+    u8 pad175[0x190 - 0x175];
     u32 unk190; /* 0x190 */
     u32 unk194; /* 0x194 */
     u8 pad198;
@@ -101,7 +103,9 @@ typedef struct Thing {
     f32 unkAA8; /* 0xAA8: gravity */
     u8 padAAC[0xAEC - 0xAAC];
     u8 unkAEC[4]; /* 0xAEC */
-    u8 padAF0[0xB98 - 0xAF0];
+    u8 padAF0[0xB28 - 0xAF0];
+    f32 unkB28[3]; /* 0xB28: carried along (0x54A bit 5) */
+    u8 padB34[0xB98 - 0xB34];
     u8 set; /* 0xB98: its D_0071A030 entry */
     u8 padB99[0xB9A - 0xB99];
     u8 unkB9A; /* 0xB9A */
