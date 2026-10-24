@@ -3805,6 +3805,121 @@ void func_006307E0(DrawObjFull *o) {
 #endif
 s32 func_0061D9A0(DrawObjFull *o);
 s32 func_006337C0(DrawObjFull *o, u8 act, u8 step);
+extern s16 D_003967F4[][0x1E];  /* per item: (+0) ... */
+
+/* Whether the player may be interrupted (by act/step) in its current action. */
+s32 func_006337C0(DrawObjFull *o, u8 act, u8 step) {
+    switch (o->act[0]) {
+    case 1:
+        switch (o->act[1]) {
+        case 0x1:
+        case 0x2:
+        case 0x3:
+        case 0x4:
+        case 0x5:
+        case 0x6:
+        case 0x7:
+        case 0x8:
+        case 0x31:
+        case 0x9:
+        case 0xA:
+        case 0xB:
+        case 0xC:
+        case 0xD:
+        case 0xE:
+        case 0x32:
+        case 0x98:
+        case 0x99:
+        case 0x9A:
+        case 0x9B:
+        case 0x9C:
+        case 0x9D:
+        case 0x9E:
+        case 0x9F:
+        case 0xA0:
+        case 0xA3:
+        case 0xA4:
+        case 0xA5:
+        case 0xA6:
+        case 0xA7:
+        case 0xA8:
+        case 0xA9:
+        case 0xAA:
+        case 0xAB:
+        case 0x74:
+        case 0x75:
+        case 0x76:
+        case 0x77:
+        case 0x78:
+        case 0x79:
+        case 0x7A:
+        case 0x7B:
+        case 0x7C:
+        case 0x4A:
+        case 0x4B:
+        case 0x4C:
+        case 0x4D:
+        case 0x4E:
+        case 0x4F:
+        case 0x50:
+        case 0x51:
+        case 0x52:
+        case 0x53:
+        case 0x54:
+        case 0x55:
+        case 0xCD:
+        case 0xD0:
+        case 0xD1:
+        case 0x81:
+        case 0x82:
+        case 0x83:
+            return 1;
+        }
+        break;
+    case 2:
+        if (act == 2) {
+            switch (step) {
+            case 1:
+                switch (o->act[1]) {
+                case 2:
+                    if (D_003967F4[o->unkC7C][0] == 0) {
+                        return 1;
+                    }
+                    break;
+                }
+                break;
+            case 5:
+            case 6:
+                switch (o->act[1]) {
+                case 9:
+                    return 1;
+                case 2:
+                    if (D_003967F4[o->unkC7C][0] == 0) {
+                        return 1;
+                    }
+                    break;
+                }
+                break;
+            }
+        }
+        switch (o->act[1]) {
+        case 2:
+            if (D_003967F4[o->unkC7C][0] == 0) {
+                return 1;
+            }
+            break;
+        case 0:
+        case 1:
+        case 7:
+        case 5:
+        case 6:
+        case 10:
+            return 1;
+        }
+        break;
+    }
+    return 0;
+}
 extern u8 D_0048BF93[];
 
 /* Our player, every 30 ticks while standing or walking (action 1 and these steps): the
@@ -4548,3 +4663,252 @@ void func_0058C380(DrawObjFull *o) {
     }
 }
 #endif
+
+typedef struct {
+    u8 heavy;           /* 0x00 */
+    u8 unk1;            /* 0x01: its turn-speed column (action 0x80) */
+    u8 unk2[0x42];
+} WeaponTurn;
+
+extern WeaponTurn D_006E5944[];
+extern s16 D_006E7210[][13];    /* (action 0x80) by condition */
+extern s16 *D_006E72E0[];       /* by the action's kind: [condition * 5 + heavy] */
+extern s16 *D_006E7690[];       /* (the same while 0xBA0 & 0x2000) */
+extern s16 D_006E76C0[];        /* (0xBA0 & 0x80) by the action's kind */
+extern s16 D_006E7280[][8];     /* 0x8000 | n: per character */
+extern s16 D_006E7630[][8];
+f32 func_00191A70(f32 x);
+
+/* How fast the character turns this frame (0x10000 a turn): by its action, condition and
+   weapon, doubled at 30 fps; while aiming (0xBA0 & 0x2000) scaled by how far it has to turn. */
+s16 func_0062DBC0(DrawObjFull *o);
+#ifdef NON_MATCHING   /* close: delay slots in the action switch and the tail's returns */
+s16 func_0062DBC0(DrawObjFull *o) {
+    s16 sp;
+    u8 cond;
+    s16 t;
+    f32 f;
+    s16 d;
+    s16 r;
+    u8 w;
+
+    cond = o->unkB9B;
+    if (o->unkD90 != 0) {
+        return 0;
+    }
+    if (o->unkBA0 & 0x18) {
+        cond = 3;
+    }
+    if (o->unkBA0 & 0x20) {
+        cond = 0;
+    }
+    switch (o->unk54F) {
+    case 0xA:
+    case 0:
+        f = o->unkBA8;
+        t = 0;
+        break;
+    case 1:
+        f = 1.0f;
+        t = 1;
+        break;
+    case 2:
+        f = 1.0f;
+        t = 2;
+        break;
+    case 3:
+        f = 1.0f;
+        t = 3;
+        break;
+    case 4:
+        f = 1.0f;
+        t = 4;
+        break;
+    case 7:
+    case 0x2D:
+    case 0x2F:
+    case 0x2E:
+        f = 1.0f;
+        t = 5;
+        break;
+    case 0x80:
+        f = o->unkBA8;
+        t = 0;
+        break;
+    case 0x21:
+        f = o->unkBA8;
+        t = 6;
+        break;
+    case 0x22:
+        f = 1.0f;
+        t = 7;
+        break;
+    case 0x23:
+        f = 1.0f;
+        t = 8;
+        break;
+    case 0x24:
+        f = 1.0f;
+        t = 9;
+        break;
+    default:
+        t = 0;
+        f = 1.0f;
+        break;
+    }
+    switch (o->unk54F) {
+    default:
+        w = D_006E5944[(u16)o->unkCA8].heavy;
+        if (o->unkBA0 & 0x2000) {
+            sp = D_006E7690[t][cond * 10 + w];
+        } else {
+            sp = D_006E72E0[t][cond * 10 + w];
+        }
+        if (o->unkBA0 & 0x80) {
+            sp = D_006E76C0[t];
+        }
+        break;
+    case 0x80:
+        sp = D_006E7210[cond][D_006E5944[(u16)o->unkCA8].unk1];
+        break;
+    }
+    if (sp & 0x8000) {
+        if (o->unkBA0 & 0x2000) {
+            sp = D_006E7630[sp & 0x7FFF][o->unkB98];
+        } else {
+            sp = D_006E7280[sp & 0x7FFF][o->unkB98];
+        }
+    }
+    sp *= (s16)(D_00306590.unkC ? 2 : 1);
+    if (!(f <= 0.0f)) {
+        sp = sp * f;
+    }
+    if (!(o->unkBA0 & 0x2000)) {
+        return sp;
+    }
+    if (o->unk54F == 0x80) {
+        return sp;
+    }
+    switch (o->act[1]) {
+    case 4:
+    case 5:
+    case 7:
+    case 8:
+        if (FIELD(o, f32, 0x1E4) < FIELD(o, f32, 0x1EC)) {
+            sp *= 2;
+        }
+        break;
+    }
+    switch (o->act[1]) {
+    case 9:
+    case 10:
+    case 11:
+        if (func_00191A70(o->unkBCE - 0x8000 - o->unk92) <= sp) {
+            sp = func_00191A70(o->unkBCE - 0x8000 - o->unk92);
+        }
+        return sp;
+    }
+    d = o->unkBCE - o->unk92;
+    if (d == -0x8000) {
+        d = 0x7FFF;
+    }
+    r = func_00191A70(d);
+    if (r < sp) {
+        sp = r;
+    } else if (r > 0x6000) {
+        sp *= 4;
+    } else if (r > 0x4000) {
+        sp *= 2;
+    }
+    return sp;
+}
+#endif
+f32 func_005A41B0(DrawObjFull *o, u16 motion, s32 a);
+void func_0055C520(DrawObjFull *o);
+void func_00635920(DrawObjFull *o);
+extern f32 D_00239DFC;
+
+/* Kind 1/2 of action 1: turning on the spot (act[1] 1 one way, else the other). */
+void func_00639FA0(DrawObjFull *o) {
+    s16 m;
+
+    o->unkBA4 |= 0x100;
+    if (func_00635970(o)) {
+        o->unk54F = 0;
+        o->unk548 &= ~1;
+        o->act[0] = 1;
+        o->act[1] = 0;
+        o->act[2] = 1;
+        o->act[3] = 0;
+        func_00635920(o);
+        func_005A4490(o, 0x2050, 0.0f, 10.0f);
+        func_0055C4E0(o);
+        return;
+    }
+    if (o->act[1] == 1) {
+        o->unk92 -= func_0062DBC0(o);
+    } else {
+        o->unk92 += func_0062DBC0(o);
+    }
+    switch (o->act[2]) {
+    case 0:
+        o->act[2]++;
+        o->unk54F = 0;
+        o->unkD10[0] = 1;
+        func_00635950(o);
+        o->unkBA8 = 1.0f;
+        if (o->unkBA0 & 8) {
+            o->unkBA8 = 1.0f;
+        }
+        if (o->unkBA0 & 0x80) {
+            o->unkBA8 = D_00239DFC;
+        }
+    case 1:
+        o->act[2]++;
+        if (!(o->unkBA0 & 0x2000)) {
+            func_0055C520(o);
+            switch (o->unk520) {
+            case 0x2003:
+                m = 0x2003;
+                break;
+            case 0x2004:
+                m = 0x2004;
+                break;
+            default:
+                m = 0x2003;
+                break;
+            }
+            if (o->unk520 != m) {
+                func_005A4490(o, m, func_005A41B0(o, m, 0), 14.0f);
+                func_0055C4E0(o);
+            } else {
+                func_0055C030(o, o->unkBA8);
+                func_0055C4E0(o);
+            }
+        } else {
+            func_0055C030(o, o->unkBA8);
+        }
+        o->unk4E4[0] = 0;
+        o->unk4E4[1] = 0;
+        o->unk4E4[2] = 0;
+        break;
+    case 2:
+        func_0055C030(o, o->unkBA8);
+        o->unk4E4[0] = 0;
+        o->unk4E4[1] = 0;
+        o->unk4E4[2] = 0;
+        break;
+    case 0xFF:
+    default:
+        o->unk54F = 0;
+        o->unk548 &= ~1;
+        o->act[0] = 1;
+        o->act[1] = 0;
+        o->act[2] = 1;
+        o->act[3] = 0;
+        func_00635920(o);
+        func_005A4490(o, 0x2050, 0.0f, 12.0f);
+        func_0055C4E0(o);
+        break;
+    }
+}

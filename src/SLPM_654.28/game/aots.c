@@ -499,3 +499,131 @@ void func_005910F0(Aot *a) {
     }
     D_006D6D00[a->type](a);
 }
+
+#include "object.h"
+#include "game.h"
+#include "job.h"
+
+/* A kind-5 zone (a message where a player steps in) as func_00593FE0 sees it. */
+typedef struct {
+    u8 unk0[0x34];
+    DrawObjFull *who;   /* 0x34 */
+    u8 unk38[4];
+    u8 on;              /* 0x3C */
+    u8 unk3D[0x50 - 0x3D];
+    u16 msg;            /* 0x50 */
+    u16 flag;           /* 0x52: 0xFFFF none; 0x8000 | flag, 0x4000 | item, or an event flag */
+    u16 msg2;           /* 0x54: when the flag is set */
+    u16 arg;            /* 0x56 */
+    u8 snd;             /* 0x58: 0xFF none */
+    u8 mask;            /* 0x59: characters with their own message */
+    u16 msgBy[8];       /* 0x5A */
+    s16 max;            /* 0x6A: messages that follow on each time (0: one) */
+    s16 count;          /* 0x6C */
+    u8 once;            /* 0x6E */
+    u8 unk6F;
+    s32 val;            /* 0x70 */
+    s32 mode;           /* 0x74: -1 none, 0 func_005403E0, 1 func_005405F0 */
+} ZoneMsg;
+
+extern DrawObjFull D_00476DD0[];
+extern u8 D_0048AEA9[];
+extern void (*D_006D67BC[])(Job *j);
+extern void (*D_006D67C0[])(Job *j);
+s32 func_001AF540(DrawObjFull *o);
+s32 func_001AF4D0(void);
+s32 func_00540A10(s32 n);
+void func_005409E0(s32 n);
+s32 func_005409B0(u16 id);
+void func_00540970(u16 id);
+void func_00588D30(u8 slot, u8 kind, void (*fn)(Job *j), u8 player);
+void func_005403E0(s32 id, s32 arg);
+void func_005405F0(s32 id, s32 arg, s32 arg2);
+void func_00540120(u16 msg, s32 a, s32 b);
+void func_0058EB70(u8 a, u16 b);
+
+/* A kind-5 zone stepped in: its message (by flag, item or event; per character; following
+   ones), a sound, and its value. */
+void func_00593FE0(ZoneMsg *z);
+#ifdef NON_MATCHING   /* first draft: the player index's dead else, the count's sign extension, branch layout */
+void func_00593FE0(ZoneMsg *z) {
+    DrawObjFull *o = z->who;
+    u16 msg;
+    u8 kind;
+    s32 p;
+
+    if (o->type != 0) {
+        return;
+    }
+    if (func_001AF540(o) == 0) {
+        return;
+    }
+    kind = D_00476DD0[D_0048BF60.unk1D].unkB98;
+    msg = z->msg;
+    p = 0;
+    if (func_001AF4D0() == 1) {
+        p = o->kind;
+    }
+    if (z->flag != 0xFFFF) {
+        if (z->flag & 0x8000) {
+            if (func_00540A10(z->flag & 0x3FFF) != 0) {
+                msg = z->msg2;
+            } else {
+                func_005409E0(z->flag & 0x3FFF);
+            }
+        } else if (z->flag & 0x4000) {
+            if (D_0048AEA9[0] >= 8) {
+                return;
+            }
+            func_00588D30(8, 8, D_006D67C0[0], o->kind);
+            D_00387670[p][8].args[0] = z->flag & 0x3FFF;
+            D_00387670[p][8].args[1] = (s32)z;
+            return;
+        } else if (func_005409B0(z->flag) != 0) {
+            msg = z->msg2;
+        } else {
+            func_00588D30(8, 7, D_006D67BC[0], o->kind);
+            D_00387670[p][8].args[0] = z->flag;
+            D_00387670[p][8].args[1] = msg;
+            func_00540970(z->flag);
+            return;
+        }
+    }
+    if (z->mask != 0) {
+        if (!(z->mask & (1 << kind))) {
+            return;
+        }
+        msg = z->msgBy[kind];
+    }
+    if (z->mode != -1 && z->count >= z->max) {
+        if (z->mode == 0) {
+            func_005403E0(z->val, 1);
+        } else if (z->mode == 1) {
+            if (func_001AF4D0() == 1) {
+                func_005405F0(z->val, 1, o->kind);
+            } else {
+                func_005405F0(z->val, 1, 0);
+            }
+        }
+    }
+    if (z->max != 0) {
+        msg += z->count;
+        if (z->count < z->max) {
+            z->count++;
+        } else {
+            z->count = z->max;
+        }
+    }
+    if (z->flag != 0xFFFF) {
+        func_00540120(msg, 0x3C, 2);
+    } else {
+        func_00540120(msg, 0x3C, 4);
+    }
+    if (z->snd != 0xFF) {
+        func_0058EB70(z->snd, z->arg);
+    }
+    if (z->once != 0) {
+        z->on = 0;
+    }
+}
+#endif
