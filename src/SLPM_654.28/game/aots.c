@@ -487,3 +487,15 @@ Aot *func_00595F30(ItemObj *o, s32 (*c)[2], s32 bottom, s32 top) {
     a->on = 1;
     return a;
 }
+
+extern void (*D_006D6D00[])(Aot *a);   /* per type */
+extern void (*D_006D6D40[])(Aot *a);   /* per type & 0x7F, for types with 0x80 */
+
+/* Runs the zone's per-type function. */
+void func_005910F0(Aot *a) {
+    if (a->type & 0x80) {
+        D_006D6D40[a->type & 0x7F](a);
+        return;
+    }
+    D_006D6D00[a->type](a);
+}

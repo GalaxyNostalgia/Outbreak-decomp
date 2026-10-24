@@ -22,6 +22,17 @@ s16 func_00346C50(const f32 *a, const f32 *b) {
 }
 #endif
 
+/* The heading from a to b the other way round: atan2(dx, dz). */
+u16 func_00340140(const f32 *a, const f32 *b) {
+    f32 x = b[0] - a[0];
+    f32 z = b[2] - a[2];
+
+    if (z == 0.0f) {
+        z = D_00239CE4;
+    }
+    return func_001918C0(func_00191B50(x, z));
+}
+
 /* The effect models loaded. */
 typedef struct {
     u8 unk0[0x820];

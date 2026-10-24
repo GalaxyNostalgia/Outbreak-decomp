@@ -8,12 +8,12 @@
 /* A place a partner can go to (0x40 bytes). */
 typedef struct {
     u8 used;            /* 0x00 */
-    u8 unk1;
+    s8 n;               /* 0x01: how many ways lead on (next) */
     u16 who;            /* 0x02 */
     f32 pos[3];         /* 0x04 */
     s32 sw;             /* 0x10: the switch that must allow it (-1: none) */
     s8 next[4];         /* 0x14: the places it leads to (-1: none) */
-    u8 kind[4][2];      /* 0x18: each way's kind (1-13: doors and such) */
+    u16 kind[4];        /* 0x18: each way's kind (1-13: doors and such; how the partner moves) */
     u8 unk20[4];
     u16 cost[4];        /* 0x24: each way's length */
     u32 keys[4];        /* 0x2C: each way's four conditions (a byte each, on the room's ids) */

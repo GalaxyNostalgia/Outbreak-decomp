@@ -274,20 +274,25 @@ typedef struct DrawObjFull {
     s8 unk1008[4];      /* 0x1008 */
     s8 unk100C;         /* 0x100C: (partners) the place they wait at */
     s8 unk100D;         /* 0x100D: (partners) the place it heads for */
-    u8 unk100E[2];
+    s8 unk100E;         /* 0x100E: (partners) the place it goes to next */
+    s8 unk100F;         /* 0x100F: unk100E before */
     f32 unk1010[3];     /* 0x1010: (partners) where it heads */
-    u8 unk101C[0x1034 - 0x101C];
+    f32 unk101C[3];     /* 0x101C: unk100E's point */
+    f32 unk1028[3];     /* 0x1028: unk100F's */
     s32 unk1034;        /* 0x1034 */
-    u8 unk1038[2];
-    s8 unk103A;         /* 0x103A */
-    u8 unk103B[0x1058 - 0x103B];
+    u16 unk1038;        /* 0x1038: (partners) the heading it wants */
+    u8 unk103A;         /* 0x103A: (partners) the moving step's state */
+    u8 unk103B[0x1054 - 0x103B];
+    u16 unk1054;        /* 0x1054: (partners) how it moves (1, 2, 8, 9: climbing...) */
+    u16 unk1056;        /* 0x1056 */
     u16 unk1058;        /* 0x1058: (partners) the room it heads for */
     s8 unk105A;         /* 0x105A */
     u8 unk105B;         /* 0x105B */
     u8 unk105C[4];
     s32 unk1060;        /* 0x1060: (partners) frames left */
     u8 unk1064;         /* 0x1064 */
-    u8 unk1065[2];
+    s8 unk1065;         /* 0x1065: (partners) the place it was at when it last looked for a way */
+    u8 unk1066;
     s8 mode;            /* 0x1067: its D_00838860 entry */
     u8 unk1068[4];
     u8 unk106C;         /* 0x106C: (partners) how near the nearest dangerous enemy is (0-2, 3 none) */
@@ -326,7 +331,8 @@ typedef struct DrawObjFull {
     s32 unk10A0;        /* 0x10A0 */
     u32 unk10A4;        /* 0x10A4: (partners) frames stuck */
     s8 unk10A8;         /* 0x10A8 */
-    u8 unk10A9[3];
+    u8 unk10A9;         /* 0x10A9 */
+    s16 unk10AA;        /* 0x10AA */
     void *modeInfo;     /* 0x10AC: &D_00838860[mode] */
     u8 unk10B0[8];      /* 0x10B0: from modeInfo */
     u8 unk10B8[8];      /* 0x10B8 */

@@ -10,6 +10,14 @@ typedef struct {
     f32 v[3];
 } F3;
 
+extern s32 D_0023C264;
+extern Zone *D_0084E0A0[];      /* the zones by the partner (func_00829B70) */
+f32 func_001916E0(const f32 *a, const f32 *b);
+s8 func_00827180(f32 *pos, s32 id);
+s8 func_00827190(f32 *pos, s32 id);
+s8 func_00827D60(DrawObjFull *obj, s32 id, s32 from, s32 to, s8 *na, s8 *nb, f32 *pa, f32 *pb,
+                 f32 *e, s16 *link, s32 mode);
+
 /* SINGLE.BIN: the computer-controlled partners' AI state. */
 
 typedef struct {
@@ -207,15 +215,244 @@ void func_00823390(DrawObjFull *obj) {
 
 s8 func_008264F0(DrawObjFull *obj, s32 not, s32 room, s32 check);
 void func_008294A0(s32 n);
-s32 func_00826850(DrawObjFull *obj, f32 *pos, u16 id);
+s32 func_00826850(DrawObjFull *obj, f32 *pos, s32 room);
 void func_00827130(f32 *out, s32 id, s32 place);
 s8 func_00826BD0(void);
 SglLink *func_00829350(s32 room, s32 variant, s32 place);
 u16 func_00825CA0(s32 lo, s32 hi);
 s32 func_00823780(DrawObjFull *obj);
-s32 func_00823980(DrawObjFull *obj, s32 mask);
 s32 func_008270C0(f32 r, f32 *pos, f32 *to);
 extern u8 D_0048AEB0[];
+
+u16 func_00340140(const f32 *from, const f32 *to);
+
+s8 func_00827430(DrawObjFull *obj, s32 id, s32 room, s32 from, s32 to, s8 *na, s8 *nb, f32 *pa,
+                 f32 *pb, s16 *link);
+
+/* The partner's next two places (and points) toward unk100D in room `room` (another room:
+   func_00827430). */
+s8 func_00827390(DrawObjFull *obj, s32 unused, s32 room) {
+    s8 r;
+    f32 dist;
+
+    if (obj->unk1E2 == room) {
+        r = func_00827D60(obj, obj->unk1E2, obj->unk100C, obj->unk100D, &obj->unk100E,
+                          &obj->unk100F, obj->unk101C, obj->unk1028, &dist, &obj->unk10AA, 0);
+    } else {
+        r = func_00827430(obj, obj->unk1E2, obj->unk1058, obj->unk100C, obj->unk100D, &obj->unk100E,
+                          &obj->unk100F, obj->unk101C, obj->unk1028, &obj->unk10AA);
+    }
+    obj->unk1065 = obj->unk100C;
+    return r;
+}
+
+/* The partner's next steps toward unk100D (func_00827390), its place marked seen, and how it
+   moves on the way (unk1056). -1: no way. */
+s32 func_00826EB0(DrawObjFull *obj) {
+    u16 kind = 0;
+    SglLink *l;
+    s32 i;
+    SglPlace *pl;
+    s32 j;
+    SglPlace *q;
+
+    if (func_00827390(obj, obj->unk100D, obj->unk1058) == -1) {
+        return -1;
+    }
+    D_0084E2B0[obj->unk1E2].seen[obj->unk100C] |= (u8)(1 << obj->kind);
+    pl = &D_0084E2B0[obj->unk1E2].places[obj->unk100C];
+    for (i = 0; i < pl->n; i++) {
+        if (pl->next[i] == obj->unk100E) {
+            kind = pl->kind[i];
+            break;
+        }
+    }
+    if (obj->unk10AA != -1) {
+        l = &D_0084E2A0.links[obj->unk10AA];
+        if (l->room == obj->unk1E2 && l->place == obj->unk100C) {
+            for (i = 0; i < pl->n; i++) {
+                q = &D_0084E2B0[obj->unk1E2].places[pl->next[i]];
+                for (j = 0; j < q->n; j++) {
+                    if (q->next[j] == obj->unk100C) {
+                        kind = q->kind[j];
+                    }
+                }
+            }
+        }
+    }
+    obj->unk1056 = kind;
+    if (obj->unk1E2 == obj->unk1058 && obj->unk100D == obj->unk100E) {
+        *(F3 *)obj->unk101C = *(F3 *)obj->unk1010;
+        *(F3 *)obj->unk1028 = *(F3 *)obj->unk1010;
+    }
+    return 0;
+}
+
+/* Sets the partner off to pos in room `room`: its target place and the first steps (-1: no
+   way). */
+s32 func_00826850(DrawObjFull *obj, f32 *pos, s32 room) {
+    s32 r;
+    s32 turn;
+    u16 a;
+    u16 b;
+    f32 rr;
+    f32 v[4];
+
+    obj->unk105A = 0;
+    obj->unk1064 = 0;
+    obj->unk10AA = -1;
+    *(F3 *)obj->unk1010 = *(F3 *)pos;
+    obj->unk1058 = room;
+    obj->unk100D = func_00827190(pos, room);
+    func_008294A0(obj->kind);
+    r = func_00826EB0(obj);
+    if (r != -1) {
+        switch (obj->unk54F) {
+        case 0x1A:
+            switch ((u8)obj->unk1056) {
+            case 1:
+            case 2:
+            case 8:
+            case 9:
+                break;
+            default:
+                obj->unk1056 = 1;
+                break;
+            }
+            break;
+        case 0x27:
+            switch ((u8)obj->unk1056) {
+            case 6:
+            case 7:
+                break;
+            default:
+                obj->unk1056 = 6;
+                break;
+            }
+            break;
+        case 0x31:
+            switch ((u8)obj->unk1056) {
+            case 0xD:
+                break;
+            default:
+                obj->unk1056 = 0xD;
+                break;
+            }
+            break;
+        }
+        obj->unk1054 = obj->unk1056;
+        obj->unk105A = 0;
+        if (obj->unk1E2 == D_00306590.unk1C) {
+            if (func_00829350(obj->unk1E2, D_0048AEB0[obj->unk1E2], obj->unk100C) == NULL) {
+                func_00827130(v, obj->unk1E2, obj->unk100C);
+                turn = 0;
+                switch ((u8)obj->unk1054) {
+                case 1:
+                case 2:
+                case 8:
+                case 9:
+                    if (obj->unk38[1] < v[1]) {
+                        if (obj->unk38[1] < obj->unk101C[1]) {
+                            turn = 1;
+                        }
+                    } else if (!(obj->unk38[1] < obj->unk101C[1])) {
+                        turn = 1;
+                    }
+                    break;
+                default:
+                    a = func_00340140(obj->unk38, v);
+                    b = func_00340140(obj->unk38, obj->unk101C);
+                    if ((u16)((u16)(a - b) + 0x4000) < 0x8000) {
+                        if (obj->unk54F == 0x1A) {
+                            rr = 100.0f;
+                        } else if (obj->unkBA4 & 0x10000) {
+                            rr = 100.0f;
+                        } else {
+                            rr = 50.0f;
+                        }
+                        if (func_008270C0(rr, obj->unk38, v) != 0) {
+                            turn = 1;
+                        }
+                    }
+                    break;
+                }
+                if (turn != 0) {
+                    obj->unk100F = obj->unk100E;
+                    *(F3 *)obj->unk1028 = *(F3 *)obj->unk101C;
+                    obj->unk100E = obj->unk100C;
+                    *(F3 *)obj->unk101C = *(F3 *)v;
+                }
+            }
+            if (obj->unk10A9 != 0) {
+                return -1;
+            }
+        }
+    }
+    if (obj->unk1E2 == obj->unk1058 && obj->unk100D == obj->unk100E) {
+        *(F3 *)obj->unk101C = *(F3 *)obj->unk1010;
+        *(F3 *)obj->unk1028 = *(F3 *)obj->unk1010;
+        obj->unk100E = obj->unk100D;
+        obj->unk100F = obj->unk100D;
+    }
+    return r;
+}
+
+/* Whether something in `mask` happened that should stop the partner's thinking step (0: it
+   is busy and can't be stopped). */
+s32 func_00823980(DrawObjFull *obj, s32 mask) {
+    DrawObjFull *me = &D_00476DD0[0];
+
+    if (func_00823B90(obj) != 0) {
+        return 0;
+    }
+    if ((mask & 0x80) && (obj->unkBA0 & 8)) {
+        return 1;
+    }
+    if ((mask & 0x100) && obj->unk54F == 0x3B) {
+        return 1;
+    }
+    if ((mask & 0x200) && obj->unk1080 == 1) {
+        return 1;
+    }
+    if ((mask & 0x400) && obj->unk108A != 0) {
+        return 1;
+    }
+    if ((mask & 0x800) && (obj->unkBA0 & 0x200)) {
+        return 1;
+    }
+    if (obj->unk1070 != 0) {
+        return 0;
+    }
+    if (mask == 0) {
+        return 1;
+    }
+    if ((mask & 1) && obj->unk1083 != 0) {
+        return 1;
+    }
+    if (mask & 2) {
+        if (me->unk1078 != me->unk1079) {
+            return 1;
+        }
+        if (me->unk107A != me->unk107B) {
+            return 1;
+        }
+    }
+    if (mask & 4) {
+        if (obj->unk1078 != obj->unk1079) {
+            return 1;
+        }
+        if (obj->unk107A != obj->unk107B) {
+            return 1;
+        }
+    }
+    if ((mask & 8) && obj->unk107F == 0 && obj->unk107E != 0) {
+        return 1;
+    }
+    if ((mask & 0x10) && obj->unk106C != obj->unk106D) {
+        return 1;
+    }
+    return 0;
+}
 
 /* Thinking step: go to a place (0: pick and set off, 1: on the way, 2: wait there). */
 s32 func_00823FF0(DrawObjFull *obj) {
@@ -291,6 +528,277 @@ void func_008232F0(DrawObjFull *obj) {
     } while (D_00839240[obj->unkFF4](obj));
 }
 
+extern void (*D_00839490[])(DrawObjFull *obj); /* the moving steps' movements (by unk1054) */
+
+/* Moving step: unk1054 follows unk1056 (when the step's state allows, clearing it), then the
+   movement it says. */
+void func_0082A830(DrawObjFull *obj) {
+    s32 i;
+
+    if ((u8)obj->unk1054 != (u8)obj->unk1056) {
+        if (obj->unk103A == 0) {
+            obj->unk1054 = obj->unk1056;
+            for (i = 0; i < 4; i++) {
+                obj->unk1008[i] = 0;
+            }
+        }
+    } else {
+        obj->unk1054 = obj->unk1056;
+    }
+    D_00839490[(u8)obj->unk1054](obj);
+}
+
+
+Zone *func_0082A030(DrawObjFull *obj, s32 n);
+s32 func_00829FA0(DrawObjFull *obj, Zone **zones, s32 n, s32 sw);
+
+s32 func_005494C0(const f32 *from, const f32 *to, f32 *hit, f32 *normal, s32 mask, s32 b,
+                  s32 *kind);
+s32 func_00635450(DrawObjFull *obj, s32 a, f32 r);
+
+/* Whether something (of the kinds that can be opened or pushed) stands in the way to the next
+   point, near enough (55) and func_00635450 says so. */
+s32 func_0082A1C0(DrawObjFull *obj);
+#ifdef NON_MATCHING   /* the original returns r (s0) where ours folds it to 0; the near-test's branches */
+s32 func_0082A1C0(DrawObjFull *obj) {
+    s32 r = 0;
+    s32 kind;
+    f32 normal[3];
+    f32 v[4];
+    f32 hit[4];
+
+    v[0] = obj->unk101C[0];
+    v[2] = obj->unk101C[2];
+    v[1] = 10.0f + obj->unk38[1];
+    if (func_005494C0(obj->unk38, v, hit, normal, -1, 0, &kind) != 0) {
+        switch ((u16)kind) {
+        case 0x4:
+        case 0x10:
+        case 0x8:
+        case 0x20:
+        case 0x40:
+        case 0x100:
+        case 0x80:
+        case 0x800:
+        case 0x200:
+            if (func_001916E0(obj->unk38, hit) < 55.0f && func_00635450(obj, 0x2000, 50.0f) != 0) {
+                r = 1;
+            }
+            break;
+        default:
+            return r;
+        }
+    }
+    return r;
+}
+#endif
+
+/* The heading the partner should take (unk1038): toward its next point (sw -1), or at the
+   zone of switch sw (its own heading for kinds 0/1/2/6, else toward it); 0 when it may walk
+   on, 2 when it must turn first, -1 otherwise. sw -2: whether it faces unk1038 already. */
+s32 func_0082B870(DrawObjFull *obj, s32 sw) {
+    s32 r = -1;
+    Zone *z;
+    u16 a;
+    u16 d;
+    f32 rr;
+    f32 c[3];
+    f32 p[3];
+
+    if (sw == -1) {
+        obj->unk1038 = func_00340140(obj->unk38, obj->unk101C);
+        r = 0;
+    } else if (sw == -2) {
+        if ((u16)((u16)((u16)obj->unk92 - obj->unk1038) + 0x800) < 0x1000) {
+            r = -1;
+        } else {
+            r = 2;
+        }
+    } else {
+        z = func_0082A030(obj, sw);
+        switch (z->kind) {
+        default:
+        case 3:
+        case 4:
+        case 5:
+        case 7:
+        case 8:
+        case 9:
+        case 10:
+        case 11:
+        case 12:
+        case 13:
+            a = func_00340140(obj->unk38, obj->unk101C);
+            break;
+        case 1:
+            a = FIELD(z, s32, 0x58) - 0x8000;
+            break;
+        case 0:
+            a = FIELD(z, s32, 0x58) - 0x8000;
+            break;
+        case 2:
+            a = FIELD(z, u16, 0x4C);
+            break;
+        case 6:
+            a = FIELD(z, u16, 0x48);
+            break;
+        }
+        d = (u16)obj->unk92 - a;
+        if (func_00829FA0(obj, D_0084E0A0, D_0023C264, sw) != 0) {
+            r = -1;
+            obj->unkFF2[1] = 1;
+            if ((u16)(d + 0x1000) > 0x2000) {
+                obj->unk1038 = a;
+                r = 2;
+            }
+        } else {
+            c[0] = (z->corner[0][0] + z->corner[1][0] + z->corner[2][0] + z->corner[3][0]) >> 2;
+            c[2] = (z->corner[0][1] + z->corner[1][1] + z->corner[2][1] + z->corner[3][1]) >> 2;
+            c[1] = z->top;
+            switch (z->kind) {
+            default:
+            case 0:
+            case 2:
+            case 3:
+            case 4:
+            case 5:
+            case 7:
+            case 8:
+            case 9:
+            case 10:
+            case 11:
+            case 12:
+            case 13:
+                rr = 30.0f;
+                break;
+            case 1:
+            case 6:
+                rr = 0.0f;
+                p[0] = z->corner[0][0];
+                p[2] = z->corner[0][1];
+                p[1] = c[1];
+                rr += func_001916E0(c, p);
+                break;
+            }
+            if (func_008270C0(rr, obj->unk38, c) != 0) {
+                obj->unk1038 = func_00340140(obj->unk38, obj->unk101C);
+                r = 0;
+            } else {
+                obj->unk1038 = func_00340140(obj->unk38, c);
+                r = 2;
+                obj->unkFF2[1] = 1;
+            }
+        }
+    }
+    if (func_0082A1C0(obj) != 0) {
+        obj->unkFF2[1] = 1;
+    }
+    return r;
+}
+
+extern f32 D_00306338[3];       /* the camera */
+extern f32 D_00306344[3];       /* and what it looks at */
+s16 func_00346C50(const f32 *a, const f32 *b);
+
+/* The partner's controls for this frame by how it should turn (func_0082B870's: 0 walk the
+   stick toward unk1038, 1/2 press, 3 turn, 4 turn and step; -1 nothing). */
+void func_0082BB30(DrawObjFull *obj, s32 how);
+#ifdef NON_MATCHING   /* the original's switch uses addi (ours addiu); load order of the heading difference */
+void func_0082BB30(DrawObjFull *obj, s32 how) {
+    u16 d;
+    u16 cam;
+
+    switch (how) {
+    case -1:
+        break;
+    default:
+    case 0:
+        d = (u16)obj->unk92 - obj->unk1038;
+        if ((u16)(d - 0x7800) < 0x1000) {
+            if (obj->unk54F != 5) {
+                obj->ctrl.cur |= 2;
+                obj->ctrl.cur |= 0x10;
+                obj->ctrl.pressed |= 0x10;
+            }
+        } else if ((u16)(d + 0x3000) > 0x6000) {
+            if (d < 0x8001) {
+                obj->ctrl.cur |= 8;
+            }
+            if (!(d < 0x8001)) {
+                obj->ctrl.cur |= 4;
+            }
+        } else {
+            cam = func_00346C50(D_00306338, D_00306344);
+            obj->ctrl.rangle = obj->unk1038 - cam;
+            obj->ctrl.rmag = 0x7F;
+        }
+        break;
+    case 1:
+        if (obj->unk1038 == 1) {
+            obj->ctrl.cur |= 1;
+        } else if (obj->unk1038 == 2) {
+            obj->ctrl.cur |= 2;
+        }
+        break;
+    case 2:
+        d = (u16)obj->unk92 - obj->unk1038;
+        if ((u16)(d + 0x100) > 0x200) {
+            if (d < 0x8001) {
+                obj->ctrl.cur |= 8;
+            } else {
+                obj->ctrl.cur |= 4;
+            }
+        }
+        break;
+    case 3:
+        if (obj->unk1038 == 0) {
+            obj->ctrl.cur |= 4;
+        } else {
+            obj->ctrl.cur |= 8;
+        }
+        break;
+    case 4:
+        d = (u16)obj->unk92 - obj->unk1038;
+        if ((u16)(d - 0x7800) < 0x1000) {
+            if (obj->unk54F != 5) {
+                obj->ctrl.cur |= 2;
+                obj->ctrl.cur |= 0x10;
+                obj->ctrl.pressed |= 0x10;
+            }
+        } else {
+            if ((u16)(d + 0x800) < 0x1000) {
+                obj->ctrl.cur |= 1;
+            }
+            if (d < 0x8001) {
+                obj->ctrl.cur |= 8;
+            }
+            if (!(d < 0x8001)) {
+                obj->ctrl.cur |= 4;
+            }
+        }
+        break;
+    }
+    if ((s8)obj->unkFF2[0] == 1) {
+        obj->ctrl.cur |= 0x10;
+        obj->ctrl.pressed |= 0x10;
+    }
+    if ((s8)obj->unkFF2[1] == 1) {
+        obj->ctrl.cur |= 0x20;
+        obj->ctrl.pressed |= 0x20;
+    }
+    obj->ctrl.released = 0;
+}
+#endif
+
+/* Movement 0: stop (or wait for the way). */
+void func_0082A8A0(DrawObjFull *obj) {
+    if (obj->unk105A == 1) {
+        func_0082A690(obj, 0);
+    } else {
+        func_0082BB30(obj, func_0082B870(obj, -1));
+    }
+}
+
 /* The partner's moves for this frame (unk105B set). */
 void func_0082BE60(DrawObjFull *obj) {
     func_0082C150(obj);
@@ -333,8 +841,6 @@ void func_00822440(DrawObjFull *obj) {
 }
 
 extern Thing D_003FFCA0[50];
-extern s32 D_0023C264;
-extern Zone *D_0084E0A0[];      /* the zones by the partner (func_00829B70) */
 extern u16 D_00838CC0[];        /* per character: frames a reaction's unk10B8 holds */
 extern s8 D_00838D60[][4];      /* danger by enemy class: three distances (in 100s), priority */
 extern u8 D_00839AB0[];         /* each enemy kind's class */
@@ -699,7 +1205,6 @@ void func_0082A6A0(DrawObjFull *obj, u16 v) {
     obj->unk103A = 0;
 }
 
-f32 func_001916E0(const f32 *a, const f32 *b);
 s32 func_0082A2F0(f32 *from, f32 *to, u16 *hit);
 
 /* 0 when pos is within r of to. */
@@ -783,6 +1288,130 @@ s32 func_00829310(DrawObjFull *obj, SglLink *l) {
 }
 
 extern s8 D_008A34C0[0x80];     /* the search's places: 1 visited/closed, -1 open */
+s32 func_00828340(DrawObjFull *obj, s32 id, SglPlace *pl, s32 at, s32 to, s32 depth, s32 *next,
+                  f32 *dist);
+s8 func_00827FC0(DrawObjFull *obj, s32 id, s32 from, s32 to, s8 *na, s8 *nb, f32 *pa, f32 *pb,
+                 f32 *dist);
+#ifdef NON_MATCHING   /* the order the loop invariants are kept on the stack */
+s32 func_00828340(DrawObjFull *obj, s32 id, SglPlace *pl, s32 at, s32 to, s32 depth, s32 *next,
+                  f32 *dist) {
+    s32 k = 0;
+    s32 hop;
+    s32 got = -1;
+    s32 found = got;
+    u8 c;
+    u8 **routes;
+    s32 *np;
+
+    D_008A34C0[at] = 1;
+    routes = &D_0084E2B0[id].routes;
+    np = &D_0084E2B0[id].nplaces;
+    for (; k < 1; k++) {
+        c = (*routes)[at * 4 + k + to * *np * 4];
+        if (c == 0xFF) {
+            continue;
+        }
+        hop = pl[at].next[c];
+        if (hop < 0) {
+            continue;
+        }
+        if (D_008A34C0[hop] != -1) {
+            continue;
+        }
+        if (func_00828FC0(obj, at, hop, id) == 0) {
+            continue;
+        }
+        *dist += pl[at].cost[k];
+        if (to == hop) {
+            got = hop;
+            found = 1;
+            break;
+        }
+        if (func_00828340(obj, id, pl, hop, to, depth + 1, next, dist) != -1) {
+            got = hop;
+            found = 1;
+            break;
+        }
+    }
+    D_008A34C0[at] = -1;
+    if (depth == 1) {
+        *next = got;
+    }
+    return found;
+}
+#endif
+
+#ifdef NON_MATCHING   /* the original's frame is 0x20 bigger (more spill slots); registers */
+s8 func_00827FC0(DrawObjFull *obj, s32 id, s32 from, s32 to, s8 *na, s8 *nb, f32 *pa, f32 *pb,
+                 f32 *dist) {
+    s32 nb2 = -1;
+    s32 hop;
+    s32 r;
+    s32 k;
+    u8 c;
+    SglPlace *pl;
+    s32 i;
+    s32 next;
+
+    r = nb2;
+    pl = D_0084E2B0[id].places;
+    if (from == to) {
+        r = from;
+    } else {
+        for (k = 0; k < 4; k++) {
+            c = D_0084E2B0[id].routes[from * 4 + k + to * D_0084E2B0[id].nplaces * 4];
+            if (c == 0xFF) {
+                continue;
+            }
+            hop = pl[from].next[c];
+            if (hop < 0) {
+                continue;
+            }
+            if ((1 << obj->kind) & D_0084E2B0[id].seen[hop]) {
+                continue;
+            }
+            if (func_00828FC0(obj, from, hop, id) == 0) {
+                continue;
+            }
+            *dist = pl[from].cost[k];
+            if (hop == to) {
+                r = hop;
+                break;
+            }
+            for (i = 0; i < 0x80; i++) {
+                if ((1 << obj->kind) & D_0084E2B0[id].seen[i]) {
+                    D_008A34C0[i] = 1;
+                } else {
+                    D_008A34C0[i] = -1;
+                }
+            }
+            D_008A34C0[from] = 1;
+            if (func_00828340(obj, id, pl, hop, to, 1, &next, dist) != -1) {
+                nb2 = next;
+                r = hop;
+                break;
+            }
+        }
+    }
+    if (r != -1) {
+        *na = r;
+        if (nb2 != -1) {
+            *nb = nb2;
+        } else {
+            *nb = to;
+        }
+        *(F3 *)pa = *(F3 *)pl[*na].pos;
+        *(F3 *)pb = *(F3 *)pl[*nb].pos;
+    } else {
+        *na = from;
+        *nb = from;
+        *(F3 *)pa = *(F3 *)pl[*na].pos;
+        *(F3 *)pb = *(F3 *)pl[*nb].pos;
+    }
+    return r;
+}
+#endif
+
 s32 func_008288F0(DrawObjFull *obj, s32 id, SglPlace *pl, s32 at, s32 to, s32 depth, s32 *next,
                   f32 *dist);
 
@@ -1095,7 +1724,7 @@ s32 func_00828FC0(DrawObjFull *obj, s32 from, s32 to, s32 id) {
         if (slot == -1) {
             return 0;
         }
-        switch (pl->kind[slot][0]) {
+        switch ((u8)pl->kind[slot]) {
         case 1:
         case 2:
         case 3:
@@ -1166,8 +1795,6 @@ s32 func_00827100(s32 id) {
 }
 
 s32 func_008264C0(s32 room, s32 variant);
-s8 func_00827D60(DrawObjFull *obj, s32 id, s32 from, s32 to, s8 *na, s8 *nb, f32 *pa, f32 *pb,
-                 f32 *e, s16 *link, s32 mode);
 u16 func_001ADEF0(s32 n);
 
 /* A place of room `room` to go to (not `not`; with check 1 only ones func_00829350 allows) that
@@ -1532,8 +2159,6 @@ s32 func_00823B90(DrawObjFull *obj) {
 }
 
 
-s8 func_00827180(f32 *pos, s32 id);
-s8 func_00827190(f32 *pos, s32 id);
 
 /* The place (of the room's, for id unk1E2) at pos: by mode 2, 1 or (0) as the partner's state
    says. */

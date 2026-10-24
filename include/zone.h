@@ -5,7 +5,7 @@
 
 /* The room's trigger zones (a list from D_0023BD90, next at 0x28; D_0023BD88 0x80: none). */
 typedef struct Zone {
-    u8 unk0[0x20];
+    s32 corner[4][2];   /* 0x00: x, z */
     s32 top;            /* 0x20 */
     s32 bottom;         /* 0x24 */
     struct Zone *next;  /* 0x28 */
