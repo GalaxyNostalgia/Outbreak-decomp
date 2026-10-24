@@ -58,6 +58,57 @@ s32 func_005E5340(const f32 *p) {
     return r;
 }
 
+/* Which quarter of its grid-0 cell p is in: +1 in the far half along x, +2 along z. */
+s32 func_005E5040(const f32 *p);
+#ifdef NON_MATCHING   /* load order of the grid's sizes (registers) */
+s32 func_005E5040(const f32 *p) {
+    s32 r;
+    f32 dz;
+    u32 d;
+    s32 cz;
+    u32 w;
+    f32 dx;
+    s32 cx;
+
+    r = 0;
+    dz = p[2] - D_003938A8.g[0].unk14;
+    d = D_003938A8.g[0].unk4;
+    cz = dz / d;
+    w = D_003938A8.g[0].unk0;
+    dx = p[0] - D_003938A8.g[0].unk10;
+    cx = dx / w;
+    if (!(dx < w / 2 + cx * w)) {
+        r = 1;
+    }
+    if (!(dz < d / 2 + cz * d)) {
+        r += 2;
+    }
+    return r;
+}
+#endif
+
+/* The triangle list of grid 0's cell under p. */
+CollTri **func_005E5490(const f32 *p) {
+    s32 cz = (p[2] - D_003938A8.g[0].unk14) / D_003938A8.g[0].unk4;
+    s32 cx = (p[0] - D_003938A8.g[0].unk10) / D_003938A8.g[0].unk0;
+
+    return (CollTri **)D_003938A8.g[0].cells[cx * D_003938A8.g[0].nx + cz];
+}
+
+/* Whether p is over grid 0. */
+s32 func_005E51F0(const f32 *p) {
+    s32 r;
+
+    if (p[0] < D_003938A8.g[0].unk10 || p[2] < D_003938A8.g[0].unk14) {
+        r = 0;
+    } else if (p[0] < D_003938A8.g[0].unk10 + D_003938A8.g[0].unk0 * D_003938A8.g[0].ny && p[2] < D_003938A8.g[0].unk14 + D_003938A8.g[0].unk4 * D_003938A8.g[0].nx) {
+        r = 1;
+    } else {
+        r = 0;
+    }
+    return r;
+}
+
 /* The triangle list of grid 1's cell under p. */
 CollTri **func_005E5F10(const f32 *p) {
     s32 cz = (p[2] - D_003938A8.g[1].unk14) / D_003938A8.g[1].unk4;
@@ -648,3 +699,163 @@ s32 func_005E84F0(f32 *a, f32 *b, f32 *c, f32 *n) {
     t->d = -(a[0] * n[0] + a[1] * n[1] + a[2] * n[2]);
     return 1;
 }
+
+/* A sphere moving from from to pos (radius r, len apart). */
+typedef struct {
+    f32 pos[3];         /* 0x00 */
+    f32 from[3];        /* 0x0C */
+    f32 r;              /* 0x18 */
+    f32 len;            /* 0x1C */
+} CollSweep;
+
+typedef struct {
+    f32 v[3];
+} CollVec;
+
+extern CollTri *D_0070F120[];   /* the triangles hit this time */
+extern f32 D_006DB1C0[][2];     /* per quarter of a cell: which way the next cells lie */
+extern s16 D_0023BECC;
+extern s8 D_0023BEC8;
+s32 func_005E6A90(CollSweep *s, CollTri *t, f32 *n, f32 *q);
+void func_005E7280(CollSweep *s, f32 *push);
+
+/* A sphere of radius r moving from from to to against the walls (the triangles of the four
+   cells round to, then the objects' own) that func_005E6050 says count for want, skip and
+   open: push gets the way out, n and q what the last one hit gave; the number hit. */
+s32 func_005E63E0(f32 r, f32 *from, f32 *to, f32 *n, f32 *push, f32 *q, u32 want, u32 skip,
+                  s32 open);
+#ifdef NON_MATCHING   /* first draft */
+s32 func_005E63E0(f32 r, f32 *from, f32 *to, f32 *n, f32 *push, f32 *q, u32 want, u32 skip,
+                  s32 open) {
+    CollSweep sw;
+    CollVec p;
+    CollTri *recent[20];
+    CollTri **list;
+    CollTri *t;
+    f32 *off;
+    s32 nrecent;
+    s32 nhit;
+    s32 found;
+    s32 cells;
+    s32 quad;
+    s32 half;
+    s32 i;
+    s32 j;
+    s32 k;
+    s32 m;
+
+    if (func_005E51F0(to) == 0) {
+        return 0;
+    }
+    nrecent = 0;
+    nhit = 0;
+    found = 0;
+    push[0] = 0.0f;
+    push[1] = 0.0f;
+    push[2] = 0.0f;
+    D_0023BECC = 0;
+    D_0023BEC8 = 0;
+    *(CollVec *)sw.pos = *(CollVec *)to;
+    *(CollVec *)sw.from = *(CollVec *)from;
+    sw.r = r;
+    sw.len = func_001916E0(sw.pos, sw.from);
+    if (D_003938A8.g[0].unk4 >= D_003938A8.g[0].unk0) {
+        cells = (s32)(2.0f * r / (f32)D_003938A8.g[0].unk0) + 2;
+    } else {
+        cells = (s32)(2.0f * r / (f32)D_003938A8.g[0].unk4) + 2;
+    }
+    if (cells == 2) {
+        quad = func_005E5040(to);
+    }
+    off = D_006DB1C0[quad];
+    half = cells / 2;
+    for (i = 0; i < 2; i++) {
+        for (j = 0; j < 2; j++) {
+            p = *(CollVec *)to;
+            if (cells == 2) {
+                p.v[0] += (f32)D_003938A8.g[0].unk0 * off[0];
+                p.v[2] += (f32)D_003938A8.g[0].unk4 * off[1];
+            } else {
+                p.v[0] -= (f32)half * (f32)D_003938A8.g[0].unk0;
+                p.v[2] -= (f32)half * (f32)D_003938A8.g[0].unk4;
+            }
+            p.v[0] += (f32)(D_003938A8.g[0].unk0 * i);
+            p.v[2] += (f32)(D_003938A8.g[0].unk4 * j);
+            if (func_005E51F0(p.v) != 1) {
+                continue;
+            }
+            list = func_005E5490(p.v);
+            for (k = 0; (t = list[k]) != (CollTri *)-1; k++) {
+                if (!func_005E6050(t, want, skip, open)) {
+                    continue;
+                }
+                if (nrecent != 0) {
+                    found = 0;
+                    for (m = 0; m < nrecent; m++) {
+                        if (t == recent[m]) {
+                            found = 1;
+                        }
+                    }
+                    if (found) {
+                        continue;
+                    }
+                }
+                if (nhit != 0) {
+                    found = 0;
+                    for (m = 0; m < nhit; m++) {
+                        if (t == D_0070F120[m]) {
+                            found = 1;
+                        }
+                    }
+                }
+                if (found) {
+                    continue;
+                }
+                if (func_005E6A90(&sw, t, n, q)) {
+                    D_0070F120[nhit++] = t;
+                }
+                recent[nrecent++] = t;
+                if (nrecent >= 20) {
+                    nrecent = 0;
+                }
+            }
+        }
+    }
+    for (k = 0, t = D_0070E750; k < D_0023BEC4; k++, t++) {
+        if (!func_005E6050(t, want, skip, 0)) {
+            continue;
+        }
+        if (nrecent != 0) {
+            found = 0;
+            for (m = 0; m < nrecent; m++) {
+                if (t == recent[m]) {
+                    found = 1;
+                }
+            }
+            if (found) {
+                continue;
+            }
+        }
+        if (nhit != 0) {
+            found = 0;
+            for (m = 0; m < nhit; m++) {
+                if (t == D_0070F120[m]) {
+                    found = 1;
+                }
+            }
+        }
+        if (found) {
+            continue;
+        }
+        if (func_005E6A90(&sw, t, n, q)) {
+            D_0070F120[nhit++] = t;
+        }
+        recent[nrecent++] = t;
+        if (nrecent >= 20) {
+            nrecent = 0;
+        }
+    }
+    func_005E7280(&sw, push);
+    return nhit;
+}
+#endif
