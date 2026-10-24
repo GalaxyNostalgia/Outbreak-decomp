@@ -141,7 +141,9 @@ typedef struct {
 } EnemySet;
 
 typedef struct {
-    u8 unk0[0xBA0];
+    u8 unk0[0x2A0];
+    u8 roomVariant[0x80]; /* 0x2A0: by room (D_0048AEB0) */
+    u8 unk320[0xBA0 - 0x320];
     u16 areaA[0x80];    /* 0xBA0: by room */
     u16 areaB[0x80];    /* 0xCA0 */
     u16 type[2];        /* 0xDA0: each group's enemy type now (0xFFFF: none) */

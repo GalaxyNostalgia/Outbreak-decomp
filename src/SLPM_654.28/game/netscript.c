@@ -596,24 +596,7 @@ typedef struct {
 
 extern RoomScriptRef D_0084E344[];
 
-/* (SINGLE.BIN) the offline script's per-player switch entries: what func_006CDA90 sets */
-typedef struct {
-    u8 on;              /* 0x0 */
-    u8 kind;            /* 0x1: 0 by id, 2 by id and id2 */
-    u8 id;              /* 0x2 */
-    u8 id2;             /* 0x3 */
-    s16 val;            /* 0x4 */
-    u8 unk6[0x10 - 6];
-} SglSwitch;
-
-typedef struct {
-    u8 unk0[0x98];
-    s32 n;              /* 0x98 */
-    SglSwitch *sw;      /* 0x9C */
-    u8 *seen;           /* 0xA0: per id, set by func_006CE9A0 */
-} SglRoomSw;            /* 0xA4 */
-
-extern SglRoomSw D_0084E2B0[];
+#include "sgl.h"
 
 /* Sets the value of the zones (and, for the player, the offline switches) of kind 0 with id
    args[0] or kind 2 with ids args[0], args[2] to args[1]. */
@@ -700,7 +683,7 @@ s32 func_006CE930(u32 *args) {
     if (D_0023C00C == 0) {
         func_005AC1C0(n);
     }
-    D_0084E2B0[D_0023C008].seen[n] = 0;
+    D_0084E2B0[D_0023C008].ids[n] = 0;
     return 0;
 }
 
@@ -712,7 +695,7 @@ s32 func_006CE9A0(u32 *args) {
     if (D_0023C00C == 0) {
         func_005AC1F0(n);
     }
-    D_0084E2B0[D_0023C008].seen[n] = 1;
+    D_0084E2B0[D_0023C008].ids[n] = 1;
     return 0;
 }
 

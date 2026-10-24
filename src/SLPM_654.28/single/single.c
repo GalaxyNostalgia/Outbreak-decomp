@@ -3,26 +3,11 @@
 
 /* SINGLE.BIN: the offline game's code (loaded at 0x820000; NETAQ.BIN takes its place online). */
 
-/* What the offline script has for each room. */
-typedef struct {
-    s32 used;           /* 0x00 */
-    s32 entry;          /* 0x04 */
-    s32 unk8;
-    u8 *unkC;
-    u8 *unk10;
-    u8 unk14[0x94 - 0x14];
-    s32 *unk94;         /* 0x94 */
-    s32 unk98;
-    u8 *unk9C;
-    u8 *unkA0;
-} SglRoom;              /* 0xA4 */
-
-extern SglRoom D_0084E2B0[0x80];
-extern u32 D_0084E2A0[4];
+#include "sgl.h"
 
 void func_00825DF0(void) {
     memset(D_0084E2B0, 0, sizeof(D_0084E2B0));
-    memset(D_0084E2A0, 0, sizeof(D_0084E2A0));
+    memset(&D_0084E2A0, 0, sizeof(D_0084E2A0));
 }
 
 /* The offline mode's state (it stands in for the online one's session). */
@@ -449,21 +434,21 @@ void func_00825E30(s32 mode) {
         r = &D_0084E2B0[e->a];
         r->used = 1;
         r->entry = i;
-        r->unk8 = func_008261E0(i);
-        r->unkC = func_00826210(i);
-        r->unk10 = func_00826240(i);
+        r->nplaces = func_008261E0(i);
+        r->places = (SglPlace *)func_00826210(i);
+        r->routes = func_00826240(i);
         r->unk94 = func_00826370(i);
-        r->unk98 = func_00826280(i);
-        r->unk9C = func_008262D0(i);
-        r->unkA0 = func_00826320(i);
+        r->n = func_00826280(i);
+        r->sw = (SglSwitch *)func_008262D0(i);
+        r->ids = func_00826320(i);
         if (mode != 2) {
             func_006CCDE0(e->a);
         }
     }
-    D_0084E2A0[0] = func_00826000();
-    D_0084E2A0[1] = (u32)func_00826020();
-    D_0084E2A0[2] = (u32)func_00826040();
-    D_0084E2A0[3] = (u32)func_00826080();
+    D_0084E2A0.size = func_00826000();
+    D_0084E2A0.links = (SglLink *)func_00826020();
+    D_0084E2A0.unk8 = func_00826040();
+    D_0084E2A0.buf = func_00826080();
     switch (mode) {
     case 0:
         func_006CCD20();
@@ -498,6 +483,31 @@ static u8 *func_008261A0(s32 i) {
         return NULL;
     }
     return (u8 *)D_008534C0 + e->off;
+}
+
+/* The script's entry for room a, variant b (NULL: none). */
+SglEntry *func_00826130(s32 a, s32 b) {
+    s32 n = func_008260C0();
+    s32 i;
+    SglEntry *e;
+
+    for (i = 0; i < n; i++) {
+        e = func_008260E0(i);
+        if (e != NULL && e->a == a && e->b == b) {
+            return e;
+        }
+    }
+    return NULL;
+}
+
+/* Its unk8 (-1: none). */
+s32 func_008264C0(s32 a, s32 b) {
+    SglEntry *e = func_00826130(a, b);
+
+    if (e != NULL) {
+        return e->unk8;
+    }
+    return -1;
 }
 
 static s32 func_008261E0(s32 i) {

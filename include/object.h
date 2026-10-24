@@ -201,7 +201,9 @@ typedef struct {
     u8 unkC68[0xC7C - 0xC68]; \
     u8 unkC7C;          /* 0xC7C: the item in hand (0xFF: none) */ \
     u8 unkC7D;          /* 0xC7D */ \
-    u8 unkC7E[0xC82 - 0xC7E]; \
+    u8 unkC7E;          /* 0xC7E */ \
+    u8 unkC7F;          /* 0xC7F */ \
+    u8 unkC80[2]; \
     u8 unkC82;          /* 0xC82: the item slot in hand */ \
     u8 unkC83; \
     u8 unkC84[4];       /* 0xC84: effects on the character (script ops 0x39, 0x3A) */ \
@@ -267,15 +269,20 @@ typedef struct DrawObjFull {
     u16 unkFF6;         /* 0xFF6: unkFF4 before */
     u16 unkFF8;         /* 0xFF8 */
     u16 unkFFA;         /* 0xFFA: unkFF8 before */
-    s8 unkFFC[4];       /* 0xFFC */
-    s16 unk1000[4];     /* 0x1000 */
+    u8 unkFFC[4];       /* 0xFFC: (partners) the thinking step's state */
+    u16 unk1000[4];     /* 0x1000: (partners) its timers */
     s8 unk1008[4];      /* 0x1008 */
     s8 unk100C;         /* 0x100C: (partners) the place they wait at */
-    u8 unk100D[0x1034 - 0x100D];
+    s8 unk100D;         /* 0x100D: (partners) the place it heads for */
+    u8 unk100E[2];
+    f32 unk1010[3];     /* 0x1010: (partners) where it heads */
+    u8 unk101C[0x1034 - 0x101C];
     s32 unk1034;        /* 0x1034 */
     u8 unk1038[2];
     s8 unk103A;         /* 0x103A */
-    u8 unk103B[0x105B - 0x103B];
+    u8 unk103B[0x1058 - 0x103B];
+    u16 unk1058;        /* 0x1058: (partners) the room it heads for */
+    s8 unk105A;         /* 0x105A */
     u8 unk105B;         /* 0x105B */
     u8 unk105C[4];
     s32 unk1060;        /* 0x1060: (partners) frames left */
@@ -308,7 +315,10 @@ typedef struct DrawObjFull {
     u16 unk1086;        /* 0x1086 */
     u16 unk1088;        /* 0x1088 */
     u16 unk108A;        /* 0x108A */
-    u8 unk108C[0x1098 - 0x108C];
+    u8 unk108C[4];
+    s32 unk1090;        /* 0x1090: (partners) an item (func_00835C50's, or ours in hand) */
+    u16 unk1094;        /* 0x1094 */
+    u16 unk1096;        /* 0x1096 */
     u8 unk1098;         /* 0x1098 */
     u8 unk1099;         /* 0x1099 */
     u16 unk109A;        /* 0x109A */
