@@ -1300,3 +1300,333 @@ s16 func_005E7280(CollSweep *s, f32 *push) {
     return D_0023BECC;
 }
 #endif
+
+/* The room objects' grid (D_00395EA0: cells of 50, from x, z) and the objects (0x3C each). */
+typedef struct {
+    f32 x;              /* 0x0 */
+    f32 y;              /* 0x4 */
+    f32 z;              /* 0x8 */
+    s16 w;              /* 0xC: cells along x */
+    s16 d;              /* 0xE: along z */
+} ObjGrid;
+
+typedef struct {
+    u8 unk0[0x18];
+    s8 x;               /* 0x18: its cell */
+    s8 z;               /* 0x19 */
+    u8 unk1A[5];
+    s8 w;               /* 0x1F: its size in cells */
+    s8 floor;           /* 0x20 */
+    s8 d;               /* 0x21 */
+    u8 unk22[0x3C - 0x22];
+} GridObj;
+
+/* A cell of the objects' grid. */
+typedef struct {
+    s8 x;
+    u8 unk1[3];
+    s8 z;
+    u8 unk5[3];
+} GridCell;
+
+extern ObjGrid D_00395EA0;
+extern GridObj D_00395720[];
+extern s8 D_0023BF4C;           /* objects placed */
+extern s8 D_0023BF48;           /* (the objects' grid has floors) */
+s8 func_0067D8B0(s8 x, s8 z);
+s8 func_0067E490(GridCell *c, const f32 *p);
+s8 func_0067E570(GridCell *c, const f32 *p);
+s8 func_0067E790(GridCell *c, const f32 *p, s8 floor);
+void func_0067DA50(s8 *floor, const f32 *p);
+
+/* The probes of func_0054BF70 round the next cell boundary: blocked (2 and up) or not. */
+#define GRID_BLOCKED(c, q, floor) (func_0067E790(c, q, floor) >= 2)
+
+/* A move from from to to against the room objects' grid (doors, boxes): out gets where it ends,
+   stopped at the objects' sides (radius 49.5) or, on a grid with floors above 50, slid along
+   them cell by cell (radius 20). */
+void func_0054BF70(f32 *to, f32 *from, f32 *out);
+#ifdef NON_MATCHING   /* first draft */
+void func_0054BF70(f32 *to, f32 *from, f32 *out) {
+    f32 lim[4];
+    Vec3f d0;
+    f32 e[3];
+    f32 q[3];
+    f32 p[3];
+    f32 dir[3];
+    GridCell cell;
+    s8 floor;
+    s8 lift;
+    s8 tries;
+    s8 i;
+    s8 side;
+    s8 k;
+    GridObj *o;
+    f32 r;
+    f32 best;
+    f32 dd;
+    f32 sx;
+    f32 sz;
+    f32 bx;
+    f32 bz;
+    f32 tx;
+    f32 tz;
+    f32 dz0;
+    s32 n;
+    s32 zfirst;
+    s32 hit;
+
+    tries = 0;
+    lift = 0;
+    r = 49.5f;
+    floor = -1;
+    if (D_0023BF4C == 0) {
+        *(Vec3f *)out = *(Vec3f *)to;
+        return;
+    }
+    if (D_0023BF48 != 0 && !(from[1] - D_00395EA0.y <= 50.0f) && func_0067E490(&cell, from) == 1) {
+        lift = 1;
+        r = 20.0f;
+    }
+    func_00340410(dir, to, from);
+    dir[1] = 0.0f;
+    if (func_00191690(dir) == 0.0f) {
+        *(Vec3f *)out = *(Vec3f *)to;
+        return;
+    }
+    func_00191750(dir);
+    e[0] = from[0] + dir[0] * r;
+    e[1] = from[1];
+    e[2] = from[2] + dir[2] * r;
+    if (func_0067E570(&cell, e) >= 2) {
+        best = 10000;
+        *(Vec3f *)out = *(Vec3f *)to;
+        side = -1;
+        k = func_0067D8B0(cell.x, cell.z);
+        if (k < 0) {
+            return;
+        }
+        o = &D_00395720[k];
+        lim[0] = D_00395EA0.z + 50.0f * o->z - (1.0f + r);
+        lim[1] = (1.0f + r) + (D_00395EA0.z + 50.0f * (o->z + o->d));
+        lim[2] = D_00395EA0.x + 50.0f * o->x - (1.0f + r);
+        lim[3] = (1.0f + r) + (D_00395EA0.x + 50.0f * (o->x + o->w));
+        for (i = 0; i < 4; i++) {
+            if (i < 2) {
+                dd = func_00191A70(lim[i] - from[2]);
+            } else {
+                dd = func_00191A70(lim[i] - from[0]);
+            }
+            if (!(best <= dd)) {
+                best = dd;
+                side = i;
+            }
+        }
+        if (side >= 0 && side < 2) {
+            out[2] = lim[side];
+        } else if (side >= 2 && side < 4) {
+            out[0] = lim[side];
+        }
+        return;
+    }
+    if (lift == 0) {
+        *(Vec3f *)out = *(Vec3f *)to;
+        return;
+    }
+    if (to[0] + r < D_00395EA0.x || !(to[0] - r < D_00395EA0.x + 50.0f * D_00395EA0.w) ||
+        to[2] + r < D_00395EA0.z || !(to[2] - r < D_00395EA0.z + 50.0f * D_00395EA0.d)) {
+        if (lift != 0 && func_0067E570(&cell, to) == 3) {
+            *(Vec3f *)out = *(Vec3f *)from;
+        } else {
+            *(Vec3f *)out = *(Vec3f *)to;
+        }
+        return;
+    }
+    *(Vec3f *)p = *(Vec3f *)from;
+    d0 = *(Vec3f *)dir;
+    sx = 0.0f;
+    sz = 0.0f;
+    if (!(dir[0] <= 0.0f)) {
+        sx = r;
+    }
+    if (dir[0] < 0.0f) {
+        sx = -r;
+    }
+    if (!(dir[2] <= 0.0f)) {
+        sz = r;
+    }
+    if (dir[2] < 0.0f) {
+        sz = -r;
+    }
+    q[2] = 0.0f;
+    q[0] = 0.0f;
+    e[2] = 0.0f;
+    e[0] = 0.0f;
+    e[1] = q[1] = from[1];
+    func_0067DA50(&floor, from);
+    dz0 = d0.z;
+    do {
+        bz = 0.0f;
+        tz = 1000.0f;
+        bx = 0.0f;
+        tx = 1000.0f;
+        if (!(dir[0] <= 0.0f)) {
+            n = (s32)((p[0] + r - D_00395EA0.x) / 50.0f) + 1;
+            if (p[0] + r < D_00395EA0.x) {
+                n--;
+            }
+            bx = D_00395EA0.x + 50.0f * n;
+            tx = (bx - (p[0] + r)) / dir[0];
+        } else if (dir[0] < 0.0f) {
+            n = (s32)((p[0] - r - D_00395EA0.x) / 50.0f);
+            if (p[0] - r < D_00395EA0.x) {
+                n--;
+            }
+            bx = D_00395EA0.x + 50.0f * n;
+            tx = (bx - (p[0] - r)) / dir[0];
+        }
+        if (!(dir[2] <= 0.0f)) {
+            n = (s32)((p[2] + r - D_00395EA0.z) / 50.0f) + 1;
+            if (p[2] + r < D_00395EA0.z) {
+                n--;
+            }
+            bz = D_00395EA0.z + 50.0f * n;
+            tz = (bz - (p[2] + r)) / dir[2];
+        } else if (dir[2] < 0.0f) {
+            n = (s32)((p[2] - r - D_00395EA0.z) / 50.0f);
+            if (p[2] - r < D_00395EA0.z) {
+                n--;
+            }
+            bz = D_00395EA0.z + 50.0f * n;
+            tz = (bz - (p[2] - r)) / dir[2];
+        }
+        if (!(tx < 0.0f) && !(tz < 0.0f)) {
+            zfirst = 1;
+            if (tx < tz) {
+                zfirst = 0;
+            }
+        } else if (tx < 0.0f) {
+            tx = 1000.0f;
+            zfirst = 1;
+        } else if (tz < 0.0f) {
+            zfirst = 0;
+            tz = 1000.0f;
+        }
+        if (tx == 1000.0f && tz == 1000.0f) {
+            break;
+        }
+        if (!(zfirst & 1)) {
+            /* the next x boundary first */
+            e[0] = bx - sx;
+            e[2] = p[2] + dir[2] * ((e[0] - p[0]) / dir[0]);
+            if ((!(dir[0] <= 0.0f) && !(e[0] < to[0])) || (dir[0] < 0.0f && e[0] <= to[0])) {
+                *(Vec3f *)out = *(Vec3f *)to;
+                return;
+            }
+            q[0] = bx + d0.x;
+            q[2] = sz + (e[2] + dz0);
+            hit = GRID_BLOCKED(&cell, q, floor);
+            if (!hit) {
+                q[2] = e[2] + dz0;
+                hit = GRID_BLOCKED(&cell, q, floor);
+            }
+            if (!hit) {
+                q[2] = e[2] + dz0 - sz;
+                hit = GRID_BLOCKED(&cell, q, floor);
+            }
+            if (!hit) {
+                q[2] = sz + (e[2] + dz0);
+                q[0] -= sx;
+                hit = GRID_BLOCKED(&cell, q, floor);
+            }
+            if (!hit) {
+                q[0] -= sx;
+                hit = GRID_BLOCKED(&cell, q, floor);
+            }
+            if (hit) {
+                p[0] = e[0] - d0.x;
+                q[0] = bx - d0.x;
+                q[2] = to[2] + sz;
+                hit = GRID_BLOCKED(&cell, q, floor);
+                if (!hit) {
+                    q[0] -= sx;
+                    hit = GRID_BLOCKED(&cell, q, floor);
+                }
+                if (!hit) {
+                    q[0] -= sx;
+                    hit = GRID_BLOCKED(&cell, q, floor);
+                }
+                if (!hit) {
+                    p[2] = to[2];
+                } else if ((!(dir[2] <= 0.0f) && bz < to[2]) || (dir[2] < 0.0f && !(bz <= to[2]))) {
+                    p[2] = bz;
+                } else {
+                    p[2] = e[2];
+                }
+                break;
+            }
+        } else {
+            /* the next z boundary first */
+            e[2] = bz - sz;
+            e[0] = p[0] + dir[0] * ((e[2] - p[2]) / dir[2]);
+            if ((!(dir[2] <= 0.0f) && !(e[2] < to[2])) || (dir[2] < 0.0f && e[2] <= to[2])) {
+                *(Vec3f *)out = *(Vec3f *)to;
+                return;
+            }
+            q[2] = bz + dz0;
+            q[0] = sx + (e[0] + d0.x);
+            hit = GRID_BLOCKED(&cell, q, floor);
+            if (!hit) {
+                q[0] = e[0] + d0.x;
+                hit = GRID_BLOCKED(&cell, q, floor);
+            }
+            if (!hit) {
+                q[0] = e[0] + d0.x - sx;
+                hit = GRID_BLOCKED(&cell, q, floor);
+            }
+            if (!hit) {
+                q[0] = sx + (e[0] + d0.x);
+                q[2] -= sz;
+                hit = GRID_BLOCKED(&cell, q, floor);
+            }
+            if (!hit) {
+                q[2] -= sz;
+                hit = GRID_BLOCKED(&cell, q, floor);
+            }
+            if (hit) {
+                p[2] = e[2] - dz0;
+                q[2] = bz - dz0;
+                q[0] = to[0] + sx;
+                hit = GRID_BLOCKED(&cell, q, floor);
+                if (!hit) {
+                    q[2] -= sz;
+                    hit = GRID_BLOCKED(&cell, q, floor);
+                }
+                if (!hit) {
+                    q[2] -= sz;
+                    hit = GRID_BLOCKED(&cell, q, floor);
+                }
+                if (!hit) {
+                    p[0] = to[0];
+                } else if ((!(dir[0] <= 0.0f) && bx < to[0]) || (dir[0] < 0.0f && !(bx <= to[0]))) {
+                    p[0] = bx;
+                } else {
+                    p[0] = e[0];
+                }
+                break;
+            }
+        }
+        /* nothing in the way: to, unless that goes back past from */
+        *(Vec3f *)p = *(Vec3f *)to;
+        if ((!(dir[0] <= 0.0f) && p[0] <= from[0]) || (dir[0] < 0.0f && !(p[0] < from[0]))) {
+            *(Vec3f *)p = *(Vec3f *)from;
+            break;
+        }
+        if ((!(dir[2] <= 0.0f) && p[2] <= from[2]) || (dir[2] < 0.0f && !(p[2] < from[2]))) {
+            *(Vec3f *)p = *(Vec3f *)from;
+            break;
+        }
+    } while (++tries < 4);
+    *(Vec3f *)out = *(Vec3f *)p;
+}
+#endif
