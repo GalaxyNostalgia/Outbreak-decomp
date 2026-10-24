@@ -277,14 +277,18 @@ typedef struct DrawObjFull {
     s8 unk103A;         /* 0x103A */
     u8 unk103B[0x105B - 0x103B];
     u8 unk105B;         /* 0x105B */
-    u8 unk105C[0x1064 - 0x105C];
+    u8 unk105C[4];
+    s32 unk1060;        /* 0x1060: (partners) frames left */
     u8 unk1064;         /* 0x1064 */
     u8 unk1065[2];
     s8 mode;            /* 0x1067: its D_00838860 entry */
-    u8 unk1068[0x106F - 0x1068];
+    u8 unk1068[4];
+    u8 unk106C;         /* 0x106C: (partners) how near the nearest dangerous enemy is (0-2, 3 none) */
+    u8 unk106D;         /* 0x106D: unk106C last frame */
+    s8 unk106E;         /* 0x106E: that enemy (D_003FFCA0 index; -1 none) */
     u8 unk106F;         /* 0x106F: unk54F last frame */
-    u8 unk1070[2];
-    s16 unk1072;        /* 0x1072 */
+    u16 unk1070;        /* 0x1070 */
+    u16 unk1072;        /* 0x1072: (partners) frames to the next idle remark */
     s8 unk1074;         /* 0x1074 */
     u8 unk1075;         /* 0x1075 */
     u8 unk1076;         /* 0x1076: unk1075 last frame */
@@ -294,23 +298,31 @@ typedef struct DrawObjFull {
     u8 unk107A;         /* 0x107A: func_005C6240's */
     u8 unk107B;         /* 0x107B: unk107A last frame */
     u16 unk107C;        /* 0x107C */
-    u8 unk107E[0x1082 - 0x107E];
+    u8 unk107E;         /* 0x107E: (partners) enemies in view */
+    u8 unk107F;         /* 0x107F: unk107E last frame */
+    u8 unk1080;         /* 0x1080 */
+    u8 unk1081;         /* 0x1081: (partners) 1/2 when the other partner leads */
     u8 unk1082;         /* 0x1082: unk1075 changed */
     u8 unk1083;         /* 0x1083 */
-    u8 unk1084[0x1098 - 0x1084];
+    u16 unk1084;        /* 0x1084: frames unk10B8 holds */
+    u16 unk1086;        /* 0x1086 */
+    u16 unk1088;        /* 0x1088 */
+    u16 unk108A;        /* 0x108A */
+    u8 unk108C[0x1098 - 0x108C];
     u8 unk1098;         /* 0x1098 */
     u8 unk1099;         /* 0x1099 */
-    s16 unk109A;        /* 0x109A */
+    u16 unk109A;        /* 0x109A */
     s32 unk109C;        /* 0x109C */
     s32 unk10A0;        /* 0x10A0 */
-    u8 unk10A4[4];
+    u32 unk10A4;        /* 0x10A4: (partners) frames stuck */
     s8 unk10A8;         /* 0x10A8 */
     u8 unk10A9[3];
     void *modeInfo;     /* 0x10AC: &D_00838860[mode] */
     u8 unk10B0[8];      /* 0x10B0: from modeInfo */
     u8 unk10B8[8];      /* 0x10B8 */
     u8 unk10C0[8];      /* 0x10C0 */
-    u8 unk10C8[0x10E0 - 0x10C8];
+    u8 unk10C8[8];      /* 0x10C8: unk10B0 + unk10B8 + unk10C0 */
+    u8 unk10D0[0x10E0 - 0x10D0];
 } DrawObjFull;          /* 0x10E0: a player's size (enemies are 0x1170, things 0xD90) */
 
 /* The NPCs (survivors and such, pool D_003E8230[10]: 0x1170 bytes). */

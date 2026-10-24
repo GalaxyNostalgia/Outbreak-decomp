@@ -518,7 +518,7 @@ s32 func_006CF700(u32 *args) {
     return 0;
 }
 
-void func_00827130(f32 *out, u16 id, s8 place);
+void func_00827130(f32 *out, s32 id, s32 place);
 s32 func_008270C0(f32 r, f32 *pos, f32 *to);
 
 /* if partner args[0] is player args[1] at place args[2] and within 30 of it */

@@ -144,6 +144,26 @@ void func_00341140(const f32 *a, const f32 *b, const f32 *p, f32 *out) {
     out[2] = a[2] + dz * t;
 }
 
+/* The point on the line through a and b nearest p (x, z pairs). */
+void func_003411E0(const f32 *a, const f32 *b, const f32 *p, f32 *out) {
+    f32 dx = b[0] - a[0];
+    f32 dz = b[1] - a[1];
+    f32 t;
+
+    t = (a[1] * dz + (a[0] * dx - dx * p[0]) - dz * p[1]) / (-(dx * dx) - dz * dz);
+    out[0] = a[0] + dx * t;
+    out[1] = a[1] + dz * t;
+}
+
+void func_00340480(f32 *out, const f32 *a, const f32 *b);
+#ifdef NON_MATCHING   /* VU0 in the original */
+/* out = a - b (x, z). */
+void func_00340480(f32 *out, const f32 *a, const f32 *b) {
+    out[0] = a[0] - b[0];
+    out[1] = a[1] - b[1];
+}
+#endif
+
 /* Point-in-polygon tests in the x-z plane (points are (x, z) pairs). */
 
 /* Twice the signed area of the triangle a, b, c. */
@@ -293,6 +313,49 @@ s32 func_00340940(s32 (*pts)[2], const s32 *p, s32 n) {
     }
     return c > 0;
 }
+
+
+/* Whether p is in the 4-point polygon pts or within r of one of its edges. */
+s32 func_00340DB0(s32 (*pts)[2], const s32 *p, s32 n, f32 r);
+#ifdef NON_MATCHING   /* the original keeps the [1] element addresses of the locals in s registers */
+s32 func_00340DB0(s32 (*pts)[2], const s32 *p, s32 n, f32 r) {
+    f32 pf[2];
+    f32 a[2];
+    f32 b[2];
+    f32 c[2];
+    f32 u[2];
+    f32 w[2];
+    s32 i;
+
+    if (func_00340940(pts, p, n) == 1) {
+        return 1;
+    }
+    r = r * r;
+    pf[0] = p[0];
+    pf[1] = p[1];
+    for (i = 0; i < 4; i++) {
+        a[0] = pts[i][0];
+        a[1] = pts[i][1];
+        b[0] = pts[(i + 1) & 3][0];
+        b[1] = pts[(i + 1) & 3][1];
+        func_003411E0(a, b, pf, c);
+        if ((c[0] - pf[0]) * (c[0] - pf[0]) + (c[1] - pf[1]) * (c[1] - pf[1]) <= r) {
+            func_00340480(u, a, c);
+            func_00340480(w, b, c);
+            if (u[0] * w[0] + u[1] * w[1] < 0.0f) {
+                return 1;
+            }
+            if ((pf[0] - a[0]) * (pf[0] - a[0]) + (pf[1] - a[1]) * (pf[1] - a[1]) < r) {
+                return 1;
+            }
+            if ((pf[0] - b[0]) * (pf[0] - b[0]) + (pf[1] - b[1]) * (pf[1] - b[1]) < r) {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+#endif
 
 /* The per-frame turn from heading from to heading to over n frames (the short way round). */
 s16 func_00346F20(u16 from, u16 to, s16 n) {
