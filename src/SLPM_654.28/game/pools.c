@@ -527,6 +527,102 @@ extern Work3941A0 D_003941A0;
 extern s8 D_0023BE4C;
 extern s8 D_0023BE48;
 
+void func_00340410(f32 *out, const f32 *a, const f32 *b);
+f32 func_001917C0(const f32 *a, const f32 *b);
+s32 func_00340630(const f32 *a, const f32 *b, const f32 *p, f32 *out);
+
+typedef struct {
+    f32 v[3];
+} AreaVec;
+
+/* Whether p is in front of the plane through q with normal n. */
+s32 func_00543F00(f32 *p, f32 *q, f32 *n) {
+    f32 w[4];
+
+    func_00340410(w, p, q);
+    return func_001917C0(w, n) > 0.0f;
+}
+
+/* One face (corners a, b, c of area z's box) of func_00543F60's test. */
+#define AREA_FACE(k, a, b, c)                                                               \
+    t[0][0] = box[a][0];                                                                    \
+    t[0][1] = box[a][1];                                                                    \
+    t[0][2] = box[a][2];                                                                    \
+    t[1][0] = box[b][0];                                                                    \
+    t[1][1] = box[b][1];                                                                    \
+    t[1][2] = box[b][2];                                                                    \
+    t[2][0] = box[c][0];                                                                    \
+    t[2][1] = box[c][1];                                                                    \
+    t[2][2] = box[c][2];                                                                    \
+    if (func_00340630(t[0], t[1], t[2], n[k]) == 0) {                                       \
+        return 0;                                                                           \
+    }                                                                                       \
+    q[k] = *(AreaVec *)t[0];                                                                \
+    pt = *(AreaVec *)p;                                                                     \
+    pt.v[1] += 10.0f
+
+/* Whether p (10 up) is inside area z's box (eight corners, s32 x y z). */
+s32 func_00543F60(f32 *p, SoundSrc *z);
+#ifdef NON_MATCHING   /* registers (the original indexes the box from z itself) */
+s32 func_00543F60(f32 *p, SoundSrc *z) {
+    AreaVec pt;
+    f32 n[6][3];
+    AreaVec q[6];
+    f32 t[3][3];
+    s32 (*box)[3];
+
+    if (p == NULL || z == NULL) {
+        return 0;
+    }
+    box = (s32 (*)[3])z->data;
+    AREA_FACE(0, 0, 3, 1);
+    if (func_00543F00(pt.v, q[0].v, n[0])) {
+        return 0;
+    }
+    AREA_FACE(1, 0, 1, 4);
+    if (func_00543F00(pt.v, q[1].v, n[1])) {
+        return 0;
+    }
+    AREA_FACE(2, 0, 4, 3);
+    if (func_00543F00(pt.v, q[2].v, n[2])) {
+        return 0;
+    }
+    AREA_FACE(3, 6, 7, 5);
+    if (func_00543F00(pt.v, q[3].v, n[3])) {
+        return 0;
+    }
+    AREA_FACE(4, 6, 2, 7);
+    if (func_00543F00(pt.v, q[4].v, n[4])) {
+        return 0;
+    }
+    AREA_FACE(5, 6, 5, 2);
+    return func_00543F00(pt.v, q[5].v, n[5]) == 0;
+}
+#endif
+
+/* The id of the sound area at p: the one of highest unk0 of the areas (flag 1) it is in, else
+   the room's (0xD70). */
+u16 func_005445D0(f32 *p) {
+    s8 i;
+    s8 sel = -1;
+    s32 best = 0;
+    SoundSrc *z;
+
+    if (p == NULL) {
+        return D_003941A0.unkD70;
+    }
+    for (i = 0, z = D_003941A0.src; i < 0x20; i++, z++) {
+        if (z->unk0 != 0 && (z->used & 1) && func_00543F60(p, z) == 1 && best < z->unk0) {
+            best = z->unk0;
+            sel = i;
+        }
+    }
+    if (sel < 0) {
+        return D_003941A0.unkD70;
+    }
+    return D_003941A0.src[sel].unk2;
+}
+
 void func_00543D00(void) {
     memset(&D_003941A0, 0, sizeof(D_003941A0));
     D_0023BE4C = 0;

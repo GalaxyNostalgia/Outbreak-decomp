@@ -717,7 +717,7 @@ extern f32 D_006DB1C0[][2];     /* per quarter of a cell: which way the next cel
 extern s16 D_0023BECC;
 extern s8 D_0023BEC8;
 s32 func_005E6A90(CollSweep *s, CollTri *t, f32 *n, f32 *q);
-void func_005E7280(CollSweep *s, f32 *push);
+s16 func_005E7280(CollSweep *s, f32 *push);
 
 /* A sphere of radius r moving from from to to against the walls (the triangles of the four
    cells round to, then the objects' own) that func_005E6050 says count for want, skip and
@@ -1064,5 +1064,239 @@ s32 func_005E6A90(CollSweep *s, CollTri *t, f32 *hit, f32 *n) {
     }
     D_0023BECC++;
     return 1;
+}
+#endif
+
+extern s8 D_0023BED0[];         /* the walls that pushed this time */
+extern f32 D_00239E70;          /* the longest push, as a share of the move */
+s8 func_005E8180(CollSweep *s, f32 *out, s8 i);
+void func_005E8410(const f32 *v, f32 *acc);
+
+/* Turns this frame's wall touches (D_0070EE50 on) into one push for sweep s, added to push
+   (no longer than D_00239E70 of the move): faces each push; edges only when no face already
+   covers them (the same plane, a convex corner, or the same point). Returns how many touched. */
+s16 func_005E7280(CollSweep *s, f32 *push);
+#ifdef NON_MATCHING   /* first draft */
+/* Whether wall b's vertex that isn't shared with wall a (when they share an edge and neither
+   is level) lies on or behind face f: the corner between them is convex. */
+static s32 corner_hidden(CollTri *a, CollTri *b, CollTri *f) {
+    f32 p[3];
+    f32 w[4];
+    s8 sv[4];
+    s8 n;
+    s8 i;
+    s8 j;
+    s32 other;
+
+    if (a->n[1] == 1.0f || a->n[1] == -1.0f || b->n[1] == 1.0f || b->n[1] == -1.0f) {
+        return 0;
+    }
+    n = 0;
+    for (i = 0; i < 3; i++) {
+        for (j = 0; j < 3; j++) {
+            if (a->v[i][0] == b->v[j][0] && a->v[i][1] == b->v[j][1] && a->v[i][2] == b->v[j][2]) {
+                sv[n++] = j;
+                break;
+            }
+        }
+    }
+    if (n < 2) {
+        return 0;
+    }
+    other = 0xFF;
+    for (i = 0; i < 3; i++) {
+        if (!(((1 << sv[0]) | (1 << sv[1])) & 0xFF & (1 << i))) {
+            other = i & 0xFF;
+            break;
+        }
+    }
+    if (other == 0xFF) {
+        return 0;
+    }
+    p[0] = b->v[other][0];
+    p[1] = b->v[other][1];
+    p[2] = b->v[other][2];
+    func_00340410(w, p, f->v[0]);
+    return !(func_001917C0(w, f->n) > 0.0f);
+}
+
+s16 func_005E7280(CollSweep *s, f32 *push) {
+    f32 v[3];
+    f32 out[3];
+    f32 acc[6];
+    s8 face[8];
+    s8 edge[8];
+    s8 res[8];
+    s8 kind[8];
+    s8 nface;
+    s8 nedge;
+    s8 nres;
+    s32 i;
+    s32 k;
+    s32 a;
+    s32 found;
+    f32 len;
+    f32 most;
+    CollTri *tf;
+    CollTri *te;
+
+    switch (D_0023BECC) {
+    case 0:
+        break;
+    case 1:
+        if (func_005E8180(s, out, 0)) {
+            v[0] = out[0];
+            v[1] = out[1];
+            v[2] = out[2];
+            len = func_00191690(v);
+            if (s->len != 0.0f) {
+                most = D_00239E70 * s->len;
+                if (!(len <= most)) {
+                    len = most;
+                }
+            }
+            func_00191750(v);
+            func_003405D0(len, out, v);
+            push[0] += out[0];
+            push[1] += out[1];
+            push[2] += out[2];
+            D_0023BED0[D_0023BEC8] = 0;
+            D_0023BEC8++;
+        }
+        break;
+    default:
+        nres = 0;
+        nface = 0;
+        nedge = 0;
+        for (i = 0; i < D_0023BECC; i++) {
+            if (D_0070EE50[i] == 0) {
+                face[nface++] = i;
+            } else {
+                edge[nedge++] = i;
+            }
+        }
+        if (nface != 0 && nedge != 0) {
+            for (i = 0; i < nface; i++) {
+                for (k = 0; k < nedge; k++) {
+                    for (a = 0; a < nres; a++) {
+                        if (edge[k] == res[a]) {
+                            break;
+                        }
+                    }
+                    te = &D_0070EF90[edge[k]];
+                    tf = &D_0070EF90[face[i]];
+                    if (tf->n[0] == te->n[0] && tf->n[1] == te->n[1] && tf->n[2] == te->n[2]) {
+                        kind[nres] = 1;
+                        res[nres] = edge[k];
+                        nres++;
+                    } else if (corner_hidden(tf, te, tf)) {
+                        kind[nres] = 2;
+                        res[nres] = edge[k];
+                        nres++;
+                    }
+                }
+            }
+        }
+        if (nedge >= 2) {
+            for (i = 0; i < nedge - 1; i++) {
+                found = 0;
+                for (a = 0; a < nres; a++) {
+                    if (edge[i] == res[a]) {
+                        found = 1;
+                        break;
+                    }
+                }
+                if ((s8)found == 1) {
+                    continue;
+                }
+                for (k = 1; k < nedge; k++) {
+                    found = 0;
+                    for (a = 0; a < nres; a++) {
+                        if (edge[k] == res[a]) {
+                            found = 1;
+                            break;
+                        }
+                    }
+                    if ((s8)found == 1 || edge[i] == edge[k]) {
+                        continue;
+                    }
+                    if (D_0070EED0[edge[i]][0] == D_0070EED0[edge[k]][0] &&
+                        D_0070EED0[edge[i]][1] == D_0070EED0[edge[k]][1] &&
+                        D_0070EED0[edge[i]][2] == D_0070EED0[edge[k]][2]) {
+                        kind[nres] = 3;
+                        res[nres] = edge[k];
+                        nres++;
+                    }
+                }
+            }
+        }
+        if (nres > 0 && nres < nedge) {
+            for (i = 0; i < nres; i++) {
+                if (kind[i] != 1) {
+                    continue;
+                }
+                for (k = 0; k < nedge; k++) {
+                    if (edge[k] == res[i]) {
+                        continue;
+                    }
+                    if (corner_hidden(&D_0070EF90[res[i]], &D_0070EF90[edge[k]], &D_0070EF90[face[i]])) {
+                        kind[nres] = 2;
+                        res[nres] = edge[k];
+                        nres++;
+                    }
+                }
+            }
+        }
+        for (i = 0; i < 6; i++) {
+            acc[i] = 0.0f;
+        }
+        for (i = 0; i < nface; i++) {
+            if (func_005E8180(s, out, face[i])) {
+                func_005E8410(out, acc);
+                D_0023BED0[D_0023BEC8] = face[i];
+                D_0023BEC8++;
+            }
+        }
+        for (i = 0; i < nedge; i++) {
+            found = 0;
+            for (a = 0; a < nres; a++) {
+                if (res[a] == edge[i]) {
+                    found = 1;
+                    break;
+                }
+            }
+            if (found == 0 && func_005E8180(s, out, edge[i])) {
+                func_005E8410(out, acc);
+                D_0023BED0[D_0023BEC8] = edge[i];
+                D_0023BEC8++;
+            }
+        }
+        for (i = 0; i < 3; i++) {
+            if (acc[i] != 0.0f && acc[3 + i] != 0.0f) {
+                out[i] = (acc[i] + acc[3 + i]) / 2.0f;
+            } else if (acc[3 + i] == 0.0f) {
+                out[i] = acc[i];
+            } else {
+                out[i] = acc[3 + i];
+            }
+        }
+        acc[0] = out[0];
+        acc[1] = out[1];
+        acc[2] = out[2];
+        len = func_00191690(acc);
+        if (s->len != 0.0f) {
+            most = D_00239E70 * s->len;
+            if (!(len <= most)) {
+                len = most;
+            }
+        }
+        func_00191750(acc);
+        func_003405D0(len, out, acc);
+        push[0] += out[0];
+        push[1] += out[1];
+        push[2] += out[2];
+        break;
+    }
+    return D_0023BECC;
 }
 #endif
