@@ -44,7 +44,7 @@ void func_00190CD0(f32 *a, const f32 *b);
 void func_00190D50(f32 *out, const f32 *a, const f32 *b);
 void func_00190DB0(f32 *a, const f32 *b);
 void func_00191110(f32 *m, const f32 *a, const f32 *b);
-void func_001912D0(f32 s, f32 u, f32 *out, const f32 *a, const f32 *b);
+void func_001912D0(f32 *out, const f32 *a, const f32 *b, f32 s, f32 u);
 void func_00191410(f32 *v, const f32 *m);
 void func_00191480(f32 *out, const f32 *v, const f32 *m);
 f32 func_00191690(const f32 *v);

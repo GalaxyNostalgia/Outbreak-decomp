@@ -1905,7 +1905,7 @@ s32 func_00633D80(DrawObjFull *o) {
             m2[14] = 0.0f;
             m2[13] = 0.0f;
             m2[12] = 0.0f;
-            func_001912D0(1.0f - o->unkB90, o->unkB90, (f32 *)((u8 *)o + 0x50), m2, m);
+            func_001912D0((f32 *)((u8 *)o + 0x50), m2, m, 1.0f - o->unkB90, o->unkB90);
             return 0;
         }
     }
@@ -4912,3 +4912,216 @@ void func_00639FA0(DrawObjFull *o) {
         break;
     }
 }
+
+/* Whether the floor 30 ahead of o (50 up; behind it when it moves backwards, 0x4EC < 0) is of
+   kind 1; out gets the point. */
+u8 func_00635160(DrawObjFull *o, f32 *out) {
+    u8 kind;
+    u8 r = 0xFF;
+
+    out[0] = 0.0f;
+    out[1] = 50.0f;
+    out[2] = 30.0f;
+    if (!(*(f32 *)&o->unk4E4[2] < 0.0f)) {
+        func_00191590(out, D_00239D30 * (s32)(u16)o->unk92 / 65536.0f);
+    } else {
+        func_00191590(out, D_00239D30 * (s32)((o->unk92 + 0x7FFF + 1) & 0xFFFF) / 65536.0f);
+    }
+    out[0] += o->unk38[0];
+    out[1] += o->unk38[1];
+    out[2] += o->unk38[2];
+    func_005E5B40(out, &kind, 1);
+    if (kind == 1) {
+        r = 1;
+    }
+    func_005E5B40(out, &kind, 0xFF);
+    return r;
+}
+typedef struct { s32 w[8]; } MotLayer32;
+extern u16 D_006E7C10[][3];     /* the walk motions (by condition), per kind 0-2 */
+u8 func_005A6070(DrawObjFull *o);
+f32 func_005A42B0(DrawObjFull *o, u16 id, s32 c);
+void func_005A3B60(DrawObjFull *o, s32 a);
+void func_0055C520(DrawObjFull *o);
+
+/* Starts walk motion n (0-2) unless it already plays (act[2] = 1), carrying the frame over when
+   the walk kind is the same; on a floor of another kind (or while walk motion 0x2010-0x2015
+   plays) it uses the first condition's motion. */
+void func_0063A240(DrawObjFull *o, u8 n);
+#ifdef NON_MATCHING   /* the original leaves nops in two branch delay slots; the jump table's addi */
+void func_0063A240(DrawObjFull *o, u8 n) {
+    f32 frame;
+    u8 kind;
+    u8 r;
+    u16 *id;
+    f32 tmp[4];
+
+    if (o->act[2] == 0xFF) {
+        return;
+    }
+    r = func_00635160(o, tmp);
+    switch (n) {
+    case 0:
+        kind = 1;
+        break;
+    case 1:
+        kind = 2;
+        break;
+    case 2:
+        kind = 3;
+        break;
+    }
+    if (r == 1) {
+        id = &D_006E7C10[func_005A6070(o) & 3][n];
+        if (o->unk520 == *id) {
+            o->act[2] = 1;
+            return;
+        }
+        if (o->unk54F == kind) {
+            frame = func_005A42B0(o, *id, 0);
+            *(MotLayer32 *)((u8 *)o + 0x364) = *(MotLayer32 *)((u8 *)o + 0x1E4);
+            func_005A3B60(o, 0);
+        } else {
+            frame = 0.0f;
+            memset((u8 *)o + 0x364, 0, 0x20);
+        }
+        o->unkBA8 = 1.0f;
+        o->unkBA8 *= o->unkBC0;
+        func_0055C520(o);
+        func_005A4490(o, *id, frame, 30.0f);
+        func_0055C4E0(o);
+        o->unk54F = kind;
+        o->act[2] = 2;
+        return;
+    }
+    switch (o->unk520) {
+    case 0x2010:
+    case 0x2011:
+    case 0x2012:
+    case 0x2013:
+    case 0x2014:
+    case 0x2015:
+        id = &D_006E7C10[0][n];
+        frame = func_005A42B0(o, *id, 0);
+        *(MotLayer32 *)((u8 *)o + 0x364) = *(MotLayer32 *)((u8 *)o + 0x1E4);
+        func_005A3B60(o, 0);
+        o->unkBA8 = 1.0f;
+        o->unkBA8 *= o->unkBC0;
+        func_0055C520(o);
+        func_005A4490(o, *id, frame, 30.0f);
+        func_0055C4E0(o);
+        o->unk54F = kind;
+        o->act[2] = 2;
+        break;
+    }
+}
+#endif
+void func_0063A4D0(DrawObjFull *o);
+f32 func_005A6FF0(DrawObjFull *o, s32 motion);
+void func_005A7320(DrawObjFull *o);
+
+/* Kinds 3-8 of action 1: walking (6), and walking while turning (7, 8). */
+void func_0063A940(DrawObjFull *o);
+#ifdef NON_MATCHING   /* only the jump table's addi (ours addiu) */
+void func_0063A940(DrawObjFull *o) {
+    f32 start = 0.0f;
+    u8 r;
+    f32 tmp[4];
+
+    o->unkBA4 |= 0x100;
+    if (func_00635970(o)) {
+        o->unk54F = 0;
+        o->unk548 &= ~1;
+        o->act[0] = 1;
+        o->act[1] = 0;
+        o->act[2] = 1;
+        o->act[3] = 0;
+        func_00635920(o);
+        func_005A4490(o, 0x2050, start, 10.0f);
+        func_0055C4E0(o);
+        return;
+    }
+    switch (o->act[1]) {
+    case 6:
+    case 7:
+    case 8:
+        o->unkBA4 |= 0x100;
+        break;
+    }
+    switch (o->act[1]) {
+    case 6:
+        break;
+    case 7:
+        o->unk92 -= func_0062DBC0(o);
+        break;
+    case 8:
+        o->unk92 += func_0062DBC0(o);
+        break;
+    }
+    r = func_00635160(o, tmp);
+    func_0063A240(o, 2);
+    switch (o->act[2]) {
+    case 0:
+        o->act[2]++;
+        if (r != 1) {
+            switch (o->unk54F) {
+            case 1:
+                func_0063A4D0(o);
+                start = func_005A6FF0(o, 0x2005);
+                break;
+            }
+        }
+        o->unk54F = 3;
+        o->unkD10[0] = 2;
+        if (o->unk520 != 0x2005) {
+            if (o->unkB98 == 0 && o->unk520 != 0x2003 && start < 1.0f) {
+                func_0055C520(o);
+                func_005A4490(o, 0x2005, start, -10.0f);
+            } else {
+                func_005A4490(o, 0x2005, start, 10.0f);
+            }
+        }
+        break;
+    case 1:
+        if (r != 1 && o->unk520 != 0x2005) {
+            func_005A4490(o, 0x2005, 0.0f, 10.0f);
+        }
+        o->act[2]++;
+        o->unk54F = 3;
+        o->unkD10[0] = 2;
+        switch (o->act[1]) {
+        case 3:
+        case 4:
+        case 5:
+        case 6:
+        case 7:
+        case 8:
+            func_00635950(o);
+            break;
+        }
+        o->unkBA8 = 1.0f;
+        if (o->unkBA0 & 0x80) {
+            o->unkBA8 *= D_00239DFC;
+        }
+        o->unkBA8 *= o->unkBC0;
+        func_0055C4E0(o);
+    case 2:
+        func_0063A4D0(o);
+        func_0055C030(o, o->unkBA8);
+        break;
+    case 0xFF:
+    default:
+        o->unk54F = 0;
+        o->unk548 &= ~1;
+        o->act[0] = 1;
+        o->act[1] = 0;
+        o->act[2] = 1;
+        o->act[3] = 0;
+        func_00635920(o);
+        func_005A4490(o, 0x2050, 0.0f, 10.0f);
+        func_0055C4E0(o);
+        break;
+    }
+    func_005A7320(o);
+}
+#endif

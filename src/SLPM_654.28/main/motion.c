@@ -17,6 +17,21 @@ void func_001A42D0(u32 base) {
     D_0023BACC = base;
 }
 
+/* Hermite interpolation at time t between key (t0, p0) with slope m0 and key (t1, p1) with
+   slope m1. */
+f32 func_001A42E0(f32 t, f32 p0, f32 t0, f32 m0, f32 p1, f32 t1, f32 m1) {
+    f32 x = t - t0;
+    f32 inv = 1.0f / (t1 - t0);
+    f32 inv2 = inv * inv;
+    f32 x2 = x * x;
+    f32 b = x2 * inv;
+    f32 c = inv2 * (x2 * x);
+    f32 e = 2.0f * c * inv;
+    f32 a = 3.0f * x2 * inv2;
+
+    return p0 * (1.0f + (e - a)) + p1 * (-e + a) + m0 * (x + (c - b - b)) + m1 * (c - b);
+}
+
 /* The first key's time. */
 f32 func_001A4360(MotionTrack *t) {
     u8 *k = (u8 *)(t->keys + D_0023BACC);

@@ -227,6 +227,11 @@ void func_0055C4E0(DrawObjFull *o) {
     }
 }
 
+/* Sets bits 1 and 7 of the first motion layer's flags (0x1F1). */
+void func_0055C520(DrawObjFull *o) {
+    ((s8 *)o)[0x1F1] |= 0x82;
+}
+
 void func_005661C0(DrawObjFull *o);
 void func_0056A440(DrawObjFull *o);
 void func_005BB880(DrawObjFull *o);

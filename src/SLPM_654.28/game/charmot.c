@@ -2,6 +2,8 @@
 #include "options.h"
 #include "game.h"
 #include "object.h"
+#include "motion.h"
+#include "model.h"
 
 /* GAME.BIN: starting characters' motions by id (0x2000s: the common ones), with the variants
    for their condition and for carrying a heavy weapon. */
@@ -193,6 +195,35 @@ void func_005A3D10(DrawObjFull *o, MotInfo *info, MotRef *m) {
 
 DrawObjFull *func_00631920(u8 a, u8 b);
 
+void func_00190ED0(f32 *dst, const f32 *src);
+
+/* Copies the local matrices and scales of o's bones that motion layer layer moves into the
+   second skeleton (model unk4). */
+void func_005A3A70(DrawObjFull *o, u16 layer);
+#ifdef NON_MATCHING   /* the call's second argument is computed later; a0/a1 swapped */
+void func_005A3A70(DrawObjFull *o, u16 layer) {
+    u8 i;
+    Slot1468 *m;
+    FlBone **src;
+    FlBone **dst;
+
+    m = (Slot1468 *)o->model;
+    dst = (FlBone **)m->unk4;
+    src = (FlBone **)m->unk0;
+    if (*dst == NULL) {
+        return;
+    }
+    for (i = 0; i < m->nblocks; i++) {
+        if (layer == src[i]->layer) {
+            func_00190ED0(dst[i]->local[0], src[i]->local[0]);
+            dst[i]->cur[0][0] = src[i]->cur[0][0];
+            dst[i]->cur[0][1] = src[i]->cur[0][1];
+            dst[i]->cur[0][2] = src[i]->cur[0][2];
+        }
+    }
+}
+#endif
+
 /* Notes (0xCE0, 0xCE1) which motion set a motion comes from: the shared or own (by unkB99),
    the character's (players: +2; NPCs: 10), or another character's (0xFF and its kind). */
 void func_005A3C10(DrawObjFull *o, u8 set) {
@@ -301,6 +332,40 @@ void *func_005A3FB0(DrawObjFull *o, s8 set) {
     }
     return r;
 }
+
+s8 func_00192760(s32 motion, f32 *out);
+
+/* The length (in frames, 0 or more) of motion id's layer-0 (which 0) or layer-1 (1) motion. */
+f32 func_005A41B0(DrawObjFull *o, s32 id, u16 which);
+#ifdef NON_MATCHING   /* one addu's operands swapped */
+f32 func_005A41B0(DrawObjFull *o, s32 id, u16 which) {
+    MotInfo info;
+    MotRef m;
+    f32 len = 0.0f;
+    u16 f;
+    MotionSet *set;
+
+    m = *func_005A3E60(o, id);
+    func_005A3D10(o, &info, &m);
+    switch (which) {
+    case 0:
+        f = info.frame0;
+        break;
+    case 1:
+        f = info.frame1;
+        break;
+    }
+    set = func_005A3FB0(o, info.set);
+    if (set == NULL) {
+        return 0.0f;
+    }
+    func_00192760(set->anims[set->index[f & 0x7FFF] + which], &len);
+    if (len < 0.0f) {
+        len = 0.0f;
+    }
+    return len;
+}
+#endif
 
 /* Starts motion m on o: its move per frame, its layers' motions. */
 void func_005A4890(DrawObjFull *o, MotRef *m, f32 a, f32 b);
@@ -5082,6 +5147,65 @@ void func_005BB880(DrawObjFull *o, f32 speed) {
         break;
     case 0x17B:
         func_00565790(0x8, o, 0, speed);
+        break;
+    }
+}
+
+/* The fields func_005A7320 reads: layer 0's play state and the move per frame. */
+typedef struct {
+    u8 unk0[0x1E4];
+    f32 pos;            /* 0x1E4: layer 0's frame */
+    f32 unk1E8;
+    f32 end;            /* 0x1EC: its last frame */
+    u8 unk1F0;
+    s8 flags;           /* 0x1F1 */
+    u16 motion;         /* 0x1F2 */
+    u8 unk1F4[0x4EC - 0x1F4];
+    f32 move;           /* 0x4EC */
+    u8 unk4F0[0xCE4 - 0x4F0];
+    f32 start;          /* 0xCE4 */
+} StepView;
+
+/* Takes the root's forward move out of the step motions into o's 0x4EC (0-10): motion 0x67
+   (as layer 0) while it runs (from where it started, 0xCE4); 10 for other characters. */
+void func_005A7320(DrawObjFull *o) {
+    StepView *v = (StepView *)o;
+    FlBone *root = (FlBone *)o->model->unk828;
+    f32 z = root->local[3][2];
+    f32 *t = root->local[3];
+
+    if (o->unkB98 != 0) {
+        if (!(v->move < 10.0f)) {
+            v->move = 10.0f;
+        }
+        return;
+    }
+    switch (v->motion) {
+    case 0x65:
+        break;
+    case 0x67:
+        if (v->flags & 0x20) {
+            break;
+        }
+        if (!(v->pos <= v->end)) {
+            break;
+        }
+        if (v->pos < 3.0f - (D_00306590.unkC != 0 ? 1 : 2)) {
+            v->start = z;
+        }
+        if (v->flags & 2) {
+            break;
+        }
+        z -= v->start;
+        v->start = t[2];
+        t[2] = 0.0f;
+        v->move += z;
+        if (!(v->move < 10.0f)) {
+            v->move = 10.0f;
+        }
+        if (v->move < 0.0f) {
+            v->move = 0.0f;
+        }
         break;
     }
 }
