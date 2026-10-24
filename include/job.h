@@ -9,7 +9,11 @@ typedef struct Job {
     u8 active;          /* 0x00 */
     u8 slot;            /* 0x01 */
     u8 kind;            /* 0x02 */
-    u8 unk3[0x1C - 3];
+    u8 unk3;
+    s8 step;            /* 0x04 */
+    u8 unk5;
+    s8 count;           /* 0x06 */
+    u8 unk7[0x1C - 7];
     void (*fn)(struct Job *j); /* 0x1C */
     u8 unk20[0x60 - 0x20];
     s32 args[5];        /* 0x60: the script op's (func_0065F070) */

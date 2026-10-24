@@ -1340,6 +1340,95 @@ void func_00588D30(u8 slot, u8 kind, void (*fn)(Job *j), u8 player);
    are "us") with args[2..6], unless it runs already. */
 extern void (*D_006D66F0[])(Job *j); /* the room's job, by room */
 
+extern void (*D_006D5CD0[])(Job *j);   /* room 1's jobs, by kind */
+extern void (*D_006D5D30[])(Job *j);   /* the same, another player's online */
+
+DrawObjFull *func_006350A0(DrawObjFull *o);
+void func_005405F0(s32 id, s32 on, u8 player);
+
+/* Room 1's job kind 7: clears our player's flag args[1], set again while Kevin (0xB98 1) is in
+   action 0x16 with object 0x1D (of type 1). */
+void func_00571D30(Job *j) {
+    s32 *args = j->args;
+    DrawObjFull *h;
+    s16 i;
+    DrawObjFull *o;
+
+    for (i = 0; i < 8; i++) {
+        o = &D_00476DD0[i];
+        h = func_006350A0(o);
+        if (o->active == 0 || o->kind != D_0048BF60.unk1D) {
+            continue;
+        }
+        func_005405F0(args[1], 0, j->player);
+        if (o->unkB98 == 1 && o->unk54F == 0x16 && h->type == 1 && h->unkBB4 == 0x1D) {
+            func_005405F0(args[1], 1, j->player);
+        }
+    }
+}
+
+void *func_00543800(void *owner, void *fn);
+void func_005D3F50(void *t);
+u8 func_00551690(u8 model);
+u16 func_001ADEF0(s32 n);
+void func_001B6FD0(f32 *pos, s32 sound);
+void func_00588E30(Job *j);
+
+/* What room 1's jobs keep in their args. */
+typedef struct {
+    u8 unk0[8];
+    u8 part;            /* 0x08: (args[2]) */
+    u8 unk9[0x18 - 9];
+    u8 *task;           /* 0x18 */
+    u8 unk1C[0x28 - 0x1C];
+    u8 n;               /* 0x28: tasks started */
+    u8 n2;              /* 0x29 */
+} JobRoom1;
+
+/* Room 1's job kind 0x12: starts func_005D3F50 for room part args[2], then every 90 frames
+   pokes it (0x10) and plays sound 0x73 or 0x74; step 2 ends the job. */
+void func_00573CD0(Job *j) {
+    JobRoom1 *d = (JobRoom1 *)j->args;
+    u8 *t;
+
+    switch (j->step) {
+    case 0:
+        j->step++;
+        d->n = 0;
+        d->n2 = 0;
+        if ((t = func_00543800(j, func_005D3F50)) != NULL) {
+            t[6] = func_00551690(d->part);
+            t[4] = 0;
+            d->task = t;
+            d->n++;
+        }
+        break;
+    case 1:
+        if ((D_0048AD90[0] & 2) == 1) {
+            j->step++;
+            break;
+        }
+        if (++j->count == 0x5A) {
+            j->count = 0;
+            *(u16 *)(d->task + 0x10) = 1;
+            func_001B6FD0(NULL, (func_001ADEF0(1) & 0xFFFF & 1) + 0x73);
+        }
+        break;
+    case 2:
+        func_00588E30(j);
+        break;
+    }
+}
+
+/* Room 1's (and 2's) job: by its kind, the online version for another player's. */
+void func_005707C0(Job *j) {
+    if (func_001AF4D0() == 1 && j->player != 0) {
+        D_006D5D30[j->kind](j);
+        return;
+    }
+    D_006D5CD0[j->kind](j);
+}
+
 /* Script op: start job args[1] (kind args[0]) running the room's function with args[2..6],
    unless it runs. */
 s32 func_0065EF50(u32 *args);

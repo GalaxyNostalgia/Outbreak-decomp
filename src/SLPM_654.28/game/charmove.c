@@ -4244,7 +4244,7 @@ s32 func_0061DF00(DrawObjFull *o) {
 }
 #endif
 
-s32 func_006350A0(DrawObjFull *o);
+DrawObjFull *func_006350A0(DrawObjFull *o);
 void func_0061DF90(DrawObjFull *o, s32 k);
 s32 func_001AF510(void);
 s16 func_00635120(s32 k);
@@ -4265,7 +4265,7 @@ s32 func_0061E020(DrawObjFull *o) {
         o->unkC64 = 0;
         switch (o->unkC65) {
         case 1:
-            k = func_006350A0(o);
+            k = (s32)func_006350A0(o);
             if ((D_0048BF60.unkB8[1] & 2) || (o->unkB9B != 2 && !(o->unkBA0 & 8))
                 || (o->unkBA4 & 0x10000) || o->unkBD0 != 0) {
                 func_0061DF90(o, k);
@@ -5049,6 +5049,27 @@ void func_00639FA0(DrawObjFull *o) {
         func_0055C4E0(o);
         break;
     }
+}
+
+DrawObjFull *func_00634C00(s32 i);
+
+/* What o holds on to (0xC66: a player, or with 0x8000 a thing; 0xFFFF: nothing). */
+DrawObjFull *func_006350A0(DrawObjFull *o) {
+    DrawObjFull *r = NULL;
+    u16 h = o->unkC66;
+
+    if (h == 0xFFFF) {
+        return r;
+    }
+    switch ((s32)(h & 0x8000) >> 15) {
+    case 0:
+        r = &D_00476DD0[h & 0x7FFF];
+        break;
+    case 1:
+        r = func_00634C00(h & 0x7FFF);
+        break;
+    }
+    return r;
 }
 
 /* Whether the floor 30 ahead of o (50 up; behind it when it moves backwards, 0x4EC < 0) is of
