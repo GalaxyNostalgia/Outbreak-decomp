@@ -518,3 +518,13 @@ void func_00670410(Thing *t) {
         break;
     }
 }
+
+/* A hidden, waiting enemy (state 0x1F). */
+void func_00671730(Thing *t) {
+    t->visible = 0;
+    t->unk54A = 0x1F;
+    t->unk32 = 0xFF;
+    t->unkBA5 = 1;
+    t->unkC94 |= 0x201;
+    t->unkC94 |= 8;
+}

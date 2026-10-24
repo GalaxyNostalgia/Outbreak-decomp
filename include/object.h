@@ -80,7 +80,9 @@ typedef struct {
     f32 unk178[3];      /* 0x178: the floor's normal */ \
     f32 unk184;         /* 0x184 */ \
     u8 unk188;          /* 0x188 */ \
-    u8 unk189[0x198 - 0x189]; \
+    u8 unk189[0x190 - 0x189]; \
+    u32 unk190;         /* 0x190: (draw flags) */ \
+    u8 unk194[0x198 - 0x194]; \
     s8 drawn;           /* 0x198 */ \
     s8 unk199;          /* 0x199 */ \
     u8 unk19A[2]; \
@@ -93,7 +95,7 @@ typedef struct {
     f32 unk1B4[2]; \
     f32 unk1BC[2]; \
     f32 unk1C4[2]; \
-    u8 unk1CC[0x1D8 - 0x1CC]; \
+    f32 unk1CC[3];      /* 0x1CC: the collision sphere's offset last frame */ \
     s32 unk1D8;         /* 0x1D8 */ \
     void *unk1DC;       /* 0x1DC: -> unkAEC */ \
     u8 unk1E0[2]; \
@@ -227,7 +229,8 @@ typedef struct {
     u32 unkCE8;         /* 0xCE8 */ \
     s32 unkCEC;         /* 0xCEC */ \
     s32 unkCF0;         /* 0xCF0 */ \
-    u8 unkCF4[0xD04 - 0xCF4]; \
+    f32 unkCF4[3];      /* 0xCF4: the last move */ \
+    u8 unkD00[4]; \
     void *motions2[3];  /* 0xD04: (as motions) */ \
     u8 unkD10[0xD28 - 0xD10]; \
     s32 unkD28;         /* 0xD28 */ \

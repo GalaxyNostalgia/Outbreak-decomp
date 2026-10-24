@@ -5,6 +5,8 @@
 #include "model.h"
 #include "enemy.h"
 
+void *memset(void *p, s32 c, u32 n);
+
 f32 func_00680D70(f32 *l, f32 *p);
 
 /* GAME.BIN: the scene's lights, fog and camera defaults. */
@@ -377,6 +379,266 @@ typedef struct {
     f32 v2[3];          /* 0x20 */
     f32 v3[3];          /* 0x2C */
 } ShadowDef;
+
+/* A character's hit shape for the frame (from its shadow def): a capsule from a to b. */
+typedef struct {
+    f32 a[3];           /* 0x00 */
+    f32 b[3];           /* 0x0C */
+    f32 r;              /* 0x18: its radius */
+    f32 d[3];           /* 0x1C: b - a */
+    f32 c[3];           /* 0x28: its middle */
+    f32 bound;          /* 0x34: the radius of a sphere round it all */
+} HitShape;
+
+typedef struct {
+    f32 v[3];
+} F3s;
+
+typedef struct {
+    f32 x, y, z;
+} HitPush;
+extern HitPush D_00724230[];    /* per hit entry: a push this frame (x, z) */
+
+/* o's hit shape (hit entry i): its shadow def's point(s), moved by the entry's push. */
+void func_006BCCC0(DrawObjFull *o, HitShape *w, s16 i);
+#ifdef NON_MATCHING   /* kind 1: the original loads the push again for b (ours reuses it) */
+void func_006BCCC0(DrawObjFull *o, HitShape *w, s16 i) {
+    ShadowDef *d = (ShadowDef *)o->unk1A8;
+
+    if (d == NULL) {
+        return;
+    }
+    if (d->kind == 0) {
+        func_006BCAA0(o, w->a, d->b0, d->b1, d->v0, d->v1);
+        w->a[0] += D_00724230[i].x;
+        w->a[2] += D_00724230[i].z;
+        *(F3s *)w->b = *(F3s *)w->a;
+        w->d[2] = 0.0f;
+        w->d[1] = 0.0f;
+        w->d[0] = 0.0f;
+        *(F3s *)w->c = *(F3s *)w->a;
+        w->bound = w->r = d->size;
+    } else if (d->kind == 1) {
+        func_006BCAA0(o, w->a, d->b0, d->b1, d->v0, d->v1);
+        func_006BCAA0(o, w->b, d->b2, d->b3, d->v2, d->v3);
+        w->a[0] += D_00724230[i].x;
+        w->a[2] += D_00724230[i].z;
+        w->b[0] += D_00724230[i].x;
+        w->b[2] += D_00724230[i].z;
+        func_00340560((Vec3 *)w->d, (Vec3 *)w->b, (Vec3 *)w->a);
+        w->c[0] = 0.5f * (w->a[0] + w->b[0]);
+        w->c[1] = 0.5f * (w->a[1] + w->b[1]);
+        w->c[2] = 0.5f * (w->a[2] + w->b[2]);
+        w->r = d->size;
+        w->bound = w->r + func_001916E0(w->a, w->c);
+    }
+}
+#endif
+
+/* The things held to be hit this frame. */
+typedef struct {
+    u16 mask;           /* 0x0: the kinds it collides with */
+    u16 kind;           /* 0x2: 1, 2: pushed away (func_006BC600) */
+    DrawObjFull *obj;   /* 0x4 */
+} HitEntry;
+
+extern HitEntry D_00386650[];
+extern s16 D_0023BD94;          /* entries */
+extern f32 D_00239E88;          /* (the least overlap that counts) */
+f32 func_001917C0(const f32 *a, const f32 *b);
+void func_003405D0(f32 s, f32 *out, const f32 *v);
+u8 func_006BCEF0(f32 ra, f32 rb, f32 *ca, f32 *cb, f32 *push);
+u8 func_006BCFB0(f32 r, HitShape *w, f32 *c, f32 *push);
+u8 func_006BD1F0(HitShape *a, HitShape *b, f32 *push);
+void func_006BC600(s8 i, s8 j, f32 *push);
+
+/* Hit entry i (o, shape w) against the others of the kinds in mask: the one overlapping most
+   (ahead of o, for kind 1) is pushed off; 1 when there was one. */
+u8 func_006BC150(DrawObjFull *o, HitShape *w, u16 mask, s8 i);
+#ifdef NON_MATCHING   /* first draft: registers and the stack (the original keeps &w->c[1], &w->c[2] on the stack) */
+u8 func_006BC150(DrawObjFull *o, HitShape *w, u16 mask, s8 i) {
+    f32 c[3];
+    f32 b[3];
+    f32 a[3];
+    f32 push[3];
+    f32 v[3];
+    HitShape w2;
+    ShadowDef *d;
+    DrawObjFull *p;
+    s32 k;
+    s32 best;
+    s32 how;
+    s32 bestHow;
+    u8 r = 0;
+    f32 most;
+    f32 gap;
+    f32 reach;
+    f32 dist;
+
+    best = -1;
+    bestHow = best;
+    most = D_00239E88;
+    for (k = 0; k < D_0023BD94; k++) {
+        if (!(mask & D_00386650[k].kind)) {
+            continue;
+        }
+        p = D_00386650[k].obj;
+        if (p == o) {
+            continue;
+        }
+        d = (ShadowDef *)p->unk1A8;
+        if (d == NULL || d->size <= 0) {
+            continue;
+        }
+        how = 1;
+        if (((ShadowDef *)o->unk1A8)->kind == 0) {
+            how = 0;
+        }
+        if (d->kind == 0) {
+            func_006BCAA0(p, c, d->b0, d->b1, d->v0, d->v1);
+            reach = w->bound + d->size;
+            dist = func_001916E0(c, w->c);
+        } else if (d->kind == 1) {
+            func_006BCAA0(p, a, d->b0, d->b1, d->v0, d->v1);
+            func_006BCAA0(p, b, d->b2, d->b3, d->v2, d->v3);
+            c[0] = 0.5f * (a[0] + b[0]);
+            c[1] = 0.5f * (a[1] + b[1]);
+            c[2] = 0.5f * (a[2] + b[2]);
+            reach = w->bound + (d->size + func_001916E0(a, c));
+            dist = func_001916E0(c, w->c);
+            how |= 2;
+        }
+        gap = reach - dist;
+        if (gap <= most) {
+            continue;
+        }
+        if (D_00386650[i].kind == 1) {
+            v[0] = c[0] - w->c[0];
+            v[1] = c[1] - w->c[1];
+            v[2] = c[2] - w->c[2];
+            if (func_001917C0((f32 *)&o->unkA8, v) < 0.0f) {
+                continue;
+            }
+        }
+        most = gap;
+        bestHow = how;
+        best = k;
+    }
+    if (best < 0) {
+        return 0;
+    }
+    p = D_00386650[best].obj;
+    func_006BCCC0(p, &w2, best);
+    memset(push, 0, sizeof(push));
+    switch (bestHow) {
+    case 0:
+        r = func_006BCEF0(w->r, w2.r, w->c, w2.c, push);
+        break;
+    case 1:
+        r = func_006BCFB0(w2.r, w, w2.c, push);
+        break;
+    case 2:
+        r = func_006BCFB0(w->r, &w2, w->c, push);
+        func_003405D0(-1.0f, push, push);
+        break;
+    case 3:
+        r = func_006BD1F0(&w2, w, push);
+        break;
+    }
+    if (r) {
+        if (o->type == 0) {
+            FIELD(o, s8, 0xC53) = 1;
+            FIELD(o, DrawObjFull *, 0xC54) = p;
+        }
+        if (p->type == 0) {
+            FIELD(p, s8, 0xC53) = 1;
+            FIELD(p, DrawObjFull *, 0xC54) = o;
+        }
+    }
+    if (D_00386650[i].kind == 1 || D_00386650[i].kind == 2) {
+        if (r) {
+            func_006BC600(i, best, push);
+            return r;
+        }
+        o->unk1E0[1] = 0;
+    } else if (r) {
+        o->unk38[0] = o->unk44[0];
+        o->unk38[2] = o->unk44[2];
+    }
+    return r;
+}
+#endif
+
+/* o's shadow from its hit shape: under the middle, as long and turned as the shape. */
+void func_006BE2F0(DrawObjFull *o, HitShape *w) {
+    f32 dx;
+    f32 dz;
+
+    o->unk19C = w->c[0];
+    o->unk1A0 = w->c[2];
+    dx = w->a[0] - w->c[0];
+    dz = w->a[2] - w->c[2];
+    o->unk1A4 = func_00341860(dx * dx + dz * dz);
+    o->unk1A6 = func_00346C50(w->a, w->b);
+}
+
+/* A wall the players can't pass this frame (a door's or a shutter's: z <= its own - 200 while
+   they are below y -870). */
+typedef struct {
+    u8 on;              /* 0x0 */
+    u8 off;             /* 0x1 */
+    u8 unk2[2];
+    DrawObjFull *obj;   /* 0x4 */
+} PushWall;
+
+extern PushWall D_00386610[];
+extern DrawObjFull D_00476DD0[];
+extern u32 D_0023BE14;          /* players */
+s32 func_001AF4D0(void);
+
+/* Keeps the players (online, ours; offline, the one played) behind wall w. */
+void func_006BE610(PushWall *w);
+#ifdef NON_MATCHING   /* registers; the original keeps &p->unk38[2] for the store */
+void func_006BE610(PushWall *w) {
+    DrawObjFull *o = w->obj;
+    DrawObjFull *p;
+    u32 i;
+    f32 z;
+    u16 id;
+    u32 n;
+
+    if (func_001AF4D0() == 1) {
+        id = D_00306590.unk1C;
+        n = D_0023BE14;
+        for (i = 0; i < n; i++) {
+            p = &D_00476DD0[i];
+            z = o->unk38[2] - 200.0f;
+            if (z < p->unk38[2] && p->unk38[1] < -870.0f && id == p->unk1E2) {
+                p->unk38[2] = z;
+                p->unk10A9 = 1;
+            }
+        }
+    } else {
+        z = o->unk38[2] - 200.0f;
+        if (z < D_00476DD0[D_0048BF60.unk1D].unk38[2] && D_00476DD0[D_0048BF60.unk1D].unk38[1] < -870.0f) {
+            D_00476DD0[D_0048BF60.unk1D].unk38[2] = z;
+            D_00476DD0[D_0048BF60.unk1D].unk10A9 = 1;
+        }
+    }
+}
+#endif
+
+void func_006BE5C0(void) {
+    PushWall *w;
+
+    if ((w = D_00386610)->on != 0) {
+        switch (w->off) {
+        case 0:
+            func_006BE610(w);
+            break;
+        }
+    }
+}
 
 void func_006BE3B0(DrawObjFull *o);
 #ifdef NON_MATCHING   /* the missing-def return's branch layout */

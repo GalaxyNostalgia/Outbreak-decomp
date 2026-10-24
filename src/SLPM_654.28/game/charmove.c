@@ -1370,6 +1370,144 @@ s16 func_00346F20(s32 from, s32 to, s32 n);
 
 /* The step that moves o to to in frames frames (none when it's further than 500: it is put
    there). */
+typedef struct {
+    f32 v[3];
+} MoveVec;
+
+s32 func_005E63E0(f32 r, f32 *from, f32 *to, f32 *n, f32 *push, f32 *q, u32 mask, u32 mask2, s32 thing);
+void func_001913A0(f32 *out, const f32 *v, const f32 *m);
+
+/* Moves o's collision sphere (0x1AC: its offset and radius) with it, from where it was (its
+   last position plus the offset then, 0x1CC) to where it is, and pushes o out of the walls it
+   meets (0x16C bit 0, with what func_005E63E0 found at 0x154 and 0x160). */
+void func_005A9AC0(DrawObjFull *o);
+#ifdef NON_MATCHING   /* the original keeps &off[2] and &to[2] in s registers */
+void func_005A9AC0(DrawObjFull *o) {
+    f32 *sph = o->unk1AC;
+    f32 from[4];
+    f32 to[4];
+    f32 n[4];
+    f32 push[4];
+    f32 q[4];
+    f32 off[4];
+    s32 thing;
+
+    o->unkF4[0x78] &= ~1;
+    from[0] = o->unk44[0] + o->unk1CC[0];
+    from[1] = o->unk44[1] + o->unk1CC[1];
+    from[2] = o->unk44[2] + o->unk1CC[2];
+    func_001913A0(off, sph, (f32 *)((u8 *)o + 0x50));
+    to[0] = o->unk38[0] + off[0];
+    to[1] = o->unk38[1] + off[1];
+    to[2] = o->unk38[2] + off[2];
+    *(MoveVec *)o->unk1CC = *(MoveVec *)off;
+    if (o->unk54A & 1) {
+        return;
+    }
+    thing = 0;
+    if (o->type == 2) {
+        thing = 1;
+    }
+    if (func_005E63E0(sph[3], from, to, n, push, q, o->unk190, FIELD(o, u32, 0x194), thing)) {
+        to[0] += push[0];
+        to[2] += push[2];
+        o->unk38[0] = to[0] - off[0];
+        o->unk38[2] = to[2] - off[2];
+        FIELD(o, f32, 0x154) = n[0];
+        FIELD(o, f32, 0x158) = n[1];
+        FIELD(o, f32, 0x15C) = n[2];
+        FIELD(o, f32, 0x160) = q[0];
+        FIELD(o, f32, 0x164) = q[1];
+        FIELD(o, f32, 0x168) = q[2];
+        o->unkF4[0x78] |= 1;
+    }
+}
+#endif
+u16 func_005445D0(f32 *p);
+f32 func_005E5B80(const f32 *p, u8 *sub, s32 want);
+void func_0054BF70(f32 *to, f32 *from, f32 *out);
+
+/* A character's move for the frame (ours, or anyone's with D_0048BF88): the step itself
+   (func_005A9AC0, noting how far it went in 0xCF4), the floor it ends on (its height, kept
+   halfway on stairs unless 0xBA4 has 0x80) and the walls (func_0054BF70). */
+void func_00631CA0(DrawObjFull *o) {
+    MoveVec v;
+    FlBone **b;
+    f32 y;
+    f32 d;
+    f32 d2;
+    f32 y2;
+
+    if (o->active == 0) {
+        return;
+    }
+    if (D_0048BF88[0] == 0 && o->unk1E2 != D_00306590.unk1C) {
+        return;
+    }
+    if (!(o->unk54A & 1)) {
+        *(MoveVec *)o->unkCF4 = *(MoveVec *)o->unk38;
+        if (o->unkBA0 & 0x80) {
+            o->unk190 = 0x41FFFF;
+        }
+        func_005A9AC0(o);
+        o->unkCF4[0] = o->unk38[0] - o->unkCF4[0];
+        o->unkCF4[1] = o->unk38[1] - o->unkCF4[1];
+        o->unkCF4[2] = o->unk38[2] - o->unkCF4[2];
+    } else {
+        func_005A9AC0(o);
+    }
+    if (!(o->unk54A & 2)) {
+        if (o->unk54F != 0x14) {
+            switch (o->unk174) {
+            case 1:
+                break;
+            case 3:
+                y = o->unk38[1];
+                d = o->unk184 - 160.0f - y;
+                if (o->unkBA4 & 0x80) {
+                    o->unk170 = y + d;
+                } else {
+                    o->unk170 = y + d / 2.0f;
+                }
+                break;
+            case 2:
+                y2 = o->unk38[1];
+                d2 = o->unk170 - y2;
+                if (o->unkBA4 & 0x80) {
+                    o->unk170 = y2 + d2;
+                } else {
+                    o->unk170 = y2 + d2 / 2.0f;
+                }
+                break;
+            }
+            if (o->unkD90 == 0 || (o->unk54A & 0x4000)) {
+                o->unk38[1] = o->unk170;
+            }
+            o->unk176 = func_005445D0(o->unk38);
+        } else {
+            b = (FlBone **)((Slot1468 *)o->model)->unk820;
+            func_005E5B80(b[2]->world[3], &o->unk175, 0xFF);
+            o->unk176 = func_005445D0(b[2]->world[3]);
+        }
+    }
+    switch (o->unk174) {
+    case 1:
+        break;
+    case 2:
+        o->unk553 = 0;
+        break;
+    case 3:
+        o->unk553 = 0;
+        break;
+    }
+    if (!(o->unk54A & 1) || ((o->unk54A & 1) && (o->unkBA0 & 0x4000))) {
+        if (!(o->unk54A & 2)) {
+            func_0054BF70(o->unk38, o->unk44, v.v);
+            *(MoveVec *)o->unk38 = v;
+        }
+    }
+}
+
 void func_00631F60(DrawObjFull *o, f32 *to, f32 *step, u32 frames);
 #ifdef NON_MATCHING   /* close: the length's two loads go through the pointers */
 void func_00631F60(DrawObjFull *o, f32 *to, f32 *step, u32 frames) {

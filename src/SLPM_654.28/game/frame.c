@@ -215,7 +215,7 @@ extern s16 D_0023BD94;          /* entries */
 void *memset(void *p, s32 c, u32 n);
 void func_006BCCC0(DrawObjFull *o, u8 *work, s16 i);
 void func_006BE2F0(DrawObjFull *o, u8 *work);
-void func_006BC150(DrawObjFull *o, u8 *work, u16 id, s8 i);
+u8 func_006BC150(DrawObjFull *o, u8 *work, u16 id, s8 i);
 void func_006BE5C0(void);
 void func_005A9CA0(void);
 
