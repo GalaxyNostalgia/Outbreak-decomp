@@ -35,7 +35,9 @@ typedef struct Thing {
     u8 index; /* 0x006: in D_003FFCA0 */
     u8 pad007;
     u8 act[4]; /* 0x008: action, its step and sub-steps */
-    u8 unkC[8]; /* 0x00C */
+    u8 unkC[2]; /* 0x00C */
+    s16 unkE; /* 0x00E: (a timer) */
+    u8 unk10[4];
     void *update; /* 0x014: (per kind) */
     void *draw; /* 0x018 */
     struct Thing *next; /* 0x01C */
@@ -55,7 +57,10 @@ typedef struct Thing {
     s16 prevRot[4]; /* 0x0A0: rot when the frame began */
     u8 pad0A8[0x0B4 - 0x0A8];
     f32 scale[3]; /* 0x0B4 */
-    u8 pad0C0[0x0F0 - 0x0C0];
+    u8 pad0C0[0x0CC - 0x0C0];
+    f32 unkCC; /* 0x0CC: (a speed) */
+    f32 unkD0; /* 0x0D0 */
+    u8 pad0D4[0x0F0 - 0x0D4];
     f32 unkF0; /* 0x0F0 */
     u8 parts[0x80]; /* 0x0F4: per model part, drawn */
     u8 pad174[0x190 - 0x174];

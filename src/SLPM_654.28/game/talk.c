@@ -70,3 +70,25 @@ void func_00685AA0(void) {
     func_00685CF0();
 }
 #endif
+
+extern DrawObjFull *D_00719578[];   /* the player talking */
+extern DrawObjFull *D_00719574[];   /* the NPC talking */
+
+/* The one talking (which: 1 the player, 2 the NPC) as model, when its 0xDC7 >= 0 is a. */
+void *func_00686150(s32 a, s32 model, s32 which) {
+    DrawObjFull *o;
+
+    if (which & 1) {
+        o = D_00719578[0];
+        if (o != NULL && (FIELD(o, s8, 0xDC7) >= 0) == a && FIELD(o, s16, 0xDC2) == model) {
+            return o;
+        }
+    }
+    if (which & 2) {
+        o = D_00719574[0];
+        if (o != NULL && (FIELD(o, s8, 0xDC7) >= 0) == a && FIELD(o, s16, 0xDC2) == model) {
+            return o;
+        }
+    }
+    return NULL;
+}

@@ -232,72 +232,72 @@ void func_0055C520(DrawObjFull *o) {
     ((s8 *)o)[0x1F1] |= 0x82;
 }
 
-void func_005661C0(DrawObjFull *o);
-void func_0056A440(DrawObjFull *o);
-void func_005BB880(DrawObjFull *o);
-void func_0058AA70(DrawObjFull *o);
-void func_0058AF00(DrawObjFull *o);
-void func_0058B200(DrawObjFull *o);
-void func_0058B550(DrawObjFull *o);
-void func_005BBC40(DrawObjFull *o);
-void func_0058BA20(DrawObjFull *o);
-void func_0058BE00(DrawObjFull *o);
-void func_00570310(DrawObjFull *o);
-void func_005655F0(DrawObjFull *o);
+void func_005661C0(DrawObjFull *o, f32 speed);
+void func_0056A440(DrawObjFull *o, f32 speed);
+void func_005BB880(DrawObjFull *o, f32 speed);
+void func_0058AA70(DrawObjFull *o, f32 speed);
+void func_0058AF00(DrawObjFull *o, f32 speed);
+void func_0058B200(DrawObjFull *o, f32 speed);
+void func_0058B550(DrawObjFull *o, f32 speed);
+void func_005BBC40(DrawObjFull *o, f32 speed);
+void func_0058BA20(DrawObjFull *o, f32 speed);
+void func_0058BE00(DrawObjFull *o, f32 speed);
+void func_00570310(DrawObjFull *o, f32 speed);
+void func_005655F0(DrawObjFull *o, f32 speed);
 
 /* A character's own step for its current motion's set (another character's: func_005655F0). */
-void func_005654D0(DrawObjFull *o) {
+void func_005654D0(DrawObjFull *o, f32 speed) {
     switch (o->unkCE0) {
     case 0:
         break;
     case 0xFF:
-        func_005655F0(o);
+        func_005655F0(o, speed);
         return;
     }
     switch (o->unkCE1) {
     case 0:
-        func_005661C0(o);
+        func_005661C0(o, speed);
         break;
     case 1:
-        func_0056A440(o);
+        func_0056A440(o, speed);
         break;
     case 2:
-        func_005BB880(o);
+        func_005BB880(o, speed);
         break;
     case 3:
-        func_0058AA70(o);
+        func_0058AA70(o, speed);
         break;
     case 4:
-        func_0058AF00(o);
+        func_0058AF00(o, speed);
         break;
     case 5:
-        func_0058B200(o);
+        func_0058B200(o, speed);
         break;
     case 6:
-        func_0058B550(o);
+        func_0058B550(o, speed);
         break;
     case 7:
-        func_005BBC40(o);
+        func_005BBC40(o, speed);
         break;
     case 8:
-        func_0058BA20(o);
+        func_0058BA20(o, speed);
         break;
     case 9:
-        func_0058BE00(o);
+        func_0058BE00(o, speed);
         break;
     case 10:
-        func_00570310(o);
+        func_00570310(o, speed);
         break;
     }
 }
-void func_00578B30(DrawObjFull *o);
+void func_00578B30(DrawObjFull *o, f32 speed);
 
 /* Before the motions advance: characters' and things' own step. */
-void func_00543410(DrawObjFull *o) {
+void func_00543410(DrawObjFull *o, f32 speed) {
     if (o->type == 0 || o->type == 1) {
-        func_005654D0(o);
+        func_005654D0(o, speed);
     } else if (o->type == 2) {
-        func_00578B30(o);
+        func_00578B30(o, speed);
     }
 }
 /* Advances layer l by speed (backwards when negative). 0 within the motion; 1 when it reached
@@ -419,7 +419,7 @@ s8 func_0055C030(DrawObjFull *o, f32 speed) {
     s8 i;
     s8 r;
 
-    func_00543410(o);
+    func_00543410(o, speed);
     for (i = 1; i < (u8)o->unk524; i++) {
         if (!(((u8 *)o)[0x1FE + i * 0x20] & 1)) {
             func_0055BE60(o, i, speed);

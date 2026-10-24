@@ -375,3 +375,146 @@ done:
     func_0067A370(t, 0);
 }
 #endif
+
+extern void (*D_006E4B60[])(Thing *t);
+
+/* State 5 of D_006E49E0's kind: by its step (D_006E4B60), then flags 0x100. */
+void func_0066F600(Thing *t) {
+    D_006E4B60[t->act[1]](t);
+    t->unkC94 |= 0x100;
+}
+
+#define BIT(a, n) ((a)[(n) >> 5] & (1 << ((n) & 0x1F)))
+
+extern u32 D_0048AD90[];        /* the event flags */
+extern Vec3f D_006E5670;        /* a step forward */
+extern f32 D_00239E18;          /* 2 pi */
+u16 func_001ADEF0(s32 n);
+void func_00679280(Thing *t, s32 motion, s8 mode, f32 frame);
+s8 func_0055C030(Thing *t, f32 speed);
+void func_0055C4E0(Thing *t);
+void func_00191590(f32 *v, f32 angle);
+
+/* An enemy waiting for event flag 0xBB1 (in its own time, 0xBB2 tenths of a second): it idles
+   (motion 0x58 from a random frame) until the flag is set, then starts motion 0x25 or 0x10 (or,
+   in step 2, walks out of view); with the flag already set it stays hidden. */
+void func_00672060(Thing *t);
+#ifdef NON_MATCHING   /* the event flag tests (the original masks the flag number first) */
+void func_00672060(Thing *t) {
+    Vec3f d;
+
+    t->unk54A = 5;
+    t->unkBA5 = 1;
+    t->unk32 = 0xFF;
+    t->unkC94 |= 0x201;
+    t->unkC82 = 1;
+    t->unkC94 |= 8;
+    switch (t->act[2]) {
+    case 0:
+        if (t->unkBAC[5] != 0 && BIT(D_0048AD90, t->unkBAC[5])) {
+            t->act[2] = 3;
+            t->visible = 0;
+            break;
+        }
+        t->act[2]++;
+        if ((t->unkCC = (f32)(u32)t->unkBAC[6] / 10.0f) <= 0.0f) {
+            t->unkCC = 1.0f;
+        }
+        t->unkD0 = t->unkCC / 2.5f;
+        func_00679280(t, 0x58, 0, (func_001ADEF0(1) & 0xFFFF) % 80);
+        func_0055C4E0(t);
+        break;
+    case 1:
+        func_0055C030(t, t->unkD0);
+        if (t->unkBAC[5] != 0 && BIT(D_0048AD90, t->unkBAC[5])) {
+            t->act[2]++;
+            if (func_001ADEF0(1) & 0xFFFF & 1) {
+                func_00678E60(t, 0x25, 0);
+            } else {
+                func_00678E60(t, 0x10, 0);
+            }
+        }
+        break;
+    case 2:
+        d = D_006E5670;
+        func_00191590(&d.x, D_00239E18 * (u16)t->rot[1] / 65536.0f);
+        t->pos[0] += d.x;
+        t->pos[2] += d.z;
+        if (func_0055C030(t, t->unkCC) > 0) {
+            t->act[2]++;
+            t->visible = 0;
+        }
+        break;
+    case 3:
+        t->visible = 0;
+        break;
+    }
+}
+#endif
+
+extern u8 D_0023BF7C;           /* frames per game frame */
+void func_0067A500(Thing *t, s32 a);
+void func_00678180(Thing *t, s32 act, s32 step);
+
+/* An enemy held in motion 0x38 until its set's 0x2E: then, after its set's 0x41 seconds, it
+   goes to action 4 step 5. */
+void func_0066FF40(Thing *t) {
+    t->unk54A = 5;
+    t->unkBA5 = 1;
+    t->unk32 = 0xFF;
+    t->unkC94 |= 0x201;
+    t->unkC94 |= 8;
+    switch (t->act[2]) {
+    case 0:
+        t->act[2]++;
+        t->unkBA3 = 6;
+        func_00678E60(t, 0x38, 0);
+        break;
+    case 1:
+        if (D_0071A030[t->set].unk2E != 0) {
+            t->act[2]++;
+            t->unkE = (s16)D_0071A030[t->set].unk41 * 60 / D_0023BF7C;
+            func_0067A500(t, 0);
+        }
+        func_0055C030(t, 0.0f);
+        break;
+    case 2:
+        func_0055C030(t, 0.0f);
+        if (--t->unkE <= 0) {
+            func_00678180(t, 4, 5);
+        }
+        break;
+    }
+}
+
+/* Like func_0066FF40, idling in motion 0x61 (from a random frame), then to action 4 step 4. */
+void func_00670410(Thing *t) {
+    t->unk54A = 5;
+    t->unkBA5 = 1;
+    t->unk32 = 0xFF;
+    t->unkC94 |= 0x201;
+    switch (t->act[2]) {
+    case 0:
+        t->act[2]++;
+        t->unkBA3 = 6;
+        t->visible = 0;
+        func_00679280(t, 0x61, 0, (func_001ADEF0(1) & 0xFFFF) % 70);
+        func_0055C4E0(t);
+        break;
+    case 1:
+        if (D_0071A030[t->set].unk2E != 0) {
+            t->act[2]++;
+            t->visible = 1;
+            t->unkE = (s16)D_0071A030[t->set].unk41 * 60 / D_0023BF7C;
+            func_0067A500(t, 0);
+        }
+        func_0055C030(t, 1.0f);
+        break;
+    case 2:
+        func_0055C030(t, 1.0f);
+        if (--t->unkE <= 0) {
+            func_00678180(t, 4, 4);
+        }
+        break;
+    }
+}

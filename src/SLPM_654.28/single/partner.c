@@ -5,6 +5,7 @@
 #include "relation.h"
 #include "zone.h"
 #include "sgl.h"
+#include "item.h"
 
 typedef struct {
     f32 v[3];
@@ -93,7 +94,7 @@ extern void (*D_00839460[])(DrawObjFull *obj); /* the moving steps (by unkFF8) *
 extern u8 D_0048C01D[];
 
 s32 func_00827100(s32 id);
-s8 func_00835C50(DrawObjFull *obj, DrawObjFull *player, s32 *item, u16 id);
+s8 func_00835C50(DrawObjFull *obj, DrawObjFull *player, u8 *item, u16 id);
 s32 func_00833130(DrawObjFull *obj);
 
 /* The partner picks what to think about (func_00823340's step) when it may: the urgent cases
@@ -178,7 +179,7 @@ void func_00823390(DrawObjFull *obj) {
         return;
     }
     if (obj->unkB98 == 7 && me->unk1E2 == obj->unk1E2 &&
-        func_00835C50(obj, me, &obj->unk1090, me->unk1E2) != 0) {
+        func_00835C50(obj, me, (u8 *)&obj->unk1090, me->unk1E2) != 0) {
         func_00823340(obj, 15);
         return;
     }
@@ -2260,4 +2261,47 @@ void func_00822150(DrawObjFull *obj, s32 mode) {
     obj->unk548 &= ~1;
     obj->unkB90 = 0.0f;
     obj->unk520 = 0;
+}
+
+extern ItemSlot D_003967D0[];
+extern f32 D_006E6EE4[];        /* the share of the maximum health below which danger means healing */
+
+/* Which item the partner obj (a medic, 7) would use on player: its own healing item (slot 0x1C,
+   item 0x131) when the player is in danger with health under that share; with the player's
+   0xBA0 bit 0 set, the first of slots 0xA-0x12 holding item 0x12D. 1 with *item set, or 0. */
+s8 func_00835C50(DrawObjFull *obj, DrawObjFull *player, u8 *item, u16 id) {
+    u8 *slots;
+    f32 lim;
+    u8 k;
+    s32 i;
+    u8 sel;
+
+    if (obj->unkB98 != 7) {
+        return 0;
+    }
+    slots = obj->unkC88;
+    lim = player->unk546 * D_006E6EE4[0] / 100.0f;
+    if (!(player->unkBA0 & 8) && player->unkB9B == 2 && player->unk544 > 0 &&
+        player->unk544 < lim) {
+        k = slots[0x1C];
+        if (k != 0 && D_003967D0[k].active != 0 && D_003967D0[k].unk6 == 0x131) {
+            *item = k;
+            return 1;
+        }
+    }
+    if (player->unkBA0 & 1) {
+        sel = 0;
+        for (i = 0; i < 9; i++) {
+            k = slots[0xA + i];
+            if (k != 0 && D_003967D0[k].active != 0 && D_003967D0[k].unk6 == 0x12D) {
+                sel = k;
+                break;
+            }
+        }
+        if (sel != 0 && D_003967D0[sel].unk6 == 0x12D) {
+            *item = sel;
+            return 1;
+        }
+    }
+    return 0;
 }

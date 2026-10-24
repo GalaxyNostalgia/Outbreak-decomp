@@ -767,7 +767,72 @@ void func_005BB7C0(u8 slot, u8 model, u8 a, u8 b) {
 s32 func_001AF510(void);
 s32 func_0064FD50(s32 a, u8 slot);
 void func_00652B50(Npc *n, s32 a);
-void func_005F41F0(Npc *n, void *p);
+/* An NPC's turn in a conversation (at 0x10A4). */
+typedef struct {
+    s8 state;           /* 0x0 */
+    u8 unk1[7];
+    s16 timer;          /* 0x8 */
+    u8 unkA[2];
+    s16 wait;           /* 0xC */
+} NpcCycle;
+
+void *func_00686150(s32 a, u16 model, s32 b);
+s32 func_006861F0(s32 a, u16 model);
+
+/* Steps NPC n's conversation turn b: waits for a speaker as its model (func_00686150) and the
+   length of its line (0xDBC), asks to talk (0xDA8), holds while func_006861F0 says so, then
+   waits again. */
+void func_005F41F0(Npc *n, NpcCycle *b) {
+    void *m;
+
+    switch (b->state) {
+    case 0:
+        b->timer = 0;
+        m = func_00686150(1, n->unkBB4, 3);
+        if (m != NULL) {
+            b->timer = FIELD(m, s16, 0xDBC) / 2 + 0x10;
+            b->state = 1;
+        } else if (b->wait == 0) {
+            if (n->visible != 0) {
+                FIELD(n, u8, 0xDA8) = 1;
+            }
+            b->wait = 8;
+        } else {
+            b->wait--;
+        }
+        break;
+    case 1:
+        if (b->timer == 0) {
+            b->timer = 0;
+            b->state = 0;
+            m = func_00686150(1, n->unkBB4, 3);
+            if (m != NULL) {
+                b->timer = FIELD(m, s16, 0xDBC) + 0x10;
+                b->state = 2;
+            }
+        } else {
+            b->timer--;
+        }
+        break;
+    case 2:
+        b->state = 3;
+        FIELD(n, u8, 0xDA8) = 1;
+        break;
+    case 3:
+        b->timer--;
+        if (func_006861F0(1, n->unkBB4) == 0) {
+            b->state = 4;
+        }
+        break;
+    case 4:
+        if (--b->timer < 0) {
+            b->state = 0;
+            b->timer = 0;
+            b->wait = 8;
+        }
+        break;
+    }
+}
 s32 func_005F4080(Npc *n);
 void func_0068A170(Npc *n);
 void func_00639CE0(Npc *n);
@@ -923,7 +988,7 @@ void func_00689FE0(Npc *n) {
         n->unkFCF = 2;
         n->visible = 1;
     }
-    func_005F41F0(n, (u8 *)n + 0x10A4);
+    func_005F41F0(n, (NpcCycle *)((u8 *)n + 0x10A4));
 }
 
 void func_005F4380(Npc *n);
@@ -944,7 +1009,7 @@ void func_0068A0C0(Npc *n) {
 }
 
 void func_0068A0D0(Npc *n) {
-    func_005F41F0(n, (u8 *)n + 0x10A4);
+    func_005F41F0(n, (NpcCycle *)((u8 *)n + 0x10A4));
 }
 
 void func_0068A0E0(Npc *n) {
@@ -956,7 +1021,7 @@ void func_0068A0F0(Npc *n) {
 
     if (r == 0) {
         func_0068A170(n);
-        func_005F41F0(n, (u8 *)n + 0x10A4);
+        func_005F41F0(n, (NpcCycle *)((u8 *)n + 0x10A4));
         return;
     }
     if (r == 1) {

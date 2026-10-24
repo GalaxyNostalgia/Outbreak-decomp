@@ -114,7 +114,8 @@ typedef struct {
     u8 unk2F[10];       /* 0x2F: (unk2F[0] 0xFF: not for types 0xA, 0x13, 0x1D, 0x29) */
     u8 unk39;
     u8 unk3A;
-    u8 unk3B[0x42 - 0x3B];
+    u8 unk3B[0x41 - 0x3B];
+    u8 unk41;           /* 0x41: (seconds) */
     u8 unk42;           /* 0x42: D_006FB4E0 row */
     u8 unk43[2];
     u8 unk45;           /* 0x45 */
