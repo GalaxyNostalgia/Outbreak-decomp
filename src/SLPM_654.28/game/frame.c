@@ -333,7 +333,10 @@ typedef struct {
     u8 unk9;            /* 0x09 */
     u8 unkA;            /* 0x0A */
     u8 unkB;            /* 0x0B */
-    u8 unkC[0x20 - 0xC];
+    s16 frame;          /* 0x0C */
+    s16 key;            /* 0x0E: in D_006ED8D0[unk9] */
+    s16 ev;             /* 0x10: in D_006EDD70[unk9] (-1 done) */
+    u8 unk12[0x20 - 0x12];
     Mat44 mtx;          /* 0x20 */
 } RoomSwitch;
 
@@ -427,6 +430,93 @@ void func_00683A80(u8 n) {
 }
 #endif
 
+#define SWITCH(i) ((RoomSwitch *)(D_00470090 + (i) * 0x60 + 0x4730))
+
+extern u8 D_006ED800[];
+
+void func_00683C90(u8 i) {
+    RoomSwitch *e = SWITCH(i);
+
+    e->unk4 = 1;
+    e->unk9 = D_006ED840[e->anim][e->step] << 2;
+}
+
+void func_00683CF0(u8 v, u8 i) {
+    RoomSwitch *e = SWITCH(i);
+
+    e->unk4 = 1;
+    e->unk9 = D_006ED800[v] << 2;
+}
+
+extern u32 D_0023BE14;          /* players */
+void func_00540750(DrawObjFull *o);
+void func_00682810(u8 i);
+
+/* D_00470090 seen as the switches and the players' pending flags. */
+typedef struct {
+    u8 unk0[0x4730];
+    RoomSwitch sw[0x10];        /* 0x4730 */
+    u8 unk4D30[0x6D35 - 0x4D30];
+    u8 pend[8];                 /* 0x6D35: per player, func_00540750 to run */
+} RoomSw;
+#define ROOMSW ((RoomSw *)D_00470090)
+
+/* Each frame: the players' pending func_00540750, then the switches' animations. */
+#ifdef NON_MATCHING   /* regalloc in the switch loop (the original keeps the field addresses off D_00470090 + i * 0x60) */
+void func_005A7660(void) {
+    s32 i;
+    u8 p;
+    u8 *a;
+    u8 *c;
+
+    if (func_001AF4D0() == 1) {
+        for (i = 0; i < D_0023BE14; i++) {
+            if (ROOMSW->pend[i] != 0 && D_00476DD0[i].unk54F != 0x32) {
+                ROOMSW->pend[i] = 0;
+                func_00540750(&D_00476DD0[i]);
+            }
+        }
+    } else {
+        p = D_0048BF60.unk1D;
+        a = ROOMSW->pend;
+        if (a[p] != 0 && D_00476DD0[p].unk54F != 0x32) {
+            a[p] = 0;
+            func_00540750(&D_00476DD0[p]);
+        }
+    }
+    for (i = 0; i < 0x10; i++) {
+        func_00682810(i);
+        if (ROOMSW->sw[i].state != 2) {
+            continue;
+        }
+        a = D_006ED840[ROOMSW->sw[i].anim];
+        if (ROOMSW->sw[i].unk2 != 0 && ROOMSW->sw[i].unk1 == 2) {
+            c = a + ROOMSW->sw[i].step;
+            if (c[1] != 0xFF) {
+                if (D_006ED780[c[1]][0] != 2) {
+                    ROOMSW->sw[i].state = 1;
+                    func_00683CF0(a[ROOMSW->sw[i].step], i);
+                }
+            } else {
+                ROOMSW->sw[i].unk1 = D_006ED780[c[-1]][1];
+                ROOMSW->sw[i].state = 0;
+            }
+        } else {
+            ROOMSW->sw[i].step++;
+            c = a + ROOMSW->sw[i].step;
+            if (*c != 0xFF) {
+                ROOMSW->sw[i].unk1 = D_006ED780[*c][0];
+                ROOMSW->sw[i].state = 1;
+                func_00683C90(i);
+            } else {
+                ROOMSW->sw[i].unk1 = D_006ED780[c[-1]][1];
+                ROOMSW->sw[i].state = 0;
+            }
+        }
+    }
+}
+#endif
+
 /* A task (func_00543800's, kind 5 in D_0023BDE8's list) that makes a kind-5 zone's effect
    at its point until event flag (or flag, bit 15) unk52 is set. */
 #include "zone.h"
@@ -506,3 +596,119 @@ void func_005A8DA0(ZoneTask *t) {
         break;
     }
 }
+
+/* The switches' keyframes (a value at a frame) and timed events. */
+typedef struct {
+    f32 v;
+    s32 t;
+} SwitchKey;
+typedef struct {
+    u16 a;
+    s32 t;
+} SwitchEv;
+extern SwitchKey *D_006ED8D0[];
+extern SwitchEv *D_006EDD70[];
+s32 func_001918C0(f32 a);
+void func_0018F7C0(f32 *m);
+void func_00190D50(f32 *out, const f32 *a, const f32 *b);
+void func_001913A0(f32 *out, const f32 *v, const f32 *m);
+void func_00340310(s32 rx, s32 ry, s32 rz, Mat44 *m);
+void func_00683D50(f32 *pos, u8 a, u16 b);
+#define RPART(k) ((Mat44 *)(r + (k) * 0x40 + 0xB20))
+
+/* Runs switch i's animation: its matrix is its model's, turned or moved by the keyframed
+   value as its kind (unkA) says, once or twice a frame (D_00306590.unkC). */
+#ifdef NON_MATCHING   /* s-register numbering and add.s operand order */
+void func_00682810(u8 i) {
+    u8 *r = D_00470090;
+    RoomSwitch *e = (RoomSwitch *)(r + i * 0x60 + 0x4730);
+    SwitchKey *k;
+    SwitchEv *ev;
+    SwitchEv *evs;
+    s32 n;
+    s32 j;
+    f32 f;
+    f32 *vz;
+    f32 *vy;
+    f32 *oz;
+    f32 v[3];
+    f32 out[4];
+    Mat44 m;
+
+    switch (e->unk4) {
+    case 0:
+        return;
+    case 1:
+        e->frame = 0;
+        e->key = 0;
+        e->ev = 0;
+        e->unk4++;
+        e->mtx = *RPART(e->model);
+    case 2:
+        break;
+    }
+    n = D_00306590.unkC != 0 ? 2 : 1;
+    vz = &v[2];
+    vy = &v[1];
+    oz = &out[2];
+    for (j = 0; j < n; j++) {
+        k = D_006ED8D0[e->unk9] + e->key;
+        f = (k[1].v - k[0].v) * (f32)(e->frame - k[0].t) / (f32)(k[1].t - k[0].t);
+        f += k[0].v;
+        switch (e->unkA) {
+        case 0:
+            func_00340310(0, func_001918C0(f) & 0xFFFF, 0, &m);
+            func_0018F7C0((f32 *)&e->mtx);
+            func_00190D50((f32 *)&e->mtx, (f32 *)&m, (f32 *)RPART(e->model));
+            e->mtx.m[3][0] = RPART(e->model)->m[3][0];
+            e->mtx.m[3][1] = RPART(e->model)->m[3][1];
+            e->mtx.m[3][2] = RPART(e->model)->m[3][2];
+            e->mtx.m[3][3] = RPART(e->model)->m[3][3];
+            break;
+        case 1:
+            e->mtx = *RPART(e->model);
+            v[0] = f;
+            *vz = 0.0f;
+            *vy = 0.0f;
+            func_001913A0(out, v, (f32 *)&e->mtx);
+            e->mtx.m[3][0] = out[0] + RPART(e->model)->m[3][0];
+            e->mtx.m[3][2] = *oz + RPART(e->model)->m[3][2];
+            break;
+        case 2:
+            e->mtx = *RPART(e->model);
+            e->mtx.m[3][1] = f + RPART(e->model)->m[3][1];
+            break;
+        case 3:
+            e->mtx = *RPART(e->model);
+            *vz = f;
+            *vy = 0.0f;
+            v[0] = 0.0f;
+            func_001913A0(out, v, (f32 *)&e->mtx);
+            e->mtx.m[3][0] = out[0] + RPART(e->model)->m[3][0];
+            e->mtx.m[3][2] = *oz + RPART(e->model)->m[3][2];
+            break;
+        }
+        e->frame++;
+        evs = D_006EDD70[e->unk9];
+        if (evs != NULL && e->ev != -1) {
+            ev = &evs[e->ev];
+            if (ev->t < e->frame) {
+                func_00683D50(e->mtx.m[3], r[e->model + 0x2E80], ev->a);
+                if (ev[1].t == -1) {
+                    e->ev = -1;
+                } else {
+                    e->ev++;
+                }
+            }
+        }
+        if (k[1].t < e->frame) {
+            e->key++;
+            if (k[2].t == -1) {
+                e->unk4 = 0;
+                e->state = 2;
+                return;
+            }
+        }
+    }
+}
+#endif

@@ -2363,3 +2363,68 @@ s32 func_0065E6B0(u32 *args) {
     D_00470090[0x8A0 + func_00551690(*(u8 *)args)] |= 0x80;
     return 0;
 }
+
+extern u8 D_0048BF7E[];
+/* Two hooks: a job and the per-frame function (func_001AEC40) it runs. */
+typedef struct {
+    s32 unk0;
+    Job *j;
+    void (*fn)(Job *j);
+} JobHook;
+extern JobHook D_00387650[];
+void func_00589FB0(Job *j);
+void func_0058A880(s32 a, Job *j, void (*fn)(Job *j));
+
+/* Room job: once scene bit args[2] is set (and no menu is up), hands over to func_00589FB0. */
+void func_00589EF0(Job *j) {
+    if (!BIT_TEST(D_0048AC10, j->args[2])) {
+        func_00588E30(j);
+        return;
+    }
+    switch (j->step) {
+    case 0:
+        j->unk3 = 2;
+        j->step = 1;
+    case 1:
+        if (D_0048BF7E[0] != 0) {
+            break;
+        }
+        D_00387650[1].unk0 = 1;
+        func_0058A880(1, j, func_00589FB0);
+    case 2:
+        j->step = 1;
+        break;
+    }
+}
+
+void func_0058A8B0(s32 a);
+
+/* Clears a job, unhooking it first. */
+void func_00588E30(Job *j) {
+    if (D_00387650[0].j == j) {
+        func_0058A8B0(0);
+    } else if (D_00387650[1].j == j) {
+        func_0058A8B0(1);
+    }
+    memset(j, 0, sizeof(Job));
+}
+
+void func_001AEC40(void (*fn)(Job *j));
+void func_001AECB0(void (*fn)(Job *j));
+
+void func_0058A880(s32 a, Job *j, void (*fn)(Job *j)) {
+    JobHook *h = &D_00387650[a];
+
+    h->j = j;
+    h->fn = fn;
+    func_001AEC40(fn);
+}
+
+void func_0058A8B0(s32 a) {
+    JobHook *h = &D_00387650[a];
+
+    if (h->fn != NULL) {
+        func_001AECB0(h->fn);
+    }
+    memset(h, 0, sizeof(JobHook));
+}
