@@ -372,3 +372,19 @@ s32 func_00340DB0(s32 (*pts)[2], const s32 *p, s32 n, f32 r) {
 s16 func_00346F20(u16 from, u16 to, s16 n) {
     return (s16)(to - from) / n;
 }
+
+void func_00340410(f32 *out, const f32 *a, const f32 *b);
+void func_00191820(f32 *out, const f32 *a, const f32 *b);
+f32 func_00191690(const f32 *v);
+
+/* The unit normal of triangle b a p (p - b across a - b) into out; 0 when it is flat. */
+s32 func_00340630(const f32 *a, const f32 *b, const f32 *p, f32 *out) {
+    f32 u[4];
+    f32 w[4];
+
+    func_00340410(u, a, b);
+    func_00340410(w, p, b);
+    func_00191820(out, w, u);
+    func_00191750(out);
+    return func_00191690(out) != 0.0f;
+}

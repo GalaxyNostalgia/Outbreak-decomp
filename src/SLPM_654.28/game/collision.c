@@ -859,3 +859,210 @@ s32 func_005E63E0(f32 r, f32 *from, f32 *to, f32 *n, f32 *push, f32 *q, u32 want
     return nhit;
 }
 #endif
+
+void func_00340410(f32 *out, const f32 *a, const f32 *b);
+void func_003404F0(f32 *out, const f32 *a, const f32 *b);
+void func_003408A0(f32 *out, const f32 *v);
+f32 func_00191A70(f32 x);
+
+/* Where sweep s crosses the plane through p with normal n (out): 1 when it starts behind it and
+   ends in front, 2 the other way round; 0 when it doesn't cross (or stays on it). */
+s32 func_005E55D0(CollSweep *s, const f32 *n, const f32 *p, f32 *out);
+#ifdef NON_MATCHING   /* first draft: registers and the stack */
+s32 func_005E55D0(CollSweep *s, const f32 *n, const f32 *p, f32 *out) {
+    f32 w[4];
+    f32 fwd[3];
+    f32 back[3];
+    f32 da;
+    f32 db;
+    f32 k;
+    s32 side;
+
+    func_00340410(back, s->from, s->pos);
+    func_00340410(fwd, s->pos, s->from);
+    side = 0;
+    func_00340410(w, s->pos, p);
+    if (!((da = func_001917C0(w, n)) < 0.0f)) {
+        side |= 1;
+    }
+    func_00340410(w, s->from, p);
+    if (!((db = func_001917C0(w, n)) < 0.0f)) {
+        side |= 2;
+    }
+    switch (side) {
+    case 0:
+    case 3:
+        side = 0;
+        break;
+    case 1:
+        k = func_001917C0(fwd, n);
+        if (k == 0.0f || !(k != 0.0f)) {
+            func_003405D0(da, w, n);
+        } else {
+            func_003405D0(da / k, w, fwd);
+        }
+        func_00340410(out, s->pos, w);
+        break;
+    case 2:
+        k = func_001917C0(back, n);
+        if (k == 0.0f || !(k != 0.0f)) {
+            func_003405D0(db, w, n);
+        } else {
+            func_003405D0(db / k, w, back);
+            func_00340410(out, s->from, w);
+        }
+        break;
+    default:
+        return side;
+    }
+    return side;
+}
+#endif
+void func_00340630(const f32 *a, const f32 *b, const f32 *p, f32 *out);
+
+/* Whether p (on its plane) is inside triangle v (normal n). */
+s32 func_005E57F0(const f32 *p, const f32 *v, const f32 *n) {
+    f32 c[4];
+
+    func_00340630(v, v + 3, p, c);
+    if (func_001917C0(c, n) < 0.0f) {
+        return 0;
+    }
+    func_00340630(v + 3, v + 6, p, c);
+    if (func_001917C0(c, n) < 0.0f) {
+        return 0;
+    }
+    func_00340630(v + 6, v, p, c);
+    return (func_001917C0(c, n) < 0.0f) ^ 1;
+}
+
+/* The walls the sphere touched this frame (up to 6). */
+extern s16 D_0070EE50[];        /* 1: touched at an edge or corner */
+extern s16 D_0070EE60[];        /* the side (1: behind the plane) and 2: past it */
+extern f32 D_0070EE70[][3];     /* the point on the plane (edge touches) */
+extern f32 D_0070EED0[][3];     /* the point touched */
+extern f32 D_0070EF30[][3];     /* where the sphere was */
+extern CollTri D_0070EF90[];    /* the walls */
+
+/* Whether sweep s touches triangle t (from its front): noted in D_0070EE50 on (the plane at the
+   sphere, or where the move crosses it; then the nearest point of an edge when that isn't in
+   the triangle). hit and n get the point and the wall's normal when it is far off (10000+). */
+s32 func_005E6A90(CollSweep *s, CollTri *t, f32 *hit, f32 *n);
+#ifdef NON_MATCHING   /* first draft */
+s32 func_005E6A90(CollSweep *s, CollTri *t, f32 *hit, f32 *n) {
+    f32 e[4][3];
+    Vec3f near;
+    Vec3f pc;
+    Vec3f best;
+    f32 v[3];
+    f32 w[3];
+    Vec3f c;
+    f32 *a;
+    f32 most;
+    f32 d;
+    s8 behind;
+    s8 how;
+    s32 k;
+    s32 i;
+    s32 side;
+
+    func_00340410(w, s->from, t->v[0]);
+    behind = (func_001917C0(w, t->n) > 0.0f) ^ 1;
+    func_00340410(w, s->pos, t->v[0]);
+    d = func_001917C0(w, t->n);
+    how = (d <= 0.0f) ? 1 : 0;
+    *(Vec3f *)v = *(Vec3f *)s->pos;
+    if (func_00191A70(d) < s->r) {
+        func_003405D0(d, &c.x, t->n);
+        func_00340410(&c.x, s->pos, &c.x);
+    } else {
+        if (!func_005E55D0(s, t->n, t->v[0], &c.x)) {
+            return 0;
+        }
+        how |= 2;
+    }
+    if (behind & 1) {
+        return 0;
+    }
+    if (func_005E57F0(&c.x, t->v[0], t->n)) {
+        if (D_0023BECC >= 6) {
+            return 0;
+        }
+        D_0070EF90[D_0023BECC] = *t;
+        func_003408A0(D_0070EF90[D_0023BECC].n, D_0070EF90[D_0023BECC].n);
+        k = D_0023BECC;
+        *(Vec3f *)D_0070EF30[k] = *(Vec3f *)v;
+        D_0070EE60[k] = how;
+        *(Vec3f *)D_0070EED0[k] = c;
+        D_0070EE50[k] = 0;
+        if (10000.0f < func_001916E0(s->pos, &c.x)) {
+            *(Vec3f *)hit = c;
+            *(Vec3f *)n = *(Vec3f *)t->n;
+        }
+        D_0023BECC++;
+        return 1;
+    }
+    most = 8000.0f;
+    D_0070EE50[D_0023BECC] = 1;
+    *(Vec3f *)e[0] = *(Vec3f *)t->v[0];
+    *(Vec3f *)e[1] = *(Vec3f *)t->v[1];
+    *(Vec3f *)e[2] = *(Vec3f *)t->v[2];
+    *(Vec3f *)e[3] = *(Vec3f *)t->v[0];
+    pc = c;
+    for (i = 0, a = e[0]; i < 3; i++, a += 3) {
+        f32 *p = (how & 2) ? &pc.x : s->pos;
+
+        side = 0;
+        func_00340410(w, p, a);
+        func_00340410(v, a + 3, a);
+        func_00191750(v);
+        if (func_001917C0(w, v) < 0.0f) {
+            side |= 1;
+        }
+        func_00340410(w, p, a + 3);
+        d = func_001917C0(w, v);
+        if (!(d <= 0.0f)) {
+            side |= 2;
+        }
+        switch (side) {
+        case 0:
+            func_003405D0(d, &c.x, v);
+            func_003404F0(&c.x, &c.x, a + 3);
+            break;
+        case 1:
+            *(Vec3f *)&c = *(Vec3f *)a;
+            break;
+        case 2:
+            *(Vec3f *)&c = *(Vec3f *)(a + 3);
+            break;
+        case 3:
+            return 0;
+        }
+        d = func_001916E0(p, &c.x);
+        if (d < most) {
+            most = d;
+            best = c;
+        }
+    }
+    if (!(most < s->r)) {
+        return 0;
+    }
+    if (D_0023BECC >= 6) {
+        return 0;
+    }
+    D_0070EF90[D_0023BECC] = *t;
+    func_003408A0(D_0070EF90[D_0023BECC].n, D_0070EF90[D_0023BECC].n);
+    k = D_0023BECC;
+    *(Vec3f *)D_0070EF30[k] = *(Vec3f *)s->pos;
+    D_0070EE60[k] = how;
+    *(Vec3f *)D_0070EED0[k] = best;
+    near = pc;
+    *(Vec3f *)D_0070EE70[k] = near;
+    if (!(10000.0f <= most)) {
+        *(Vec3f *)hit = near;
+        *(Vec3f *)n = *(Vec3f *)t->n;
+    }
+    D_0023BECC++;
+    return 1;
+}
+#endif
