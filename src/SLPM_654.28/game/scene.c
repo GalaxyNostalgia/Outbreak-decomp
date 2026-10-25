@@ -453,8 +453,40 @@ f32 func_00191A70(f32 x);
 f32 func_00191690(const f32 *v);
 void func_00191820(f32 *out, const f32 *a, const f32 *b);
 void func_001918A0(f32 *dst, const f32 *src);
-void func_006BDCC0(f32 r, f32 len, f32 *v, f32 *push);
+
+/* push = v scaled to stretch from len out to r (len 0: left alone). */
+void func_006BDCC0(f32 r, f32 len, f32 *v, f32 *push) {
+    if (len != 0.0f) {
+        r -= len;
+        if (len < D_00239E88) {
+            len = D_00239E88;
+        }
+        func_003405D0(r / len, push, v);
+    }
+}
+
+/* The point of segment a..b (direction dir, length len) closest to p. */
 void func_006BDD20(f32 len, f32 *a, f32 *b, f32 *dir, f32 *p, f32 *out);
+#ifdef NON_MATCHING   /* the scale call's arguments: the original sets dir (a1) in the branch's delay slot */
+void func_006BDD20(f32 len, f32 *a, f32 *b, f32 *dir, f32 *p, f32 *out) {
+    Vec3 v;
+    f32 t;
+
+    func_00340560(&v, (Vec3 *)p, (Vec3 *)a);
+    t = func_001917C0(&v.x, dir);
+    if (t < 0.0f) {
+        func_001918A0(out, a);
+        return;
+    }
+    if (!(t <= len)) {
+        func_001918A0(out, b);
+        return;
+    }
+    func_003405D0(t, &v.x, dir);
+    func_003404F0((Vec3 *)out, (Vec3 *)a, &v);
+
+}
+#endif
 
 /* Capsule a against capsule b (radii summed): 1 when they overlap, with how to push a off (out of
    b) in push. The axes' closest points: parallel axes by their distance and ends, else clamped to
