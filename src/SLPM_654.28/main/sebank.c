@@ -558,6 +558,27 @@ s32 func_001B7A50(s32 bank, s32 id, s32 unused) {
     return func_001ABAA0(bank, id, unused, -1, -1, -1, 0);
 }
 
+extern s32 *D_00217080[];
+s32 func_001B7B50(f32 *pos, s32 *tbl, s32 *vol, s32 *pan);
+
+/* Play a sound effect at pos (volume and pan from the listener, table k), once or (once 0)
+   with flag. */
+void func_001B7A70(s32 bank, s32 id, s32 unused, f32 *pos, s32 k, s32 once, s32 flag) {
+    s32 pan;
+    s32 vol;
+
+    if (k == 1) {
+        k = 1;
+    }
+    if (func_001B7B50(pos, D_00217080[k], &vol, &pan)) {
+        if (once == 0) {
+            func_001ABAA0(bank, id, unused, vol, pan, -1, flag);
+        } else {
+            func_001ABE10(bank, id, unused, vol, pan, 0x2000);
+        }
+    }
+}
+
 void func_001B6E80(s32 id, s32 bank) {
     func_001B7A50(bank, id, 0);
 }
@@ -593,7 +614,6 @@ void func_001B6F00(s32 id) {
 }
 
 s32 func_001B6F10(s32 sound);
-s32 func_001B7A70(s32 bank, s32 id, s32 unused, f32 *pos, s32 a, s32 b, s32 c);
 extern s16 D_0023BB40;      /* the last such sound */
 
 /* Plays a sound effect of bank 2 (func_001B6F10 picks it; 0xFF: none), at pos if given. */
