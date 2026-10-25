@@ -842,7 +842,15 @@ typedef struct {
     u8 open;            /* 0x04: 0 closed, 1 the menu, 2 ..., 4, 5 */
     u8 unk5[0x32C0 - 5];
     u16 pad;            /* 0x32C0: buttons pressed */
-    u8 unk32C2[0x33C0 - 0x32C2];
+    u16 held;           /* 0x32C2: (swapped as the button setting says) */
+    u16 repeat;         /* 0x32C4 */
+    s16 rx;             /* 0x32C6 */
+    s16 lx;             /* 0x32C8 */
+    s16 ry;             /* 0x32CA */
+    s16 ly;             /* 0x32CC */
+    s16 rmag;           /* 0x32CE */
+    s16 lmag;           /* 0x32D0 */
+    u8 unk32D2[0x33C0 - 0x32D2];
     s8 unk33C0;         /* 0x33C0 */
 } MapScreen;
 
@@ -912,7 +920,49 @@ void func_006AE930(void) {
 
 extern u8 D_00389740[0x10];
 extern u8 D_00723F9E;
-void func_006AC230(void);
+
+/* The map screen's controls this frame: the menu pad's, with the two buttons the button setting
+   (D_00306590.unk2C) swaps swapped. */
+#include "ctrl.h"
+extern Ctrl D_003063E0;
+extern s32 D_006FFC90[][2];      /* per button setting: the two buttons swapped */
+extern s32 D_006FFC94[][2];
+extern s32 D_0048C020[];
+
+void func_006AC230(void) {
+    Ctrl *c;
+    MapScreen *m;
+    u32 b;
+    s32 x;
+    s32 y;
+    u32 r;
+
+    b = D_003063E0.cur;
+    m = &D_00720BE0;
+    c = &D_003063E0;
+    x = D_006FFC90[D_00306590.unk2C][0];
+    y = D_006FFC94[D_00306590.unk2C][0];
+    r = 0;
+
+    if (x != 0 || y != 0) {
+        if (b & x) {
+            r |= y;
+        }
+        if (b & y) {
+            r |= x;
+        }
+        b = r | (b & ~(x | y));
+    }
+    m->pad = D_0048C020[0];
+    m->held = b;
+    m->repeat = c->repeat;
+    m->rx = c->rx;
+    m->ry = c->ry;
+    m->rmag = c->rmag;
+    m->lx = c->lx;
+    m->ly = c->ly;
+    m->lmag = c->lmag;
+}
 s32 func_001AF510(void);
 s32 func_001AF500(void);
 void func_006AC8D0(u8 mode);

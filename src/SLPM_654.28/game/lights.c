@@ -232,10 +232,16 @@ typedef struct {
 } LightGroup;
 
 typedef struct {
+    s16 a;
+    s16 b;              /* 0x2: (the last of a run) its frames */
+} LightKey;
+
+typedef struct {
     u8 unk0[8];
     LightGroup *groups; /* 0x08 */
     LightPart *parts;   /* 0x0C */
-    u8 unk10[0x18 - 0x10];
+    LightKey *keys;     /* 0x10 */
+    u8 unk14[0x18 - 0x14];
     s32 unk18;          /* 0x18 */
 } LightDef;
 
@@ -264,7 +270,9 @@ typedef struct {
     u8 unk96[0xB4 - 0x96];
     f32 scale[3];       /* 0x0B4 */
     f32 unkC0[3];       /* 0x0C0 */
-    u8 unkCC[0x130 - 0xCC];
+    u8 unkCC[0xF0 - 0xCC];
+    s16 frames[0x12];   /* 0x0F0: per channel (func_0055FBF0) */
+    u8 unk114[0x130 - 0x114];
     f32 stepA;          /* 0x130 */
     f32 stepB;          /* 0x134 */
     u8 countA;          /* 0x138 */
@@ -289,7 +297,7 @@ typedef struct {
     f32 unk224;         /* 0x224 */
     f32 unk228;         /* 0x228 */
     f32 unk22C;         /* 0x22C */
-    s32 unk230;         /* 0x230 */
+    f32 unk230;         /* 0x230 */
     s32 unk234;         /* 0x234 */
     u8 unk238[2];
     s16 unk23A;         /* 0x23A: 1 ..., 0x10 its own matrix at the camera */
@@ -304,7 +312,7 @@ typedef struct {
 extern s8 D_0048BF88[];
 extern f32 D_00306338[3];       /* the camera */
 void func_0055FB20(Obj250L *p);
-void func_0055FBF0(LightFx *p, LightDef *d, s32 c, s16 b, s16 a);
+void func_0055FBF0(LightFx *p, LightDef *d, s32 ch, s32 n, s32 k);
 void func_00347040(f32 x, f32 y, f32 *v, f32 *a, f32 *b);
 f32 func_005906C0(f32 near, f32 far, f32 *pos);
 void func_0018FA40(f32 x, f32 y, f32 z, f32 *m);
@@ -370,7 +378,7 @@ void func_005470B0(Obj250L *p0) {
         p->unkC0[0] = 0.0f;
         p->unkC0[1] = 0.0f;
         p->unkC0[2] = 0.0f;
-        p->unk230 = 0;
+        p->unk230 = 0.0f;
     case 1:
         break;
     default:
@@ -452,3 +460,115 @@ end:
 }
 #endif
 
+
+/* Steps channel ch of light effect p along its n keys from k (func_005607B0 reads the value at
+   the channel's frame): scale, alpha, colour, turn, place and the rest. */
+extern f32 D_00239D44;
+
+/* The value at frame of n keys (each a value and the frame it is reached at), in a straight
+   line between them. */
+f32 func_005607B0(LightKey *keys, s32 frame, s32 n);
+#ifdef NON_MATCHING   /* the key loop's compare into $at; lo's two fields in swapped registers */
+f32 func_005607B0(LightKey *keys, s32 frame, s32 n) {
+    s32 i;
+    LightKey *lo;
+    LightKey *hi;
+
+    for (i = 0; i < n; i++) {
+        if (frame < keys[i].b) {
+            break;
+        }
+    }
+    if (i == n) {
+        return keys[i - 1].a;
+    }
+    if (i == 0) {
+        return keys[0].a;
+    }
+    lo = &keys[i - 1];
+    hi = &keys[i];
+    return lo->a + (f32)(hi->a - lo->a) * ((f32)(frame - lo->b) / (f32)(hi->b - lo->b));
+}
+#endif
+
+
+#ifdef NON_MATCHING   /* two addu operands swapped in the last key's address */
+void func_0055FBF0(LightFx *p, LightDef *d, s32 ch, s32 n, s32 k) {
+    f32 f = func_005607B0(&d->keys[k], p->frames[ch], n);
+
+    switch (ch) {
+    case 0:
+        p->scale[0] = f / 16.0f;
+        break;
+    case 1:
+        p->scale[1] = f / 16.0f;
+        break;
+    case 2:
+        p->scale[2] = f / 16.0f;
+        break;
+    case 3:
+        p->col[3] = f / 255.0f;
+        break;
+    case 15:
+        p->col[0] = f / 255.0f;
+        break;
+    case 16:
+        p->col[1] = f / 255.0f;
+        break;
+    case 17:
+        p->col[2] = f / 255.0f;
+        break;
+    case 4:
+        if (f < 0.0f) {
+            f += 360.0f;
+        }
+        p->rot[0] = (u32)(0.5f + 65536.0f * f / 360.0f);
+        break;
+    case 5:
+        if (f < 0.0f) {
+            f += 360.0f;
+        }
+        p->rot[1] = (u32)(0.5f + 65536.0f * f / 360.0f);
+        break;
+    case 6:
+        if (f < 0.0f) {
+            f += 360.0f;
+        }
+        p->rot[2] = (u32)(0.5f + 65536.0f * f / 360.0f);
+        break;
+    case 7:
+        p->pos[0] = p->ofs[0] + f / 16.0f;
+        break;
+    case 8:
+        p->pos[1] = p->ofs[1] + f / 16.0f;
+        break;
+    case 9:
+        p->pos[2] = p->ofs[2] + f / 16.0f;
+        break;
+    case 10:
+        p->unk218 = f / 16.0f;
+        break;
+    case 11:
+        p->unk21C = f / 16.0f;
+        break;
+    case 12:
+        p->unk220 = f / 16.0f;
+        break;
+    case 13:
+        p->unk224 = f / 16.0f;
+        break;
+    case 14:
+        p->unk230 = D_00239D44 * (f / 16.0f);
+        break;
+    default:
+        return;
+    }
+    p->frames[ch]++;
+    if (n != 0) {
+        n--;
+    }
+    if ((&d->keys[k])[n].b <= p->frames[ch]) {
+        p->frames[ch] = 0;
+    }
+}
+#endif
