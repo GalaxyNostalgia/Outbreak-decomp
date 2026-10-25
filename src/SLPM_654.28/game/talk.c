@@ -754,14 +754,25 @@ void func_00686090(DrawObjFull *p) {
    (D_00718AC0: [0] the one playing). */
 typedef struct {
     s16 active;         /* 0x00 */
-    u8 unk2[6];
+    u8 unk2[2];
+    s16 unk4;           /* 0x04 */
+    s16 unk6;           /* 0x06 */
     s16 timer;          /* 0x08 */
     u8 unkA[3];
-    s8 unkD;            /* 0x0D */
-    u8 unkE[0x5C - 0xE];
+    s8 unkD;            /* 0x0D: our own player's */
+    u8 unkE[6];
+    u8 *text;           /* 0x14 */
+    u8 unk18[0x58 - 0x18];
+    s16 unk58;          /* 0x58 */
+    u8 unk5A[2];
     DrawObjFull *who;   /* 0x5C */
-    u16 unk60;          /* 0x60 */
-    u8 unk62[0x98 - 0x62];
+    u16 unk60;          /* 0x60: the talk entry */
+    u8 unk62[5];
+    u8 unk67;           /* 0x67 */
+    u8 unk68[2];
+    char name[0x92 - 0x6A]; /* 0x6A */
+    u8 unk92;           /* 0x92: the speaker's colour */
+    u8 unk93[0x98 - 0x93];
 } Speech;
 
 extern s8 D_0048BF88[];
@@ -771,6 +782,120 @@ extern Speech *D_00718AC0[2][0x10];
 extern Speech D_00718B40[0x10];
 void func_00687AD0(Speech *s, s8 a);
 void func_00687420(Speech *s, s32 ch);
+
+Speech *func_006854F0(void);
+void func_00687E60(s32 id, s32 a);
+s32 sprintf(char *dst, const char *fmt, ...);
+f32 func_00634380(DrawObjFull *o, f32 *pos);
+f32 func_00191A70(f32 x);
+extern char D_0070BF08[];
+extern char D_0070BF10[];
+
+/* Starts p's chosen talk entry (0xDB4) as a speech: near enough our player (800, a room apart
+   only within 200 in height), its text from the room's speech data (players' or NPCs' part),
+   its colour and name; 1 unless the text starts with D_0070BF08's mark. */
+#ifdef NON_MATCHING   /* first draft: the speech data's address arithmetic, registers */
+s32 func_00685590(DrawObjFull *p) {
+    TalkEntry *e;
+    Speech *s;
+    u8 *base;
+    u16 *ids;
+    s32 r;
+    s32 i;
+    u8 *t;
+    char mark[4];
+
+    if (D_0048BF88[0] != 0) {
+        return 0;
+    }
+    if (D_0048BF60.unkBD != 0) {
+        return 0;
+    }
+    if (D_0048BF60.unkB9 & 4) {
+        return 0;
+    }
+    if (!p->active) {
+        return 0;
+    }
+    if (800.0f < func_00634380(p, D_00476DD0[D_0048BF60.unk1D].unk38)) {
+        return 0;
+    }
+    if (p->unk1E2 != D_00476DD0[D_0048BF60.unk1D].unk1E2 &&
+        !(func_00191A70(p->unk38[1] - D_00476DD0[D_0048BF60.unk1D].unk38[1]) <= 200.0f)) {
+        return 0;
+    }
+    if (p->type == 0) {
+        e = func_00685190(p->unkB98, p->unkDB4 - 1, 1);
+    } else {
+        e = func_00685190(8, p->unkDB4 - 1, 1);
+    }
+    if (e == NULL) {
+        return 0;
+    }
+    s = func_006854F0();
+    if (s == NULL) {
+        return 0;
+    }
+    p->unkDBC = *(s16 *)e->unk4;
+    s->unk4 = *(s16 *)e->unk4;
+    s->unk6 = *(s16 *)e->unk4;
+    if (p->type == 0) {
+        base = D_00306590.speech + 0x5C000 + p->kind * 0x5C00;
+    } else {
+        base = D_00306590.speech + 0x73000;
+    }
+    t = base + *(s32 *)(base + *(s32 *)(base + 4 + *(u16 *)&e->kind * 8));
+    if (p->talkCmd != 0) {
+        s->timer = 9999;
+        if (p->talkCmd & 0x80) {
+            s->unk92 = (p->talkCmd & 0x7F) + 9;
+        } else {
+            s->unk92 = (p->talkCmd & 0x7F) + 1;
+        }
+    } else {
+        s->unk92 = 1;
+    }
+    s->text = t + 8;
+    s->unk60 = p->unkDB4;
+    s->unkD = 0;
+    if (p->type == 0 && p->kind == D_0048BF60.unk1D) {
+        s->unkD = 1;
+    }
+    s->unk58 = -1;
+    s->who = p;
+    s->unk58 = *(s16 *)(e->unk4 + 2);
+    s->unk67 = 0;
+    r = 1;
+    t = s->text;
+    mark[3] = 0;
+    mark[2] = 0;
+    mark[1] = 0;
+    mark[0] = 0;
+    sprintf(mark, D_0070BF08);
+    if (t[0] == mark[0] && t[1] == mark[1]) {
+        r = 0;
+        s->unk67 = 1;
+    }
+    sprintf(s->name, D_0070BF10);
+    if (s->name != NULL) {
+        s->name[2] = p->unkB99 == 0 ? 0x3B : 0x3C;
+        if (p->type == 0 && p->kind == D_0048BF60.unk1D) {
+            s->name[2] = p->unkB99 == 0 ? 0x39 : 0x3A;
+        }
+    }
+    ids = (u16 *)(base + *(s32 *)base + *(u16 *)&e->kind * 16);
+    for (i = 0; i < 8; i++, ids++) {
+        if (*ids != 0xFFFF) {
+            if (*ids & 0x8000) {
+                func_00687E60(*ids & 0x7FFF, 1);
+            } else {
+                func_00687E60(*ids & 0x7FFF, 0);
+            }
+        }
+    }
+    return r;
+}
+#endif
 
 #ifdef NON_MATCHING   /* the second clearing loop's store stays out of its bnez delay slot in the original */
 void func_006871E0(void) {
