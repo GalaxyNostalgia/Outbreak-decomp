@@ -278,7 +278,70 @@ s8 func_00833250(DrawObjFull *obj, Zone **zones, s32 n, Zone **found, u8 *at) {
     return r;
 }
 #endif
-void func_00834800(DrawObjFull *obj);
+typedef struct {
+    u16 v[5];
+} ItemIds5;
+extern ItemIds5 D_0083A228;     /* items that refill ... */
+extern ItemIds5 D_0083A238;     /* ... these */
+s32 func_008360C0(DrawObjFull *obj, u16 id);
+s32 func_00834E60(DrawObjFull *obj, u8 a, u8 b);
+s32 func_00836BD0(DrawObjFull *obj, u8 *slots);
+s32 func_00584910(u8 slot);
+s32 func_00583880(u8 a, u8 b);
+
+/* The partner tidies its items: refills each of D_0083A238's from D_0083A228's, then merges
+   pairs of part-full stacks that combine (func_00583880 3). */
+void func_00834800(DrawObjFull *obj) {
+    ItemIds5 from = D_0083A228;
+    ItemIds5 to = D_0083A238;
+    u8 slots[8];
+    s32 i;
+    s32 j;
+    s32 n;
+    u8 a;
+    u8 b;
+    s8 r;
+
+    for (i = 0; i < 5; i++) {
+        a = func_008360C0(obj, from.v[i]);
+        if (a != 0) {
+            b = func_008360C0(obj, to.v[i]);
+            if (b != 0) {
+                func_00834E60(obj, a, b);
+            }
+        }
+    }
+    n = func_00836BD0(obj, slots);
+    for (i = 0; i < n; i++) {
+        if (slots[i] == 0) {
+            continue;
+        }
+        if (!(D_003967D0[slots[i]].unk24 < (s16)func_00584910(slots[i]))) {
+            continue;
+        }
+        for (j = i + 1; j < n; j++) {
+            if (slots[j] == 0) {
+                continue;
+            }
+            if (!(D_003967D0[slots[j]].unk24 < (s16)func_00584910(slots[j]))) {
+                continue;
+            }
+            if ((s16)func_00583880(slots[i], slots[j]) != 3) {
+                continue;
+            }
+            r = func_00834E60(obj, slots[i], slots[j]);
+            switch (r) {
+            case 2:
+                slots[i] = 0;
+                break;
+            case 3:
+                slots[j] = 0;
+                break;
+            }
+            break;
+        }
+    }
+}
 void func_00834A20(DrawObjFull *obj);
 
 void func_008347C0(DrawObjFull *obj) {
