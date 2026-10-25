@@ -1140,7 +1140,65 @@ s8 func_00582C60(ItemSlot *a, ItemSlot *b, s16 arg);
 s8 func_00582CB0(ItemSlot *a, ItemSlot *b, s16 arg);
 s8 func_00582E30(ItemSlot *a, ItemSlot *b, s16 arg);
 s8 func_00582EB0(ItemSlot *a, ItemSlot *b, s16 arg);
+typedef struct {
+    s16 with;           /* the other item's id */
+    s16 arg;
+    s16 kind;           /* how they combine (func_005823A0) */
+} ItemCombo;
+s16 func_00583AD0(ItemSlot *a, ItemSlot *b, s16 *arg);
+s16 *func_00583DD0(ItemSlot *a);
+
+/* How items a and b combine (and its arg): character 4 carrying both has her own ways for some
+   (func_00583AD0); else a's entries in D_007177A0. 0: they don't. */
 s16 func_005838F0(ItemSlot *a, ItemSlot *b, s16 *arg);
+#ifdef NON_MATCHING   /* first draft: the id switch's layout */
+s16 func_005838F0(ItemSlot *a, ItemSlot *b, s16 *arg) {
+    s16 kind = 0;
+    s16 *info;
+    s16 first;
+    s16 n;
+    s32 i;
+    ItemCombo *c;
+
+    if (a == NULL || b == NULL) {
+        return 0;
+    }
+    if (a == b) {
+        return 0;
+    }
+    if ((u16)a->owner < 5 && (u16)b->owner < 5 && D_00476DD0[a->owner - 1].unkB98 == 4 &&
+        D_00476DD0[b->owner - 1].unkB98 == 4) {
+        switch (a->unk6) {
+        case 0x1C:
+        case 0x66:
+        case 0x67:
+        case 0x6A:
+        case 0x6F:
+        case 0x76:
+        case 0x1C2:
+        case 0x1C7:
+            kind = func_00583AD0(a, b, arg);
+            if (kind != 0) {
+                return kind;
+            }
+            break;
+        }
+    }
+    first = func_00583DD0(a)[2];
+    n = func_00583DD0(a)[3];
+    if (first < 0 || n <= 0) {
+        return 0;
+    }
+    for (i = 0, c = (ItemCombo *)((s16 *)D_007177A0 + first); i < n; i++, c++) {
+        if (b->unk6 == c->with) {
+            *arg = c->arg;
+            kind = c->kind;
+            break;
+        }
+    }
+    return kind;
+}
+#endif
 void func_005861E0(s16 kind, s16 arg, s16 x, DrawObjFull *o);
 
 /* Combines item slots ia and ib (both carried): func_005838F0 says how, each way its function;
