@@ -307,7 +307,34 @@ void func_00686530(DrawObjFull *p) {
     }
 }
 
+extern s16 D_0071956A[];        /* (1-based) a talk entry asked for */
+
+/* For our own player: unkA of the talk entry asked for (D_0071956A), else 0x63. */
 s32 func_00687130(DrawObjFull *p);
+#ifdef NON_MATCHING   /* the 0x63 returns (the first jumps past ld ra) and D_0071956A's sign-extension in its own block */
+s32 func_00687130(DrawObjFull *p) {
+    TalkEntry *e;
+    u8 me;
+    s16 n;
+
+    if (p->type == 0) {
+        me = D_0048BF60.unk1D;
+        if (p->kind != me) {
+            return 0x63;
+        }
+        n = D_0071956A[0];
+        if (n == 0) {
+            return 0x63;
+        }
+        e = func_00685190(D_00476DD0[me].unkB98, n - 1, 1);
+        if (e == NULL) {
+            return 0x63;
+        }
+        return e->unkA;
+    }
+    return 0x63;
+}
+#endif
 
 /* Replies (kind 6): the first p's character may give now; 1 if it is to talk. */
 s32 func_00686BB0(DrawObjFull *p);
