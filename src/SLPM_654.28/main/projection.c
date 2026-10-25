@@ -222,3 +222,16 @@ void func_0018F9B0(Mat44 *m, f32 x, f32 y, f32 z) {
     func_0018F880(x, y, z, (f32 *)&s);
     func_00190DB0((f32 *)m, (f32 *)&s);
 }
+
+void func_00190CD0(f32 *a, const f32 *b);          /* VU0: a = a * b */
+void func_00191480(f32 *out, const f32 *v, const f32 *m);
+
+/* v on screen: through the world-to-view (scratchpad 0x3700), view-to-screen (0x3F40) and
+   D_002771E0 matrices. */
+void func_00191A10(f32 *out, const f32 *v) {
+    Mat44 m;
+
+    func_00190C50(&m, PS2_SPR(0x70003700), PS2_SPR(0x70003F40));
+    func_00190CD0((f32 *)&m, (f32 *)&D_002771E0);
+    func_00191480(out, v, (f32 *)&m);
+}

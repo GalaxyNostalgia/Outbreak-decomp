@@ -813,3 +813,154 @@ void func_001AFBB0(void) {
         }
     }
 }
+
+/* A sound at a place (an SE on bank 2, or music on stream 1): its volume and pan follow the
+   listener (func_001B7B50), eased over 4 frames. */
+typedef struct {
+    s8 unk0;
+    s8 kind;            /* 0x01: 0 an SE, else music */
+    s8 id;              /* 0x02 */
+    s8 unk3;
+    s8 state;           /* 0x04 */
+    u8 unk5[3];
+    s16 tVol;           /* 0x08: frames of easing left */
+    s16 tPan;           /* 0x0A */
+    s32 curVol;         /* 0x0C */
+    s32 curPan;         /* 0x10 */
+    s32 vol;            /* 0x14: what it eases to */
+    s32 pan;            /* 0x18 */
+    f32 stepVol;        /* 0x1C */
+    f32 stepPan;        /* 0x20 */
+    u8 unk24[0x2C - 0x24];
+    f32 pos[3];         /* 0x2C */
+    s16 unk38;          /* 0x38: D_00239F90 entry */
+} PlacedSound;
+
+extern s8 D_00239F90[8];
+extern s32 *D_00217080[];
+/* A placed sound's volume (from tbl, one entry per 300 units, eased between) and pan (from where
+   pos is on screen) as the camera hears it: 0 when out of range (4800) or silent. */
+extern f32 D_003062E0[16];      /* the camera's view matrix */
+extern f32 D_00239CFC;
+void func_00190E00(f32 *out, const f32 *m);
+void func_0018F7C0(f32 *m);
+void func_001AE9C0(s32 cmd, u32 arg);
+void func_00191A10(f32 *out, const f32 *v);
+f32 func_00191BC0(f32 x);
+f32 func_00341860(f32 x);
+
+s32 func_001B7B50(f32 *pos, s32 *tbl, s32 *vol, s32 *pan) {
+    f32 d;
+    f32 dx;
+    f32 dy;
+    f32 dz;
+    s32 p;
+    s32 i;
+    s32 v;
+    f32 scr[4];
+    Mat44 m;
+    f32 inv[16];
+
+    func_00190E00(inv, D_003062E0);
+    dx = pos[0] - inv[12];
+    dy = pos[1] - inv[13];
+    dz = pos[2] - inv[14];
+    d = func_00341860(dx * dx + dy * dy + dz * dz);
+    p = 0x3F;
+    *pan = p;
+    *vol = 0;
+    if (!(d < 4800.0f)) {
+        return 0;
+    }
+    if (d <= 100.0f) {
+        v = tbl[0];
+    } else {
+        func_0018F7C0((f32 *)&m);
+        func_001AE9C0(0x1A, (u32)&m);
+        func_00191A10(scr, pos);
+        if (scr[0] < 0.0f) {
+            scr[0] = 0.0f;
+        }
+        if (!(scr[0] <= 640.0f)) {
+            scr[0] = 640.0f;
+        }
+        if (scr[3] < 0.0f) {
+            scr[0] = 640.0f - scr[0];
+        }
+        p = scr[0] / D_00239CFC;
+        i = func_00191BC0(d / 300.0f);
+        v = tbl[i] - (s32)((d - 300.0f * i) / 300.0f * (tbl[i] - tbl[i + 1]));
+        if (v == 0) {
+            return 0;
+        }
+    }
+    *vol = v;
+    *pan = p;
+    return 1;
+}
+s32 func_001ABAA0(s32 bank, s32 id, s32 unused, u32 vol, s32 pan, s32 unused2, s32 flag);
+s32 func_001ABE10(s32 bank, s32 id, s32 unused, s32 vol, s32 pan, s32 flags);
+
+void func_001B8230(PlacedSound *s) {
+    s32 k = D_00239F90[s->unk38];
+    s32 r;
+    s32 changed;
+    s32 vol;
+    s32 pan;
+
+    switch (s->state) {
+    case 0:
+        s->state++;
+        r = func_001B7B50(s->pos, D_00217080[k], &s->vol, &s->pan);
+        s->curVol = s->vol;
+        s->curPan = s->pan;
+        if (s->kind == 0) {
+            func_001ABAA0(2, s->id, 0, s->vol, s->pan, -1, 0);
+            func_001ABE10(2, s->id, 0, s->vol, s->pan, 0x2000);
+        } else if (func_001B87F0(1, s->id, 4) == 0) {
+            if (r == 0) {
+                func_001AD260(1, 0);
+            } else {
+                func_001AD260(1, s->vol);
+            }
+        }
+        s->tVol = 4;
+    case 1:
+        func_001B7B50(s->pos, D_00217080[k], &vol, &pan);
+        if (s->vol != vol) {
+            s->stepVol = (vol - s->curVol) / 4.0f;
+            s->vol = vol;
+            s->tVol = 4;
+        }
+        if (s->pan != pan) {
+            s->stepPan = (pan - s->curPan) / 4.0f;
+            s->pan = pan;
+            s->tPan = 4;
+        }
+        changed = 0;
+        if (s->tVol != 0) {
+            if (--s->tVol == 0) {
+                s->curVol = s->vol;
+            } else {
+                s->curVol = s->curVol + s->stepVol;
+            }
+            changed = 1;
+        }
+        if (s->tPan != 0) {
+            if (--s->tPan == 0) {
+                s->curPan = s->pan;
+            } else {
+                s->curPan = s->curPan + s->stepPan;
+            }
+            changed = 1;
+        }
+        if (changed) {
+            if (s->kind == 0) {
+                func_001ABE10(2, s->id, 0, s->curVol, s->curPan, 0x2000);
+            } else if (func_001AD700(1) == 0) {
+                func_001AD260(1, s->curVol);
+            }
+        }
+        break;
+    }
+}
