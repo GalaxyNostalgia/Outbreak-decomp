@@ -1052,3 +1052,22 @@ void func_0067B2C0(void) {
     D_007160FC[0] = 0;
     func_0067B310();
 }
+
+/* The characters' light for drawing in room group g: the brightest at the group's point (or the
+   own light set, func_00681FD0). */
+typedef struct {
+    u8 unk0[0x2B38];
+    u8 groupArg[0x18];      /* 0x2B38 */
+    f32 groupPos[0x18][3];  /* 0x2B50 */
+} RoomGroups;
+
+extern RoomGroups D_00470090;
+void func_00681FD0(void);
+
+void func_00680BC0(u8 g, u8 own) {
+    if (own == 1) {
+        func_00681FD0();
+        return;
+    }
+    func_00680AB0(D_00470090.groupPos[g], D_00470090.groupArg[g]);
+}

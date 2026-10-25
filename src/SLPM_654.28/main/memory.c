@@ -2268,3 +2268,23 @@ s32 func_00193620(MotionTrack *t, f32 *bind, f32 *cur, f32 frame, u16 *state) {
     }
     return 1;
 }
+
+/* Sets packet group n's (1-based) texture i. */
+void func_0018C030(u32 n, s32 i, s32 tex) {
+    FlPacketGroup *g;
+
+    if (n == 0 || n > 0x280) {
+        return;
+    }
+    if (i < 0 || i >= 0x20) {
+        return;
+    }
+    if (tex == 0) {
+        return;
+    }
+    g = &D_0023BA2C[n - 1];
+    if (g->tex[i] != tex) {
+        g->tex[i] = tex;
+        g->texList[i] = tex;
+    }
+}

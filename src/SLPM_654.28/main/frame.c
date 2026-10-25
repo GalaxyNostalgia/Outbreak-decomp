@@ -212,3 +212,9 @@ void func_0019FEE0(void) {
     func_0018CA60(0, p & 0x0FFFFFFF, (u32 *)p, &D_00281AF0);
 }
 #endif
+
+void func_0018C030(u32 n, s32 i, s32 tex);
+
+void func_001B23F0(u32 n, s32 i, s32 tex) {
+    func_0018C030(n, i, tex);
+}

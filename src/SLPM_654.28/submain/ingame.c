@@ -1030,3 +1030,246 @@ void func_00343340(DrawCb *cb) {
     func_001AE9C0(0x6C, (void *)1);
 }
 #endif
+
+/* Draws an effect: its model part (from its def's model, by frame unless flag 0x4000) with
+   its colour, texture scroll (0x200) and matrix: its own or the one it follows, facing the
+   camera for 0x800 (upright for 0x1000), in the room's space for 0x4000. */
+#include "effect.h"
+typedef struct {
+    u8 unk0[0x808];
+    RoomPart *parts;    /* 0x808 */
+} EffModel;
+
+typedef struct {
+    u8 unk0[0x18];
+    u8 *model;          /* 0x18: (an EffModel; its frames' part tables at 0x1024) */
+} EffDef;
+
+typedef struct {
+    s8 active;          /* 0x000 */
+    s8 visible;         /* 0x001 */
+    u8 unk2[0x30 - 2];
+    u8 part;            /* 0x030 */
+    u8 unk31[0x38 - 0x31];
+    f32 pos[3];         /* 0x038 */
+    u8 unk44[0x90 - 0x44];
+    s16 rot[3];         /* 0x090 */
+    u8 unk96[0xB4 - 0x96];
+    f32 scale[3];       /* 0x0B4 */
+    u8 unkC0[0x1F0 - 0xC0];
+    Mat44 *mtx;         /* 0x1F0 */
+    EffDef *def;        /* 0x1F4 */
+    u8 unk1F8[8];
+    u32 flags;          /* 0x200 */
+    u8 unk204[4];
+    f32 col[4];         /* 0x208: r, g, b, a */
+    f32 uv[2];          /* 0x218 */
+    f32 uvScale[2];     /* 0x220 */
+    f32 uvOfs[2];       /* 0x228 */
+    f32 uvRot;          /* 0x230 */
+    u8 unk234[4];
+    u8 unk238;          /* 0x238 */
+    u8 unk239;
+    s16 frame;          /* 0x23A */
+} EffDraw;
+
+typedef struct {
+    s32 unk0;
+    f32 col[4];         /* 0x04 */
+    u8 unk14[0x44 - 0x14];
+    s32 tex;            /* 0x44 */
+    s32 unk48;
+} EffMat;
+
+extern f32 D_00470910[4];       /* the room's offset */
+extern f32 D_00306338[3];       /* the camera */
+void func_0018FA30(f32 x, f32 y, f32 z, Mat44 *m);
+void func_0018FA40(Mat44 *m, f32 x, f32 y, f32 z);
+void func_0018FAD0(f32 a, Mat44 *m);
+void func_0018FB70(f32 a, Mat44 *m);
+void func_00190E00(Mat44 *out, const Mat44 *m);
+void func_00190ED0(Mat44 *dst, const Mat44 *src);
+void func_00190DB0(Mat44 *a, const Mat44 *b);
+void func_0018F9F0(Mat44 *m, const f32 *s);
+u16 func_00340140(const f32 *a, const f32 *b);
+u16 func_00340190(const f32 *a, const f32 *b);
+void *func_00107B50(void *dst, const void *src, u32 n);
+void func_001AE430(s32 a, s32 b);
+void func_001B23F0(s32 model, s32 i, s32 tex);
+void func_00680BC0(u8 a, s32 b);
+
+void func_00342740(void *e0);
+#ifdef NON_MATCHING   /* first draft */
+void func_00342740(void *e0) {
+    EffDraw *e = e0;
+    EffDef *def;
+    u8 *md;
+    RoomPart *pt;
+    s16 k;
+    s32 i;
+    s32 col;
+    u16 a;
+    u16 b;
+    EffMat mat;
+    Mat44 m3;
+    Mat44 m2;
+    Mat44 m;
+    f32 v[4];
+    f32 d[3];
+    f32 w[3];
+    f32 cam[3];
+    f32 p[3];
+
+    func_0067F290(1);
+    func_00344FF0();
+    def = e->def;
+    md = def->model;
+    func_0018F7C0(&m);
+    func_001AE9C0(0x5F, (void *)5);
+    func_001AE9C0(0x60, NULL);
+    if (e->flags & 0x200) {
+        func_0018F8E0(e->uv[0] + e->uvOfs[0], e->uv[1] + e->uvOfs[1], 0.0f, (f32 *)&m3);
+        func_0018FCA0(0.0f, 0.0f, e->uvRot, &m3);
+        func_0018F9B0(&m3, e->uvScale[0], e->uvScale[1], 1.0f);
+    } else {
+        func_0018F8E0(0.0f, 0.0f, 0.0f, (f32 *)&m3);
+        func_0018FCA0(0.0f, 0.0f, 0.0f, &m3);
+    }
+    func_001AE9C0(0x19, &m3);
+    if (e->flags & 0x400) {
+        func_001AE430(4, 1);
+    } else {
+        func_001AE430(4, 5);
+    }
+    if (e->active == 0 || e->visible == 0 || !(e->flags & 0x8000)) {
+        return;
+    }
+    if (e->flags & 0x4000) {
+        k = e->part;
+    } else {
+        k = *(s16 *)(md + e->frame * 32 + e->part * 2 + 0x1024);
+    }
+    pt = &((EffModel *)md)->parts[k];
+    if (pt->model == -1 || pt->model == 0) {
+        return;
+    }
+    col = -1;
+    if ((e->flags & 0x4000) && (e->flags & 0x40)) {
+        col = (u32)(255.0f * e->col[3]) << 24;
+        col |= (u32)(255.0f * e->col[0]) << 16;
+        col |= (u32)(255.0f * e->col[1]) << 8;
+        col |= (u32)(255.0f * e->col[2]);
+    }
+    if (pt->unk88 != 0) {
+        func_00344960(pt, &col);
+    }
+    for (i = 0; i < ((EffModel *)md)->parts[k].nTex; i++) {
+        func_00107B50(&mat, D_004BEEF0[*(u16 *)(md + 8 + pt->tex[i] * 2)], 0x4C);
+        if (e->flags & 0x80) {
+            mat.col[3] = e->col[3];
+        }
+        if (e->flags & 0x40) {
+            mat.col[0] = e->col[0];
+            mat.col[1] = e->col[1];
+            mat.col[2] = e->col[2];
+        }
+        func_001AE9C0((u8)(i + 0x3A), &mat);
+        if (mat.tex != 0) {
+            func_001B23F0(pt->model, i, mat.tex);
+        }
+    }
+    p[0] = 0.0f;
+    p[1] = 0.0f;
+    p[2] = 0.0f;
+    if (e->flags & 0x4000) {
+        if (e->flags & 0x800) {
+            if (e->flags & 0x1000) {
+                func_0018FAB0(p, (u32)e->mtx);
+                func_00190ED0(&m2, e->mtx);
+                func_0018FA30(0.0f, 0.0f, 0.0f, &m2);
+            } else {
+                if (e->mtx != NULL) {
+                    func_0018FAB0(p, (u32)e->mtx);
+                }
+                func_0018F7C0(&m2);
+                cam[0] = D_00306338[0];
+                cam[1] = D_00306338[1];
+                cam[2] = D_00306338[2];
+                a = 0x10000 - func_00340190(p, cam);
+                b = func_00340140(p, cam);
+                func_0018FAD0(func_00191950(a), &m2);
+                func_0018FB70(func_00191950(b), &m2);
+            }
+        } else if (e->mtx != NULL) {
+            func_00190ED0(&m2, e->mtx);
+            func_0018FAB0(p, (u32)&m2);
+            func_0018FA30(0.0f, 0.0f, 0.0f, &m2);
+        } else {
+            func_0018F7C0(&m2);
+        }
+        func_0018F7C0(&m);
+        func_0018F9F0(&m, e->scale);
+        func_00340210(e->rot[0], e->rot[1], e->rot[2], &m);
+        func_00190DB0(&m, &m2);
+        func_0018FA40(&m, e->pos[0], e->pos[1], e->pos[2]);
+        func_0018FA40(&m, p[0], p[1], p[2]);
+        if ((e->flags & 0x800) && (e->flags & 0x1000)) {
+            func_00190E00(&m3, &m);
+            func_0018FAB0(v, (u32)&m);
+            d[0] = D_00306338[0] - v[0];
+            d[1] = D_00306338[1] - v[1];
+            d[2] = D_00306338[2] - v[2];
+            func_001913A0(w, d, (f32 *)&m3);
+            d[2] = 0.0f;
+            d[1] = 0.0f;
+            d[0] = 0.0f;
+            a = func_00340140(d, w);
+            func_0018F7C0(&m3);
+            func_0018FB70(func_00191950(a), &m3);
+            func_0018FAB0(d, (u32)&m);
+            func_00190DB0(&m3, &m);
+            func_00190ED0(&m, &m3);
+            func_0018FA30(d[0], d[1], d[2], &m);
+        }
+    } else {
+        func_0018F7C0(&m);
+        if (e->flags & 0x800) {
+            func_00190E00(&m2, (Mat44 *)&D_003062E0);
+            if (e->mtx != NULL) {
+                func_0018FAB0(p, (u32)e->mtx);
+            }
+        } else if (e->mtx == NULL) {
+            func_0018F7C0(&m2);
+        } else {
+            func_00190ED0(&m2, e->mtx);
+            func_0018FAB0(p, (u32)&m2);
+        }
+        func_0018F9F0(&m, e->scale);
+        func_00340210(e->rot[0], e->rot[1], e->rot[2], &m);
+        func_00190DB0(&m, &m2);
+        func_0018FA40(&m, e->pos[0], e->pos[1], e->pos[2]);
+        func_0018FA40(&m, p[0], p[1], p[2]);
+    }
+    if (e->flags & 0x4000) {
+        func_0018FA70(&m, D_00470910);
+    }
+    func_001AE9C0(0x1A, &m);
+    if (pt->unk90[0] == 2) {
+        func_00680BC0(e->unk238, 1);
+    } else {
+        func_00680BC0(e->unk238, 0);
+    }
+    if (!(e->flags & 0x4000)) {
+        if (e->flags & 0x10000) {
+            func_001AE9C0(0x6C, NULL);
+            func_0018BC50(pt->model, 0);
+            func_001AE9C0(0x6C, (void *)1);
+            return;
+        }
+        func_001AE9C0(0x6C, (void *)1);
+        func_0018BC50(pt->model, 0);
+        return;
+    }
+    func_0018BC50(pt->model, 0);
+}
+#endif
