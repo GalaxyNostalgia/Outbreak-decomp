@@ -504,6 +504,63 @@ s32 func_005C74D0(TalkCond *c, DrawObjFull *p) {
     }
 }
 
+DrawObjFull *func_00651300(s16 id);
+
+/* Kind 0x16: the state (0xBA0) of the one p talks to (0xDC2: a player, or an NPC by id). */
+s32 func_005C7CC0(TalkCond *c, DrawObjFull *p) {
+    DrawObjFull *q;
+    s32 f;
+
+    if (p->unkDC7 < 0) {
+        if (p->unkDC2 < 0) {
+            return 0;
+        }
+        q = &D_00476DD0[p->unkDC2];
+    } else {
+        q = func_00651300(p->unkDC2);
+        if (q == NULL) {
+            return 0;
+        }
+    }
+    f = q->unkBA0;
+    if (c->not == 0) {
+        switch (c->val) {
+        case 0:
+            return !((f & 0x33) != 0);
+        case 1:
+            return (f & 1) != 0;
+        case 2:
+            return (f & 2) != 0;
+        case 3:
+            return 0;
+        case 4:
+            return (f & 0x10) != 0;
+        case 5:
+            return (f & 0x20) != 0;
+        default:
+            return 0;
+        }
+    } else if (c->not == 1) {
+        switch (c->val) {
+        case 0:
+            return (f & 0x33) != 0;
+        case 1:
+            return !((f & 1) != 0);
+        case 2:
+            return !((f & 2) != 0);
+        case 3:
+            return 0;
+        case 4:
+            return !((f & 0x10) != 0);
+        case 5:
+            return !((f & 0x20) != 0);
+        default:
+            return 0;
+        }
+    }
+    return 0;
+}
+
 /* Kind 0x15: p's state (0xBA0): 0 fine (none of 0xB3), 1, 2, 4 0x10, 5 0x20, 6 0x80 (or not). */
 s32 func_005C7B50(TalkCond *c, DrawObjFull *p) {
     if (c->not == 0) {
@@ -660,7 +717,6 @@ s16 func_005C7650(u8 *c, DrawObjFull *p);
 s16 func_005C77F0(u8 *c, DrawObjFull *p);
 s16 func_005C7980(u8 *c, DrawObjFull *p);
 s16 func_005C7A30(u8 *c, DrawObjFull *p);
-s16 func_005C7CC0(u8 *c, DrawObjFull *p);
 s16 func_005C7E50(u8 *c, DrawObjFull *p);
 s16 func_005C7EF0(u8 *c, DrawObjFull *p);
 s16 func_005C7F90(u8 *c, DrawObjFull *p);
@@ -761,7 +817,7 @@ s16 func_005C6480(u8 *c, DrawObjFull *p) {
         r = func_005C7B50((TalkCond *)c, p);
         break;
     case 0x16:
-        r = func_005C7CC0(c, p);
+        r = func_005C7CC0((TalkCond *)c, p);
         break;
     case 0x17:
         r = func_005C7E50(c, p);
