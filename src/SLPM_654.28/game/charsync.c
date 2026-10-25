@@ -548,6 +548,22 @@ s32 func_005C7B50(TalkCond *c, DrawObjFull *p) {
     return 0;
 }
 
+/* Kind 0x30: the character of the other player p's 0x80 talk command names is val (or not). */
+s16 func_005C92E0(TalkCond *c, DrawObjFull *p) {
+    s32 k = p->talkCmd;
+
+    if (k == 0) {
+        return 0;
+    }
+    if (!((s8)k & 0x80)) {
+        return 0;
+    }
+    if (c->not == 0) {
+        return p->others[(s8)k & 0x7F] == c->val;
+    }
+    return p->others[(s8)k & 0x7F] != c->val;
+}
+
 /* Kind 0x2E: p's talk command (0xDA9) is val (or not); none, or 0x80 ones, never. */
 s16 func_005C9210(TalkCond *c, DrawObjFull *p) {
     s32 k = p->talkCmd;
@@ -607,7 +623,6 @@ s16 func_005C8F00(u8 *c, DrawObjFull *p);
 s16 func_005C8FB0(u8 *c, DrawObjFull *p);
 s16 func_005C9060(u8 *c, DrawObjFull *p);
 s16 func_005C9270(u8 *c, DrawObjFull *p);
-s16 func_005C92E0(u8 *c, DrawObjFull *p);
 
 /* A talk (or event) condition (8 bytes: its kind first) for p: each kind's check; 0xFF is
    always true. */
@@ -759,7 +774,7 @@ s16 func_005C6480(u8 *c, DrawObjFull *p) {
         r = func_005C9270(c, p);
         break;
     case 0x30:
-        r = func_005C92E0(c, p);
+        r = func_005C92E0((TalkCond *)c, p);
         break;
     case 0xFF:
         r = 1;
