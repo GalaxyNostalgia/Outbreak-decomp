@@ -5321,7 +5321,7 @@ void func_0063A240(DrawObjFull *o, u8 n) {
 }
 #endif
 void func_0063A4D0(DrawObjFull *o);
-f32 func_005A6FF0(DrawObjFull *o, s32 motion);
+f32 func_005A6FF0(DrawObjFull *o, u16 motion);
 void func_005A7320(DrawObjFull *o);
 
 /* Kinds 3-8 of action 1: walking (6), and walking while turning (7, 8). */
@@ -5535,7 +5535,8 @@ void func_0063A940(DrawObjFull *o) {
 
 /* The motion layers as func_0063A4D0 sees them (cf. objmot.c ObjLayer at 0x1E4). */
 typedef struct {
-    u8 unk0[0x1E8];
+    u8 unk0[0x1E4];
+    f32 frame0;         /* 0x1E4: the first layer's frame */
     f32 len0;           /* 0x1E8: the first layer's length */
     u8 unk1EC[0x1F1 - 0x1EC];
     s8 flags0;          /* 0x1F1 */
@@ -5545,6 +5546,97 @@ typedef struct {
     u8 unk36C[0x4FC - 0x36C];
     f32 root[3];        /* 0x4FC */
 } MotLayers;
+
+/* Per character: the frame ranges of one motion and where they carry over to in another. */
+typedef struct {
+    s16 *ranges;        /* (from, to) frame pairs: a range in the old motion, then its new frames */
+    s32 n;
+} PhaseMap;
+
+extern u8 D_006E5944[][0x44];
+extern PhaseMap *D_006EFA60[4][4];  /* fine and caution, by walking/running motion pair */
+extern PhaseMap *D_00719F00[4][4];  /* danger */
+f32 func_005A40D0(DrawObjFull *o, u16 id, s32 c);
+
+/* The frame a switch to motion (0x2003, 0x2005, 0x2010, 0x2013) starts on, keeping the stride's
+   phase from the current one; else func_005A42B0's. */
+f32 func_005A6FF0(DrawObjFull *o, u16 motion) {
+    MotLayers *l = (MotLayers *)o;
+    f32 f = 0.0f;
+    s32 from;
+    s32 to;
+    PhaseMap *m;
+    s16 *r;
+    s32 i;
+
+    if (o->unkCA8 != 0 && D_006E5944[(u16)o->unkCA8][0] != 0) {
+        return func_005A42B0(o, motion, 0);
+    }
+    switch (o->unk520) {
+    case 0x2003:
+        from = 0;
+        break;
+    case 0x2005:
+        from = 1;
+        break;
+    case 0x2010:
+        from = 2;
+        break;
+    case 0x2013:
+        from = 3;
+        break;
+    default:
+        return func_005A42B0(o, motion, 0);
+    }
+    switch (motion) {
+    case 0x2003:
+        to = 0;
+        break;
+    case 0x2005:
+        to = 1;
+        break;
+    case 0x2010:
+        to = 2;
+        break;
+    case 0x2013:
+        to = 3;
+        break;
+    default:
+        return func_005A42B0(o, motion, 0);
+    }
+    switch (o->unkB9B) {
+    case 0:
+    case 1:
+        m = D_006EFA60[from][to];
+        break;
+    case 2:
+        m = D_00719F00[from][to];
+        break;
+    case 3:
+    default:
+        return func_005A42B0(o, motion, 0);
+    }
+    if (m == NULL) {
+        return func_005A42B0(o, motion, 0);
+    }
+    m += o->unkB98;
+    if (m->ranges == NULL) {
+        return func_005A42B0(o, motion, 0);
+    }
+    for (i = 0; i < m->n; i += 2) {
+        r = &m->ranges[i * 2];
+        if (!(l->frame0 < r[0]) && l->frame0 < r[1]) {
+            f = r[2] + (l->frame0 - r[0]) / (r[1] - r[0]) * (r[3] - r[2]);
+        }
+    }
+    if (f == 0.0f) {
+        return func_005A42B0(o, motion, 0);
+    }
+    if (f <= func_005A40D0(o, motion, 0)) {
+        return f;
+    }
+    return func_005A42B0(o, motion, 0);
+}
 
 extern u8 D_30659C[];
 u8 func_00635160(DrawObjFull *o, f32 *out);
