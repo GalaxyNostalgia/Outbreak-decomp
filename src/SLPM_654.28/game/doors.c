@@ -57,7 +57,14 @@ typedef struct {
 } RoomObjSpot;
 
 extern RoomObj D_00395720[0x20];
-extern u8 D_00395EA0[0x930];
+/* The room objects' grid: cells of 50 from (x, z), at height y. */
+typedef struct {
+    f32 x;              /* 0x0 */
+    f32 y;              /* 0x4 */
+    f32 z;              /* 0x8 */
+    u8 unkC[0x930 - 0xC];
+} ObjGridAll;
+extern ObjGridAll D_00395EA0;
 extern s8 D_0023BF54;           /* objects placed */
 extern RoomObjType D_00716000[0x20];
 extern s16 D_00715FC0[0x20];
@@ -71,7 +78,7 @@ void *memcpy(void *dst, const void *src, u32 n);
 
 void func_0067ACB0(void) {
     memset(D_00395720, 0, sizeof(D_00395720));
-    memset(D_00395EA0, 0, sizeof(D_00395EA0));
+    memset(&D_00395EA0, 0, sizeof(D_00395EA0));
     D_0023BF54 = 0;
     memset(D_00716000, 0, sizeof(D_00716000));
     memset(D_00715FC0, -1, sizeof(D_00715FC0));
@@ -437,7 +444,7 @@ void func_0067D7C0(s8 now, s8 prev) {
 }
 #endif
 
-s32 func_0067E490(s32 *xy);
+s32 func_0067E490(s32 *xy, f32 *pos);
 s8 func_0067D8B0(s8 x, s8 y);
 
 /* The object (area) under pos, when pos is on top of one. */
@@ -451,10 +458,10 @@ s32 func_0067DA50(s8 *out, f32 *pos) {
     if (pos == NULL) {
         return 0;
     }
-    if (pos[1] - FIELD(D_00395EA0, f32, 4) < 50.0f) {
+    if (pos[1] - D_00395EA0.y < 50.0f) {
         return 0;
     }
-    if (func_0067E490(xy) != 0) {
+    if (func_0067E490(xy, pos) != 0) {
         i = func_0067D8B0(xy[0], xy[1]);
         *out = i;
         if (i >= 0) {
@@ -477,3 +484,61 @@ f32 func_0067DAF0(u8 i) {
     }
     return 50.0f * o->unk1F[1];
 }
+
+extern s8 D_0023BF48;           /* (the objects' grid has floors) */
+f32 func_005E5B40(const f32 *p, u8 *kind, s32 want);
+
+/* What's at pos on the walkable grid: -1 no pos, 0 nothing (or the floor under it is the same
+   level), 1 a cell, 2 an object's (level 0) or a walkable cell (on its floor's grid), 3 over a
+   drop; out gets the cell. */
+typedef struct {
+    s32 x;
+    s32 z;
+} GridXY;               /* a cell of the objects' grid */
+
+s8 func_0067E570(GridXY *out, f32 *pos);
+#ifdef NON_MATCHING   /* scheduling: the grid word's address, xy.z loaded through a pointer, r = 3's slot */
+s8 func_0067E570(GridXY *out, f32 *pos) {
+    s8 r = 0;
+    s8 k = -1;
+    s8 lvl;
+    s32 i;
+    GridXY xy;
+    u8 kind;
+
+    if (pos == NULL) {
+        return k;
+    }
+    lvl = (s32)(1.0f + (pos[1] - D_00395EA0.y)) / 50;
+    if (D_0023BF48 == 0) {
+        k = 0;
+        lvl = 0;
+    } else {
+        for (i = 0; i < 4; i++) {
+            if (D_0023AE60[i] == lvl) {
+                k = i;
+                break;
+            }
+        }
+    }
+    if (func_0067E490(&xy.x, pos)) {
+        r = 1;
+        if (lvl == 0) {
+            if (func_0067D8B0(xy.x, xy.z) >= 0) {
+                r = 2;
+            }
+        } else if (((u32 (*)[3])D_00711080[k])[xy.x][xy.z >> 5] & (r << (xy.z & 0x1F))) {
+            r = 2;
+        }
+    } else if (lvl > 0) {
+        r = 3;
+        if (lvl == (s8)((s32)(1.0f + (func_005E5B40(pos, &kind, 0xFF) - D_00395EA0.y)) / 50)) {
+            r = 0;
+        }
+    }
+    if (out != NULL) {
+        *out = xy;
+    }
+    return r;
+}
+#endif
