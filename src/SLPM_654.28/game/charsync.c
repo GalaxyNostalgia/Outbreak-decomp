@@ -635,6 +635,23 @@ s32 func_005C7E50(TalkCond *c, DrawObjFull *p) {
     }
 }
 
+/* Kind 0xA: p talks to the player numbered val (or not). */
+s32 func_005C7290(TalkCond *c, DrawObjFull *p) {
+    if (p->unkDC7 >= 0) {
+        return 0;
+    }
+    if (p->unkDC2 < 0) {
+        return 0;
+    }
+    if (c->not == 0) {
+        return c->val == p->unkDC2;
+    }
+    if (c->not == 1) {
+        return c->val != p->unkDC2;
+    }
+    return 0;
+}
+
 /* Kind 0x15: p's state (0xBA0): 0 fine (none of 0xB3), 1, 2, 4 0x10, 5 0x20, 6 0x80 (or not). */
 s32 func_005C7B50(TalkCond *c, DrawObjFull *p) {
     if (c->not == 0) {
@@ -780,7 +797,6 @@ s16 func_005C6F40(u8 *c, DrawObjFull *p);
 s16 func_005C7090(u8 *c, DrawObjFull *p);
 s16 func_005C71A0(u8 *c, DrawObjFull *p);
 s16 func_005C7210(u8 *c, DrawObjFull *p);
-s16 func_005C7290(u8 *c, DrawObjFull *p);
 s16 func_005C7300(u8 *c, DrawObjFull *p);
 s16 func_005C7370(u8 *c, DrawObjFull *p);
 s16 func_005C7420(u8 *c, DrawObjFull *p);
@@ -852,7 +868,7 @@ s16 func_005C6480(u8 *c, DrawObjFull *p) {
         r = func_005C7210(c, p);
         break;
     case 0xA:
-        r = func_005C7290(c, p);
+        r = func_005C7290((TalkCond *)c, p);
         break;
     case 0xB:
         r = func_005C7300(c, p);
