@@ -5277,6 +5277,110 @@ f32 func_005A6FF0(DrawObjFull *o, s32 motion);
 void func_005A7320(DrawObjFull *o);
 
 /* Kinds 3-8 of action 1: walking (6), and walking while turning (7, 8). */
+/* Action 1, steps 3-5: walking (turning left 4, right 5), its motion 0x2003 at the walking speed. */
+void func_0063A5F0(DrawObjFull *o);
+#ifdef NON_MATCHING   /* the jump table's addi (as func_0063A940) */
+void func_0063A5F0(DrawObjFull *o) {
+    f32 start = 0.0f;
+    u8 r;
+    f32 tmp[4];
+
+    if (func_00635970(o)) {
+        o->unk54F = 0;
+        o->unk548 &= ~1;
+        o->act[0] = 1;
+        o->act[1] = 0;
+        o->act[2] = 1;
+        o->act[3] = 0;
+        func_00635920(o);
+        func_005A4490(o, 0x2050, start, 10.0f);
+        func_0055C4E0(o);
+        return;
+    }
+    switch (o->act[1]) {
+    case 3:
+    case 4:
+    case 5:
+        o->unkBA4 |= 0x100;
+        break;
+    }
+    switch (o->act[1]) {
+    case 3:
+        break;
+    case 4:
+        o->unk92 -= func_0062DBC0(o);
+        break;
+    case 5:
+        o->unk92 += func_0062DBC0(o);
+        break;
+    }
+    r = func_00635160(o, tmp);
+    func_0063A240(o, 0);
+    switch (o->act[2]) {
+    case 0:
+        o->act[2]++;
+        if (r != 1) {
+            switch (o->unk54F) {
+            case 3:
+            case 4:
+                func_0063A4D0(o);
+                start = func_005A6FF0(o, 0x2003);
+                break;
+            }
+        }
+        o->unk54F = 1;
+        o->unkD10[0] = 1;
+        if (o->unk520 != 0x2003) {
+            func_005A4490(o, 0x2003, start, 10.0f);
+        }
+        break;
+    case 1:
+        if (r != 1 && o->unk520 != 0x2003) {
+            o->unk4E4[0] = 0;
+            o->unk4E4[1] = 0;
+            o->unk4E4[2] = 0;
+            func_005A4490(o, 0x2003, 0.0f, 10.0f);
+        }
+        o->act[2]++;
+        o->unk54F = 1;
+        o->unkD10[0] = 1;
+        switch (o->act[1]) {
+        case 3:
+        case 4:
+        case 5:
+        case 6:
+        case 7:
+        case 8:
+            func_00635950(o);
+            break;
+        }
+        func_0055C4E0(o);
+        o->unkBA8 = 1.0f;
+        if (o->unkBA0 & 0x80) {
+            o->unkBA8 *= D_00239DFC;
+        }
+        o->unkBA8 *= o->unkBC0;
+    case 2:
+        func_0063A4D0(o);
+        func_0055C030(o, o->unkBA8);
+        break;
+    case 0xFF:
+    default:
+        o->unk54F = 0;
+        o->unk548 &= ~1;
+        o->act[0] = 1;
+        o->act[1] = 0;
+        o->act[2] = 1;
+        o->act[3] = 0;
+        func_00635920(o);
+        func_005A4490(o, 0x2050, 0.0f, 10.0f);
+        func_0055C4E0(o);
+        break;
+    }
+    func_005A7320(o);
+}
+#endif
+
 void func_0063A940(DrawObjFull *o);
 #ifdef NON_MATCHING   /* only the jump table's addi (ours addiu) */
 void func_0063A940(DrawObjFull *o) {
