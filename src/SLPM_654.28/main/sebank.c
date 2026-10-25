@@ -657,6 +657,13 @@ void func_001B6FD0(f32 *pos, s32 id) {
     }
 }
 
+/* A player's own sound se (their bank, 4 + player) at their position. */
+void func_001B7250(DrawObjFull *o, s32 se) {
+    if (o->type == 0) {
+        func_001B7A70(o->kind + 4, se, o->kind, o->unk38, 1, 0, 0);
+    }
+}
+
 u16 func_001ADEF0(s32 n);
 extern s8 D_006FCF50[][2];      /* (GAME.BIN) per NPC model: [1] its footstep sound's offset */
 extern s8 D_006FD080[][3];      /* (GAME.BIN) per character and costume */
