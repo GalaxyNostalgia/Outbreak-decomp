@@ -305,7 +305,25 @@ u8 func_008360C0(DrawObjFull *obj, u16 id) {
     }
     return r;
 }
-s32 func_00834E60(DrawObjFull *obj, u8 a, u8 b);
+s32 func_005823A0(u8 a, u8 b);
+void func_005C1430(DrawObjFull *obj, u8 slot);
+
+/* Combines item slots a and b (func_005823A0): 2 used a up, 3 used b up (then dropped from
+   the partner, func_005C1430). */
+s32 func_00834E60(DrawObjFull *obj, u8 a, u8 b) {
+    s32 r;
+
+    if (a == b) {
+        return 0;
+    }
+    r = (s8)func_005823A0(a, b);
+    if (r == 2) {
+        func_005C1430(obj, a);
+    } else if (r == 3) {
+        func_005C1430(obj, b);
+    }
+    return r;
+}
 /* The partner's item slots in use into slots (character 6's four extra ones, 0xC89, too); how many. */
 s32 func_00836BD0(DrawObjFull *obj, u8 *slots) {
     s32 n = 0;
