@@ -5429,6 +5429,54 @@ void func_0063A5F0(DrawObjFull *o) {
 }
 #endif
 
+/* Action 1, step 0x15 (?): turning round on the spot (motion 0x200A, then 0x200B), then
+   standing. */
+void func_0063B2C0(DrawObjFull *o) {
+    if (func_00635970(o)) {
+        o->unk54F = 0;
+        o->unk548 &= ~1;
+        o->act[0] = 1;
+        o->act[1] = 0;
+        o->act[2] = 1;
+        o->act[3] = 0;
+        func_00635920(o);
+        func_005A4490(o, 0x2050, 0.0f, 10.0f);
+        func_0055C4E0(o);
+        return;
+    }
+    o->unkBA4 |= 0x100;
+    switch (o->act[2]) {
+    case 0:
+        o->act[2]++;
+        o->unk54F = 5;
+        o->unkD10[0] = 1;
+        func_00635950(o);
+        o->unkBA8 = 1.0f;
+        func_005A4490(o, 0x200A, 0.0f, 10.0f);
+        break;
+    case 1:
+        if (func_0055C030(o, o->unkBA8) > 0) {
+            func_005A4490(o, 0x200B, 0.0f, 0.0f);
+            o->unk92 += 0x8000;
+            o->act[2]++;
+        }
+        break;
+    case 2:
+        if (func_0055C030(o, o->unkBA8) > 0) {
+            o->unk54F = 0;
+            o->unk548 &= ~1;
+            o->act[0] = 1;
+            o->act[1] = 0;
+            o->act[2] = 1;
+            o->act[3] = 0;
+            func_00635920(o);
+            func_005A4490(o, 0x2050, 0.0f, 12.0f);
+            func_0055C4E0(o);
+        }
+        break;
+    }
+}
+
 void func_0063A940(DrawObjFull *o);
 #ifdef NON_MATCHING   /* only the jump table's addi (ours addiu) */
 void func_0063A940(DrawObjFull *o) {
