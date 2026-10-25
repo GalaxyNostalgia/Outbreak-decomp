@@ -380,7 +380,34 @@ typedef struct {
 } MotLayers2;
 #define LAYER(o, i) (((MotLayers2 *)(o))->l[i])
 
+f32 func_00192740(s32 motion);
+
+/* The last frame of motion id's layer-0 (which 0) or layer-1 (1) motion. */
 f32 func_005A40D0(DrawObjFull *o, s32 id, u16 which);
+#ifdef NON_MATCHING   /* one addu's operands swapped (as func_005A41B0) */
+f32 func_005A40D0(DrawObjFull *o, s32 id, u16 which) {
+    MotInfo info;
+    MotRef m;
+    u16 f;
+    MotionSet *set;
+
+    m = *func_005A3E60(o, id);
+    func_005A3D10(o, &info, &m);
+    switch (which) {
+    case 0:
+        f = info.frame0;
+        break;
+    case 1:
+        f = info.frame1;
+        break;
+    }
+    set = func_005A3FB0(o, info.set);
+    if (set == NULL) {
+        return 0.0f;
+    }
+    return func_00192740(set->anims[set->index[f & 0x7FFF] + which]);
+}
+#endif
 
 /* Where layer `which` is in motion id, mapped from its own frames (begin..end) onto id's
    (func_005A41B0..func_005A40D0). */
