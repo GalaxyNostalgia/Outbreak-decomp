@@ -848,7 +848,18 @@ s32 func_005F4080(Npc *n) {
 extern u16 D_0048AFB0[][6];
 extern u32 D_0048AD90[];
 void func_0068A6E0(Npc *n);
-s32 func_0068A700(Npc *n, s32 a);
+typedef struct {
+    Vec3 p[3];
+} NpcSpots;
+extern NpcSpots D_006FB650;     /* the spots func_0068A700 checks */
+f32 func_00634380(Npc *n, f32 *pos);
+
+/* Whether the NPC is within 170 of spot i. */
+s32 func_0068A700(Npc *n, s32 i) {
+    NpcSpots t = D_006FB650;
+
+    return 170.0f > func_00634380(n, &t.p[i].x);
+}
 s32 func_0068A950(Npc *n);
 void func_0068AAB0(Npc *n, s32 a);
 void func_0068AB80(Npc *n, s32 a);
@@ -1140,7 +1151,32 @@ void func_0068B150(Npc *n) {
     n->unkBA0 &= ~0x80000;
 }
 s32 func_0068B1B0(Npc *n);
-void func_0068AD40(Npc *n, DrawObjFull *p);
+s32 func_00549860(const f32 *from, const f32 *to, s32 mask, s32 a, s32 *hit);
+void func_00602A20(f32 *out, f32 *a, f32 *b);
+
+/* Walking up to player p: aims at where they stand (or, past a wall or with the 0x78th part
+   flag, func_00602A20's way round), and stops within 100 or blocked. */
+void func_0068AD40(Npc *n, DrawObjFull *p) {
+    s32 hit;
+
+    switch ((u8)n->unkFD0[3]) {
+    case 0:
+        *(Vec3 *)n->unkFDC = *(Vec3 *)p->unk38;
+        if (func_00549860(n->unk38, n->unkFDC, 0x4FFFF, 0, &hit) != 1 && !(n->unkF4[0x16C - 0xF4] & 1)) {
+            break;
+        }
+        n->unkFD0[3] = 1;
+        func_00602A20(n->unkFDC, n->unkFDC, n->unk38);
+    case 1:
+        if (func_00549860(n->unk38, n->unkFDC, 0x4FFFF, 0, &hit) == 1 || (n->unkF4[0x16C - 0xF4] & 1)) {
+            n->unkFD0[3] = 0;
+        }
+        if (func_00634380(n, n->unkFDC) < 100.0f) {
+            n->unkFD0[3] = 0;
+        }
+        break;
+    }
+}
 
 /* Following its player (0x1020): stays put near (100), walks up (func_0068AD40) further away,
    and gives up past 300. */

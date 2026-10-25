@@ -390,7 +390,8 @@ typedef struct Npc {
     u8 unkFD6;          /* 0xFD6 */
     s8 unkFD7;          /* 0xFD7 */
     f32 unkFD8;         /* 0xFD8: how near it follows */
-    u8 unkFDC[0xFF6 - 0xFDC];
+    f32 unkFDC[3];      /* 0xFDC: where it walks to */
+    u8 unkFE8[0xFF6 - 0xFE8];
     u8 unkFF6;          /* 0xFF6: what it looks for (a player number, character, NPC model...) */
     u8 unkFF7[0x101F - 0xFF7];
     u8 unk101F;         /* 0x101F */
