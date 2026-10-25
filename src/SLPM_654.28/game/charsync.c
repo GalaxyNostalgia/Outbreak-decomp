@@ -613,6 +613,28 @@ s32 func_005C6AD0(TalkCond *c, DrawObjFull *p) {
 }
 #endif
 
+/* Kind 0x17: p's 0xD28 in seconds against val (op c->not: ==, !=, <, >, <=, >=). */
+s32 func_005C7E50(TalkCond *c, DrawObjFull *p) {
+    u32 t = (u32)p->unkD28 / 60;
+
+    switch (c->not) {
+    case 0:
+        return t == (u32)c->val;
+    case 1:
+        return t != (u32)c->val;
+    case 2:
+        return t < (u32)c->val;
+    case 3:
+        return t > (u32)c->val;
+    case 4:
+        return t <= (u32)c->val;
+    case 5:
+        return t >= (u32)c->val;
+    default:
+        return 0;
+    }
+}
+
 /* Kind 0x15: p's state (0xBA0): 0 fine (none of 0xB3), 1, 2, 4 0x10, 5 0x20, 6 0x80 (or not). */
 s32 func_005C7B50(TalkCond *c, DrawObjFull *p) {
     if (c->not == 0) {
@@ -767,7 +789,6 @@ s16 func_005C7600(u8 *c, DrawObjFull *p);
 s16 func_005C7650(u8 *c, DrawObjFull *p);
 s16 func_005C77F0(u8 *c, DrawObjFull *p);
 s16 func_005C7A30(u8 *c, DrawObjFull *p);
-s16 func_005C7E50(u8 *c, DrawObjFull *p);
 s16 func_005C7EF0(u8 *c, DrawObjFull *p);
 s16 func_005C7F90(u8 *c, DrawObjFull *p);
 s16 func_005C7FB0(u8 *c, DrawObjFull *p);
@@ -870,7 +891,7 @@ s16 func_005C6480(u8 *c, DrawObjFull *p) {
         r = func_005C7CC0((TalkCond *)c, p);
         break;
     case 0x17:
-        r = func_005C7E50(c, p);
+        r = func_005C7E50((TalkCond *)c, p);
         break;
     case 0x18:
         r = func_005C7EF0(c, p);
