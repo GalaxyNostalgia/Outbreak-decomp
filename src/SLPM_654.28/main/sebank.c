@@ -611,7 +611,19 @@ void func_001B6FD0(f32 *pos, s32 id) {
 }
 
 u16 func_001ADEF0(s32 n);
-s8 func_001B75E0(DrawObjFull *o);
+extern s8 D_006FCF50[][2];      /* (GAME.BIN) per NPC model: [1] its footstep sound's offset */
+extern s8 D_006FD080[][3];      /* (GAME.BIN) per character and costume */
+
+/* The footstep sound's offset for a character (NPCs by model, players by character and costume). */
+s8 func_001B75E0(DrawObjFull *o) {
+    if (o->unkBB4 != 0) {
+        s32 i = (o->unkBB4 & 0xFFFF) - 1;
+
+        return D_006FCF50[i][1];
+    }
+    return *(&D_006FD080[0][o->costume] + o->unkB98 * 3);
+
+}
 u16 func_5445D0(f32 *pos);
 void func_00190E00(Mat44 *out, const Mat44 *m);
 extern Mat44 D_003062E0;
