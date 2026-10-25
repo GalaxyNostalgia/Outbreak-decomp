@@ -475,8 +475,8 @@ void func_0064C620(DrawObjFull *o, u8 kind) {
 /* A talk condition: its kind (func_005C6480), whether it's negated, and a value. */
 typedef struct {
     u8 kind;
-    u8 not;             /* 0x1 */
-    u8 unk2[2];
+    u8 not;             /* 0x1: (or the comparison) */
+    u16 arg;            /* 0x2 */
     s32 val;            /* 0x4 */
 } TalkCond;
 
@@ -564,6 +564,66 @@ s16 func_005C92E0(TalkCond *c, DrawObjFull *p) {
     return p->others[(s8)k & 0x7F] != c->val;
 }
 
+f32 func_00341860(f32 x);
+
+/* Kind 0x2C: whether another character in p's room is within (op c->not) arg across the floor;
+   val 0 asks for none. */
+s32 func_005C9060(TalkCond *c, DrawObjFull *p) {
+    f32 r = c->arg;
+    DrawObjFull *q;
+    s32 i;
+    s32 f;
+    f32 d;
+    f32 dx;
+    f32 dz;
+
+    f = 0;
+    q = D_00476DD0;
+    for (i = 0; i < 8; i++, q++) {
+        if ((q->active & q->visible) && (p->type != 0 || q != p) && p->unk1E2 == q->unk1E2) {
+            dx = q->unk38[0] - p->unk38[0];
+            dz = q->unk38[2] - p->unk38[2];
+            d = func_00341860(dx * dx + dz * dz);
+            switch (c->not) {
+            case 0:
+                if (d <= r) {
+                    f = 1;
+                }
+                break;
+            case 1:
+                if (!(d <= r)) {
+                    f = 1;
+                }
+                break;
+            case 2:
+                if (d < r) {
+                    f = 1;
+                }
+                break;
+            case 3:
+                if (!(d <= r)) {
+                    f = 1;
+                }
+                break;
+            case 4:
+                if (d <= r) {
+                    f = 1;
+                }
+                break;
+            case 5:
+                if (!(d < r)) {
+                    f = 1;
+                }
+                break;
+            }
+        }
+    }
+    if (c->val == 0) {
+        return !(f != 0);
+    }
+    return f != 0;
+}
+
 /* Kind 0x2E: p's talk command (0xDA9) is val (or not); none, or 0x80 ones, never. */
 s16 func_005C9210(TalkCond *c, DrawObjFull *p) {
     s32 k = p->talkCmd;
@@ -621,7 +681,6 @@ s16 func_005C8DA0(u8 *c, DrawObjFull *p);
 s16 func_005C8E50(u8 *c, DrawObjFull *p);
 s16 func_005C8F00(u8 *c, DrawObjFull *p);
 s16 func_005C8FB0(u8 *c, DrawObjFull *p);
-s16 func_005C9060(u8 *c, DrawObjFull *p);
 s16 func_005C9270(u8 *c, DrawObjFull *p);
 
 /* A talk (or event) condition (8 bytes: its kind first) for p: each kind's check; 0xFF is
@@ -765,7 +824,7 @@ s16 func_005C6480(u8 *c, DrawObjFull *p) {
         r = func_005C8FB0(c, p);
         break;
     case 0x2C:
-        r = func_005C9060(c, p);
+        r = func_005C9060((TalkCond *)c, p);
         break;
     case 0x2E:
         r = func_005C9210((TalkCond *)c, p);
