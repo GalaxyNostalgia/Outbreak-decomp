@@ -928,7 +928,80 @@ f32 func_00191950(u32 a);
 void func_00191590(f32 *v, f32 angle);
 s32 func_00549860(const f32 *from, const f32 *to, s32 mask, s32 a, s32 *hit);
 s32 func_00822EC0(DrawObjFull *obj, DrawObjFull *player, s32 a);
-void func_00823090(DrawObjFull *obj, s32 what);
+extern s8 *D_00839200[];        /* per remark: the chance (in 100) per character */
+typedef struct {
+    s8 delay;           /* frames before it's said */
+    s8 say;
+    s8 chance;          /* the chance (in 100) to say 0xB instead (5-8: the strongest feeling wanted) */
+} Remark;
+extern Remark D_008391D0[];     /* per remark */
+u16 func_001ADEF0(s32 n);
+
+/* Queues a remark (what, 0-12) for the partner, by chance: 0x109A frames on, it says 0x1099. 5-8
+   ask for its strongest feeling (0x10C8): otherwise 0xB (3, fear) or 0xA. */
+void func_00823090(DrawObjFull *obj, u32 what);
+#ifdef NON_MATCHING   /* registers (obj in s2), and the Remark fields' relocations (the original folds each field into its own hi/lo) */
+void func_00823090(DrawObjFull *obj, u32 what) {
+    s8 *t;
+    s8 *e;
+    u8 max;
+    u8 best;
+    s32 i;
+
+    switch (what) {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 9:
+    case 10:
+    case 11:
+        t = D_00839200[what];
+        if ((func_001ADEF0(1) & 0xFFFF) % 100 > t[obj->unkB98]) {
+            break;
+        }
+        obj->unk109A = D_008391D0[what].delay;
+        obj->unk1099 = D_008391D0[what].say;
+        e = &D_008391D0[what].chance;
+        if (*e != 0 && (func_001ADEF0(1) & 0xFFFF) % 100 <= *e) {
+            obj->unk1099 = 0xB;
+        }
+        break;
+    case 5:
+    case 6:
+    case 7:
+    case 8:
+        best = 0;
+        max = 0;
+        for (i = 0; i < 8; i++) {
+            if (max < obj->unk10C8[i]) {
+                max = obj->unk10C8[i];
+                best = i;
+            }
+        }
+        if (best == D_008391D0[what].chance) {
+            t = D_00839200[what];
+            if ((func_001ADEF0(1) & 0xFFFF) % 100 > t[obj->unkB98]) {
+                break;
+            }
+            obj->unk1099 = D_008391D0[what].say;
+            obj->unk109A = D_008391D0[what].delay;
+        } else if (best == 3) {
+            obj->unk1099 = 0xB;
+            obj->unk109A = D_008391D0[what].delay;
+        } else {
+            obj->unk1099 = 0xA;
+            obj->unk109A = D_008391D0[what].delay;
+        }
+        break;
+    case 12:
+        obj->unk109A = D_008391D0[what].delay;
+        obj->unk1099 = D_008391D0[what].say;
+        break;
+    }
+}
+#endif
 u8 func_005C14C0(DrawObjFull *obj, u16 a);
 
 /* A partner's look at the scene each frame: where it waits, whether it is stuck, how it
