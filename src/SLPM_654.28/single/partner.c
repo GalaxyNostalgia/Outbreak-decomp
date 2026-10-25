@@ -527,8 +527,8 @@ void func_008347C0(DrawObjFull *obj) {
 }
 typedef struct {
     s8 hp;              /* when (func_00636540 under) to heal */
-    u8 unk1;
-    u16 flags;          /* 1, 2: try the lists from the end */
+    s8 pct;             /* healing below this share of the maximum health */
+    u16 flags;          /* 1, 2, 4: try the lists from the end */
 } PartnerHeal;
 typedef struct {
     u16 v[3];
@@ -596,7 +596,44 @@ void func_00834F00(DrawObjFull *obj) {
     }
 }
 #endif
+typedef struct {
+    u16 v[10];
+} ItemIds10;
+extern ItemIds10 D_0083A270;    /* the healing items, in order */
+
+/* Request 2's third pass: while its health is under its character's share, the partner uses
+   healing items (0 from func_00581B30 stops it). */
 void func_00835180(DrawObjFull *obj);
+#ifdef NON_MATCHING   /* first draft: the loops' layout */
+void func_00835180(DrawObjFull *obj) {
+    ItemIds10 ids = D_0083A270;
+    f32 limit = (f32)obj->unk546 * D_0083A1B0[obj->unkB98].pct / 100.0f;
+    s32 i;
+    u8 k;
+    s8 r;
+
+    while (obj->unk544 <= limit) {
+        for (i = 0; i < 10; i++) {
+            k = func_008360C0(obj, ids.v[D_0083A1B0[obj->unkB98].flags & 4 ? 9 - i : i]);
+            if (k != 0) {
+                break;
+            }
+        }
+        if (i < 10) {
+            r = func_00581B30(k, obj);
+            if (r == 0) {
+                return;
+            }
+            if (r == 2) {
+                func_005C13D0(obj, k);
+            }
+        }
+        if (!(i < 10)) {
+            return;
+        }
+    }
+}
+#endif
 void func_008360B0(DrawObjFull *obj);
 
 /* Request 2: the partner looks over its items (four passes). */
