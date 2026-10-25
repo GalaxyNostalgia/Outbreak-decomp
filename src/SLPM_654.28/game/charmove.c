@@ -4675,6 +4675,73 @@ void func_0058C240(DrawObjFull *o) {
     }
 }
 
+u8 func_0058DAB0(DrawObjFull *o, f32 *to, s32 a);
+f32 func_006343D0(DrawObjFull *o, f32 *to);
+void func_0058C4C0(DrawObjFull *o, s32 a);
+void func_00639DF0(DrawObjFull *o);
+
+/* Way 1: walking to 0xFDC (func_0058DAB0 picks the step: 3 there, 1/2 turning, 0x15 ...), then
+   standing once within 20. */
+void func_0058C6B0(DrawObjFull *o) {
+    u8 old = o->act[1];
+
+    switch (o->wayStep) {
+    case 0:
+        o->wayStep++;
+    case 1:
+        o->wayStep++;
+        o->act[0] = 1;
+        o->act[1] = func_0058DAB0(o, o->unkFDC, 0x600);
+        switch (o->act[1]) {
+        case 3:
+            o->wayStep = 4;
+            break;
+        case 1:
+            o->wayStep = 2;
+            break;
+        case 2:
+            o->wayStep = 2;
+            break;
+        case 0x15:
+            o->wayStep = 3;
+            break;
+        }
+        if (o->act[1] != old) {
+            o->act[3] = 0;
+            o->act[2] = 0;
+            func_00639DF0(o);
+        }
+        break;
+    case 2:
+        func_00639DF0(o);
+        o->act[0] = 1;
+        o->act[1] = func_0058DAB0(o, o->unkFDC, 0x600);
+        if (o->act[1] == 3) {
+            o->wayStep = 4;
+            o->act[3] = 0;
+            o->act[2] = 0;
+        }
+        break;
+    case 3:
+        func_00639DF0(o);
+        if (o->act[1] != 0x15) {
+            o->wayStep = 4;
+            o->act[0] = 1;
+            o->act[1] = 3;
+            o->act[3] = 0;
+            o->act[2] = 0;
+        }
+        break;
+    case 4:
+        if (func_006343D0(o, o->unkFDC) < 20.0f) {
+            o->unkFCC = 0;
+        }
+        func_0058C4C0(o, 0);
+        func_00639DF0(o);
+        break;
+    }
+}
+
 /* A character's step, by its action (act[0]) and then the action's kind (act[1]): tables of
    handlers, each reached by a tail call. */
 typedef void (*CharStep)(DrawObjFull *o);

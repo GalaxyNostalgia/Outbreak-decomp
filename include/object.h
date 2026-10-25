@@ -287,7 +287,9 @@ typedef struct DrawObjFull {
     u8 wayStep;         /* 0xFB8 */
     u8 unkFB9[0xFCC - 0xFB9];
     u8 unkFCC;          /* 0xFCC */
-    u8 unkFCD[0xFF0 - 0xFCD];
+    u8 unkFCD[0xFDC - 0xFCD];
+    f32 unkFDC[3];      /* 0xFDC: (way 1) where it walks to */
+    u8 unkFE8[0xFF0 - 0xFE8];
     u8 isNpc;           /* 0xFF0: (players) a computer-controlled partner */
     /* the partner's AI (SINGLE.BIN) */
     u8 unkFF1;          /* 0xFF1 */
