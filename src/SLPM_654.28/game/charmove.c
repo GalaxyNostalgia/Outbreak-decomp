@@ -5772,6 +5772,55 @@ s32 func_00619DF0(DrawObjFull *o) {
     return 0;
 }
 
+s32 func_0061EDF0(DrawObjFull *o);
+
+/* Another chain of the action checks (cf. func_0061A1F0). */
+s32 func_00619FE0(DrawObjFull *o) {
+    if (o->type == 0 && func_0061D090(o)) {
+        return 1;
+    }
+    if (func_0061DF00(o)) {
+        return 1;
+    }
+    if (o->type == 0 && func_0061D1E0(o)) {
+        return 1;
+    }
+    if (o->type == 0 && func_0061D1F0(o)) {
+        return 1;
+    }
+    if (o->type == 0 && func_0061DE60(o)) {
+        return 1;
+    }
+    if (o->type == 0 && func_0061D9A0(o)) {
+        return 1;
+    }
+    if (o->type == 0 && func_0061CE50(o)) {
+        return 1;
+    }
+    if (o->type == 0 && func_0061CF40(o)) {
+        return 1;
+    }
+    if (o->type == 0 && func_0061C4F0(o, 0)) {
+        return 1;
+    }
+    if (o->type == 0 && func_0061C580(o, 0)) {
+        return 1;
+    }
+    if (o->type == 0 && func_0061C590(o, 0)) {
+        return 1;
+    }
+    if (o->type == 0 && func_0061E8B0(o)) {
+        return 1;
+    }
+    if (o->type == 0 && func_0061C650(o, 0)) {
+        return 1;
+    }
+    if (o->type == 0 && func_0061EDF0(o)) {
+        return 1;
+    }
+    return 0;
+}
+
 /* A shorter chain of the action checks (cf. func_006198F0): 1 once one starts. */
 s32 func_0061A1F0(DrawObjFull *o) {
     if (o->type == 0 && func_0061D090(o)) {
