@@ -449,7 +449,267 @@ f32 func_001917C0(const f32 *a, const f32 *b);
 void func_003405D0(f32 s, f32 *out, const f32 *v);
 u8 func_006BCEF0(f32 ra, f32 rb, f32 *ca, f32 *cb, f32 *push);
 u8 func_006BCFB0(f32 r, HitShape *w, f32 *c, f32 *push);
+f32 func_00191A70(f32 x);
+f32 func_00191690(const f32 *v);
+void func_00191820(f32 *out, const f32 *a, const f32 *b);
+void func_001918A0(f32 *dst, const f32 *src);
+void func_006BDCC0(f32 r, f32 len, f32 *v, f32 *push);
+void func_006BDD20(f32 len, f32 *a, f32 *b, f32 *dir, f32 *p, f32 *out);
+
+/* Capsule a against capsule b (radii summed): 1 when they overlap, with how to push a off (out of
+   b) in push. The axes' closest points: parallel axes by their distance and ends, else clamped to
+   each segment. */
 u8 func_006BD1F0(HitShape *a, HitShape *b, f32 *push);
+#ifdef NON_MATCHING   /* first draft */
+u8 func_006BD1F0(HitShape *a, HitShape *b, f32 *push) {
+    Vec3 da;
+    Vec3 db;
+    Vec3 d;
+    Vec3 c;
+    Vec3 p;
+    Vec3 q;
+    Vec3 n;
+    f32 la;
+    f32 lb;
+    f32 rs;
+    f32 cs;
+    f32 t;
+    f32 u;
+    f32 dist;
+    f32 sa;
+    f32 sb;
+    f32 l;
+    f32 m;
+    u8 ka;
+    u8 kb;
+
+    rs = a->r + b->r;
+    la = 2.0f * (a->bound - a->r);
+    if (la < D_00239E88) {
+        la = D_00239E88;
+    }
+    lb = 2.0f * (b->bound - b->r);
+    if (lb < D_00239E88) {
+        lb = D_00239E88;
+    }
+    da.x = a->d[0] / la;
+    da.y = a->d[1] / la;
+    da.z = a->d[2] / la;
+    db.x = b->d[0] / lb;
+    db.y = b->d[1] / lb;
+    db.z = b->d[2] / lb;
+    cs = func_001917C0(&da.x, &db.x);
+    if (1.0f - func_00191A70(cs) < D_00239E88) {
+        /* parallel */
+        func_00340560(&d, (Vec3 *)b->a, (Vec3 *)a->a);
+        t = func_001917C0(&d.x, &da.x);
+        la = t * t;
+        l = func_001917C0(&d.x, &d.x) - la;
+        if (l < 0.0f) {
+            return 0;
+        }
+        dist = func_00341860(l);
+        if (!(dist <= rs)) {
+            return 0;
+        }
+        if (dist < D_00239E88) {
+            c.x = 5.0f + da.x;
+            c.y = da.y;
+            c.z = da.z;
+            func_00191820(&n.x, &da.x, &c.x);
+            if (func_00191A70(n.x) < D_00239E88 && func_00191A70(n.y) < D_00239E88 &&
+                func_00191A70(n.z) < D_00239E88) {
+                c.y += 5.0f;
+                func_00191820(&n.x, &da.x, &c.x);
+            }
+            func_00191750(&n);
+            func_003405D0(rs, &n.x, &n.x);
+        } else {
+            func_003405D0(t, &n.x, &da.x);
+            func_003404F0(&p, (Vec3 *)a->a, &n);
+            func_00340560(&n, (Vec3 *)b->a, &p);
+            func_003405D0((rs - dist) / dist, &n.x, &n.x);
+        }
+        if (t < 0.0f) {
+            func_00340560(&c, (Vec3 *)b->b, (Vec3 *)a->a);
+            u = func_001917C0(&c.x, &da.x);
+            if (!(u < 0.0f)) {
+                func_001918A0(push, &n.x);
+                return 1;
+            }
+            if (t < u) {
+                l = func_00191690(&c.x);
+                if (l <= rs) {
+                    func_003405D0((rs - l) / l, push, &c.x);
+                    return 1;
+                }
+                return 0;
+            }
+            l = func_00191690(&d.x);
+            if (l <= rs) {
+                func_003405D0((rs - l) / l, push, &d.x);
+                return 1;
+            }
+            return 0;
+        }
+        if (t <= lb) {
+            func_001918A0(push, &n.x);
+            return 1;
+        }
+        func_00340560(&c, (Vec3 *)a->b, (Vec3 *)b->a);
+        u = func_001917C0(&c.x, &db.x);
+        if (u <= lb) {
+            func_001918A0(push, &n.x);
+            return 1;
+        }
+        if (t < u) {
+            l = func_00341860(dist * dist + la);
+            if (l <= rs) {
+                func_003405D0((rs - l) / l, push, &d.x);
+                return 1;
+            }
+            return 0;
+        }
+        l = func_00341860(dist * dist + u * u);
+        if (l <= rs) {
+            func_003405D0((rs - l) / l, push, &c.x);
+            return 1;
+        }
+        return 0;
+    }
+    func_00340560(&d, (Vec3 *)b->a, (Vec3 *)a->a);
+    t = func_001917C0(&d.x, &da.x);
+    u = func_001917C0(&d.x, &db.x);
+    l = 1.0f - cs * cs;
+    sb = (t * cs - u) / l;
+    sa = (t - u * cs) / l;
+    if (sa < 0.0f) {
+        ka = 0;
+    } else if (sa <= la) {
+        ka = 1;
+    } else {
+        ka = 2;
+    }
+    if (sb < 0.0f) {
+        kb = 0;
+    } else if (sb <= lb) {
+        kb = 1;
+    } else {
+        kb = 2;
+    }
+    switch (ka) {
+    case 0:
+        func_006BDD20(lb, b->a, b->b, &db.x, a->a, &p.x);
+        func_00340560(&d, &p, (Vec3 *)a->a);
+        l = func_00191690(&d.x);
+        switch (kb) {
+        case 0:
+            func_006BDD20(la, a->a, a->b, &da.x, b->a, &q.x);
+            func_00340560(&c, (Vec3 *)b->a, &q);
+            break;
+        case 1:
+            if (l <= rs) {
+                func_006BDCC0(rs, l, &d.x, push);
+                return 1;
+            }
+            return 0;
+        case 2:
+            func_006BDD20(la, a->a, a->b, &da.x, b->b, &q.x);
+            func_00340560(&c, (Vec3 *)b->b, &q);
+            break;
+        default:
+            return 0;
+        }
+        m = func_00191690(&c.x);
+        if (l < m) {
+            if (l <= rs) {
+                func_006BDCC0(rs, l, &d.x, push);
+                return 1;
+            }
+            return 0;
+        }
+        if (m <= rs) {
+            func_006BDCC0(rs, m, &c.x, push);
+            return 1;
+        }
+        return 0;
+    case 1:
+        switch (kb) {
+        case 0:
+            func_006BDD20(la, a->a, a->b, &da.x, b->a, &p.x);
+            func_00340560(&d, (Vec3 *)b->a, &p);
+            l = func_00191690(&d.x);
+            if (l <= rs) {
+                func_006BDCC0(rs, l, &d.x, push);
+                return 1;
+            }
+            return 0;
+        case 1:
+            func_003405D0(sa, &d.x, &da.x);
+            func_003404F0(&p, (Vec3 *)a->a, &d);
+            func_003405D0(sb, &d.x, &db.x);
+            func_003404F0(&q, (Vec3 *)b->a, &d);
+            func_00340560(&d, &q, &p);
+            l = func_00191690(&d.x);
+            if (l <= rs) {
+                if (l < D_00239E88) {
+                    func_00191820(&d.x, &da.x, &db.x);
+                    func_003405D0(rs, push, &d.x);
+                } else {
+                    func_006BDCC0(rs, l, &d.x, push);
+                }
+                return 1;
+            }
+            return 0;
+        case 2:
+            func_006BDD20(la, a->a, a->b, &da.x, b->b, &p.x);
+            func_00340560(&d, (Vec3 *)b->b, &p);
+            l = func_00191690(&d.x);
+            if (l <= rs) {
+                func_006BDCC0(rs, l, &d.x, push);
+                return 1;
+            }
+            return 0;
+        }
+    case 2:
+        func_006BDD20(lb, b->a, b->b, &db.x, a->b, &p.x);
+        func_00340560(&d, &p, (Vec3 *)a->b);
+        l = func_00191690(&d.x);
+        switch (kb) {
+        case 0:
+            func_006BDD20(la, a->a, a->b, &da.x, b->a, &q.x);
+            func_00340560(&c, (Vec3 *)b->a, &q);
+            break;
+        case 1:
+            if (l <= rs) {
+                func_006BDCC0(rs, l, &d.x, push);
+                return 1;
+            }
+            return 0;
+        case 2:
+            func_006BDD20(la, a->a, a->b, &da.x, b->b, &q.x);
+            func_00340560(&c, (Vec3 *)b->b, &q);
+            break;
+        default:
+            return 0;
+        }
+        m = func_00191690(&c.x);
+        if (l < m) {
+            if (l <= rs) {
+                func_006BDCC0(rs, l, &d.x, push);
+                return 1;
+            }
+            return 0;
+        }
+        if (m <= rs) {
+            func_006BDCC0(rs, m, &c.x, push);
+            return 1;
+        }
+        return 0;
+    }
+    return 0;
+}
+#endif
 void func_006BC600(s8 i, s8 j, f32 *push);
 
 /* Hit entry i (o, shape w) against the others of the kinds in mask: the one overlapping most
