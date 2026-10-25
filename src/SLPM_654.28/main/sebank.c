@@ -1,5 +1,6 @@
 #include "cri.h"
 #include "sce.h"
+#include "object.h"
 
 /* Sound effect banks (.snd files in partition 3): a queue of banks to load, read with ADXF and sent
    to the sound driver one per frame. */
@@ -606,6 +607,62 @@ void func_001B6FD0(f32 *pos, s32 id) {
             func_001B7A70(2, id, 0, pos, 1, 0, 0);
         }
         D_0023BB40 = id;
+    }
+}
+
+u16 func_001ADEF0(s32 n);
+s8 func_001B75E0(DrawObjFull *o);
+u16 func_5445D0(f32 *pos);
+void func_00190E00(Mat44 *out, const Mat44 *m);
+extern Mat44 D_003062E0;
+
+/* A character's footstep (kind 0/1 left and right foot, 2, 3, 4): bank 3's sound for it (players
+   add their floor's, func_001B75E0) at its feet, plus the floor's (func_5445D0: low byte, high
+   byte a second sound). */
+void func_001B7410(DrawObjFull *o, s8 kind) {
+    u16 id;
+    u16 se;
+    u16 floor;
+    u16 at;
+    Mat44 m;
+    Vec3 pos;
+
+    switch (kind) {
+    case 0:
+    case 1:
+        id = kind * 2 + (func_001ADEF0(1) & 1);
+        break;
+    case 2:
+        id = 4;
+        break;
+    case 3:
+        id = 5;
+        break;
+    case 4:
+        id = (func_001ADEF0(1) & 1) + 6;
+        break;
+    }
+    at = 0;
+    if (o->type == 0) {
+        se = id + func_001B75E0(o);
+        if (o->unk54F == 0x2B && o->act[1] == 0x6D) {
+            at = 1;
+        }
+    } else {
+        se = id;
+    }
+    floor = func_5445D0(o->unk38);
+    if (at) {
+        func_00190E00(&m, &D_003062E0);
+        pos.x = m.m[3][0];
+        pos.y = m.m[3][1];
+        pos.z = m.m[3][2];
+    } else {
+        pos = *(Vec3 *)o->unk38;
+    }
+    func_001B7A70(3, se, o->kind, &pos.x, 1, 0, floor & 0xFF);
+    if ((u16)(floor >> 8)) {
+        func_001B7A70(3, se, o->kind, &pos.x, 1, 0, (u16)(floor >> 8));
     }
 }
 
