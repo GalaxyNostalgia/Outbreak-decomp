@@ -4675,7 +4675,7 @@ void func_0058C240(DrawObjFull *o) {
     }
 }
 
-u8 func_0058DAB0(DrawObjFull *o, f32 *to, s32 a);
+u8 func_0058DAB0(DrawObjFull *o, f32 *to, s16 tol);
 f32 func_006343D0(DrawObjFull *o, f32 *to);
 void func_0058C4C0(DrawObjFull *o, s32 a);
 void func_00639DF0(DrawObjFull *o);
@@ -4740,6 +4740,25 @@ void func_0058C6B0(DrawObjFull *o) {
         func_00639DF0(o);
         break;
     }
+}
+
+s16 func_346C50(f32 *from, f32 *to);
+
+/* The step that turns the character toward `to`: 3 already facing it (within tol), 1 turning
+   left (0xA000 and over), 2 right (under 0x6000), 0x15 turning round. */
+u8 func_0058DAB0(DrawObjFull *o, f32 *to, s16 tol) {
+    u16 d = func_346C50(o->unk38, to) - o->unk92;
+
+    if (d >= (u16)-tol || d < (u16)tol) {
+        return 3;
+    }
+    if (d >= 0xA000) {
+        return 1;
+    }
+    if (d < 0x6000) {
+        return 2;
+    }
+    return 0x15;
 }
 
 /* A character's step, by its action (act[0]) and then the action's kind (act[1]): tables of
