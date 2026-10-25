@@ -716,6 +716,40 @@ s32 func_005C7FB0(TalkCond *c, DrawObjFull *p) {
     return 0;
 }
 
+/* Kind 0x14: the health of the one p talks to (read as a player's even for an NPC) against val. */
+s32 func_005C7A30(TalkCond *c, DrawObjFull *p);
+#ifdef NON_MATCHING   /* where &p->unkDC2 is taken (the original after each test) */
+s32 func_005C7A30(TalkCond *c, DrawObjFull *p) {
+    s16 *who = &p->unkDC2;
+    DrawObjFull *q;
+
+    if (p->unkDC7 < 0) {
+        if (*who < 0) {
+            return 0;
+        }
+    } else if (func_00651300(*who) == NULL) {
+        return 0;
+    }
+    q = &D_00476DD0[*who];
+    switch (c->not) {
+    case 0:
+        return q->unk544 == c->val;
+    case 1:
+        return q->unk544 != c->val;
+    case 2:
+        return q->unk544 < c->val;
+    case 3:
+        return q->unk544 > c->val;
+    case 4:
+        return q->unk544 <= c->val;
+    case 5:
+        return q->unk544 >= c->val;
+    default:
+        return 0;
+    }
+}
+#endif
+
 /* Kind 0x15: p's state (0xBA0): 0 fine (none of 0xB3), 1, 2, 4 0x10, 5 0x20, 6 0x80 (or not). */
 s32 func_005C7B50(TalkCond *c, DrawObjFull *p) {
     if (c->not == 0) {
@@ -921,7 +955,6 @@ s16 func_005C7420(u8 *c, DrawObjFull *p);
 s16 func_005C75B0(u8 *c, DrawObjFull *p);
 s16 func_005C7600(u8 *c, DrawObjFull *p);
 s16 func_005C7650(u8 *c, DrawObjFull *p);
-s16 func_005C7A30(u8 *c, DrawObjFull *p);
 s16 func_005C7F90(u8 *c, DrawObjFull *p);
 s16 func_005C8040(u8 *c, DrawObjFull *p);
 s16 func_005C80F0(u8 *c, DrawObjFull *p);
@@ -1013,7 +1046,7 @@ s16 func_005C6480(u8 *c, DrawObjFull *p) {
         r = func_005C7980((TalkCond *)c, p);
         break;
     case 0x14:
-        r = func_005C7A30(c, p);
+        r = func_005C7A30((TalkCond *)c, p);
         break;
     case 0x15:
         r = func_005C7B50((TalkCond *)c, p);
