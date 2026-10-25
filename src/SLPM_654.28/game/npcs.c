@@ -848,7 +848,6 @@ s32 func_005F4080(Npc *n) {
 extern u16 D_0048AFB0[][6];
 extern u32 D_0048AD90[];
 void func_0068A6E0(Npc *n);
-void func_0068A780(Npc *n);
 s32 func_0068A700(Npc *n, s32 a);
 s32 func_0068A950(Npc *n);
 void func_0068AAB0(Npc *n, s32 a);
@@ -863,19 +862,55 @@ s32 func_0068A660(Npc *n);
 void func_005403E0(s32 a, s32 b);
 void func_005F4BB0(Npc *n, s32 a);
 
-/* Unless held (0xBA0 & 0x80000): back to its first action if 0xFB7 asks, and shown. */
-#define NPC_WAKE(n)                         \
+/* Unless held (0xBA0 & 0x80000): its mode 0xFB7 becomes m (restarting its actions if it changes),
+   and it's shown. */
+#define NPC_MODE(n, m)                      \
     if (!((n)->unkBA0 & 0x80000)) {         \
-        if ((n)->unkFB7) {                  \
+        if ((n)->unkFB7 != (m)) {           \
             (n)->act[0] = 0;                \
             (n)->act[1] = 0;                \
             (n)->act[2] = 0;                \
             (n)->act[3] = 0;                \
             (n)->unkFB8[0] = 0;             \
         }                                   \
-        (n)->unkFB7 = 0;                    \
+        (n)->unkFB7 = (m);                  \
         (n)->visible = 1;                   \
     }
+#define NPC_WAKE(n) NPC_MODE(n, 0)
+
+s32 func_0068AF60(Npc *n);
+s32 func_0068B0A0(Npc *n);
+s32 func_0068B130(Npc *n, DrawObjFull *p);
+f32 func_00634380(Npc *n, f32 *pos);
+void func_0068B150(Npc *n);
+s32 func_0068B1B0(Npc *n);
+void func_0068AD40(Npc *n, DrawObjFull *p);
+
+/* Following its player (0x1020): stays put near (100), walks up (func_0068AD40) further away,
+   and gives up past 300. */
+void func_0068A780(Npc *n) {
+    DrawObjFull *p;
+    f32 d;
+
+    n->unkFD8 = 300.0f;
+    if (func_0068AF60(n)) {
+        p = &D_00476DD0[n->unk1020 - 1];
+        if (func_0068B0A0(n) && func_0068B130(n, p)) {
+            d = func_00634380(n, p->unk38);
+            if (d > 300.0f) {
+                func_0068B150(n);
+                NPC_WAKE(n);
+            } else if (!(p->unkBA0 & 0x10000) || !func_0068B1B0(n)) {
+                if (d > 100.0f) {
+                    NPC_MODE(n, 1);
+                    func_0068AD40(n, p);
+                    return;
+                }
+                NPC_WAKE(n);
+            }
+        }
+    }
+}
 
 /* An NPC's scripted job (0x1150): each step calls func_0068A6E0 once it's done. */
 void func_0068A170(Npc *n) {

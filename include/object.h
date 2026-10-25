@@ -385,7 +385,8 @@ typedef struct Npc {
     u8 unkFD4[2];
     u8 unkFD6;          /* 0xFD6 */
     s8 unkFD7;          /* 0xFD7 */
-    u8 unkFD8[0x101F - 0xFD8];
+    f32 unkFD8;         /* 0xFD8: how near it follows */
+    u8 unkFDC[0x101F - 0xFDC];
     u8 unk101F;         /* 0x101F */
     u8 unk1020;         /* 0x1020 */
     u8 unk1021[0x102C - 0x1021];

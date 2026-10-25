@@ -591,6 +591,24 @@ void func_001B6F00(s32 id) {
     func_001B7A50(12, id, 0);
 }
 
+s32 func_001B6F10(s32 sound);
+s32 func_001B7A70(s32 bank, s32 id, s32 unused, f32 *pos, s32 a, s32 b, s32 c);
+extern s16 D_0023BB40;      /* the last such sound */
+
+/* Plays a sound effect of bank 2 (func_001B6F10 picks it; 0xFF: none), at pos if given. */
+void func_001B6FD0(f32 *pos, s32 id) {
+    id = func_001B6F10(id);
+
+    if (id != 0xFF) {
+        if (pos == NULL) {
+            func_001B7A50(2, id, 0);
+        } else {
+            func_001B7A70(2, id, 0, pos, 1, 0, 0);
+        }
+        D_0023BB40 = id;
+    }
+}
+
 /* The enemy sound bank: pieces (sequences and waves) added one by one, then merged and sent as
    one bank. */
 typedef struct {
