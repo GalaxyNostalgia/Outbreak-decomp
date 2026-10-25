@@ -600,3 +600,14 @@ void func_005B99B0(Obj250L *e) {
 }
 #endif
 
+
+/* An effect shows while the room matrix it follows (unk30) is drawn. */
+extern s32 D_003AEF6C[];
+
+void func_0055FB20(Obj250L *p) {
+    if (D_003AEF6C[0] & (1 << p->unk30)) {
+        p->unk1 = 1;
+    } else {
+        p->unk1 = 0;
+    }
+}

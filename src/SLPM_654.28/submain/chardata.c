@@ -80,3 +80,25 @@ s32 func_00347340(DrawObjFull *o, s8 table, s32 index) {
 
 void func_00347580(void) {
 }
+
+/* How far v sits off the camera's view, as two shares (sideways and up) of a turn, each
+   scaled by x / y, fractional part kept. */
+extern f32 D_00306338[3];       /* the camera */
+extern f32 D_00306344[3];       /* what it looks at */
+f32 func_00191BD0(f32 x);
+u32 func_00340140(const f32 *a, const f32 *b);
+u32 func_00340190(const f32 *a, const f32 *b);
+
+void func_00347040(f32 x, f32 y, f32 *v, f32 *outA, f32 *outB) {
+    f32 b;
+    f32 a;
+    f32 c;
+    f32 d;
+
+    a = (f32)(func_00340140(D_00306344, D_00306338) & 0xFFFF) / 65536.0f;
+    b = (f32)(func_00340190(D_00306344, D_00306338) & 0xFFFF) / 65536.0f;
+    c = (f32)((0x10000 - func_00340140(v, D_00306338)) & 0xFFFF) / 65536.0f;
+    d = (f32)(func_00340190(v, D_00306338) & 0xFFFF) / 65536.0f;
+    *outA = func_00191BD0(x * (a + c));
+    *outB = func_00191BD0(y * (b + d));
+}

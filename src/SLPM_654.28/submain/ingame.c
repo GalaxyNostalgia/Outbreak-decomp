@@ -956,6 +956,16 @@ f32 func_00341860(f32 x) {
     return func_00191BF0(x);
 }
 
+f32 func_00191AA0(f32 x);
+
+/* sqrt of |x|, 0 for 0. */
+f32 func_00341890(f32 x) {
+    if (x == 0.0f) {
+        return 0.0f;
+    }
+    return func_00191AA0(x);
+}
+
 #include "drawcb.h"
 extern Slot1468 D_00389750;     /* the shadow model */
 extern s16 D_0038A774[][16];    /* (0x20 bytes each) [0]: the model part */

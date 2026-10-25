@@ -18,7 +18,7 @@ typedef struct {
     u8 unkC[0x1C - 0xC];
     s32 unk1C;          /* 0x1C */
     f32 unk20[2];       /* 0x20 */
-    u8 unk28[0x30 - 0x28];
+    f32 range[2];       /* 0x28: (flag 0x20) its fade by distance (func_005906C0) */
 } RoomLight;            /* 0x30 */
 
 extern RoomLight D_00363310[];
@@ -218,3 +218,237 @@ void func_00546E30(void) {
         D_0048AE9C[0] = -1;
     }
 }
+
+/* A light effect as func_00546B70 sets it up (an Obj250L). */
+typedef struct {
+    s16 a;
+    s16 b;
+    s32 c;
+} LightPart;
+
+typedef struct {
+    s32 first;
+    s32 n;
+} LightGroup;
+
+typedef struct {
+    u8 unk0[8];
+    LightGroup *groups; /* 0x08 */
+    LightPart *parts;   /* 0x0C */
+    u8 unk10[0x18 - 0x10];
+    s32 unk18;          /* 0x18 */
+} LightDef;
+
+typedef struct {
+    s8 active;          /* 0x000 */
+    s8 visible;         /* 0x001 */
+    u8 unk2[6];
+    u8 state;           /* 0x008 */
+    u8 step;            /* 0x009 */
+    u8 unkA[2];
+    s16 timer;          /* 0x00C: the blink's */
+    s16 period;         /* 0x00E */
+    s16 blinkA;         /* 0x010 */
+    s16 blinkB;         /* 0x012 */
+    u8 unk14[0x24 - 0x14];
+    RoomLight *light;   /* 0x024 */
+    u8 unk28[0x30 - 0x28];
+    u8 mtxId;           /* 0x030 */
+    u8 unk31;
+    u8 group;           /* 0x032: its group in def + 1 (0: none) */
+    u8 unk33[5];
+    f32 pos[3];         /* 0x038 */
+    f32 ofs[3];         /* 0x044 */
+    Mat44 own;          /* 0x050 */
+    s16 rot[3];         /* 0x090 */
+    u8 unk96[0xB4 - 0x96];
+    f32 scale[3];       /* 0x0B4 */
+    f32 unkC0[3];       /* 0x0C0 */
+    u8 unkCC[0x130 - 0xCC];
+    f32 stepA;          /* 0x130 */
+    f32 stepB;          /* 0x134 */
+    u8 countA;          /* 0x138 */
+    u8 countB;          /* 0x139 */
+    s8 blink;           /* 0x13A */
+    u8 unk13B[0x18C - 0x13B];
+    s32 delay;          /* 0x18C */
+    u8 unk190[0x198 - 0x190];
+    f32 unk198;         /* 0x198 */
+    f32 unk19C;         /* 0x19C */
+    u8 unk1A0[0x1F0 - 0x1A0];
+    Mat44 *mtx;         /* 0x1F0 */
+    LightDef *def;      /* 0x1F4 */
+    s32 unk1F8;         /* 0x1F8 */
+    u8 unk1FC[4];
+    u32 flags;          /* 0x200 */
+    u8 unk204[4];
+    f32 col[4];         /* 0x208 */
+    f32 unk218;         /* 0x218 */
+    f32 unk21C;         /* 0x21C */
+    f32 unk220;         /* 0x220 */
+    f32 unk224;         /* 0x224 */
+    f32 unk228;         /* 0x228 */
+    f32 unk22C;         /* 0x22C */
+    s32 unk230;         /* 0x230 */
+    s32 unk234;         /* 0x234 */
+    u8 unk238[2];
+    s16 unk23A;         /* 0x23A: 1 ..., 0x10 its own matrix at the camera */
+    s16 unk23C;         /* 0x23C */
+    s16 unk23E;         /* 0x23E */
+} LightFx;
+
+typedef struct {
+    f32 v[3];
+} LightVec;
+
+extern s8 D_0048BF88[];
+extern f32 D_00306338[3];       /* the camera */
+void func_0055FB20(Obj250L *p);
+void func_0055FBF0(LightFx *p, LightDef *d, s32 c, s16 b, s16 a);
+void func_00347040(f32 x, f32 y, f32 *v, f32 *a, f32 *b);
+f32 func_005906C0(f32 near, f32 far, f32 *pos);
+void func_0018FA40(f32 x, f32 y, f32 z, f32 *m);
+void func_0018FA30(f32 x, f32 y, f32 z, f32 *m);
+void func_0018FAB0(f32 *out, const f32 *m);
+
+void func_005470B0(Obj250L *p0);
+#ifdef NON_MATCHING   /* operand order in the group walk; the w copy and delay store through address registers */
+void func_005470B0(Obj250L *p0) {
+    LightFx *p = (LightFx *)p0;
+    s32 i;
+    LightDef *d = p->def;
+    RoomLight *l;
+    LightPart *e;
+    f32 f;
+    f32 a;
+    f32 b;
+    f32 v[3];
+    f32 w[3];
+    Mat44 m;
+
+    if ((D_0048AE9C[0] & (1 << p->mtxId)) || D_0048BF88[0] != 0) {
+        p->active = p->visible = 1;
+    } else {
+        p->active = p->visible = 0;
+    }
+    if (p->active == 0) {
+        return;
+    }
+    switch (p->state) {
+    case 0:
+        p->state++;
+        p->visible = 0;
+        p->flags |= 0x8000;
+        p->unk1F8 = p->def->unk18;
+    case 1:
+        break;
+    default:
+        goto end;
+    }
+    switch (p->step) {
+    case 0:
+        p->visible = 1;
+        p->step++;
+        p->pos[0] = p->ofs[0];
+        p->pos[1] = p->ofs[1];
+        p->pos[2] = p->ofs[2];
+        p->scale[0] = 1.0f;
+        p->scale[1] = 1.0f;
+        p->scale[2] = 1.0f;
+        p->rot[0] = 0;
+        p->rot[1] = 0;
+        p->rot[2] = 0;
+        p->unk234 = 0;
+        p->col[3] = 1.0f;
+        p->col[0] = 1.0f;
+        p->col[1] = 1.0f;
+        p->col[2] = 1.0f;
+        p->unk21C = 0.0f;
+        p->unk218 = 0.0f;
+        p->unk220 = 1.0f;
+        p->unk224 = 1.0f;
+        p->unkC0[0] = 0.0f;
+        p->unkC0[1] = 0.0f;
+        p->unkC0[2] = 0.0f;
+        p->unk230 = 0;
+    case 1:
+        break;
+    default:
+        goto end;
+    }
+    if (p->group != 0) {
+        for (i = 0; i < d->groups[p->group - 1].n; i++) {
+            e = &d->parts[d->groups[p->group - 1].first + i];
+            func_0055FBF0(p, d, e->c, e->b, e->a);
+        }
+    }
+    p->col[3] *= p->unk198;
+    p->col[0] *= p->unk19C;
+    p->col[1] *= p->unk19C;
+    p->col[2] *= p->unk19C;
+    if (p->unk23A & 1) {
+        v[2] = 0.0f;
+        v[1] = 0.0f;
+        v[0] = 0.0f;
+        if (p->mtx != NULL) {
+            func_0018FAB0(v, (f32 *)p->mtx);
+        }
+        v[0] += p->pos[0];
+        v[1] += p->pos[1];
+        v[2] += p->pos[2];
+        func_00347040(p->unk23C / 16.0f, p->unk23E / 16.0f, v, &a, &b);
+        p->unk228 = a;
+        p->unk22C = b;
+    }
+    if (p->unk23A & 0x10) {
+        p->pos[0] = 0.0f;
+        p->pos[1] = 0.0f;
+        p->pos[2] = 0.0f;
+        func_0018FA30(D_00306338[0], D_00306338[1], D_00306338[2], (f32 *)&p->own);
+    }
+    if (p->blink != 0) {
+        if (p->delay != 0) {
+            p->delay--;
+            goto end;
+        }
+        if (p->timer <= 0) {
+            p->timer = p->period;
+            if (++p->blinkA >= p->countA) {
+                p->unk228 = 0.0f;
+                p->blinkA = 0;
+                if (++p->blinkB >= p->countB) {
+                    p->unk22C = 0.0f;
+                    p->blinkB = 0;
+                } else {
+                    p->unk22C += p->stepB;
+                }
+            } else {
+                p->unk228 += p->stepA;
+            }
+        }
+        p->timer--;
+    }
+    l = p->light;
+    if (l->flags & 0x20) {
+        if (p->mtx != NULL) {
+            func_00190ED0((f32 *)&m, (f32 *)p->mtx);
+            func_0018FA40(p->pos[0], p->pos[1], p->pos[2], (f32 *)&m);
+            *(LightVec *)w = *(LightVec *)m.m[3];
+        } else {
+            w[0] = p->pos[0];
+            w[1] = p->pos[1];
+            w[2] = p->pos[2];
+        }
+        f = func_005906C0(l->range[0], l->range[1], w);
+        if (f == 0.0f) {
+            p->visible = 0;
+            return;
+        }
+        p->visible = 1;
+        p->col[3] *= f;
+    }
+end:
+    func_0055FB20(p0);
+}
+#endif
+

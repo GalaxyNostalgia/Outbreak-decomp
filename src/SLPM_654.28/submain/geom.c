@@ -33,6 +33,23 @@ u16 func_00340140(const f32 *a, const f32 *b) {
     return func_001918C0(func_00191B50(x, z));
 }
 
+f32 func_00341890(f32 x);
+
+/* The pitch from a to b: atan2(dy, the flat distance). */
+u16 func_00340190(const f32 *a, const f32 *b) {
+    f32 d[3];
+    f32 h;
+
+    d[0] = b[0] - a[0];
+    d[1] = b[1] - a[1];
+    d[2] = b[2] - a[2];
+    h = func_00341890(d[0] * d[0] + d[2] * d[2]);
+    if (h == 0.0f) {
+        h = D_00239CE4;
+    }
+    return func_001918C0(func_00191B50(d[1], h));
+}
+
 /* The effect models loaded. */
 typedef struct {
     u8 unk0[0x820];

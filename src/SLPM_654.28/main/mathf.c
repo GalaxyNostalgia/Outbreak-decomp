@@ -121,3 +121,8 @@ void func_0018F9F0(f32 *m, const f32 *s) {
     func_0018F880(s[0], s[1], s[2], t);
     func_00190DB0(m, t);
 }
+
+/* sqrt of |x| */
+f32 func_00191AA0(f32 x) {
+    return func_00191BF0(func_00191A70(x));
+}
