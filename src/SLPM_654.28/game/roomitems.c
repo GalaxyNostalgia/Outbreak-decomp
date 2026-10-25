@@ -1082,3 +1082,49 @@ s32 func_00562BF0(ZoneWho *z, DrawObjFull *o) {
     }
     return r;
 }
+
+extern u16 D_003065AA[];        /* the scenario */
+s32 func_00583EA0(u8 item, s32 flag);
+s32 func_005C14C0(DrawObjFull *o, u16 id);
+
+/* Whether character who (players 0-3, NPCs 4 on) may take item slot item: not a one-of-a-kind
+   (0x8000000) it has, nor (scenario 0x23) one of the 0x34BC-0x34BE set it can't hold together. */
+s32 func_00562C80(u16 who, u8 item) {
+    ItemSlot *it = &D_003967D0[item];
+    DrawObjFull *o;
+
+    if (*(s8 *)it == 0) {
+        return 0;
+    }
+    if (who < 4) {
+        o = &D_00476DD0[who];
+    } else {
+        o = func_00651300(who - 4);
+    }
+    if (o == NULL) {
+        return 0;
+    }
+    if (func_00583EA0(item, 0x8000000) && (u8)func_005C14C0(o, it->unk6)) {
+        return 0;
+    }
+    if (D_003065AA[0] == 0x23) {
+        switch (it->unk6) {
+        case 0x34BE:
+            if ((u8)func_005C14C0(o, 0x34BC) || (u8)func_005C14C0(o, 0x34BD)) {
+                return 0;
+            }
+            break;
+        case 0x34BC:
+            if ((u8)func_005C14C0(o, 0x34BE)) {
+                return 0;
+            }
+            break;
+        case 0x34BD:
+            if ((u8)func_005C14C0(o, 0x34BE)) {
+                return 0;
+            }
+            break;
+        }
+    }
+    return 1;
+}
