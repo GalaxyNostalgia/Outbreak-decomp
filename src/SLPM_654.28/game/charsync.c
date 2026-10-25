@@ -585,14 +585,34 @@ extern u8 D_30659C[];
 extern u32 D_00719628[];        /* the timers running (a bit each) */
 extern s32 D_00719668[];        /* the timers (frames) */
 
+/* Kind 0: timer arg is running (or not, as val says). */
+s32 func_005C6A40(TalkCond *c, DrawObjFull *p) {
+    s32 t = c->arg;
+    s32 on = 0;
+    u32 w;
+
+    w = D_00719628[(u32)t >> 5];
+    if (w & (1 << (t % 32))) {
+        on = 1;
+    }
+    if (c->not == 0) {
+        return on == c->val;
+    }
+    if (c->not == 1) {
+        return on != c->val;
+    }
+    return 0;
+}
+
 /* Kind 1: timer arg (in seconds) against val, while it runs. */
 s32 func_005C6AD0(TalkCond *c, DrawObjFull *p);
-#ifdef NON_MATCHING   /* scheduling of the timer bit test */
 s32 func_005C6AD0(TalkCond *c, DrawObjFull *p) {
     s32 fps = D_30659C[0] != 0 ? 0x1E : 0x3C;
     s32 t = c->arg;
+    u32 w;
 
-    if (D_00719628[(u32)t >> 5] & (1 << (t % 32))) {
+    w = D_00719628[(u32)t >> 5];
+    if (w & (1 << (t % 32))) {
 
         switch (c->not) {
         case 0:
@@ -607,11 +627,12 @@ s32 func_005C6AD0(TalkCond *c, DrawObjFull *p) {
             return D_00719668[t] / fps <= c->val;
         case 5:
             return D_00719668[t] / fps >= c->val;
+        default:
+            return 0;
         }
     }
     return 0;
 }
-#endif
 
 /* Kind 0x17: p's 0xD28 in seconds against val (op c->not: ==, !=, <, >, <=, >=). */
 s32 func_005C7E50(TalkCond *c, DrawObjFull *p) {
@@ -886,7 +907,6 @@ s16 func_005C9210(TalkCond *c, DrawObjFull *p) {
     return (s8)k != c->val;
 }
 
-s16 func_005C6A40(u8 *c, DrawObjFull *p);
 s16 func_005C6CA0(u8 *c, DrawObjFull *p);
 s16 func_005C6CF0(u8 *c, DrawObjFull *p);
 s16 func_005C6DA0(u8 *c, DrawObjFull *p);
@@ -933,7 +953,7 @@ s16 func_005C6480(u8 *c, DrawObjFull *p) {
         r = 0;
         break;
     case 0x0:
-        r = func_005C6A40(c, p);
+        r = func_005C6A40((TalkCond *)c, p);
         break;
     case 0x1:
         r = func_005C6AD0((TalkCond *)c, p);
