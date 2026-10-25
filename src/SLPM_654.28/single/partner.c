@@ -278,7 +278,15 @@ s8 func_00833250(DrawObjFull *obj, Zone **zones, s32 n, Zone **found, u8 *at) {
     return r;
 }
 #endif
-void func_008347C0(DrawObjFull *obj);
+void func_00834800(DrawObjFull *obj);
+void func_00834A20(DrawObjFull *obj);
+
+void func_008347C0(DrawObjFull *obj) {
+    if (obj != NULL) {
+        func_00834800(obj);
+        func_00834A20(obj);
+    }
+}
 void func_00834F00(DrawObjFull *obj);
 void func_00835180(DrawObjFull *obj);
 void func_008360B0(DrawObjFull *obj);
