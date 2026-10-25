@@ -917,3 +917,14 @@ void func_0060F2B0(void) {
 
 void func_0060F2C0(void) {
 }
+
+/* A thing as func_0060EF10 sees it. */
+typedef struct {
+    u8 unk0[0xC94];
+    s32 flags;          /* 0xC94 */
+} ThingFlags;
+
+/* Whether thing t counts (not hidden: 0xC94 & 8). */
+s8 func_0060EF10(ThingFlags *t) {
+    return !((t->flags & 8) != 0);
+}

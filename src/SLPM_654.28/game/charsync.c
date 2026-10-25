@@ -816,7 +816,7 @@ s32 func_005C9060(TalkCond *c, DrawObjFull *p) {
 }
 
 extern DrawObjFull *D_0023BDF4;     /* the things */
-s32 func_0060EF10(DrawObjFull *t);
+s8 func_0060EF10(DrawObjFull *t);
 
 /* Kind 0x12: whether a (shown, func_0060EF10) thing is within (op c->not) arg of p across the
    floor, as val says. */
