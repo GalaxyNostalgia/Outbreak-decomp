@@ -674,6 +674,27 @@ s32 func_005C7290(TalkCond *c, DrawObjFull *p) {
     return 0;
 }
 
+/* Kind 0x1A: the one p talks to stands on floor kind val (0x54F). */
+s32 func_005C7FB0(TalkCond *c, DrawObjFull *p) {
+    DrawObjFull *q;
+
+    if (p->unkDC7 < 0) {
+        if (p->unkDC2 < 0) {
+            return 0;
+        }
+        q = &D_00476DD0[p->unkDC2];
+    } else {
+        q = func_00651300(p->unkDC2);
+        if (q == NULL) {
+            return 0;
+        }
+    }
+    if (c->val == q->unk54F) {
+        return 1;
+    }
+    return 0;
+}
+
 /* Kind 0x15: p's state (0xBA0): 0 fine (none of 0xB3), 1, 2, 4 0x10, 5 0x20, 6 0x80 (or not). */
 s32 func_005C7B50(TalkCond *c, DrawObjFull *p) {
     if (c->not == 0) {
@@ -828,7 +849,6 @@ s16 func_005C7650(u8 *c, DrawObjFull *p);
 s16 func_005C77F0(u8 *c, DrawObjFull *p);
 s16 func_005C7A30(u8 *c, DrawObjFull *p);
 s16 func_005C7F90(u8 *c, DrawObjFull *p);
-s16 func_005C7FB0(u8 *c, DrawObjFull *p);
 s16 func_005C8040(u8 *c, DrawObjFull *p);
 s16 func_005C80F0(u8 *c, DrawObjFull *p);
 s16 func_005C8130(u8 *c, DrawObjFull *p);
@@ -937,7 +957,7 @@ s16 func_005C6480(u8 *c, DrawObjFull *p) {
         r = func_005C7F90(c, p);
         break;
     case 0x1A:
-        r = func_005C7FB0(c, p);
+        r = func_005C7FB0((TalkCond *)c, p);
         break;
     case 0x1B:
         r = func_005C8040(c, p);
