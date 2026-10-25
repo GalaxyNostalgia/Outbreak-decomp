@@ -1128,3 +1128,141 @@ s32 func_00562C80(u16 who, u8 item) {
     }
     return 1;
 }
+
+s8 func_005827B0(ItemSlot *a, ItemSlot *b);
+s8 func_00582870(ItemSlot *a, ItemSlot *b);
+s8 func_00582B30(ItemSlot *a, ItemSlot *b);
+s8 func_00582BA0(ItemSlot *a, ItemSlot *b);
+s8 func_00582920(ItemSlot *a, ItemSlot *b, s16 arg);
+s8 func_00582970(ItemSlot *a, ItemSlot *b, s16 arg);
+s8 func_005829B0(ItemSlot *a, ItemSlot *b, s16 arg);
+s8 func_00582C60(ItemSlot *a, ItemSlot *b, s16 arg);
+s8 func_00582CB0(ItemSlot *a, ItemSlot *b, s16 arg);
+s8 func_00582E30(ItemSlot *a, ItemSlot *b, s16 arg);
+s8 func_00582EB0(ItemSlot *a, ItemSlot *b, s16 arg);
+s16 func_005838F0(ItemSlot *a, ItemSlot *b, s16 *arg);
+void func_005861E0(s16 kind, s16 arg, s16 x, DrawObjFull *o);
+
+/* Combines item slots ia and ib (both carried): func_005838F0 says how, each way its function;
+   0 nothing, 2 ia used up, 3 ib used up (as the combining functions say it). */
+s8 func_005823A0(u8 ia, u8 ib);
+#ifdef NON_MATCHING   /* first draft: the switch's layout and registers */
+s8 func_005823A0(u8 ia, u8 ib) {
+    ItemSlot *a = &D_003967D0[ia];
+    s8 r = 0;
+    s16 x = 0;
+    ItemSlot *b = &D_003967D0[ib];
+    s16 kind;
+    s16 arg;
+
+    if (*(s8 *)a == 0 || *(s8 *)b == 0) {
+        return 0;
+    }
+    if (a->owner == 0) {
+        return r;
+    }
+    if (b->owner == 0) {
+        return r;
+    }
+    kind = func_005838F0(a, b, &arg);
+    switch ((u8)kind) {
+    case 1:
+        r = func_005827B0(a, b);
+        break;
+    case 2:
+        r = func_005827B0(b, a);
+        if (r == 3) {
+            r = 2;
+        }
+        break;
+    case 3:
+        r = func_00582870(a, b);
+        break;
+    case 4:
+        r = func_00582920(a, b, arg);
+        break;
+    case 5:
+        r = func_00582920(a, b, arg);
+        break;
+    case 6:
+        r = func_00582920(b, a, arg);
+        if (r == 3) {
+            r = 2;
+        }
+        break;
+    case 7:
+        r = func_005829B0(a, b, arg);
+        break;
+    case 8:
+        r = func_005829B0(b, a, arg);
+        if (r == 3) {
+            r = 2;
+        }
+        break;
+    case 9:
+        r = func_00582970(a, b, arg);
+        break;
+    case 10:
+        r = func_00582970(b, a, arg);
+        break;
+    case 11:
+        r = func_00582B30(a, b);
+        break;
+    case 12:
+        r = func_00582B30(b, a);
+        break;
+    case 13:
+        r = func_00582BA0(a, b);
+        break;
+    case 14:
+        r = func_00582BA0(b, a);
+        if (r == 3) {
+            r = 2;
+        }
+        break;
+    case 15:
+        x = b->unk6;
+        r = func_00582C60(a, b, arg);
+        break;
+    case 16:
+        x = a->unk6;
+        r = func_00582C60(b, a, arg);
+        break;
+    case 17:
+        r = func_00582CB0(a, b, arg);
+        break;
+    case 18:
+        r = func_00582E30(a, b, arg);
+        break;
+    case 19:
+        r = func_00582E30(b, a, arg);
+        if (r == 2) {
+            r = 3;
+        }
+        break;
+    case 20:
+        r = func_00582EB0(a, b, arg);
+        break;
+    case 22:
+        r = func_005827B0(a, b);
+        break;
+    case 23:
+        r = func_005827B0(b, a);
+        if (r == 3) {
+            r = 2;
+        }
+        break;
+    }
+    if (r != 0) {
+        DrawObjFull *o;
+
+        if (*(s8 *)a != 0) {
+            o = &D_00476DD0[a->owner - 1];
+        } else {
+            o = &D_00476DD0[b->owner - 1];
+        }
+        func_005861E0(kind, arg, x, o);
+    }
+    return r;
+}
+#endif
