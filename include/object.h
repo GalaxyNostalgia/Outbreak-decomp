@@ -382,7 +382,7 @@ typedef struct Npc {
     u8 unkFBC[0xFCA - 0xFBC];
     s16 unkFCA;         /* 0xFCA: frames before it looks for a player again */
     u8 unkFCC;
-    u8 unkFCD;          /* 0xFCD */
+    s8 unkFCD;          /* 0xFCD: how it looks for a player (func_005F3C90) */
     u8 unkFCE;
     s8 unkFCF;          /* 0xFCF: state */
     s8 unkFD0[4];       /* 0xFD0 */
@@ -390,7 +390,9 @@ typedef struct Npc {
     u8 unkFD6;          /* 0xFD6 */
     s8 unkFD7;          /* 0xFD7 */
     f32 unkFD8;         /* 0xFD8: how near it follows */
-    u8 unkFDC[0x101F - 0xFDC];
+    u8 unkFDC[0xFF6 - 0xFDC];
+    u8 unkFF6;          /* 0xFF6: what it looks for (a player number, character, NPC model...) */
+    u8 unkFF7[0x101F - 0xFF7];
     u8 unk101F;         /* 0x101F */
     u8 unk1020;         /* 0x1020 */
     u8 unk1021[3];

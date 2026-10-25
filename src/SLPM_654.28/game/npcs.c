@@ -878,7 +878,168 @@ void func_005F4BB0(Npc *n, s32 a);
     }
 #define NPC_WAKE(n) NPC_MODE(n, 0)
 
+extern DrawObjFull *D_0023BDF4;     /* the things */
+/* Whether player p will do: 2 not (gone, hidden or down: 0xBA0 & 0x1E0), 1 the NPC is held
+   (0xBA0 & 0x80000), 0 yes. */
+s32 func_005F3C30(Npc *n, DrawObjFull *p);
+#ifdef NON_MATCHING   /* nop left in the visible test's delay slot and a second 'return 2' */
+s32 func_005F3C30(Npc *n, DrawObjFull *p) {
+    if (p->active) {
+        if (p->visible) {
+            if (n->unkBA0 & 0x80000) {
+                return 1;
+            }
+            return (p->unkBA0 & 0x1E0) ? 2 : 0;
+        }
+        return 2;
+    }
+    return 2;
+}
+#endif
+f32 func_00634380(Npc *n, f32 *pos);
+
+/* Finds what the NPC looks for (0xFCD's way, 0xFF6) into 0x1024: 0 the player numbered, 1 the
+   character, 2 the NPC of that model, 3 the thing of that kind, 4/5 the nearest/farthest player
+   in its room (within 0xFD8), 6/7 NPCs and 8/9 things the same way, 10 its target. */
 void func_005F3C90(Npc *n);
+#ifdef NON_MATCHING   /* matches once func_005F3C30 is matching (static) C */
+void func_005F3C90(Npc *n) {
+    DrawObjFull *best = NULL;
+    s32 i;
+    DrawObjFull *p;
+    f32 d;
+    f32 bd;
+    s32 r;
+
+    switch (n->unkFCD) {
+    case 0:
+        for (i = 0, p = D_00476DD0; i < 8; i++, p++) {
+            if (p->active && p->unk1E2 == n->unk1E2 && p->kind == n->unkFF6) {
+                best = p;
+                break;
+            }
+        }
+        break;
+    case 1: {
+        DrawObjFull *q;
+        s32 j;
+
+        for (j = 0, q = D_00476DD0; j < 8; j++, q++) {
+            if (q->active && q->unk1E2 == n->unk1E2 && q->unkB98 == n->unkFF6) {
+                best = q;
+                break;
+            }
+        }
+        break;
+    }
+    case 2:
+        for (p = (DrawObjFull *)D_0023BE04; p != NULL; p = p->next) {
+            if (p->active && p->unkBB4 == n->unkFF6) {
+                best = p;
+                break;
+            }
+        }
+        break;
+    case 3:
+        for (p = D_0023BDF4; p != NULL; p = p->next) {
+            if (p->active && p->kind == n->unkFF6) {
+                best = p;
+                break;
+            }
+        }
+        break;
+    case 4: {
+        DrawObjFull *q;
+        s32 j;
+
+        bd = n->unkFD8;
+        for (q = D_00476DD0, j = 0; j < 8; j++, q++) {
+            if (q->active && q->unk1E2 == n->unk1E2) {
+                r = func_005F3C30(n, q);
+                if (r == 0) {
+                    d = func_00634380(n, q->unk38);
+                    if (!(bd <= d)) {
+                        bd = d;
+                        best = q;
+                    }
+                } else if (r == 1) {
+                    best = &D_00476DD0[(u16)n->unkC66];
+                }
+            }
+        }
+        break;
+    }
+    case 5: {
+        DrawObjFull *q;
+        s32 j;
+
+        bd = n->unkFD8;
+        for (q = D_00476DD0, j = 0; j < 8; j++, q++) {
+            if (q->active && q->unk1E2 == n->unk1E2) {
+                d = func_00634380(n, q->unk38);
+                if (bd < d) {
+                    bd = d;
+                    best = q;
+                }
+            }
+        }
+        break;
+    }
+    case 8:
+        bd = 10000;
+        for (p = D_0023BDF4; p != NULL; p = p->next) {
+            if (p->active) {
+                d = func_00634380(n, p->unk38);
+                if (!(bd <= d)) {
+                    bd = d;
+                    best = p;
+                }
+            }
+        }
+        break;
+    case 9:
+        bd = 0.0f;
+        for (p = D_0023BDF4; p != NULL; p = p->next) {
+            if (p->active) {
+                d = func_00634380(n, p->unk38);
+                if (!(bd <= d)) {
+                    bd = d;
+                    best = p;
+                }
+            }
+        }
+        break;
+    case 6:
+        bd = 10000;
+        for (p = (DrawObjFull *)D_0023BE04; p != NULL; p = p->next) {
+            if (p->active) {
+                d = func_00634380(n, p->unk38);
+                if (!(bd <= d)) {
+                    bd = d;
+                    best = p;
+                }
+            }
+        }
+        break;
+    case 7:
+        bd = 0.0f;
+        for (p = (DrawObjFull *)D_0023BE04; p != NULL; p = p->next) {
+            if (p->active) {
+                d = func_00634380(n, p->unk38);
+                if (!(bd <= d)) {
+                    bd = d;
+                    best = p;
+                }
+            }
+        }
+        break;
+    case 10:
+        best = (DrawObjFull *)n->unk24;
+        break;
+    }
+    n->unk1024 = best;
+}
+#endif
 void func_005F4BD0(Npc *n, s32 a);
 
 /* Whether it has a player to follow: online only for its owner (func_0064FD50), it looks
