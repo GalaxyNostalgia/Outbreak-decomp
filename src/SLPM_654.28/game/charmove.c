@@ -5899,7 +5899,10 @@ s32 func_0061A3A0(DrawObjFull *o) {
     return 0;
 }
 
-s32 func_005A5130(DrawObjFull *o);
+/* Always 1. */
+s32 func_005A5130(DrawObjFull *o) {
+    return 1;
+}
 
 /* Walking: turning (0x8 left, 0x4 right: action 1's step from the floor's step set) unless
    0xBA0 & 0x2000 (then func_0061C650 for players); else carrying on (func_005A5130). */
