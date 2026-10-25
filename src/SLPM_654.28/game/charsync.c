@@ -471,3 +471,211 @@ void func_0064C620(DrawObjFull *o, u8 kind) {
     }
 }
 #endif
+
+s16 func_005C6A40(u8 *c, DrawObjFull *p);
+s16 func_005C6AD0(u8 *c, DrawObjFull *p);
+s16 func_005C6CA0(u8 *c, DrawObjFull *p);
+s16 func_005C6CF0(u8 *c, DrawObjFull *p);
+s16 func_005C6DA0(u8 *c, DrawObjFull *p);
+s16 func_005C6E50(u8 *c, DrawObjFull *p);
+s16 func_005C6F40(u8 *c, DrawObjFull *p);
+s16 func_005C7090(u8 *c, DrawObjFull *p);
+s16 func_005C71A0(u8 *c, DrawObjFull *p);
+s16 func_005C7210(u8 *c, DrawObjFull *p);
+s16 func_005C7290(u8 *c, DrawObjFull *p);
+s16 func_005C7300(u8 *c, DrawObjFull *p);
+s16 func_005C7370(u8 *c, DrawObjFull *p);
+s16 func_005C7420(u8 *c, DrawObjFull *p);
+s16 func_005C74D0(u8 *c, DrawObjFull *p);
+s16 func_005C75B0(u8 *c, DrawObjFull *p);
+s16 func_005C7600(u8 *c, DrawObjFull *p);
+s16 func_005C7650(u8 *c, DrawObjFull *p);
+s16 func_005C77F0(u8 *c, DrawObjFull *p);
+s16 func_005C7980(u8 *c, DrawObjFull *p);
+s16 func_005C7A30(u8 *c, DrawObjFull *p);
+s16 func_005C7B50(u8 *c, DrawObjFull *p);
+s16 func_005C7CC0(u8 *c, DrawObjFull *p);
+s16 func_005C7E50(u8 *c, DrawObjFull *p);
+s16 func_005C7EF0(u8 *c, DrawObjFull *p);
+s16 func_005C7F90(u8 *c, DrawObjFull *p);
+s16 func_005C7FB0(u8 *c, DrawObjFull *p);
+s16 func_005C8040(u8 *c, DrawObjFull *p);
+s16 func_005C80F0(u8 *c, DrawObjFull *p);
+s16 func_005C8130(u8 *c, DrawObjFull *p);
+s16 func_005C81E0(u8 *c, DrawObjFull *p);
+s16 func_005C8390(u8 *c, DrawObjFull *p);
+s16 func_005C8540(u8 *c, DrawObjFull *p);
+s16 func_005C8650(u8 *c, DrawObjFull *p);
+s16 func_005C8730(u8 *c, DrawObjFull *p);
+s16 func_005C8820(u8 *c, DrawObjFull *p);
+s16 func_005C8910(u8 *c, DrawObjFull *p);
+s16 func_005C89B0(u8 *c, DrawObjFull *p);
+s16 func_005C8CF0(u8 *c, DrawObjFull *p);
+s16 func_005C8DA0(u8 *c, DrawObjFull *p);
+s16 func_005C8E50(u8 *c, DrawObjFull *p);
+s16 func_005C8F00(u8 *c, DrawObjFull *p);
+s16 func_005C8FB0(u8 *c, DrawObjFull *p);
+s16 func_005C9060(u8 *c, DrawObjFull *p);
+s16 func_005C9210(u8 *c, DrawObjFull *p);
+s16 func_005C9270(u8 *c, DrawObjFull *p);
+s16 func_005C92E0(u8 *c, DrawObjFull *p);
+
+/* A talk (or event) condition (8 bytes: its kind first) for p: each kind's check; 0xFF is
+   always true. */
+s16 func_005C6480(u8 *c, DrawObjFull *p);
+#ifdef NON_MATCHING   /* the compare chain: the original fills every other beq's delay slot */
+s16 func_005C6480(u8 *c, DrawObjFull *p) {
+    s16 r;
+
+    switch (c[0]) {
+    default:
+        r = 0;
+        break;
+    case 0x0:
+        r = func_005C6A40(c, p);
+        break;
+    case 0x1:
+        r = func_005C6AD0(c, p);
+        break;
+    case 0x2:
+        r = func_005C6CA0(c, p);
+        break;
+    case 0x3:
+        r = func_005C6CF0(c, p);
+        break;
+    case 0x4:
+        r = func_005C6DA0(c, p);
+        break;
+    case 0x5:
+        r = func_005C6E50(c, p);
+        break;
+    case 0x6:
+        r = func_005C6F40(c, p);
+        break;
+    case 0x7:
+        r = func_005C7090(c, p);
+        break;
+    case 0x8:
+        r = func_005C71A0(c, p);
+        break;
+    case 0x9:
+        r = func_005C7210(c, p);
+        break;
+    case 0xA:
+        r = func_005C7290(c, p);
+        break;
+    case 0xB:
+        r = func_005C7300(c, p);
+        break;
+    case 0xC:
+        r = func_005C7370(c, p);
+        break;
+    case 0xD:
+        r = func_005C7420(c, p);
+        break;
+    case 0xE:
+        r = func_005C74D0(c, p);
+        break;
+    case 0xF:
+        r = func_005C75B0(c, p);
+        break;
+    case 0x10:
+        r = func_005C7600(c, p);
+        break;
+    case 0x11:
+        r = func_005C7650(c, p);
+        break;
+    case 0x12:
+        r = func_005C77F0(c, p);
+        break;
+    case 0x13:
+        r = func_005C7980(c, p);
+        break;
+    case 0x14:
+        r = func_005C7A30(c, p);
+        break;
+    case 0x15:
+        r = func_005C7B50(c, p);
+        break;
+    case 0x16:
+        r = func_005C7CC0(c, p);
+        break;
+    case 0x17:
+        r = func_005C7E50(c, p);
+        break;
+    case 0x18:
+        r = func_005C7EF0(c, p);
+        break;
+    case 0x19:
+        r = func_005C7F90(c, p);
+        break;
+    case 0x1A:
+        r = func_005C7FB0(c, p);
+        break;
+    case 0x1B:
+        r = func_005C8040(c, p);
+        break;
+    case 0x1D:
+        r = func_005C80F0(c, p);
+        break;
+    case 0x1E:
+        r = func_005C8130(c, p);
+        break;
+    case 0x1F:
+        r = func_005C81E0(c, p);
+        break;
+    case 0x20:
+        r = func_005C8390(c, p);
+        break;
+    case 0x21:
+        r = func_005C8540(c, p);
+        break;
+    case 0x22:
+        r = func_005C8650(c, p);
+        break;
+    case 0x23:
+        r = func_005C8910(c, p);
+        break;
+    case 0x24:
+        r = func_005C8730(c, p);
+        break;
+    case 0x25:
+        r = func_005C89B0(c, p);
+        break;
+    case 0x26:
+        r = func_005C8820(c, p);
+        break;
+    case 0x27:
+        r = func_005C8CF0(c, p);
+        break;
+    case 0x28:
+        r = func_005C8DA0(c, p);
+        break;
+    case 0x29:
+        r = func_005C8E50(c, p);
+        break;
+    case 0x2A:
+        r = func_005C8F00(c, p);
+        break;
+    case 0x2B:
+        r = func_005C8FB0(c, p);
+        break;
+    case 0x2C:
+        r = func_005C9060(c, p);
+        break;
+    case 0x2E:
+        r = func_005C9210(c, p);
+        break;
+    case 0x2F:
+        r = func_005C9270(c, p);
+        break;
+    case 0x30:
+        r = func_005C92E0(c, p);
+        break;
+    case 0xFF:
+        r = 1;
+        break;
+    }
+    return r;
+}
+#endif
