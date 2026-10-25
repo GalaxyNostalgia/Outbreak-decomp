@@ -480,6 +480,50 @@ typedef struct {
     s32 val;            /* 0x4 */
 } TalkCond;
 
+/* Kind 0x15: p's state (0xBA0): 0 fine (none of 0xB3), 1, 2, 4 0x10, 5 0x20, 6 0x80 (or not). */
+s32 func_005C7B50(TalkCond *c, DrawObjFull *p) {
+    if (c->not == 0) {
+        switch (c->val) {
+        case 0:
+            return !((p->unkBA0 & 0xB3) != 0);
+        case 1:
+            return (p->unkBA0 & 1) != 0;
+        case 2:
+            return (p->unkBA0 & 2) != 0;
+        case 3:
+            return 0;
+        case 4:
+            return (p->unkBA0 & 0x10) != 0;
+        case 5:
+            return (p->unkBA0 & 0x20) != 0;
+        case 6:
+            return (p->unkBA0 & 0x80) != 0;
+        default:
+            return 0;
+        }
+    } else if (c->not == 1) {
+        switch (c->val) {
+        case 0:
+            return (p->unkBA0 & 0xB3) != 0;
+        case 1:
+            return !((p->unkBA0 & 1) != 0);
+        case 2:
+            return !((p->unkBA0 & 2) != 0);
+        case 3:
+            return 0;
+        case 4:
+            return !((p->unkBA0 & 0x10) != 0);
+        case 5:
+            return !((p->unkBA0 & 0x20) != 0);
+        case 6:
+            return !((p->unkBA0 & 0x80) != 0);
+        default:
+            return 0;
+        }
+    }
+    return 0;
+}
+
 /* Kind 0x2E: p's talk command (0xDA9) is val (or not); none, or 0x80 ones, never. */
 s16 func_005C9210(TalkCond *c, DrawObjFull *p) {
     s32 k = p->talkCmd;
@@ -517,7 +561,6 @@ s16 func_005C7650(u8 *c, DrawObjFull *p);
 s16 func_005C77F0(u8 *c, DrawObjFull *p);
 s16 func_005C7980(u8 *c, DrawObjFull *p);
 s16 func_005C7A30(u8 *c, DrawObjFull *p);
-s16 func_005C7B50(u8 *c, DrawObjFull *p);
 s16 func_005C7CC0(u8 *c, DrawObjFull *p);
 s16 func_005C7E50(u8 *c, DrawObjFull *p);
 s16 func_005C7EF0(u8 *c, DrawObjFull *p);
@@ -618,7 +661,7 @@ s16 func_005C6480(u8 *c, DrawObjFull *p) {
         r = func_005C7A30(c, p);
         break;
     case 0x15:
-        r = func_005C7B50(c, p);
+        r = func_005C7B50((TalkCond *)c, p);
         break;
     case 0x16:
         r = func_005C7CC0(c, p);
