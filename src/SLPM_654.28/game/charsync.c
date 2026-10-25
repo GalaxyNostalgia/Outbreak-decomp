@@ -750,6 +750,16 @@ s32 func_005C7A30(TalkCond *c, DrawObjFull *p) {
 }
 #endif
 
+u8 func_005C14C0(DrawObjFull *o, u16 id);
+
+/* Kind 2: p has item arg (or not, val 0). */
+s32 func_005C6CA0(TalkCond *c, DrawObjFull *p) {
+    if (func_005C14C0(p, c->arg)) {
+        return c->val != 0;
+    }
+    return !(c->val != 0);
+}
+
 /* Kind 0x15: p's state (0xBA0): 0 fine (none of 0xB3), 1, 2, 4 0x10, 5 0x20, 6 0x80 (or not). */
 s32 func_005C7B50(TalkCond *c, DrawObjFull *p) {
     if (c->not == 0) {
@@ -941,7 +951,6 @@ s16 func_005C9210(TalkCond *c, DrawObjFull *p) {
     return (s8)k != c->val;
 }
 
-s16 func_005C6CA0(u8 *c, DrawObjFull *p);
 s16 func_005C6CF0(u8 *c, DrawObjFull *p);
 s16 func_005C6DA0(u8 *c, DrawObjFull *p);
 s16 func_005C6E50(u8 *c, DrawObjFull *p);
@@ -992,7 +1001,7 @@ s16 func_005C6480(u8 *c, DrawObjFull *p) {
         r = func_005C6AD0((TalkCond *)c, p);
         break;
     case 0x2:
-        r = func_005C6CA0(c, p);
+        r = func_005C6CA0((TalkCond *)c, p);
         break;
     case 0x3:
         r = func_005C6CF0(c, p);
