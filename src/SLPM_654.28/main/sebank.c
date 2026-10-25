@@ -613,7 +613,34 @@ void func_001B6F00(s32 id) {
     func_001B7A50(12, id, 0);
 }
 
-s32 func_001B6F10(s32 sound);
+extern u16 D_003065AA[];        /* the scenario */
+extern s16 D_006FC730[];        /* (GAME.BIN) per scenario: the sound for each of bank 2's */
+extern s16 D_006FC8D0[];
+extern s16 D_006FCA70[];
+extern s16 D_006FCC10[];
+extern s16 D_006FCDB0[];
+
+/* Bank 2's sound as the scenario has it (scenarios 1, 2, 0x1C, 0x23, 0x29 remap theirs). */
+s32 func_001B6F10(s32 sound) {
+    switch (D_003065AA[0]) {
+    case 1:
+        sound = D_006FC730[sound];
+        break;
+    case 2:
+        sound = D_006FC8D0[sound];
+        break;
+    case 0x1C:
+        sound = D_006FCA70[sound];
+        break;
+    case 0x23:
+        sound = D_006FCC10[sound];
+        break;
+    case 0x29:
+        sound = D_006FCDB0[sound];
+        break;
+    }
+    return sound;
+}
 extern s16 D_0023BB40;      /* the last such sound */
 
 /* Plays a sound effect of bank 2 (func_001B6F10 picks it; 0xFF: none), at pos if given. */
