@@ -1519,3 +1519,15 @@ void func_0068A0F0(Npc *n) {
     }
     func_00652B50(n, 0);
 }
+
+/* The NPC with model id (0xBB4), or NULL. */
+Npc *func_00651300(s32 id) {
+    Npc *n;
+
+    for (n = D_0023BE04; n != NULL; n = n->next) {
+        if (n->active && n->unkBB4 == id) {
+            return n;
+        }
+    }
+    return NULL;
+}
