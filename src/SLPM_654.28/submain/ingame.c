@@ -975,6 +975,13 @@ f32 func_005E5B40(const f32 *p, u8 *kind, s32 want);
 void func_0018F9B0(Mat44 *m, f32 sx, f32 sy, f32 sz);
 s16 func_003426E0(s32 n);
 
+void func_00342740(void *e);
+
+/* Draws an effect (a draw callback). */
+void func_00343330(DrawCb *cb) {
+    func_00342740(cb->arg);
+}
+
 /* Draws a character's blob shadow (a draw callback): the shadow model's part scaled to the
    shadow's size and length, turned its way, on the floor under its shadow point. */
 void func_00343340(DrawCb *cb);

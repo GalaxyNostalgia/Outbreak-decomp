@@ -138,6 +138,8 @@ typedef struct {
     u8 owner[0x10];         /* 0x210 */
     s16 timer[0x10];        /* 0x220 */
     s16 unk240[0x10];       /* 0x240 */
+    u8 unk260[0x3A4 - 0x260];
+    u16 rooms[0x40][6];     /* 0x3A4: per room, [0] its switches done (D_0048AFB4) */
 } SceneData210;
 
 extern SceneData210 D_0048AC10;
@@ -517,4 +519,151 @@ s32 func_0064FF60(DrawObjFull *o) {
         }
     }
     return found;
+}
+
+/* Each frame: the room's switches being worked (their progress at D_00470090 + 0x4700) move
+   on (func_00540A30), and the switches their zones stand for; online, the changes go out in
+   one message (up to 10). */
+#include "options.h"
+typedef struct {
+    u8 room;
+    u8 bit;
+    s16 value;
+} SwitchMove;
+
+typedef struct {
+    u8 type;            /* 0x0 */
+    u8 len;             /* 0x1 */
+    u8 unk2[2];
+    u8 n;               /* 0x4 */
+    u8 unk5[3];
+    SwitchMove e[10];   /* 0x8 */
+} SwitchMsg;
+
+typedef struct {
+    u8 unk0[0x30];
+    u8 kind;            /* 0x30 */
+    u8 unk31[0x44 - 0x31];
+    s32 room;           /* 0x44 */
+    s32 bit;            /* 0x48 */
+} SwitchZoneRef;
+
+typedef struct {
+    u8 unk0[0x4700];
+    s16 sw[0x18];           /* 0x4700: per switch, how far it is worked */
+} RoomSwitches;
+extern RoomSwitches D_00470090;
+void func_00540A30(u8 room, u8 bit, s32 value);
+void func_005406B0(s32 row, s32 bit, s32 col);
+SwitchZoneRef *func_00551820(u8 id);
+
+void func_0064EF20(void) {
+    s32 i;
+    u32 b;
+    f32 f;
+    u8 *n;
+    SwitchZoneRef *z;
+    SwitchMsg m;
+
+    n = &m.n;
+    for (i = 0, *n = 0; i < 0x18; i++) {
+        f = D_00470090.sw[i];
+        if (f < 1.0f) {
+            continue;
+        }
+        b = 1 << i;
+        if (!(D_0048AC10.rooms[D_00306590.unk1C][0] & b)) {
+            func_00540A30(D_00306590.unk1C, i, (s32)f);
+            if (!(D_0048AC10.rooms[D_00306590.unk1C][0] & b)) {
+                m.e[*n].value = (s32)f;
+                m.e[*n].bit = i;
+                m.e[*n].room = D_00306590.unk1C;
+                (*n)++;
+                if (*n >= 10) {
+                    break;
+                }
+            } else {
+                func_005406B0(D_00306590.unk1C, i, 2);
+            }
+        }
+        if (i < 0x10 && (z = func_00551820(i)) != NULL && z->kind == 0 &&
+            !(D_0048AC10.rooms[z->room][0] & (1 << z->bit))) {
+            func_00540A30(z->room, z->bit, (s32)f);
+            if (!(D_0048AC10.rooms[z->room][0] & (1 << z->bit))) {
+                m.e[*n].value = (s32)f;
+                m.e[*n].bit = z->bit;
+                m.e[*n].room = z->room;
+                (*n)++;
+                if (*n >= 10) {
+                    break;
+                }
+            } else {
+                func_005406B0(z->room, z->bit, 2);
+            }
+        }
+    }
+    if (*n != 0) {
+        m.type = 4;
+        m.len = 0x30;
+        if (func_001AF510() == 1) {
+            func_001AF000(5, (NetMsg *)&m, 0, 2);
+        }
+    }
+}
+
+/* Which net player (+ 1, 0xFF: none) has the room a mark's thing is in: a player's (type 0),
+   a D_003614F0 record's (1) or an enemy set entry's (2). */
+typedef struct {
+    u8 unk0;
+    u8 room;            /* 0x01 */
+    u8 unk2[0x78 - 2];
+} Rec3614F0;
+
+typedef struct {
+    u8 unk0[0x22];
+    u8 room;            /* 0x22 */
+    u8 unk23[0x60 - 0x23];
+} EnemySetRoom;
+
+extern Rec3614F0 D_003614F0[];
+extern EnemySetRoom D_0071A030[];
+extern DrawObjFull D_00476DD0[];
+s32 func_001AF440(u16 room);
+
+u8 func_0064F7A0(Mark *m) {
+    Rec3614F0 *rec;
+    EnemySetRoom *es;
+    DrawObjFull *o;
+    s32 r;
+    u8 v;
+
+    switch (m->type) {
+    case 1:
+        rec = &D_003614F0[m->id];
+        r = func_001AF440(rec->room);
+        if (r == -1) {
+            v = 0xFF;
+        } else {
+            v = r + 1;
+        }
+        return v;
+    case 2:
+        es = &D_0071A030[m->id];
+        r = func_001AF440(es->room);
+        if (r == -1) {
+            v = 0xFF;
+        } else {
+            v = r + 1;
+        }
+        return v;
+    case 0:
+        o = &D_00476DD0[m->id];
+        r = func_001AF440(o->unk1E2);
+        if (r == -1) {
+            return 0xFF;
+        }
+        return r + 1;
+    default:
+        return 0;
+    }
 }
