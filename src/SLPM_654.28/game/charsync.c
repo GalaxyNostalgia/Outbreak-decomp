@@ -815,6 +815,61 @@ s32 func_005C9060(TalkCond *c, DrawObjFull *p) {
     return f != 0;
 }
 
+extern DrawObjFull *D_0023BDF4;     /* the things */
+s32 func_0060EF10(DrawObjFull *t);
+
+/* Kind 0x12: whether a (shown, func_0060EF10) thing is within (op c->not) arg of p across the
+   floor, as val says. */
+s32 func_005C77F0(TalkCond *c, DrawObjFull *p) {
+    DrawObjFull *q = D_0023BDF4;
+    f32 r = c->arg;
+    s32 f;
+    f32 d;
+    f32 dx;
+    f32 dz;
+
+    for (f = 0; q != NULL; q = q->next) {
+        if (q->active && q->visible && !(q->unk548 & 1) && func_0060EF10(q)) {
+            dx = q->unk38[0] - p->unk38[0];
+            dz = q->unk38[2] - p->unk38[2];
+            d = func_00341860(dx * dx + dz * dz);
+            switch (c->not) {
+            case 0:
+                if (d <= r) {
+                    f = 1;
+                }
+                break;
+            case 1:
+                if (!(d <= r)) {
+                    f = 1;
+                }
+                break;
+            case 2:
+                if (d < r) {
+                    f = 1;
+                }
+                break;
+            case 3:
+                if (!(d <= r)) {
+                    f = 1;
+                }
+                break;
+            case 4:
+                if (d <= r) {
+                    f = 1;
+                }
+                break;
+            case 5:
+                if (!(d < r)) {
+                    f = 1;
+                }
+                break;
+            }
+        }
+    }
+    return c->val == f;
+}
+
 /* Kind 0x2E: p's talk command (0xDA9) is val (or not); none, or 0x80 ones, never. */
 s16 func_005C9210(TalkCond *c, DrawObjFull *p) {
     s32 k = p->talkCmd;
@@ -846,7 +901,6 @@ s16 func_005C7420(u8 *c, DrawObjFull *p);
 s16 func_005C75B0(u8 *c, DrawObjFull *p);
 s16 func_005C7600(u8 *c, DrawObjFull *p);
 s16 func_005C7650(u8 *c, DrawObjFull *p);
-s16 func_005C77F0(u8 *c, DrawObjFull *p);
 s16 func_005C7A30(u8 *c, DrawObjFull *p);
 s16 func_005C7F90(u8 *c, DrawObjFull *p);
 s16 func_005C8040(u8 *c, DrawObjFull *p);
@@ -933,7 +987,7 @@ s16 func_005C6480(u8 *c, DrawObjFull *p) {
         r = func_005C7650(c, p);
         break;
     case 0x12:
-        r = func_005C77F0(c, p);
+        r = func_005C77F0((TalkCond *)c, p);
         break;
     case 0x13:
         r = func_005C7980((TalkCond *)c, p);
