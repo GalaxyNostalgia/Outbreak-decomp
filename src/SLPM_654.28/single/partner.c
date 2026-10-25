@@ -278,7 +278,18 @@ s8 func_00833250(DrawObjFull *obj, Zone **zones, s32 n, Zone **found, u8 *at) {
     return r;
 }
 #endif
-void func_00834780(DrawObjFull *obj);
+void func_008347C0(DrawObjFull *obj);
+void func_00834F00(DrawObjFull *obj);
+void func_00835180(DrawObjFull *obj);
+void func_008360B0(DrawObjFull *obj);
+
+/* Request 2: the partner looks over its items (four passes). */
+void func_00834780(DrawObjFull *obj) {
+    func_008347C0(obj);
+    func_00834F00(obj);
+    func_00835180(obj);
+    func_008360B0(obj);
+}
 s32 func_00835300(DrawObjFull *obj, s32 *item);
 s32 func_008359A0(DrawObjFull *obj, s32 *item, u8 *at);
 
