@@ -77,6 +77,25 @@ void func_00340560(Vec3 *out, Vec3 *a, Vec3 *b) {
 }
 #endif
 
+extern f32 D_00239E88;          /* (the least that counts) */
+f32 func_00191A70(f32 x);
+
+/* out = v with its tiny components set to 0. */
+void func_003408A0(Vec3 *out, Vec3 *v) {
+    out->x = v->x;
+    out->y = v->y;
+    out->z = v->z;
+    if (func_00191A70(v->x) < D_00239E88) {
+        out->x = 0.0f;
+    }
+    if (func_00191A70(v->y) < D_00239E88) {
+        out->y = 0.0f;
+    }
+    if (func_00191A70(v->z) < D_00239E88) {
+        out->z = 0.0f;
+    }
+}
+
 /* The view matrix from the camera. */
 void func_00345870(void) {
     Vec3 dir;
