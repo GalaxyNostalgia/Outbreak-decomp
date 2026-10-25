@@ -833,8 +833,167 @@ void func_005F41F0(Npc *n, NpcCycle *b) {
         break;
     }
 }
-s32 func_005F4080(Npc *n);
-void func_0068A170(Npc *n);
+/* An NPC's life: 2 dead (0xBA0 & 0x20), 1 dying once its action is 3 or later, else 0. */
+s32 func_005F4080(Npc *n) {
+    s32 f = n->unkBA0;
+
+    if (f & 0x20) {
+        return 2;
+    }
+    if (f & 0x200) {
+        return n->act[0] >= 3;
+    }
+    return 0;
+}
+extern u16 D_0048AFB0[][6];
+extern u32 D_0048AD90[];
+void func_0068A6E0(Npc *n);
+void func_0068A780(Npc *n);
+s32 func_0068A700(Npc *n, s32 a);
+s32 func_0068A950(Npc *n);
+void func_0068AAB0(Npc *n, s32 a);
+void func_0068AB80(Npc *n, s32 a);
+s32 func_0068AA00(Npc *n);
+s32 func_0068AA70(Npc *n, s32 a);
+s32 func_0068A9B0(Npc *n);
+s32 func_0068A9C0(Npc *n);
+void func_0068AD30(Npc *n);
+s32 func_0068ACA0(Npc *n);
+s32 func_0068A660(Npc *n);
+void func_005403E0(s32 a, s32 b);
+void func_005F4BB0(Npc *n, s32 a);
+
+/* Unless held (0xBA0 & 0x80000): back to its first action if 0xFB7 asks, and shown. */
+#define NPC_WAKE(n)                         \
+    if (!((n)->unkBA0 & 0x80000)) {         \
+        if ((n)->unkFB7) {                  \
+            (n)->act[0] = 0;                \
+            (n)->act[1] = 0;                \
+            (n)->act[2] = 0;                \
+            (n)->act[3] = 0;                \
+            (n)->unkFB8[0] = 0;             \
+        }                                   \
+        (n)->unkFB7 = 0;                    \
+        (n)->visible = 1;                   \
+    }
+
+/* An NPC's scripted job (0x1150): each step calls func_0068A6E0 once it's done. */
+void func_0068A170(Npc *n) {
+    switch (n->unk1150) {
+    case 0:
+        func_0068A780(n);
+        if (func_0068A700(n, 0)) {
+            func_0068A6E0(n);
+            return;
+        }
+        break;
+    case 1:
+        func_0068A780(n);
+        if (func_0068A950(n)) {
+            func_0068A6E0(n);
+        }
+        break;
+    case 2:
+        func_0068AAB0(n, 0);
+        if (func_0068AA00(n)) {
+            func_0068A6E0(n);
+        } else if (func_0068AA70(n, 0)) {
+            func_0068A6E0(n);
+        }
+        break;
+    case 3:
+        func_0068AB80(n, 0);
+        if (func_0068AA00(n)) {
+            func_0068A6E0(n);
+        } else if (func_0068A9B0(n)) {
+            func_0068A6E0(n);
+        }
+        break;
+    case 4:
+        NPC_WAKE(n);
+        if (func_0068A9C0(n)) {
+            func_0068A6E0(n);
+        }
+        break;
+    case 5:
+        func_0068AD30(n);
+        if (func_0068ACA0(n)) {
+            func_0068A6E0(n);
+        }
+        break;
+    case 6:
+        func_0068AAB0(n, 1);
+        if (!(D_0048AFB0[5][0] & 8)) {
+            func_00652B50(n, 1);
+            func_0068A6E0(n);
+        } else if (func_0068AA70(n, 1)) {
+            func_0068A6E0(n);
+        }
+        break;
+    case 7:
+        func_0068AB80(n, 1);
+        if (!(D_0048AFB0[5][0] & 8)) {
+            func_00652B50(n, 1);
+            func_0068A6E0(n);
+        } else if (func_0068A9B0(n)) {
+            func_005403E0(0x3E, 1);
+            func_0068A6E0(n);
+        }
+        break;
+    case 8:
+        NPC_WAKE(n);
+        if (!(D_0048AFB0[5][0] & 8)) {
+            func_0068A6E0(n);
+        }
+        break;
+    case 9:
+        func_0068A780(n);
+        if (func_0068A700(n, 1)) {
+            func_0068A6E0(n);
+        }
+        break;
+    case 10:
+        func_0068AAB0(n, 2);
+        if (D_0048AD90[0] & 0x2000) {
+            func_0068A6E0(n);
+        } else if (func_0068AA70(n, 2)) {
+            func_0068A6E0(n);
+        }
+        break;
+    case 11:
+        func_0068AB80(n, 2);
+        if (D_0048AD90[0] & 0x2000) {
+            func_0068A6E0(n);
+        } else if (func_0068A9B0(n)) {
+            func_0068A6E0(n);
+        }
+        break;
+    case 12:
+        NPC_WAKE(n);
+        if (D_0048AD90[0] & 0x2000) {
+            func_0068A6E0(n);
+        }
+        break;
+    case 13:
+        func_0068A780(n);
+        if (func_0068A700(n, 2)) {
+            func_0068A6E0(n);
+        }
+        break;
+    case 14:
+        NPC_WAKE(n);
+        if (func_0068A660(n)) {
+            func_005403E0(0x35, 1);
+            n->unk544 = 0;
+            func_005F4BB0(n, 4);
+            func_0068A6E0(n);
+        }
+        break;
+    case 15:
+        NPC_WAKE(n);
+        break;
+    }
+}
 void func_00639CE0(Npc *n);
 
 /* Empty (a debug hook). */
@@ -947,7 +1106,7 @@ void func_00689F40(Npc *n) {
     n->unkFB7 = 0;
     n->unkFCF = 1;
     if (!(n->unkBA0 & 0x80000)) {
-        if ((u8)n->unkFB7 != 0) {
+        if (n->unkFB7 != 0) {
             n->act[0] = 0;
             n->act[1] = 0;
             n->act[2] = 0;

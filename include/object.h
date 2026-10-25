@@ -377,7 +377,7 @@ typedef struct Npc {
     u8 held;            /* 0xFB4 */
     u8 slot;            /* 0xFB5: its D_003614F0 record */
     u8 unkFB6;
-    s8 unkFB7;          /* 0xFB7 */
+    u8 unkFB7;          /* 0xFB7 */
     s8 unkFB8[4];       /* 0xFB8 */
     u8 unkFBC[0xFCF - 0xFBC];
     s8 unkFCF;          /* 0xFCF: state */
