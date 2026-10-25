@@ -58,10 +58,15 @@ typedef struct {
     u8 unkAC;           /* 0xAC: the common item messages are loaded */
     u8 unkAD;           /* 0xAD: the room's map (and its messages) are loaded */
     u8 unkAE;           /* 0xAE: the files screen is loaded */
-    u8 unkAF[0xB6 - 0xAF];
+    u8 unkAF;
+    u8 unkB0;           /* 0xB0: the map was opened for the virus gauge */
+    u8 unkB1;           /* 0xB1: 0 watching the gauge, 1/2 the map open for it */
+    s16 unkB2;          /* 0xB2: frames before it closes */
+    u8 unkB4[2];
     u8 unkB6;           /* 0xB6: (offline) a bit per ... */
     s8 unkB7;           /* 0xB7 */
-    u8 unkB8[2];
+    u8 unkB8;
+    u8 unkB9;           /* 0xB9: 1 the map can't be opened, 2 ... */
     u8 unkBA;           /* 0xBA: (game start byte 2) */
     u8 unkBB;
     s8 unkBC;           /* 0xBC */

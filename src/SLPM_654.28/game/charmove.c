@@ -4266,7 +4266,7 @@ s32 func_0061E020(DrawObjFull *o) {
         switch (o->unkC65) {
         case 1:
             k = (s32)func_006350A0(o);
-            if ((D_0048BF60.unkB8[1] & 2) || (o->unkB9B != 2 && !(o->unkBA0 & 8))
+            if ((D_0048BF60.unkB9 & 2) || (o->unkB9B != 2 && !(o->unkBA0 & 8))
                 || (o->unkBA4 & 0x10000) || o->unkBD0 != 0) {
                 func_0061DF90(o, k);
                 return 1;

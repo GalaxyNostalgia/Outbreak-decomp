@@ -833,8 +833,8 @@ void func_006B7020(void);
 
 void func_006AC8A0(void) {
     func_001AECB0(func_006B7020);
-    FIELD(&D_0048BF60, s8, 0xB0) = 0;
-    FIELD(&D_0048BF60, s8, 0xB1) = 0;
+    D_0048BF60.unkB0 = 0;
+    D_0048BF60.unkB1 = 0;
 }
 
 typedef struct {
@@ -921,6 +921,75 @@ void func_006AE930(void) {
 extern u8 D_00389740[0x10];
 extern u8 D_00723F9E;
 
+/* Each frame: the virus gauge opens the map at 95% and at the marks of D_006FFCB0 (when nothing
+   holds the virus back), and closes it again below 95% once its time is up. */
+f32 func_00636540(void);
+void func_006AC7D0(void);
+void func_006AA8A0(void);
+extern f32 D_006FFCB0[12];
+extern DrawObjFull D_00476DD0[];
+
+void func_006AC8D0(u8 mode) {
+    GameState *g = &D_0048BF60;
+    f32 v = func_00636540();
+    s16 pct = v;
+    s32 i;
+    u32 t;
+
+    if (D_0048BF60.unkBD != 0) {
+        func_006AC8A0();
+        return;
+    }
+    t = 10.0f * v;
+    switch (g->unkB1) {
+    case 0:
+        if (!(v < 95.0f)) {
+            func_006AC7D0();
+            return;
+        }
+        for (i = 0; i < 12; i++) {
+            if (t == (u32)(10.0f * D_006FFCB0[i])) {
+                if (D_00476DD0[D_0048BF60.unk1D].unkBB6 != 0 ||
+                    D_00476DD0[D_0048BF60.unk1D].unkBB8 != 0 ||
+                    D_00476DD0[D_0048BF60.unk1D].unkBBA != 0) {
+                    return;
+                }
+                func_006AC7D0();
+                return;
+            }
+        }
+        break;
+    case 1:
+        func_006AA8A0();
+        if (D_00720BE0.open == 2) {
+            g->unkB2 = 1;
+            return;
+        } else if (D_00720BE0.open != 1 && pct < 0x5F) {
+            g->unkB2--;
+            if (g->unkB2 <= 0) {
+                func_006AC8A0();
+            }
+        }
+        break;
+    case 2:
+        func_006AA8A0();
+        if (D_00720BE0.open == 2) {
+            g->unkB2 = 1;
+            return;
+        } else if (D_00720BE0.open != 1 && pct < 0x5F) {
+            if (--g->unkB2 <= 0) {
+                goto close;
+            }
+        }
+        break;
+    }
+    return;
+close:
+    func_001AECB0(func_006B7020);
+    g->unkB0 = 0;
+    g->unkB1 = 0;
+}
+
 /* The map screen's controls this frame: the menu pad's, with the two buttons the button setting
    (D_00306590.unk2C) swaps swapped. */
 #include "ctrl.h"
@@ -966,7 +1035,37 @@ void func_006AC230(void) {
 s32 func_001AF510(void);
 s32 func_001AF500(void);
 void func_006AC8D0(u8 mode);
-u8 func_005C1060(DrawObjFull *p);
+/* Whether player p may open the map now (in one of its plain standing or moving actions):
+   0 no, 1 yes, 2 yes but hurt (status 0x480). */
+s32 func_005C1060(DrawObjFull *p) {
+    if (p->unkBD0 != 0) {
+        return 0;
+    }
+    if (D_0048BF60.unkB9 & 1) {
+        return 0;
+    }
+    if (p->unkBA0 & 0x160) {
+        return 0;
+    }
+    if (p->act[0] != 1) {
+        return 0;
+    }
+    switch (p->act[1]) {
+    case 0:
+    case 0x1A:
+    case 0x34:
+    case 0x4A:
+    case 0x6D:
+    case 0x74:
+    case 0x81:
+    case 0x98:
+    case 0xA3:
+    case 0xC5:
+    case 0xCD:
+        return (p->unkBA0 & 0x480) != 0 ? 2 : 1;
+    }
+    return 0;
+}
 void func_006AE420(s32 mode, u8 player);
 void func_005C15E0(DrawObjFull *p);
 void func_006AC3C0(void);
