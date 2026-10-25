@@ -635,6 +635,28 @@ s32 func_005C7E50(TalkCond *c, DrawObjFull *p) {
     }
 }
 
+/* Kind 0x18: p's 0xD2C in seconds against val (op c->not: ==, !=, <, >, <=, >=). */
+s32 func_005C7EF0(TalkCond *c, DrawObjFull *p) {
+    u32 t = (u32)p->unkD2C / 60;
+
+    switch (c->not) {
+    case 0:
+        return t == (u32)c->val;
+    case 1:
+        return t != (u32)c->val;
+    case 2:
+        return t < (u32)c->val;
+    case 3:
+        return t > (u32)c->val;
+    case 4:
+        return t <= (u32)c->val;
+    case 5:
+        return t >= (u32)c->val;
+    default:
+        return 0;
+    }
+}
+
 /* Kind 0xA: p talks to the player numbered val (or not). */
 s32 func_005C7290(TalkCond *c, DrawObjFull *p) {
     if (p->unkDC7 >= 0) {
@@ -805,7 +827,6 @@ s16 func_005C7600(u8 *c, DrawObjFull *p);
 s16 func_005C7650(u8 *c, DrawObjFull *p);
 s16 func_005C77F0(u8 *c, DrawObjFull *p);
 s16 func_005C7A30(u8 *c, DrawObjFull *p);
-s16 func_005C7EF0(u8 *c, DrawObjFull *p);
 s16 func_005C7F90(u8 *c, DrawObjFull *p);
 s16 func_005C7FB0(u8 *c, DrawObjFull *p);
 s16 func_005C8040(u8 *c, DrawObjFull *p);
@@ -910,7 +931,7 @@ s16 func_005C6480(u8 *c, DrawObjFull *p) {
         r = func_005C7E50((TalkCond *)c, p);
         break;
     case 0x18:
-        r = func_005C7EF0(c, p);
+        r = func_005C7EF0((TalkCond *)c, p);
         break;
     case 0x19:
         r = func_005C7F90(c, p);
