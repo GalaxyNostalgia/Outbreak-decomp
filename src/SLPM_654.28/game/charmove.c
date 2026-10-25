@@ -4761,6 +4761,42 @@ u8 func_0058DAB0(DrawObjFull *o, f32 *to, s16 tol) {
     return 0x15;
 }
 
+f32 func_00191A70(f32 x);
+f32 func_001A42E0(f32 t, f32 x1, f32 y1, f32 x2, f32 y2, f32 x3, f32 y3);
+
+/* Turns the character toward 0xFDC (mode 2: away from it), eased, at most 0x400 a frame. */
+void func_0058C4C0(DrawObjFull *o, s32 mode) {
+    u16 step;
+    u16 target;
+    s16 ds;
+    u16 d;
+
+    switch (mode) {
+    case 0:
+        step = 0x400;
+        target = func_346C50(o->unk38, o->unkFDC);
+        break;
+    case 1:
+        step = 0x400;
+        target = func_346C50(o->unk38, o->unkFDC);
+        break;
+    case 2:
+        step = 0x400;
+        target = func_346C50(o->unk38, o->unkFDC) + 0x7FFF + 1;
+        break;
+    }
+    d = (u32)((s16)((target - o->unk92) & 0xFFFF) *
+              func_001A42E0(func_00191A70((s16)(target - o->unk92)) / 32768.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f));
+    ds = d;
+    if (func_00191A70(ds) < step) {
+        o->unk92 += ds;
+    } else if (d < 0x8000) {
+        o->unk92 += (s16)step;
+    } else {
+        o->unk92 -= (s16)step;
+    }
+}
+
 /* A character's step, by its action (act[0]) and then the action's kind (act[1]): tables of
    handlers, each reached by a tail call. */
 typedef void (*CharStep)(DrawObjFull *o);
