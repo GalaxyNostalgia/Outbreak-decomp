@@ -4,6 +4,7 @@
 /* SINGLE.BIN: the offline game's code (loaded at 0x820000; NETAQ.BIN takes its place online). */
 
 #include "sgl.h"
+void *memcpy(void *dst, const void *src, u32 n);
 
 void func_00825DF0(void) {
     memset(D_0084E2B0, 0, sizeof(D_0084E2B0));
@@ -872,7 +873,7 @@ void func_00821390(s16 to, Msg *m, s32 kind) {
 #endif
 
 extern char D_0083B0C0[];       /* "RS %d" */
-extern s8 D_0084E045;
+extern s8 D_0084E045[];
 
 /* Player p (0 only, as written) takes (take) or tells the others it would take room object obj:
    offline, each object's four takers are kept in D_0083B960, a player in one row at most. */
@@ -906,7 +907,7 @@ void func_00821950(s32 p, s32 obj, s32 take) {
         func_00820940(7, (Msg *)m, 0, 4);
         return;
     }
-    if (D_0084E045 == 0) {
+    if (D_0084E045[0] == 0) {
         return;
     }
     row = D_0083B960[obj];
@@ -939,11 +940,11 @@ void func_00821950(s32 p, s32 obj, s32 take) {
 }
 #endif
 
-extern s32 D_0084E048;
+extern s32 D_0084E048[];
 extern s16 D_0023BBA0;
 extern u8 D_0023BB28;
 void func_001B27B0(s32 x, s32 line, const char *fmt, ...);
-void func_0064C130(u8 *m, u8 from);
+void func_0064C130(u8 *m, s32 from);
 void func_00822090(u8 a, u8 *p);
 void func_0064E590(u8 a, u8 b, u8 c);
 void func_00821FE0(u8 *m, u8 from);
@@ -982,7 +983,7 @@ void func_00820AC0(s32 n, u8 *m) {
                 }
                 break;
             case 1:
-                if (D_0084E045 == 0) {
+                if (D_0084E045[0] == 0) {
                     func_00822090(m[4], m + 5);
                 }
                 break;
@@ -1018,8 +1019,8 @@ void func_00820AC0(s32 n, u8 *m) {
             func_0064E590(m[4], m[5], m[6]);
             break;
         case 1:
-            if (D_0084E045 == 0 && m[8] == D_0048BF60.unk1D) {
-                D_0084E048 = *(s32 *)(m + 4);
+            if (D_0084E045[0] == 0 && m[8] == D_0048BF60.unk1D) {
+                D_0084E048[0] = *(s32 *)(m + 4);
             }
             break;
         case 2:
@@ -1058,3 +1059,135 @@ void func_00820AC0(s32 n, u8 *m) {
     }
 }
 #endif
+
+/* Another kind of message n received. */
+extern char D_0083B118[];
+typedef struct {
+    s32 kind;
+    s32 unk4;
+    u8 data[0x28];
+} FwdMsg;
+
+void func_00821030(FwdMsg *f, s32 to);
+
+/* Passes a received packet's message on (func_00821030) to its sender's slot, unless a. */
+void func_00820E70(Packet *m, s32 a);
+#ifdef NON_MATCHING   /* m->unk0 is loaded before the first store in the original */
+void func_00820E70(Packet *m, s32 a) {
+    FwdMsg *p;
+    s32 to;
+    s32 n;
+    u8 *src;
+    FwdMsg f;
+
+    src = m->data;
+    to = m->unk4;
+    p = &f;
+    p->kind = 1;
+    p->unk4 = m->unk0;
+    n = m->data[1];
+    if (n > 0x20) {
+        n = 0x20;
+    }
+    memcpy(p->data, src, n);
+    if (a == 0) {
+        func_00821030(p, to - 1);
+    }
+}
+#endif
+
+void func_00820EF0(s32 n, Packet *m) {
+    if (func_001B6980(0) != 0 && func_001B6980(0x68) != 0) {
+        func_001B27B0(n % 4 * 6 + 0xD, n / 4 + 7, D_0083B118, n);
+    }
+    switch (n) {
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+        func_00820E70(m, 0);
+        return;
+    case 7:
+        func_00820E70(m, 0);
+        break;
+    case 8:
+        break;
+    }
+}
+
+/* Handles a message passed on from slot `to` (by its type, data[3]). */
+typedef struct {
+    u8 type;
+    u8 len;
+    s8 idx;
+    u8 unk3;
+    s32 time;           /* 0x04 */
+    u8 to;              /* 0x08 */
+} TimeMsg;
+
+void func_00821D60(FwdMsg *f, s32 to, s32 c);
+void func_00821F40(s32 to);
+/* Takes rooms' scenario flags from a message: (len - 6) / 5 entries of a room and its 4 bytes. */
+void func_008218D0(u8 *data) {
+    u8 *p = data + 6;
+    s32 i;
+    s32 n = (data[1] - 6) / 5;
+
+    for (i = 0; i < n; i++) {
+        u8 *f = D_0083BD60[p[0]];
+
+        f[0] = p[1];
+        f[1] = p[2];
+        f[2] = p[3];
+        f[3] = p[4];
+        p += 5;
+    }
+}
+
+void func_00821030(FwdMsg *f, s32 to) {
+    s32 save;
+    TimeMsg m;
+
+    if (f->kind == 0) {
+        return;
+    }
+    switch (f->data[3]) {
+    case 0:
+        if (D_0084E045[0] != 0) {
+            func_00821D60(f, to, 0);
+        }
+        break;
+    case 1:
+        if (D_0084E045[0] != 0) {
+            save = D_0084E048[0];
+            m.len = 0xA;
+            m.to = to;
+            m.type = 1;
+            m.unk3 = 1;
+            m.idx = 0;
+            m.time = save + 6;
+            D_0084E048[0] = f->unk4;
+            func_00820940(7, (Msg *)&m, 0, 4);
+            D_0084E048[0] = save;
+        }
+        break;
+    case 2:
+        if (to != D_0048BF60.unk1D) {
+            func_00821F40(to);
+        }
+        break;
+    case 3:
+        func_0064C130(f->data, to);
+        break;
+    case 4:
+        switch (f->data[4]) {
+        case 0:
+        case 1:
+            break;
+        case 2:
+            func_008218D0(f->data);
+            break;
+        }
+        break;
+    }
+}
