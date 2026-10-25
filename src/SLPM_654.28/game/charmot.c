@@ -367,6 +367,47 @@ f32 func_005A41B0(DrawObjFull *o, s32 id, u16 which) {
 }
 #endif
 
+/* A character's motion layer (0x20 bytes from 0x1E4; cf. objmot.c's ObjLayer). */
+typedef struct {
+    f32 frame;          /* 0x00 */
+    f32 end;            /* 0x04: the frame it ends on */
+    f32 begin;          /* 0x08: the frame it began on */
+    u8 unkC[0x20 - 0xC];
+} MotLayer;
+typedef struct {
+    u8 unk0[0x1E4];
+    MotLayer l[2];      /* 0x1E4 */
+} MotLayers2;
+#define LAYER(o, i) (((MotLayers2 *)(o))->l[i])
+
+f32 func_005A40D0(DrawObjFull *o, s32 id, u16 which);
+
+/* Where layer `which` is in motion id, mapped from its own frames (begin..end) onto id's
+   (func_005A41B0..func_005A40D0). */
+f32 func_005A42B0(DrawObjFull *o, s32 id, u16 which);
+#ifdef NON_MATCHING   /* the layer's address: the original recomputes which*32 + o for end */
+f32 func_005A42B0(DrawObjFull *o, s32 id, u16 which) {
+    f32 end;
+    f32 a;
+    f32 t;
+    f32 begin = LAYER(o, which).begin;
+    f32 b;
+
+    if (LAYER(o, which).frame < begin) {
+        t = 0.0f;
+    } else {
+        t = LAYER(o, which).frame - begin;
+    }
+    end = LAYER(o, which).end;
+    a = func_005A41B0(o, id, which);
+    b = func_005A40D0(o, id, which);
+    if (end - begin <= 0.0f) {
+        return 0.0f;
+    }
+    return a + t * (b - a) / (end - begin);
+}
+#endif
+
 /* Starts motion m on o: its move per frame, its layers' motions. */
 void func_005A4890(DrawObjFull *o, MotRef *m, f32 a, f32 b);
 #ifdef NON_MATCHING   /* first draft */
