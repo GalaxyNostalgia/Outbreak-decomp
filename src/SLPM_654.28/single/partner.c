@@ -283,7 +283,28 @@ typedef struct {
 } ItemIds5;
 extern ItemIds5 D_0083A228;     /* items that refill ... */
 extern ItemIds5 D_0083A238;     /* ... these */
-s32 func_008360C0(DrawObjFull *obj, u16 id);
+s32 func_005C14C0(DrawObjFull *obj, u16 a);
+
+/* The item slot (in the character's four, 0xC84) holding item id; character 6 asks
+   func_005C14C0. 0: none. */
+u8 func_008360C0(DrawObjFull *obj, u16 id) {
+    s32 i;
+    u8 k;
+    u8 r = 0;
+
+    if (obj->unkB98 == 6) {
+        r = func_005C14C0(obj, id);
+    } else {
+        for (i = 0; i < 4; i++) {
+            k = obj->unkC84[i];
+            if (k != 0 && id == D_003967D0[k].unk6) {
+                r = k;
+                break;
+            }
+        }
+    }
+    return r;
+}
 s32 func_00834E60(DrawObjFull *obj, u8 a, u8 b);
 s32 func_00836BD0(DrawObjFull *obj, u8 *slots);
 s32 func_00584910(u8 slot);
@@ -1198,7 +1219,7 @@ void func_00823090(DrawObjFull *obj, u32 what) {
     }
 }
 #endif
-u8 func_005C14C0(DrawObjFull *obj, u16 a);
+s32 func_005C14C0(DrawObjFull *obj, u16 a);
 
 /* A partner's look at the scene each frame: where it waits, whether it is stuck, how it
    stands to us and the other partner, its wishes (unk10C8: mode's + reaction's + danger's),
@@ -1421,7 +1442,7 @@ void func_00822520(DrawObjFull *obj) {
     }
     obj->unk10C8[3] += D_0023B900[obj->unk106C];
     if (obj->unk109C != -1) {
-        if (func_005C14C0(obj, *(u16 *)&obj->unk10A0) == 0) {
+        if ((u8)func_005C14C0(obj, *(u16 *)&obj->unk10A0) == 0) {
             obj->unk109C = -1;
         } else {
             obj->unk10C8[obj->unk109C] = 0xFF;
