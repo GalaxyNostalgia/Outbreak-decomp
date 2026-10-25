@@ -878,7 +878,73 @@ void func_005F4BB0(Npc *n, s32 a);
     }
 #define NPC_WAKE(n) NPC_MODE(n, 0)
 
-s32 func_0068AF60(Npc *n);
+void func_005F3C90(Npc *n);
+void func_005F4BD0(Npc *n, s32 a);
+
+/* Whether it has a player to follow: online only for its owner (func_0064FD50), it looks
+   (func_005F3C90) every 8 frames and takes the one found. */
+s32 func_0068B4E0(Npc *n);
+#ifdef NON_MATCHING   /* the found-player return 1/0 and the prologue's a1 load order */
+s32 func_0068B4E0(Npc *n) {
+    s32 p;
+
+    if (func_0064FD50(1, n->slot)) {
+        if (n->unkFCA == 0) {
+            n->unkFCD = 4;
+            func_005F3C90(n);
+            if (n->unk1024 == NULL) {
+                p = 0;
+                NPC_WAKE(n);
+            } else {
+                p = n->unk1024->kind + 1;
+            }
+            if (p != n->unk1020) {
+                n->unk1020 = p;
+                func_005F4BD0(n, 3);
+                n->unkFCA = 8;
+            }
+            if (p) {
+                return 1;
+            }
+            return 0;
+        }
+        n->unkFCA--;
+        return 0;
+    }
+    if (n->unk1020 == 0) {
+        NPC_WAKE(n);
+        return 0;
+    }
+    return 1;
+}
+#endif
+
+/* The player it follows (0x1020, 1-based; 0 none): while held (0xBA0 & 0x80000) the one holding
+   it (0xC66), else it lets go of one that's down (0xBA0 & 0x1E0) unless func_0068B4E0 says. */
+u8 func_0068AF60(Npc *n) {
+    u8 i;
+
+    if (n->unkBA0 & 0x80000) {
+        s32 v = (u16)n->unkC66 + 1;
+
+        if (n->unk1020 == v) {
+            return n->unk1020;
+        }
+        n->unk1020 = v;
+    } else {
+        i = n->unk1020 & 0xFF;
+        if (n->unk1020 == 0) {
+            if (!func_0068B4E0(n)) {
+                NPC_WAKE(n);
+                n->unk1020 = 0;
+            }
+        } else if ((D_00476DD0[i - 1].unkBA0 & 0x1E0) && !func_0068B4E0(n)) {
+            NPC_WAKE(n);
+            n->unk1020 = 0;
+        }
+    }
+    return n->unk1020;
+}
 s32 func_0068B0A0(Npc *n);
 s32 func_0068B130(Npc *n, DrawObjFull *p);
 f32 func_00634380(Npc *n, f32 *pos);

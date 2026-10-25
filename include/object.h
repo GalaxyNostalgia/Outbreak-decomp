@@ -379,7 +379,11 @@ typedef struct Npc {
     u8 unkFB6;
     u8 unkFB7;          /* 0xFB7 */
     s8 unkFB8[4];       /* 0xFB8 */
-    u8 unkFBC[0xFCF - 0xFBC];
+    u8 unkFBC[0xFCA - 0xFBC];
+    s16 unkFCA;         /* 0xFCA: frames before it looks for a player again */
+    u8 unkFCC;
+    u8 unkFCD;          /* 0xFCD */
+    u8 unkFCE;
     s8 unkFCF;          /* 0xFCF: state */
     s8 unkFD0[4];       /* 0xFD0 */
     u8 unkFD4[2];
@@ -389,7 +393,9 @@ typedef struct Npc {
     u8 unkFDC[0x101F - 0xFDC];
     u8 unk101F;         /* 0x101F */
     u8 unk1020;         /* 0x1020 */
-    u8 unk1021[0x102C - 0x1021];
+    u8 unk1021[3];
+    DrawObjFull *unk1024; /* 0x1024: the player it found */
+    u8 unk1028[0x102C - 0x1028];
     s8 unk102C;         /* 0x102C */
     u8 unk102D[0x1040 - 0x102D];
     s32 unk1040[3];     /* 0x1040 */
