@@ -223,7 +223,61 @@ SglLink *func_00829350(s32 room, s32 variant, s32 place);
 u16 func_00825CA0(s32 lo, s32 hi);
 s32 func_00823B90(DrawObjFull *obj);
 void func_0082C330(DrawObjFull *obj);
-u8 func_00833250(DrawObjFull *obj, Zone **zones, s32 n, Zone **found, u8 *at);
+extern u16 D_003065AC[];        /* the room we're in */
+s32 func_00562BF0(Zone *z, DrawObjFull *obj);
+s32 func_00562C80(u8 who, u8 item);
+u8 *func_00583E30(u8 item);
+s32 func_00833530(DrawObjFull *obj, u8 item, u8 *at);
+s32 func_00833740(DrawObjFull *obj, u8 item, u8 *at);
+
+/* An item the partner can take among the zones (kind 0x80 item spots) in our room: found gets
+   its zone, the result func_00833530's (2: and then func_00833740's). */
+s8 func_00833250(DrawObjFull *obj, Zone **zones, s32 n, Zone **found, u8 *at);
+#ifdef NON_MATCHING   /* first draft: registers, the loop's layout */
+s8 func_00833250(DrawObjFull *obj, Zone **zones, s32 n, Zone **found, u8 *at) {
+    s8 r = 0;
+    s32 i;
+    Zone *z;
+    u8 k;
+    ItemSlot *it;
+
+    if (D_003065AC[0] != obj->unk1E2) {
+        return 0;
+    }
+    *at = 0;
+    for (i = 0; i < n; i++) {
+        z = zones[i];
+        if (z == NULL || z->kind != 0x80) {
+            continue;
+        }
+        k = *(u8 *)&z->u;
+        it = &D_003967D0[k];
+        if (k == 0 || *(s8 *)it == 0 || it->owner != 0) {
+            continue;
+        }
+        if (!func_00562BF0(z, obj)) {
+            continue;
+        }
+        if (it->owner == 0 && func_00583E30(k)[0x16] != 0) {
+            continue;
+        }
+        if (!func_00562C80(obj->kind, k)) {
+            continue;
+        }
+        r = func_00833530(obj, k, at);
+        if (r == 0) {
+            continue;
+        }
+        *found = z;
+        if (r != 2) {
+            return r;
+        }
+        r = func_00833740(obj, k, at);
+        break;
+    }
+    return r;
+}
+#endif
 void func_00834780(DrawObjFull *obj);
 s32 func_00835300(DrawObjFull *obj, s32 *item);
 s32 func_008359A0(DrawObjFull *obj, s32 *item, u8 *at);
