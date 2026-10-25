@@ -542,6 +542,90 @@ void func_005405F0(s32 id, s32 arg, s32 arg2);
 void func_00540120(u16 msg, s32 a, s32 b);
 void func_0058EB70(u8 a, u16 b);
 
+/* A kind-3 zone (a sound where a player steps in) as func_005939C0 sees it. */
+typedef struct {
+    u8 unk0[0x34];
+    DrawObjFull *who;   /* 0x34 */
+    u8 unk38[0x40 - 0x38];
+    s32 snd;            /* 0x40: (low 9 bits) */
+    s32 mode;           /* 0x44: 0 func_005403E0, 1 func_005405F0 (ours, or for all), 2 and a message, 3 both */
+    s32 unk48;
+    s32 test;           /* 0x4C: 1 the player number is (or isn't) val, 2 the character, 3 online and not
+                           ours, 4 ours */
+    s32 val;            /* 0x50 */
+    s32 not;            /* 0x54 */
+    u16 msg;            /* 0x58: 0xFFFF none */
+} ZoneSnd;
+
+/* A kind-3 zone stepped in: its sound (and message), for whom it's meant. */
+void func_005939C0(ZoneSnd *z);
+#ifdef NON_MATCHING   /* registers: z and o swapped (s1/s2) */
+void func_005939C0(ZoneSnd *z) {
+    DrawObjFull *o = z->who;
+    s32 id;
+
+    if (o->type != 0) {
+        return;
+    }
+    id = z->snd & 0x1FF;
+    switch (z->test) {
+    case 0:
+        break;
+    case 1:
+        if ((o->kind != z->val) != z->not) {
+            return;
+        }
+        break;
+    case 2:
+        if ((o->unkB98 != z->val) != z->not) {
+            return;
+        }
+        break;
+    case 3:
+        if (!func_001AF4D0()) {
+            return;
+        }
+        if (func_001AF540(o)) {
+            return;
+        }
+        break;
+    case 4:
+        if (!func_001AF540(o)) {
+            return;
+        }
+        break;
+    }
+    switch (z->mode) {
+    case 0:
+        func_005403E0(id, 1);
+        break;
+    case 1:
+        if (func_001AF4D0() == 1) {
+            func_005405F0(id, 1, o->kind);
+        } else if (func_001AF540(o)) {
+            func_005405F0(id, 1, 0);
+        }
+        break;
+    case 2:
+        func_005403E0(id, 1);
+        if (z->msg != 0xFFFF && func_001AF540(o)) {
+            func_00540120(z->msg, 0x3C, 4);
+        }
+        break;
+    case 3:
+        if (func_001AF4D0() == 1) {
+            func_005405F0(id, 1, o->kind);
+        } else if (func_001AF540(o)) {
+            func_005405F0(id, 1, 0);
+        }
+        if (z->msg != 0xFFFF && func_001AF540(o)) {
+            func_00540120(z->msg, 0x3C, 4);
+        }
+        break;
+    }
+}
+#endif
+
 /* A kind-5 zone stepped in: its message (by flag, item or event; per character; following
    ones), a sound, and its value. */
 void func_00593FE0(ZoneMsg *z);
