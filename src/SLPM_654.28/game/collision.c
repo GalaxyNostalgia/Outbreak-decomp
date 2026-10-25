@@ -1126,7 +1126,30 @@ s8 func_005E8180(CollSweep *s, f32 *out, s8 k) {
     return 1;
 }
 #endif
-void func_005E8410(const f32 *v, f32 *acc);
+/* Grows the push box acc (the most each way: [0..2] up, [3..5] down) to take in v. */
+void func_005E8410(const f32 *v, f32 *acc) {
+    if (v[0] >= 0.0f) {
+        if (acc[0] < v[0]) {
+            acc[0] = v[0];
+        }
+    } else if (!(acc[3] <= v[0])) {
+        acc[3] = v[0];
+    }
+    if (v[1] >= 0.0f) {
+        if (acc[1] < v[1]) {
+            acc[1] = v[1];
+        }
+    } else if (!(acc[4] <= v[1])) {
+        acc[4] = v[1];
+    }
+    if (v[2] >= 0.0f) {
+        if (acc[2] < v[2]) {
+            acc[2] = v[2];
+        }
+    } else if (!(acc[5] <= v[2])) {
+        acc[5] = v[2];
+    }
+}
 
 /* Turns this frame's wall touches (D_0070EE50 on) into one push for sweep s, added to push
    (no longer than D_00239E70 of the move): faces each push; edges only when no face already
