@@ -137,10 +137,14 @@ typedef struct {
     s16 id;             /* 0x0: (negative: none) */
     s8 kind;            /* 0x2 */
     s8 unk3;            /* 0x3: 0 once only, 1 once to each player */
-    u8 unk4[0xA - 4];
+    u8 unk4[4];         /* 0x4: (talk) four conditions of 8 bytes from here (func_005C6480) */
+    s16 unk8;           /* 0x8 */
     s16 unkA;           /* 0xA */
     u16 replies[4];     /* 0xC: (as a reply set) the entries that answer it */
-    u8 unk14[0x2C - 0x14];
+    u8 unk14[0x24 - 0x14];
+    s8 ops[3];          /* 0x24: how each condition joins the ones before (0 and, 1 or, -1 not at all) */
+    u8 unk27;
+    s8 res[4];          /* 0x28: the conditions' results */
     s32 unk2C;          /* 0x2C: (unk3 1) the players it was said to */
 } TalkEntry;
 
@@ -202,7 +206,52 @@ TalkEntry *func_00685190(s32 who, s32 i, s32 alt) {
     return (TalkEntry *)(D_00306590.speech + 0x6000 + who * 0x12800 + i);
 }
 #endif
-void func_00686F80(DrawObjFull *p, TalkEntry *e);
+s8 func_005C6480(u8 *cond, DrawObjFull *p);
+
+/* Whether talk entry e may be said by p: its conditions (anded or ored as e->ops say), not
+   blocked by its entry for p's character, and (unk3 2) not said to this player before; the
+   kind's slot gets e->id + 1 then, else 0. */
+void func_00686F80(DrawObjFull *p, TalkEntry *e) {
+    TalkEntry *c;
+    s32 i;
+    s32 ok;
+    s32 op;
+
+    for (i = 0; i < 4; i++) {
+        e->res[i] = func_005C6480(e->unk4 + i * 8, p);
+    }
+    ok = e->res[0];
+    for (i = 0; i < 3; i++) {
+        op = e->ops[i];
+        if (op == 0) {
+            ok &= e->res[i + 1];
+        } else if ((s8)op > 0) {
+
+            ok |= e->res[i + 1];
+        }
+    }
+    if (p->type == 0) {
+        c = func_00685190(p->unkB98, e->id, 1);
+    } else {
+        c = func_00685190(8, e->id, 1);
+    }
+    if (c != NULL) {
+        if (c->unk8 != 0) {
+            ok = 0;
+        }
+        if (func_00687130(p) <= c->unkA) {
+            ok = 0;
+        }
+    }
+    if (e->unk3 == 2 && p->unkDC7 < 0 && p->unkDC2 >= 0 && (e->unk2C & (1 << p->unkDC2))) {
+        ok = 0;
+    }
+    if (ok == 0) {
+        D_007194C0.unkC4[e->kind] = 0;
+    } else {
+        D_007194C0.unkC4[e->kind] = e->id + 1;
+    }
+}
 void func_00686DF0(s32 a);
 
 /* Runs our character's kind-3 talk entries. */
