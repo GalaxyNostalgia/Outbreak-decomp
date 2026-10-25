@@ -712,3 +712,155 @@ void func_00682810(u8 i) {
     }
 }
 #endif
+
+#include "item.h"
+#include "model.h"
+
+/* An animated item thing: each of its bones gets six keyframed channels (position, then
+   rotation) until all are done; a carried one shows its holder's pose when it aims. */
+extern RoomObjModel D_0039A3D0;
+void func_00562F10(ItemObj *o);
+f32 func_006826A0(u8 *data, s16 frame, s32 n, s32 *end);
+void func_0018FCA0(f32 rx, f32 ry, f32 rz, f32 *m);
+void func_0018FAB0(f32 *out, const f32 *m);
+void func_0018FA30(f32 x, f32 y, f32 z, f32 *m);
+
+void func_00682230(ItemObj *o);
+#ifdef NON_MATCHING   /* regalloc; the original reads v[1..3] through address registers and doesn't fold w - 1 into the address */
+void func_00682230(ItemObj *o) {
+    s32 b;
+    s32 c;
+    s32 *ch;
+    s8 *d;
+    s32 bit;
+    u16 w;
+    f32 *v4;
+    f32 *v5;
+    s32 n;
+    f32 pos[3];
+    Mat44 m;
+    f32 v[6];
+
+    func_00562F10(o);
+    if (!(o->flags & 0x20000)) {
+        return;
+    }
+    w = D_003967D0[o->index].owner;
+    if (w != 0 && (w & 0xFFFF) < 5) {
+        if (D_00476DD0[w - 1].unkBA0 & 0x200) {
+            for (b = 0; b < D_0039A3D0.count[o->model]; b++) {
+                o->partOn[b] = 1;
+                o->parts[b] = D_0039A3D0.world[o->model][b];
+            }
+        }
+    } else {
+        o->anim = 0;
+    }
+    switch (o->anim) {
+    case 0:
+        o->frame = 0;
+        o->done[0] = 0;
+        o->done[1] = 0;
+        o->done[2] = 0;
+        o->done[3] = 0;
+        o->done[4] = 0;
+        o->done[5] = 0;
+        o->unk3E[0] = 0;
+        w = D_003967D0[o->index].owner;
+        if (w != 0) {
+            return;
+        }
+        if ((w & 0xFFFF) < 5) {
+            return;
+        }
+        for (b = 0; b < D_0039A3D0.count[o->model]; b++) {
+            o->partOn[b] = 1;
+            o->parts[b] = D_0039A3D0.world[o->model][b];
+        }
+        return;
+    case 1:
+        v5 = &v[5];
+        v4 = &v[4];
+        for (b = 0; b < 6; b++) {
+            d = &o->done[b];
+            if (*d == 0x3F) {
+                continue;
+            }
+            if (o->animTbl[b] == 0) {
+                *d = 0x3F;
+                continue;
+            }
+            ch = (s32 *)(o->animData + o->animTbl[b]);
+            for (c = 0; c < 6; c++) {
+                bit = 1 << c;
+                v[c] = 0.0f;
+                if (*d & bit) {
+                    continue;
+                }
+                if (ch[c * 2] == 0) {
+                    *d |= (s8)bit;
+                    continue;
+                }
+                n = 0;
+                v[c] = func_006826A0(o->animData + ch[c * 2], o->frame, ch[c * 2 + 1], &n);
+                if (n != 0) {
+                    *d |= (s8)bit;
+                }
+            }
+            func_0018FCA0(v[3], *v4, *v5, (f32 *)&o->parts[b]);
+            m = D_0039A3D0.world[o->model][b];
+            func_0018FAB0(pos, (f32 *)&m);
+            func_0018FA30(v[0], v[1], v[2], (f32 *)&o->parts[b]);
+        }
+        o->frame += 2;
+        n = 0;
+        for (b = 0; b < 6; b++) {
+            if (o->done[b] == 0x3F) {
+                n++;
+            }
+        }
+        if (n == 6) {
+            o->anim = 0;
+        }
+        break;
+    }
+}
+#endif
+
+/* An item glint: a sparkle effect (one of three) at pos, and the next wait: wait's top bits
+   count 0..2, its low 12 the frames. */
+#include "effect.h"
+u16 func_001ADEF0(s32 n);
+Obj250L *func_00620DB0(Mat44 *m, f32 *ofs, s32 mask, s16 id, s32 variant, s32 flags,
+                       void *update);
+void func_00621DA0(Obj250L *e);
+typedef struct {
+    f32 v[3];
+} GlintVec;
+
+void func_005AD2D0(f32 *pos, s16 *wait) {
+    Obj250L *e;
+    s16 n;
+    s16 t;
+
+    e = func_00620DB0(NULL, pos, 0, (func_001ADEF0(1) & 0xFFFF) % 3 + 0x24, 0, 0x1A193,
+                      func_00621DA0);
+    if (e == NULL) {
+        return;
+    }
+    *(GlintVec *)&e->pos = *(GlintVec *)pos;
+    e->unkC = 0;
+    e->unkF0 = 30.0f;
+    n = *wait >> 12;
+    t = (n == 2) ? 0 : n + 1;
+    *wait = t << 12;
+    if (t == 0) {
+        n = e->unkE / 2 + t * 30 - 4;
+    } else {
+        n = e->unkE / 2 + (t + 1) * 30 - 4;
+    }
+    if (n < 0) {
+        n = 0;
+    }
+    *wait |= n;
+}

@@ -110,3 +110,14 @@ f32 func_00191950(u32 a) {
     return r;
 }
 #endif
+
+void func_0018F880(f32 x, f32 y, f32 z, f32 *m);    /* VU0: scale matrix */
+void func_00190DB0(f32 *a, const f32 *b);           /* VU0: a = a * b */
+
+/* Scales matrix m by s. */
+void func_0018F9F0(f32 *m, const f32 *s) {
+    f32 t[16];
+
+    func_0018F880(s[0], s[1], s[2], t);
+    func_00190DB0(m, t);
+}

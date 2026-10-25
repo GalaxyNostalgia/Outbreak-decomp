@@ -923,3 +923,121 @@ u32 func_00562B70(ItemObj *o, u32 mask) {
     }
     return mask & D_00716980[t].flags;
 }
+
+/* An item thing's glint: when its wait runs out it shines for 4 frames at its point (or off it
+   by unk218 along rot), then waits again. */
+f32 func_00340100(s16 a);
+f32 func_003400C0(s16 a);
+void func_005AD2D0(f32 *pos, s16 *wait);
+
+void func_005621E0(ItemObj *o) {
+    s16 z;
+    f32 p[3];
+
+    switch (o->id) {
+    case 0x12C:
+    case 0x12E:
+    case 0x12D:
+    case 0x27A6:
+        break;
+    default:
+        switch (o->glint) {
+        case 0:
+            if (--o->unkE < 0) {
+                o->flags |= 0x1000;
+                o->glint = 1;
+                o->unkE = 0;
+                if (o->unk218 != 0.0f && (z = o->rot[2]) != 0) {
+                    p[0] = o->pos[0] + o->unk218 * (func_00340100(o->rot[1]) * func_00340100(z));
+                    p[1] = o->pos[1] + -o->unk218 * func_003400C0(o->rot[2]);
+                    p[2] = o->pos[2] + o->unk218 * (func_003400C0(o->rot[1]) * func_00340100(o->rot[2]));
+                    func_005AD2D0(p, &o->unk12);
+                } else {
+                    func_005AD2D0(o->pos, &o->unk12);
+                }
+            }
+            break;
+        case 1:
+            o->unkE++;
+            if (o->unkE >= 4) {
+                o->flags &= ~0x1000;
+                o->unkE = o->unk12 & 0xFFF;
+                o->glint = 0;
+            }
+            break;
+        }
+        break;
+    }
+}
+
+/* Each frame, an item thing: one carried (flag 0x20000) shows only while its holder is
+   drawn in our game (and isn't us aiming); otherwise its matrix from rot and scale. */
+extern DrawObjFull D_00476DD0[];
+extern u8 D_0048AEA0[];
+void func_00581560(u8 slot);
+void func_005621E0(ItemObj *o);
+void func_00562390(ItemObj *o);
+f32 func_00191950(u32 a);
+void func_0018FE70(f32 rx, f32 ry, f32 rz, f32 *m);
+void func_0018F9F0(f32 *m, f32 *s);
+
+void func_00562F10(ItemObj *o);
+#ifdef NON_MATCHING   /* the original repeats a branch's delay-slot instruction after each early-return b (dead code ours lacks) */
+void func_00562F10(ItemObj *o) {
+    s16 c;
+    DrawObjFull *h;
+
+    if (o == NULL) {
+        return;
+    }
+    if (o->active == 0) {
+        return;
+    }
+    o->unk1 = 1;
+    if (o->flags & 0x80000000) {
+        o->unk1 = 0;
+    }
+    if (o->flags & 0x20000) {
+        c = (u16)D_003967D0[o->index].owner - 1;
+        if (c < 0) {
+            o->unk1 = 0;
+            return;
+        }
+        if (c < 4) {
+            h = &D_00476DD0[c];
+        } else {
+            h = func_00651300(c - 4);
+        }
+        if (h == NULL || h->active == 0 || (h->unkBA0 & 0x5E0)) {
+            func_00581560(o->index);
+            return;
+        }
+        if (D_00306590.unk1C != h->unk1E2) {
+            o->unk1 = 0;
+            return;
+        }
+        if (h->visible == 0) {
+            o->unk1 = 0;
+            return;
+        }
+        if (c < 4 && ((D_0048AEA0[0] != 0 && D_0048BF60.unk1D == c) ||
+                      (D_0048AEA0[1] != 0 && D_0048BF60.unk1D != c))) {
+            o->unk1 = 0;
+            return;
+        }
+        o->unk241[0] = h->unk175;
+        return;
+    }
+    if ((o->flags & 0x800) && !(o->flags & 0x400)) {
+        func_005621E0(o);
+    }
+    if (o->flags & 0x100000) {
+        func_00562390(o);
+    }
+    if (o->flags & 0x80000) {
+        func_0018FE70(func_00191950((u16)o->rot[0]), func_00191950((u16)o->rot[1]),
+                      func_00191950((u16)o->rot[2]), o->mat);
+        func_0018F9F0(o->mat, o->scale);
+    }
+}
+#endif

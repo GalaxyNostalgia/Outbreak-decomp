@@ -35,7 +35,8 @@ typedef struct Obj250L {
     Mat44 unk50;        /* 0x050: its own copy of the matrix it follows */
     u8 unk90[0xEC - 0x90];
     f32 unkEC;          /* 0x0EC */
-    u8 unkF0[0x114 - 0xF0];
+    f32 unkF0;          /* 0x0F0 */
+    u8 unkF4[0x114 - 0xF4];
     s16 partIds[16];    /* 0x114 */
     void *parts[16];    /* 0x134 */
     u8 unk174[0x1F0 - 0x174];

@@ -52,18 +52,24 @@ typedef struct ItemObj {
     u8 unk4;            /* 0x004 */
     u8 unk5;
     u8 slot;            /* 0x006: its place in the pool */
-    u8 unk7[0xE - 7];
+    u8 unk7;
+    u8 glint;           /* 0x008: 0 waiting, 1 shining (func_005621E0) */
+    u8 anim;            /* 0x009: 0 start, 1 playing (func_00682230) */
+    u8 unkA[0xE - 0xA];
     s16 unkE;           /* 0x00E */
-    u8 unk10[2];
-    s16 unk12;          /* 0x012 */
+    s16 frame;          /* 0x010: of its animation */
+    s16 unk12;          /* 0x012: the glint's wait (low 12 bits) */
     void *update;       /* 0x014: by the item's kind (D_006D5C30) */
     void *draw;         /* 0x018 */
     struct ItemObj *prev;   /* 0x01C */
     struct ItemObj *next;   /* 0x020 */
-    u8 unk24[0x30 - 0x24];
+    s32 *animTbl;       /* 0x024: per bone, an offset into animData (0: none) */
+    u8 *animData;       /* 0x028: per bone, 6 channels of {offset, count} */
+    u8 unk2C[4];
     u8 partOn[6];       /* 0x030 */
     u16 id;             /* 0x036 */
-    u8 unk38[8];
+    s8 done[6];         /* 0x038: per bone, its finished channels (0x3F all) */
+    u8 unk3E[2];
     Mat44 parts[6];     /* 0x040: its bones (from the room's object model) */
     f32 mat[16];        /* 0x1C0 */
     f32 pos[3];         /* 0x200 */

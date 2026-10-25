@@ -191,7 +191,10 @@ typedef struct {
     s8 x;               /* 0x18 */
     s8 y;               /* 0x19 */
     u8 sides;           /* 0x1A: which sides it is reached from (by turn) */
-    u8 unk1B[4];
+    u8 unk1B;
+    s8 push;            /* 0x1C: how long it has been pushed */
+    u8 move;            /* 0x1D: the way it is pushed (1 +y, 2 +x, 4 -y, 8 -x) */
+    u8 unk1E;
     s8 w;               /* 0x1F */
     s8 d;               /* 0x20: (own size) its height */
     s8 h;               /* 0x21 */
@@ -659,3 +662,56 @@ s32 func_0067E9C0(DrawObjFull *o, u8 item) {
     return r;
 }
 #endif
+
+/* A placed thing's item update: once pushed long enough it moves a cell the way it is pushed
+   and its areas follow. */
+extern u8 D_0023BF44;
+void func_0067BA30(RoomExtraSlot *s, s32 (*a)[2], s32 (*b)[2]);
+void func_0067BC50(RoomExtraSlot *s, s32 (*c)[2]);
+
+void func_0067C8C0(ItemObj *o) {
+    RoomExtraSlot *s = &D_00395720[o->index];
+
+    if (o->flags & 8) {
+        o->unk1 = 0;
+    } else {
+        o->unk1 = 1;
+    }
+    if (D_00716000[s->kind].unk2 > 0) {
+        if (s->flags & 2) {
+            if (s->unk2C != 0) {
+                func_0067B890(s, (s32 (*)[2])s->unk2C);
+                *(SlotVec3 *)s->pos = *(SlotVec3 *)o->pos;
+            }
+        } else if (s->push >= D_00716000[s->kind].unk2) {
+            if (s->move != 0) {
+                switch (s->move) {
+                case 1:
+                    s->y++;
+                    break;
+                case 2:
+                    s->x++;
+                    break;
+                case 4:
+                    s->y--;
+                    break;
+                case 8:
+                    s->x--;
+                    break;
+                }
+                if (s->unk30 != 0 && s->unk34 != 0) {
+                    func_0067BA30(s, (s32 (*)[2])s->unk30, (s32 (*)[2])s->unk34);
+                }
+                if (s->unk38 != 0) {
+                    func_0067BC50(s, (s32 (*)[2])s->unk38);
+                }
+                s->flags |= 2;
+                s->move = 0;
+                D_0023BF44 = 1;
+            }
+        }
+    }
+    if (o->flags & 8) {
+        *(SlotVec3 *)&o->mat[12] = *(SlotVec3 *)o->pos;
+    }
+}
