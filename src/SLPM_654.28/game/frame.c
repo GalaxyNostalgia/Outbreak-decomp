@@ -864,3 +864,77 @@ void func_005AD2D0(f32 *pos, s16 *wait) {
     }
     *wait |= n;
 }
+
+/* A task (func_00543800's) that turns room model `model` by the keyframes D_0023AB00 (with
+   D_0023AB04's timing) while go is 1, then puts the model's matrix back. */
+typedef struct {
+    u8 unk0[6];
+    u8 model;           /* 0x06 */
+    u8 unk7;
+    u8 state;           /* 0x08 */
+    u8 unk9[3];
+    s16 frame;          /* 0x0C */
+    s16 key;            /* 0x0E */
+    s16 go;             /* 0x10 */
+    u8 unk12[0x30 - 0x12];
+    Mat44 mtx;          /* 0x30 */
+} TurnTask;
+
+extern SwitchKey *D_0023AB00;
+extern SwitchKey *D_0023AB04;
+void func_005A7A60(u8 k);
+
+void func_005D3F50(TurnTask *t);
+#ifdef NON_MATCHING   /* the keyframe tables' loads scheduled differently; base register operand order in the copies */
+void func_005D3F50(TurnTask *t) {
+    s8 j;
+    u8 *r;
+    SwitchKey *k;
+    SwitchKey *e;
+    f32 f;
+    Mat44 m;
+
+    r = D_00470090;
+    switch (t->state) {
+    case 0:
+        t->state++;
+        t->frame = 0;
+        t->key = 0;
+        t->mtx = *(Mat44 *)(D_00470090 + t->model * 0x40 + 0xB20);
+        func_005A79E0(t->model, &t->mtx);
+        break;
+    case 1:
+        for (j = 0; j < D_00306590.unkC + 1; j++) {
+            if (t->go != 1) {
+                continue;
+            }
+            k = D_0023AB00 + t->key;
+            e = D_0023AB04 + t->key;
+            f = (k[1].v - k[0].v) * (f32)(t->frame - k[0].t) / (f32)(k[1].t - k[0].t);
+            f += k[0].v;
+            t->frame++;
+            if (e[1].t <= t->frame) {
+                t->key++;
+                e++;
+            }
+            if (e[1].t < 0) {
+                t->go = 0;
+                t->state = 0;
+            }
+            func_00340310(0, func_001918C0(f) & 0xFFFF, 0, &m);
+            func_0018F7C0((f32 *)&t->mtx);
+            func_00190D50((f32 *)&t->mtx, (f32 *)RPART(t->model), (f32 *)&m);
+            t->mtx.m[3][0] = RPART(t->model)->m[3][0];
+            t->mtx.m[3][1] = RPART(t->model)->m[3][1];
+            t->mtx.m[3][2] = RPART(t->model)->m[3][2];
+            t->mtx.m[3][3] = RPART(t->model)->m[3][3];
+        }
+        break;
+    case 2:
+        func_005A7A60(t->model);
+        *(Mat44 *)(D_00470090 + t->model * 0x40 + 0xB20) = t->mtx;
+        func_005436F0(t);
+        break;
+    }
+}
+#endif

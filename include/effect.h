@@ -33,7 +33,11 @@ typedef struct Obj250L {
     Vec3 pos;           /* 0x038 */
     f32 ofs[3];         /* 0x044: (with mtx) the offset from it */
     Mat44 unk50;        /* 0x050: its own copy of the matrix it follows */
-    u8 unk90[0xEC - 0x90];
+    u8 unk90[2];
+    s16 unk92;          /* 0x092 */
+    u8 unk94[0xB4 - 0x94];
+    f32 unkB4[3];       /* 0x0B4: its velocity */
+    u8 unkC0[0xEC - 0xC0];
     f32 unkEC;          /* 0x0EC */
     f32 unkF0;          /* 0x0F0 */
     u8 unkF4[0x114 - 0xF4];
@@ -53,7 +57,7 @@ typedef struct Obj250L {
     u8 unk238[2];
     s16 unk23A;         /* 0x23A */
     s16 unk23C;         /* 0x23C */
-    u8 unk23E[2];
+    s16 unk23E;         /* 0x23E */
     s16 unk240;         /* 0x240 */
     u8 unk242[0x250 - 0x242];
 } Obj250L;

@@ -450,3 +450,153 @@ void func_005AF010(Thing *t, s8 n) {
         p->target = t;
     }
 }
+
+/* Runs the update of every effect in list. */
+void func_006206F0(u8 list) {
+    Obj250L *p;
+
+    for (p = D_0023BDD8[list]; p != NULL; p = p->next) {
+        ((void (*)(Obj250L *))p->update)(p);
+    }
+}
+
+/* Splashes: for each of its owner's bones in D_006D8220 (kind unk4 picks the set in
+   D_0023A940), one where the bone is in the water's band and one where it crosses its surface
+   (or moves along it), each with its own wait. */
+typedef struct {
+    s32 bone;
+    f32 lo;             /* 0x04: the band, from the water */
+    f32 hi;             /* 0x08 */
+    f32 vel[3];         /* 0x0C: the splash's */
+} SplashBone;           /* 0x18 */
+
+typedef struct {
+    f32 prev[11][3];    /* 0x00: each bone's position last frame */
+    s8 waitA[11];       /* 0x84 */
+    s8 waitB[11];       /* 0x8F */
+} SplashState;
+
+typedef struct {
+    f32 v[3];
+} SplashVec;
+
+extern s8 D_0023A940[4][2];     /* per kind: its first SplashBone, how many */
+extern SplashBone D_006D8220[];
+extern f32 D_006D8580[][3];
+extern u16 D_0048AEAA[];
+extern u8 D_006DE4B6[];
+extern u8 D_006DE4B3[];
+void func_00620530(Obj250L *p);
+void func_005BA250(Obj250L *p);
+void func_00622660(Obj250L *p);
+f32 func_00341860(f32 x);
+f32 func_005E5B40(const f32 *p, u8 *kind, s32 want);
+void func_001913A0(f32 *out, const f32 *v, const f32 *m);
+
+void func_005B99B0(Obj250L *e);
+#ifdef NON_MATCHING   /* s-register numbering; the original reads p[1] through an address register */
+void func_005B99B0(Obj250L *e) {
+    DrawObjFull *o = e->target;
+    SplashState *st = (SplashState *)&e->partIds;
+    SplashBone *d;
+    Mat44 *m;
+    Obj250L *x;
+    s32 i;
+    s32 fl;
+    s16 r;
+    f32 w;
+    f32 top;
+    f32 lo;
+    f32 hi;
+    u8 k;
+    f32 p[3];
+    f32 c[3];
+    s32 n;
+
+    if (o->active == 0 || o->visible == 0) {
+        func_00620530(e);
+        return;
+    }
+    n = D_0023A940[e->unk4][1];
+    if (e->unk8[0] == 0) {
+        if (!(D_0048AEAA[0] & 1)) {
+            func_00620530(e);
+            return;
+        }
+        for (i = 0; i < n; i++) {
+            st->waitB[i] = 1;
+        }
+        e->unk8[0] = 1;
+    }
+    *(SplashVec *)p = *(SplashVec *)o->unk38;
+    p[1] += 200.0f;
+    w = func_005E5B40(p, &k, 0x81);
+    if (k != 0x81) {
+        return;
+    }
+    top = 3.0f + w;
+    d = &D_006D8220[D_0023A940[e->unk4][0]];
+    for (i = 0; i < n; i++, d++) {
+        fl = 0;
+        m = ((Mat44 **)((u8 *)o->model + 0x820))[d->bone];
+        *(SplashVec *)p = *(SplashVec *)m->m[3];
+        lo = w + d->lo;
+        hi = w + d->hi;
+        if (st->waitA[i] >= 0) {
+            st->waitA[i]--;
+        }
+        if (!(p[1] < lo) && p[1] <= hi) {
+            fl = 4;
+            if (st->waitA[i] < 0) {
+                fl |= 1;
+            }
+        }
+        if (st->waitB[i] >= 0) {
+            st->waitB[i]--;
+        }
+        if (st->waitB[i] < 0) {
+            if ((st->prev[i][1] <= hi && !(p[1] <= hi)) || (!(st->prev[i][1] < hi) && p[1] < hi)) {
+                fl |= 2;
+            } else if (fl & 4) {
+                if (!(func_00341860((p[0] - st->prev[i][0]) * (p[0] - st->prev[i][0]) +
+                                    (p[2] - st->prev[i][2]) * (p[2] - st->prev[i][2])) < 8.0f)) {
+                    fl |= 2;
+                }
+            }
+        }
+        *(SplashVec *)st->prev[i] = *(SplashVec *)p;
+        if (!(fl & 3)) {
+            continue;
+        }
+        c[0] = p[0];
+        c[1] = top;
+        c[2] = p[2];
+        if (e->unk4 == 1) {
+            func_001913A0(p, D_006D8580[i], (f32 *)m);
+            c[0] += p[0];
+            c[2] += p[2];
+        }
+        r = func_001ADEF0(1);
+        if (fl & 1) {
+            x = func_00620DB0(NULL, c, D_006DE4B6[0], 0x36, 0, 0x1A193, func_00622660);
+            if (x != NULL) {
+                *(SplashVec *)x->unkB4 = *(SplashVec *)d->vel;
+                x->unk92 = r;
+                x->unk23E = 6;
+                func_005BA250(x);
+                st->waitA[i] = 10;
+            }
+        }
+        if (fl & 2) {
+            x = func_00620DB0(NULL, c, D_006DE4B3[0], 0x33, 0, 0x1A193, func_00622660);
+            if (x != NULL) {
+                *(SplashVec *)x->unkB4 = *(SplashVec *)d->vel;
+                x->unk23E = 4;
+                func_005BA250(x);
+                st->waitB[i] = 15;
+            }
+        }
+    }
+}
+#endif
+
