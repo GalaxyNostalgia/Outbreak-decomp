@@ -697,19 +697,21 @@ void func_0055D5F0(EnemySetRoom *e, Mark *m, u8 a, s32 b);
 
 typedef struct {
     u8 unk0;
-    s8 room;            /* 0x01 */
-    u8 unk2[6];
+    u8 room;            /* 0x01 */
+    u8 unk2[2];
+    u16 model;          /* 0x04: the NPC's model + 1 */
+    u8 unk6[2];
     Vec3 pos;           /* 0x08 */
-    s16 unk14;          /* 0x14: heading */
-    s16 unk16;          /* 0x16: health */
+    u16 unk14;          /* 0x14: heading */
+    u16 unk16;          /* 0x16: health */
     u8 unk18[0x1E - 0x18];
     u8 unk1E;           /* 0x1E */
     u8 unk1F;
     u8 unk20;           /* 0x20 */
     u8 unk21;           /* 0x21 */
     u8 unk22[2];
-    u8 unk24;           /* 0x24 */
-    u8 unk25;           /* 0x25 */
+    s8 unk24;           /* 0x24 */
+    s8 unk25;           /* 0x25 */
     u8 unk26[2];
     s32 unk28;          /* 0x28 */
     u8 unk2C[4];
@@ -735,7 +737,7 @@ void func_0055D3A0(Mark *m) {
         switch (m->unk7) {
         case 1:
             if (m->unk12 <= 0) {
-                if (func_005CCE40(t->room, m->unk8, &r) >= 0) {
+                if (func_005CCE40((s8)t->room, m->unk8, &r) >= 0) {
                     func_006530F0(t, m->unk8, r);
                 }
                 m->state = 0;
@@ -832,20 +834,24 @@ void func_0064FCB0(s32 unused, u8 *msg) {
 
 /* An NPC's message: its header, then what each kind carries. */
 typedef struct {
-    u8 kind;            /* 0x00 */
-    u8 size;            /* 0x01 */
-    u8 unk2;
-    u8 unk3;
     u16 model;          /* 0x04 */
     u8 b6;              /* 0x06 */
     u8 b7;              /* 0x07 */
     union {
-        struct { s32 state; s32 w; s16 hp; } k0;
-        struct { s32 state; f32 pos[3]; s32 w; s16 dir; } k1;
-        struct { s32 state; f32 pos[3]; s16 dir; s16 hp; s32 w; s32 b; } k6;
-        struct { f32 pos[3]; s16 dir; } k7;
+        struct { s32 state; s32 w; u16 hp; } k0;
+        struct { s32 state; f32 pos[3]; s32 w; u16 dir; } k1;
+        struct { s32 state; f32 pos[3]; u16 dir; u16 hp; s32 w; s32 b; } k6;
+        struct { f32 pos[3]; u16 dir; } k7;
     } u;
     u8 unk2C[4];
+} NpcBody;
+
+typedef struct {
+    u8 kind;            /* 0x00 */
+    u8 size;            /* 0x01 */
+    u8 from;            /* 0x02: the sender's player number */
+    u8 unk3;
+    NpcBody b;          /* 0x04 */
 } NpcMsg;               /* 0x30 */
 
 void func_1AF000(s32 type, void *msg, s32 a, s32 b);
@@ -857,19 +863,19 @@ void func_00652B50(Npc *o, u8 kind) {
 
     if (o->type == 1 && func_0064FD50(1, o->slot)) {
         msg.unk3 = 0;
-        msg.unk2 = 0;
+        msg.from = 0;
         msg.kind = kind;
         msg.size = 0x2C;
         t = &D_3614F0[o->slot];
         switch (kind) {
         case 0:
             msg.size = 0x14;
-            msg.u.k0.state = o->unkFCF;
-            msg.u.k0.hp = o->unk544;
-            msg.b6 = o->unk1E2;
-            msg.model = o->unkBB4;
-            msg.b7 = o->unkB9B;
-            msg.u.k0.w = o->unk1150;
+            msg.b.u.k0.state = o->unkFCF;
+            msg.b.u.k0.hp = o->unk544;
+            msg.b.b6 = o->unk1E2;
+            msg.b.model = o->unkBB4;
+            msg.b.b7 = o->unkB9B;
+            msg.b.u.k0.w = o->unk1150;
             func_1AF000(9, &msg, 0, 4);
             t->unk30 = o->unkFCF;
             t->room = o->unk1E2;
@@ -880,15 +886,15 @@ void func_00652B50(Npc *o, u8 kind) {
             break;
         case 1:
             msg.size = 0x20;
-            msg.u.k1.state = o->unkFCF;
-            msg.u.k1.pos[0] = o->unk38[0];
-            msg.u.k1.pos[1] = o->unk38[1];
-            msg.u.k1.pos[2] = o->unk38[2];
-            msg.u.k1.dir = o->unk92;
-            msg.model = o->unkBB4;
-            msg.b6 = o->unk1020;
-            msg.b7 = o->unk101F;
-            msg.u.k1.w = o->unk1150;
+            msg.b.u.k1.state = o->unkFCF;
+            msg.b.u.k1.pos[0] = o->unk38[0];
+            msg.b.u.k1.pos[1] = o->unk38[1];
+            msg.b.u.k1.pos[2] = o->unk38[2];
+            msg.b.u.k1.dir = o->unk92;
+            msg.b.model = o->unkBB4;
+            msg.b.b6 = o->unk1020;
+            msg.b.b7 = o->unk101F;
+            msg.b.u.k1.w = o->unk1150;
             t->unk30 = o->unkFCF;
             t->pos.x = o->unk38[0];
             t->pos.y = o->unk38[1];
@@ -902,14 +908,14 @@ void func_00652B50(Npc *o, u8 kind) {
             break;
         case 2:
             msg.size = 0x1C;
-            msg.u.k1.state = o->unkFCF;
-            msg.u.k1.pos[0] = o->unk38[0];
-            msg.u.k1.pos[1] = o->unk38[1];
-            msg.u.k1.pos[2] = o->unk38[2];
-            msg.b6 = o->unk1E2;
-            msg.model = o->unkBB4;
-            msg.b7 = o->unk1154;
-            msg.u.k1.w = o->unk1150;
+            msg.b.u.k1.state = o->unkFCF;
+            msg.b.u.k1.pos[0] = o->unk38[0];
+            msg.b.u.k1.pos[1] = o->unk38[1];
+            msg.b.u.k1.pos[2] = o->unk38[2];
+            msg.b.b6 = o->unk1E2;
+            msg.b.model = o->unkBB4;
+            msg.b.b7 = o->unk1154;
+            msg.b.u.k1.w = o->unk1150;
             t->unk30 = o->unkFCF;
             t->pos.x = o->unk38[0];
             t->pos.y = o->unk38[1];
@@ -922,10 +928,10 @@ void func_00652B50(Npc *o, u8 kind) {
             break;
         case 3:
             msg.size = 0xC;
-            msg.u.k0.state = o->unkFCF;
-            msg.b6 = o->unk1020;
-            msg.b7 = o->unk101F;
-            msg.model = o->unkBB4;
+            msg.b.u.k0.state = o->unkFCF;
+            msg.b.b6 = o->unk1020;
+            msg.b.b7 = o->unk101F;
+            msg.b.model = o->unkBB4;
             func_1AF000(9, &msg, 0, 4);
             t->unk30 = o->unkFCF;
             t->room = o->unk1E2;
@@ -935,13 +941,13 @@ void func_00652B50(Npc *o, u8 kind) {
             break;
         case 4:
             msg.size = 0x1C;
-            msg.u.k1.state = o->unkFCF;
-            msg.u.k1.pos[0] = o->unk38[0];
-            msg.u.k1.pos[1] = o->unk38[1];
-            msg.u.k1.pos[2] = o->unk38[2];
-            msg.b6 = o->unk1E2;
-            msg.model = o->unkBB4;
-            msg.b7 = o->unk1154;
+            msg.b.u.k1.state = o->unkFCF;
+            msg.b.u.k1.pos[0] = o->unk38[0];
+            msg.b.u.k1.pos[1] = o->unk38[1];
+            msg.b.u.k1.pos[2] = o->unk38[2];
+            msg.b.b6 = o->unk1E2;
+            msg.b.model = o->unkBB4;
+            msg.b.b7 = o->unk1154;
             t->unk30 = o->unkFCF;
             t->pos.x = o->unk38[0];
             t->pos.y = o->unk38[1];
@@ -953,14 +959,14 @@ void func_00652B50(Npc *o, u8 kind) {
             break;
         case 5:
             msg.size = 0x20;
-            msg.u.k1.state = o->unkFCF;
-            msg.model = o->unkBB4;
-            msg.b6 = o->unk1020;
-            msg.b7 = o->unk101F;
-            msg.u.k1.w = o->unk1150;
-            msg.u.k1.pos[0] = o->unk38[0];
-            msg.u.k1.pos[1] = o->unk38[1];
-            msg.u.k1.pos[2] = o->unk38[2];
+            msg.b.u.k1.state = o->unkFCF;
+            msg.b.model = o->unkBB4;
+            msg.b.b6 = o->unk1020;
+            msg.b.b7 = o->unk101F;
+            msg.b.u.k1.w = o->unk1150;
+            msg.b.u.k1.pos[0] = o->unk38[0];
+            msg.b.u.k1.pos[1] = o->unk38[1];
+            msg.b.u.k1.pos[2] = o->unk38[2];
             t->unk30 = o->unkFCF;
             t->pos.x = o->unk38[0];
             t->pos.y = o->unk38[1];
@@ -973,17 +979,17 @@ void func_00652B50(Npc *o, u8 kind) {
             break;
         case 6:
             msg.size = 0x24;
-            msg.u.k6.state = o->unkFCF;
-            msg.u.k6.pos[0] = o->unk38[0];
-            msg.u.k6.pos[1] = o->unk38[1];
-            msg.u.k6.pos[2] = o->unk38[2];
-            msg.u.k6.dir = o->unk92;
-            msg.u.k6.hp = o->unk544;
-            msg.b6 = o->unk1E2;
-            msg.model = o->unkBB4;
-            msg.b7 = o->unkB9B;
-            msg.u.k6.w = o->unk1150;
-            msg.u.k6.b = o->unk113C;
+            msg.b.u.k6.state = o->unkFCF;
+            msg.b.u.k6.pos[0] = o->unk38[0];
+            msg.b.u.k6.pos[1] = o->unk38[1];
+            msg.b.u.k6.pos[2] = o->unk38[2];
+            msg.b.u.k6.dir = o->unk92;
+            msg.b.u.k6.hp = o->unk544;
+            msg.b.b6 = o->unk1E2;
+            msg.b.model = o->unkBB4;
+            msg.b.b7 = o->unkB9B;
+            msg.b.u.k6.w = o->unk1150;
+            msg.b.u.k6.b = o->unk113C;
             func_1AF000(9, &msg, 0, 4);
             t->unk30 = o->unkFCF;
             t->pos.x = o->unk38[0];
@@ -998,16 +1004,265 @@ void func_00652B50(Npc *o, u8 kind) {
             break;
         case 7:
             msg.size = 0x18;
-            msg.model = o->unkBB4;
-            msg.u.k7.pos[0] = o->unk38[0];
-            msg.u.k7.pos[1] = o->unk38[1];
-            msg.u.k7.pos[2] = o->unk38[2];
-            msg.u.k7.dir = o->unk92;
+            msg.b.model = o->unkBB4;
+            msg.b.u.k7.pos[0] = o->unk38[0];
+            msg.b.u.k7.pos[1] = o->unk38[1];
+            msg.b.u.k7.pos[2] = o->unk38[2];
+            msg.b.u.k7.dir = o->unk92;
             func_1AF000(9, &msg, 0, 2);
             t->pos.x = o->unk38[0];
             t->pos.y = o->unk38[1];
             t->pos.z = o->unk38[2];
             t->unk14 = o->unk92;
+            break;
+        }
+    }
+}
+
+extern Npc *D_0023BE04;
+void func_0058DBD0(Npc *n, Vec3 *to, s32 a);
+
+/* Receives an NPC's state message (func_00652B50's kinds) into its D_3614F0 record and the NPC. */
+void func_006531C0(NpcMsg *msg) {
+    u8 kind = msg->kind;
+    s32 from = msg->from;
+    Npc *found;
+    NpcBody *b = &msg->b;
+    s32 i;
+    Npc *n;
+    ThingRec *t = NULL;
+
+    for (i = 0; i < 0x40; i++) {
+        if (b->model == D_3614F0[i].model) {
+            t = &D_3614F0[i];
+        }
+    }
+    n = D_0023BE04;
+    found = NULL;
+    if (D_0048BF60.unk28 == 0) {
+        while (n != NULL) {
+            if (n->active && n->unkBB4 == b->model) {
+                found = n;
+                break;
+            }
+            n = n->next;
+        }
+    }
+    n = found;
+    if (t != NULL && t->unk30 != 4 && t->unk30 != 7) {
+        switch (kind) {
+        case 0:
+            if (from == D_0048BF60.unk1D) {
+                break;
+            }
+            t->unk30 = b->u.k0.state;
+            t->unk28 = b->u.k0.w;
+            t->unk16 = b->u.k0.hp;
+            t->room = b->b6;
+            t->model = b->model;
+            t->unk20 = b->b7;
+            if (n == NULL) {
+                break;
+            }
+            n->visible = 1;
+            if (t->room != n->unk1E2) {
+                n->visible = 0;
+            }
+            n->unk1E2 = t->room;
+            n->unk544 = t->unk16;
+            n->unkB9B = b->b7;
+            if (n->unkFCF == 5 && t->unk30 != 5) {
+                n->unkBA0 &= ~0x01000000;
+            }
+            n->unk1150 = t->unk28;
+            n->unkFCF = t->unk30;
+            n->unkFD0[0] = 0;
+            n->unkFD0[1] = 0;
+            n->unkFD0[2] = 0;
+            n->unkFD0[3] = 0;
+            t->unk1E = 0;
+            break;
+        case 1:
+        case 5:
+            if (from == D_0048BF60.unk1D) {
+                break;
+            }
+            t->unk30 = b->u.k1.state;
+            t->pos.x = b->u.k1.pos[0];
+            t->pos.y = b->u.k1.pos[1];
+            t->pos.z = b->u.k1.pos[2];
+            t->unk14 = b->u.k1.dir;
+            t->model = b->model;
+            t->unk24 = *(s8 *)&b->b6;
+            t->unk25 = *(s8 *)&b->b7;
+            t->unk28 = b->u.k1.w;
+            if (n != NULL) {
+                n->visible = 1;
+                if (t->room != n->unk1E2) {
+                    n->visible = 0;
+                    n->unk38[0] = t->pos.x;
+                    n->unk38[1] = t->pos.y;
+                    n->unk38[2] = t->pos.z;
+                    n->unk92 = t->unk14;
+                } else if (!(n->unkBA0 & 0x80000)) {
+                    if (kind == 5) {
+                        n->unk38[0] = t->pos.x;
+                        n->unk38[1] = t->pos.y;
+                        n->unk38[2] = t->pos.z;
+                        n->unk92 = t->unk14;
+                    } else {
+                        func_0058DBD0(n, &t->pos, 15);
+                        n->unkD8C = t->unk14;
+                        n->unk92 = t->unk14;
+                    }
+                }
+                if (n->unkFCF == 5 && t->unk30 != 5) {
+                    n->unkBA0 &= ~0x01000000;
+                }
+                n->unk1020 = t->unk24;
+                n->unk101F = t->unk25;
+                if (n->unk1150 != t->unk28) {
+                    n->unk1150 = t->unk28;
+                    n->unkFCF = t->unk30;
+                    n->unkFD0[0] = 0;
+                    n->unkFD0[1] = 0;
+                    n->unkFD0[2] = 0;
+                    n->unkFD0[3] = 0;
+                }
+            }
+            t->unk1E = 0;
+            break;
+        case 2:
+        case 8:
+            t->pos.x = b->u.k1.pos[0];
+            t->pos.y = b->u.k1.pos[1];
+            t->pos.z = b->u.k1.pos[2];
+            t->model = b->model;
+            t->room = b->b6;
+            t->unk21 = b->b7;
+            t->unk1E = 2;
+            if (n == NULL) {
+                break;
+            }
+            n->unkFCF = 5;
+            n->unk1154 = t->unk21;
+            n->unk1E2 = t->room;
+            n->visible = 0;
+            n->unkFD0[0] = 0;
+            n->unkFD0[1] = 0;
+            n->unkFD0[2] = 0;
+            n->unkFD0[3] = 0;
+            n->unkFB7 = 0x10;
+            n->unkBA0 &= ~0x80000;
+            break;
+        case 3:
+            if (from == D_0048BF60.unk1D) {
+                break;
+            }
+            t->unk30 = b->u.k0.state;
+            t->unk24 = *(s8 *)&b->b6;
+            t->unk25 = *(s8 *)&b->b7;
+            t->model = b->model;
+            if (n == NULL) {
+                break;
+            }
+            if (t->room != n->unk1E2) {
+                n->visible = 0;
+            } else {
+                n->visible = 1;
+            }
+            if (n->unkFCF == 5 && t->unk30 != 5) {
+                n->unkBA0 &= ~0x01000000;
+                n->unkFCF = t->unk30;
+                n->unkFD0[0] = 0;
+                n->unkFD0[1] = 0;
+                n->unkFD0[2] = 0;
+                n->unkFD0[3] = 0;
+            }
+            n->unk1E2 = t->room;
+            n->unk1020 = t->unk24;
+            n->unk101F = t->unk25;
+            break;
+        case 4:
+            t->unk30 = b->u.k1.state;
+            t->pos.x = b->u.k1.pos[0];
+            t->pos.y = b->u.k1.pos[1];
+            t->pos.z = b->u.k1.pos[2];
+            t->model = b->model;
+            t->room = b->b6;
+            t->unk1E = 1;
+            if (n == NULL) {
+                break;
+            }
+            n->unkFCF = 5;
+            n->unk1E2 = t->room;
+            n->visible = 0;
+            n->unk1150 = t->unk28;
+            n->unkFD0[0] = 0;
+            n->unkFD0[1] = 0;
+            n->unkFD0[2] = 0;
+            n->unkFD0[3] = 0;
+            n->unkFB7 = 0x10;
+            break;
+        case 7:
+            if (from == D_0048BF60.unk1D) {
+                break;
+            }
+            t->pos.x = b->u.k7.pos[0];
+            t->pos.y = b->u.k7.pos[1];
+            t->pos.z = b->u.k7.pos[2];
+            t->model = b->model;
+            if (n != NULL) {
+                func_0058DBD0(n, &t->pos, 15);
+            }
+            t->unk1E = 0;
+            break;
+        case 6:
+            if (from == D_0048BF60.unk1D) {
+                break;
+            }
+            t->unk30 = b->u.k6.state;
+            t->pos.x = b->u.k6.pos[0];
+            t->pos.y = b->u.k6.pos[1];
+            t->pos.z = b->u.k6.pos[2];
+            t->unk28 = b->u.k6.w;
+            t->unk14 = b->u.k6.dir;
+            t->unk16 = b->u.k6.hp;
+            t->room = b->b6;
+            t->model = b->model;
+            t->unk20 = b->b7;
+            if (n == NULL) {
+                break;
+            }
+            n->visible = 1;
+            if (t->room != n->unk1E2) {
+                n->visible = 0;
+                n->unk38[0] = t->pos.x;
+                n->unk38[1] = t->pos.y;
+                n->unk38[2] = t->pos.z;
+                n->unk92 = t->unk14;
+            } else if (!(n->unkBA0 & 0x80000)) {
+                func_0058DBD0(n, &t->pos, 15);
+                n->unkD8C = t->unk14;
+                n->unk92 = t->unk14;
+            }
+            n->unk1E2 = t->room;
+            n->unk544 = t->unk16;
+            n->unkB9B = b->b7;
+            n->unk113C = b->u.k6.b;
+            if (n->unkFCF == 5 && t->unk30 != 5) {
+                n->unkBA0 &= ~0x01000000;
+            }
+            if (n->unk1150 != t->unk28) {
+                n->unk1150 = t->unk28;
+                n->unkFCF = t->unk30;
+                n->unkFD0[0] = 0;
+                n->unkFD0[1] = 0;
+                n->unkFD0[2] = 0;
+                n->unkFD0[3] = 0;
+            }
+            t->unk1E = 0;
+            n->unkFD0[2] = 1;
             break;
         }
     }
