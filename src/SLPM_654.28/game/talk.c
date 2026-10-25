@@ -102,8 +102,8 @@ void func_00685AA0(void) {
         }
     }
     for (n = D_0023BE04; n != NULL; n = n->next) {
-        func_00685D80(n);
-        func_00686090(n);
+        func_00685D80((DrawObjFull *)n);
+        func_00686090((DrawObjFull *)n);
     }
     func_006871E0();
     func_00685CF0();
@@ -136,18 +136,27 @@ void *func_00686150(s32 a, s32 model, s32 which) {
 typedef struct {
     s16 id;             /* 0x0: (negative: none) */
     s8 kind;            /* 0x2 */
-    u8 unk3[0xA - 3];
+    s8 unk3;            /* 0x3: 0 once only, 1 once to each player */
+    u8 unk4[0xA - 4];
     s16 unkA;           /* 0xA */
     u16 replies[4];     /* 0xC: (as a reply set) the entries that answer it */
+    u8 unk14[0x2C - 0x14];
+    s32 unk2C;          /* 0x2C: (unk3 1) the players it was said to */
 } TalkEntry;
 
 typedef struct {
-    u8 unk0[0xB4];
+    u8 unk0[0xA8];
+    u16 unkA8;          /* 0xA8: (the speech playing on channel 0) its unk60 */
+    u16 unkAA;          /* 0xAA: (channel 1) */
+    u8 unkAC[0xB4 - 0xAC];
     DrawObjFull *unkB4; /* 0xB4: the last to talk to us */
     DrawObjFull *unkB8; /* 0xB8 */
     u8 unkBC[0xC4 - 0xBC];
     s32 unkC4[8];       /* 0xC4: per kind */
     s32 unkE4[0x20];    /* 0xE4 */
+    u8 unk164[4];
+    u32 said[0x10];     /* 0x168: a bit per talk entry: said this frame */
+    s32 since[0x200];   /* 0x1A8: per talk entry, frames it has been said for */
 } TalkWork;
 
 extern TalkWork D_007194C0;
@@ -298,11 +307,10 @@ void func_00686530(DrawObjFull *p) {
     }
 }
 
-s32 func_00687130(DrawObjFull *p, TalkEntry *e);
+s32 func_00687130(DrawObjFull *p);
 
 /* Replies (kind 6): the first p's character may give now; 1 if it is to talk. */
 s32 func_00686BB0(DrawObjFull *p);
-#ifdef NON_MATCHING   /* f->unkA is loaded before the call; the original calls first and sets a1 once */
 s32 func_00686BB0(DrawObjFull *p) {
     TalkEntry *e;
     s32 i;
@@ -323,7 +331,7 @@ s32 func_00686BB0(DrawObjFull *p) {
         } else {
             f = func_00685190(8, e->id, 1);
         }
-        if (f == NULL || f->unkA < func_00687130(p, e)) {
+        if (f == NULL || func_00687130(p) > f->unkA) {
             func_00686F80(p, e);
             if (D_007194C0.unkC4[6] != 0) {
                 p->unkDB4 = D_007194C0.unkC4[6];
@@ -340,10 +348,84 @@ s32 func_00686BB0(DrawObjFull *p) {
     }
     return r;
 }
-#endif
 
 void func_00686F10(DrawObjFull *p);
-void func_006862A0(DrawObjFull *p);
+s32 func_006862A0(DrawObjFull *p);
+
+void func_00686F30(void);
+
+/* Says the first talk picked (D_007194C0.unkC4, by kind; kind 3 not for NPCs) that is due and
+   whose listener can hear; once-only talks are used up. 1 if one was said. */
+#ifdef NON_MATCHING   /* keeps &unkC4[k] in a3 across func_00685190 (a leaf, once that matches) */
+s32 func_006862A0(DrawObjFull *p) {
+    s32 k;
+    s32 r;
+    s32 *c;
+    TalkEntry *e;
+    TalkEntry *f;
+    s32 j;
+    u32 m;
+    DrawObjFull *o;
+
+    for (k = 0, r = 0; k < 5; k++) {
+        c = &D_007194C0.unkC4[k];
+        if (*c <= 0) {
+            continue;
+        }
+        if (p->type == 0) {
+            e = func_00685190(p->unkB98, *c - 1, 0);
+            f = func_00685190(p->unkB98, *c - 1, 1);
+        } else {
+            if (k == 3) {
+                continue;
+            }
+            e = func_00685190(8, *c - 1, 0);
+            f = func_00685190(8, *c - 1, 1);
+        }
+        if (f != NULL && !(func_00687130(p) > f->unkA)) {
+            continue;
+        }
+        if (e == NULL) {
+            continue;
+        }
+        if (p->unkDC7 < 0 && (D_00476DD0[p->unkDC2].unkBA0 & 0x20)) {
+            continue;
+        }
+        if (e->kind != 4) {
+            if (e->unk3 == 0) {
+                e->id = -1;
+            } else if (e->unk3 == 1 && k != 1) {
+                if (p->unkDC7 < 0 && p->unkDC2 >= 0) {
+                    e->unk2C |= 1 << p->unkDC2;
+                }
+                m = 0;
+                for (j = 0; j < 8; j++) {
+                    o = &D_00476DD0[j];
+                    if (D_0048BF60.unk1D != o->kind && o->active != 0) {
+                        m |= 1 << j;
+                    }
+                }
+                if (m == 0) {
+                    e->id = -1;
+                } else if ((e->unk2C ^ (m & ~(1 << D_0048BF60.unk1D))) == 0) {
+                    e->id = -1;
+                }
+            }
+        }
+        if (k == 3) {
+            func_00686F30();
+        }
+        p->unkDB4 = D_007194C0.unkC4[k];
+        D_007194C0.unkC4[k] = 0;
+        r = 1;
+        p->unkDC0 = r;
+        p->unkDBE = 0;
+        p->talk = r;
+        break;
+    }
+    return r;
+}
+#endif
 
 /* p answers o when o's last talk was to p (or to everyone): with one of the kind-4 entries
    o's talk lists as its replies. */
@@ -462,7 +544,7 @@ s32 func_00686840(DrawObjFull *p) {
     }
     return 0;
 }
-void func_006862A0(DrawObjFull *p);
+s32 func_006862A0(DrawObjFull *p);
 
 #ifdef NON_MATCHING   /* a nop left in func_00686F10's delay slot */
 void func_00685D80(DrawObjFull *p) {
@@ -589,5 +671,86 @@ void func_00686090(DrawObjFull *p) {
         p->unkDC0 = 0;
     } else {
         func_00686290(p, 1);
+    }
+}
+
+/* The speeches being said (16 of 0x98 bytes, D_00718B40), and per channel which are heard
+   (D_00718AC0: [0] the one playing). */
+typedef struct {
+    s16 active;         /* 0x00 */
+    u8 unk2[6];
+    s16 timer;          /* 0x08 */
+    u8 unkA[3];
+    s8 unkD;            /* 0x0D */
+    u8 unkE[0x5C - 0xE];
+    DrawObjFull *who;   /* 0x5C */
+    u16 unk60;          /* 0x60 */
+    u8 unk62[0x98 - 0x62];
+} Speech;
+
+extern s8 D_0048BF88[];
+extern s16 D_0023BF7A;
+extern s16 D_0023BF78;
+extern Speech *D_00718AC0[2][0x10];
+extern Speech D_00718B40[0x10];
+void func_00687AD0(Speech *s, s8 a);
+void func_00687420(Speech *s, s32 ch);
+
+#ifdef NON_MATCHING   /* the second clearing loop's store stays out of its bnez delay slot in the original */
+void func_006871E0(void) {
+    s32 i;
+    s32 j;
+    Speech *s;
+
+    if (D_0048BF88[0] == 0 && D_0048BF60.unkBD == 0 && !(D_0048BF60.unkB9 & 4)) {
+        D_0023BF7A = 0;
+        D_0023BF78 = 0;
+        for (i = 0; i < 2; i++) {
+            for (j = 0xF; j >= 0; j--) {
+                D_00718AC0[i][j] = 0;
+            }
+        }
+        for (i = 0, s = D_00718B40; i < 0x10; i++, s++) {
+            if (s->active != 0) {
+                s->timer++;
+                func_00687AD0(s, s->unkD);
+            }
+        }
+        for (i = 0; i < 2; i++) {
+            for (j = 1; j < 0x10; j++) {
+                if (D_00718AC0[i][j] != NULL) {
+                    D_00718AC0[i][j]->active = 0;
+                }
+                D_00718AC0[i][j] = NULL;
+            }
+        }
+        D_007194C0.unkB4 = NULL;
+        D_007194C0.unkA8 = 0;
+        if ((s = D_00718AC0[0][0]) != NULL) {
+            func_00687420(s, 0);
+            D_007194C0.unkA8 = s->unk60;
+            D_007194C0.unkB4 = s->who;
+        }
+        D_007194C0.unkB8 = NULL;
+        D_007194C0.unkAA = 0;
+        if ((s = D_00718AC0[1][0]) != NULL) {
+            func_00687420(s, 1);
+            D_007194C0.unkAA = s->unk60;
+            D_007194C0.unkB8 = s->who;
+        }
+    }
+}
+#endif
+
+/* Counts how long each talk entry has been going (0 once it stops). */
+void func_00685CF0(void) {
+    s32 i;
+
+    for (i = 0; i < 0x200; i++) {
+        if (D_007194C0.said[i / 32] & (1 << (i % 32))) {
+            D_007194C0.since[i]++;
+        } else {
+            D_007194C0.since[i] = 0;
+        }
     }
 }
