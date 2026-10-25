@@ -452,7 +452,7 @@ void func_00346B90(void *o);
 void func_00652910(Npc *n);
 void func_005ABBE0(f32 r, f32 *pos, void *o, s32 a);
 s32 func_001AF510(void);
-s32 func_0064FD50(s32 a, u8 slot);
+s32 func_0064FD50(s32 a, s32 slot);
 void func_00632180(Npc *n);
 
 /* An NPC being pushed (0xD80 a frame for 0xD90 frames, ending at 0xD74): 2 while it lasts, 1
@@ -765,7 +765,7 @@ void func_005BB7C0(u8 slot, u8 model, u8 a, u8 b) {
 
 /* The NPCs' update: by state, then the common parts. */
 s32 func_001AF510(void);
-s32 func_0064FD50(s32 a, u8 slot);
+s32 func_0064FD50(s32 a, s32 slot);
 void func_00652B50(Npc *n, s32 a);
 /* An NPC's turn in a conversation (at 0x10A4). */
 typedef struct {
@@ -1056,7 +1056,6 @@ void func_005F4BD0(Npc *n, u8 kind) {
 /* Whether it has a player to follow: online only for its owner (func_0064FD50), it looks
    (func_005F3C90) every 8 frames and takes the one found. */
 s32 func_0068B4E0(Npc *n);
-#ifdef NON_MATCHING   /* the found-player return 1/0 and the prologue's a1 load order */
 s32 func_0068B4E0(Npc *n) {
     s32 p;
 
@@ -1075,21 +1074,20 @@ s32 func_0068B4E0(Npc *n) {
                 func_005F4BD0(n, 3);
                 n->unkFCA = 8;
             }
-            if (p) {
-                return 1;
+            if (p == 0) {
+                return 0;
             }
+        } else {
+            n->unkFCA--;
             return 0;
         }
-        n->unkFCA--;
-        return 0;
-    }
-    if (n->unk1020 == 0) {
+    } else if (n->unk1020 == 0) {
         NPC_WAKE(n);
         return 0;
     }
     return 1;
+
 }
-#endif
 
 /* The player it follows (0x1020, 1-based; 0 none): while held (0xBA0 & 0x80000) the one holding
    it (0xC66), else it lets go of one that's down (0xBA0 & 0x1E0) unless func_0068B4E0 says. */
@@ -1117,10 +1115,30 @@ u8 func_0068AF60(Npc *n) {
     }
     return n->unk1020;
 }
-s32 func_0068B0A0(Npc *n);
-s32 func_0068B130(Npc *n, DrawObjFull *p);
+/* Lets go of its player once they're in different rooms; always 1. */
+s32 func_0068B0A0(Npc *n) {
+    DrawObjFull *p = &D_00476DD0[n->unk1020 - 1];
+
+    if (n->unk1E2 != p->unk1E2) {
+
+        NPC_WAKE(n);
+        n->unk1020 = 0;
+    }
+    return 1;
+}
+/* Always 1 (a byte tested against 0x20000000). */
+s32 func_0068B130(Npc *n, DrawObjFull *p) {
+    return !(p->unk54F & 0x20000000);
+}
 f32 func_00634380(Npc *n, f32 *pos);
-void func_0068B150(Npc *n);
+/* Stops following (telling the others if it's ours) and isn't held any more. */
+void func_0068B150(Npc *n) {
+    if (func_0064FD50(1, n->slot)) {
+        func_00652B50(n, 3);
+    }
+    n->unk1020 = 0;
+    n->unkBA0 &= ~0x80000;
+}
 s32 func_0068B1B0(Npc *n);
 void func_0068AD40(Npc *n, DrawObjFull *p);
 
