@@ -218,7 +218,7 @@ s8 func_008264F0(DrawObjFull *obj, s32 not, s32 room, s32 check);
 void func_008294A0(s32 n);
 s32 func_00826850(DrawObjFull *obj, f32 *pos, s32 room);
 void func_00827130(f32 *out, s32 id, s32 place);
-s8 func_00826BD0(void);
+s32 func_00826BD0(DrawObjFull *obj);
 SglLink *func_00829350(s32 room, s32 variant, s32 place);
 u16 func_00825CA0(s32 lo, s32 hi);
 s32 func_00823780(DrawObjFull *obj);
@@ -245,6 +245,81 @@ s8 func_00827390(DrawObjFull *obj, s32 unused, s32 room) {
     }
     obj->unk1065 = obj->unk100C;
     return r;
+}
+
+/* Each step of the partner's walk: on to the next place when it reaches the one it heads for
+   (within 50, 100 when running); 1 when it has arrived, -1 when there is no way. */
+s32 func_00826BD0(DrawObjFull *obj) {
+    s32 res;
+    f32 r;
+    F3 a;
+    F3 b;
+
+    res = 0;
+    if (obj->unk105A != 0) {
+        return obj->unk105A;
+    }
+    if (obj->unk1064 != 0) {
+        obj->unk1064 = 0;
+        return func_00826EB0(obj);
+    }
+    if (obj->unk54F == 0x1A) {
+        r = 100.0f;
+    } else if (obj->unkBA4 & 0x10000) {
+        r = 100.0f;
+    } else {
+        r = 50.0f;
+    }
+    if (func_00828FC0(obj, obj->unk1065, obj->unk100E, obj->unk1E2) == 0) {
+        return -1;
+    }
+    if (obj->unk1E2 == D_00306590.unk1C && obj->unk10A9 != 0) {
+        return -1;
+    }
+    if (obj->unk1E2 != obj->unk1058) {
+        if (obj->unk100E != obj->unk100F && obj->unk100C == obj->unk100E) {
+            res = func_00826EB0(obj);
+        }
+    } else if (obj->unk100D != obj->unk100E) {
+        if (obj->unk100E == obj->unk100C) {
+            a = *(F3 *)obj->unk38;
+            b = *(F3 *)obj->unk101C;
+            switch (obj->unk54F) {
+            case 0x21:
+            case 0x22:
+            case 0x23:
+            case 0x24:
+                a.v[1] = 0.0f;
+                b.v[1] = 0.0f;
+                break;
+            }
+            if (func_008270C0(r, a.v, b.v) == 0) {
+                res = func_00826EB0(obj);
+            }
+        }
+    } else if (obj->unk100D == obj->unk100C) {
+        a = *(F3 *)obj->unk38;
+        b = *(F3 *)obj->unk1010;
+        switch (obj->unk54F) {
+        case 0x21:
+        case 0x22:
+        case 0x23:
+        case 0x24:
+            a.v[1] = 0.0f;
+            b.v[1] = 0.0f;
+            break;
+        }
+        if (func_008270C0(r, a.v, b.v) == 0) {
+            res = 1;
+        }
+    }
+    if (obj->unk1E2 == obj->unk1058 && obj->unk100D == obj->unk100E) {
+        *(F3 *)obj->unk101C = *(F3 *)obj->unk1010;
+        *(F3 *)obj->unk1028 = *(F3 *)obj->unk1010;
+        obj->unk100E = obj->unk100D;
+        obj->unk100F = obj->unk100D;
+    }
+    return res;
 }
 
 /* The partner's next steps toward unk100D (func_00827390), its place marked seen, and how it
@@ -478,7 +553,7 @@ s32 func_00823FF0(DrawObjFull *obj) {
         obj->unkFFC[0]++;
         break;
     case 1:
-        obj->unk105A = func_00826BD0();
+        obj->unk105A = func_00826BD0(obj);
         if (obj->unk105A < 0) {
             func_0082A690(obj, 0);
             func_00823340(obj, 0);

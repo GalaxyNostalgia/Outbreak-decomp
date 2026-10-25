@@ -2428,3 +2428,33 @@ void func_0058A8B0(s32 a) {
     }
     memset(h, 0, sizeof(JobHook));
 }
+
+/* Script op: if placed thing (D_003967B0[args[0]][3]) is in state args[1] and not moving. */
+typedef struct {
+    u8 unk0[2];
+    u8 state;           /* 0x02 */
+    u8 unk3[0x24 - 3];
+    s32 flags;          /* 0x24: 2 moving */
+    u8 unk28[0x3C - 0x28];
+} PlacedView;
+
+extern s8 D_003967B0[][4];
+extern PlacedView D_00395720[32];
+
+s32 func_0065EB20(u32 *args) {
+    s32 i = (s8)args[0];
+    s8 a = args[1];
+    s8 k;
+
+    D_0048BE70.unk78[CUR]++;
+    k = D_003967B0[i][3];
+    if (k < 0) {
+        func_0065AAF0();
+        return 2;
+    }
+    if (a != D_00395720[k].state || (D_00395720[k].flags & 2)) {
+        func_0065AAF0();
+        return 2;
+    }
+    return 0;
+}

@@ -5296,3 +5296,82 @@ void func_0063A940(DrawObjFull *o) {
     func_005A7320(o);
 }
 #endif
+
+/* The actions a character may start this frame, first come first served (players only for
+   most). */
+s32 func_0061DF00(DrawObjFull *o);
+s32 func_0061CCF0(DrawObjFull *o, u8 set);
+s32 func_0061EDC0(DrawObjFull *o);
+
+s32 func_00619C00(DrawObjFull *o) {
+    if (o->type == 0 && func_0061D090(o) != 0) {
+        return 1;
+    }
+    if (func_0061DF00(o) != 0) {
+        return 1;
+    }
+    if (o->type == 0 && func_0061D1E0(o) != 0) {
+        return 1;
+    }
+    if (o->type == 0 && func_0061D1F0(o) != 0) {
+        return 1;
+    }
+    if (o->type == 0 && func_0061DE60(o) != 0) {
+        return 1;
+    }
+    if (o->type == 0 && func_0061D9A0(o) != 0) {
+        return 1;
+    }
+    if (o->type == 0 && func_0061CE50(o) != 0) {
+        return 1;
+    }
+    if (o->type == 0 && func_0061C580(o, 0) != 0) {
+        return 1;
+    }
+    if (o->type == 0 && func_0061C4F0(o, 0) != 0) {
+        return 1;
+    }
+    if (o->type == 0 && func_0061C490(o, 0) != 0) {
+        return 1;
+    }
+    if (o->type == 0 && func_0061C590(o, 0) != 0) {
+        return 1;
+    }
+    if (o->type == 0 && func_0061CCF0(o, 0) != 0) {
+        return 1;
+    }
+    if (o->type == 0 && func_0061EDC0(o) != 0) {
+        return 1;
+    }
+    return 0;
+}
+
+/* Starts action 1 step s[1] / s[2] of set when its button (8 / 4) is pressed. */
+s32 func_0061CCF0(DrawObjFull *o, u8 set) {
+    if (o->ctrl.pressed & 8) {
+        o->act[0] = 1;
+        o->act[1] = D_006DD930[set].s[1];
+        o->act[2] = 0;
+        o->act[3] = 0;
+        func_00635920(o);
+        return 1;
+    }
+    if (o->ctrl.pressed & 4) {
+        o->act[0] = 1;
+        o->act[1] = D_006DD930[set].s[2];
+        o->act[2] = 0;
+        o->act[3] = 0;
+        func_00635920(o);
+        return 1;
+    }
+    return 0;
+}
+
+/* With neither button (4, 8) held: the action's sub-step to 0xFF, and 1. */
+s32 func_0061EDC0(DrawObjFull *o) {
+    if (!(o->ctrl.cur & 0xC)) {
+        o->act[2] = 0xFF;
+        return 1;
+    }
+    return 0;
+}
