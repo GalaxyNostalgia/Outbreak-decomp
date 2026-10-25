@@ -742,7 +742,71 @@ u8 func_006BD1F0(HitShape *a, HitShape *b, f32 *push) {
     return 0;
 }
 #endif
-void func_006BC600(s8 i, s8 j, f32 *push);
+extern u8 D_30659C[];
+s32 func_001AF510(void);
+
+/* Pushes hit entries i and j apart by push: the lighter one (0x199) all the way, else the one
+   that moved, else both half; online, each pair only so often (0x1E1). The pushes are kept in
+   D_00724230. */
+void func_006BC600(s8 ki, s8 kj, f32 *push);
+#ifdef NON_MATCHING   /* registers (a, b in s3, s2), the push table's field relocations */
+void func_006BC600(s8 ki, s8 kj, f32 *push) {
+    s32 j = kj;
+    DrawObjFull *b = D_00386650[j].obj;
+    s32 i = ki;
+    DrawObjFull *a = D_00386650[i].obj;
+    f32 da;
+    f32 db;
+    f32 h[3];
+
+    if (func_001AF510() == 1) {
+        if (!(a->unk1E0[1] < (s16)(D_30659C[0] != 0 ? 0x3C : 0x78))) {
+            return;
+        }
+        a->unk1E0[1]++;
+        b->unk1E0[1]++;
+    }
+    if ((u8)a->unk199 < (u8)b->unk199) {
+        a->unk38[0] += push[0];
+        a->unk38[2] += push[2];
+        D_00724230[i].x += push[0];
+        D_00724230[i].z += push[2];
+        return;
+    }
+    if ((u8)b->unk199 < (u8)a->unk199) {
+        b->unk38[0] -= push[0];
+        b->unk38[2] -= push[2];
+        D_00724230[j].x -= push[0];
+        D_00724230[j].z -= push[2];
+        return;
+    }
+    da = func_001916E0(a->unk38, a->unk44);
+    db = func_001916E0(b->unk38, b->unk44);
+    if ((da == 0.0f && db == 0.0f) || (da != 0.0f && db != 0.0f)) {
+        func_003405D0(0.5f, h, push);
+        a->unk38[0] += h[0];
+        a->unk38[2] += h[2];
+        D_00724230[i].x += h[0];
+        D_00724230[i].z += h[2];
+        b->unk38[0] -= h[0];
+        b->unk38[2] -= h[2];
+        D_00724230[j].x -= h[0];
+        D_00724230[j].z -= h[2];
+        return;
+    }
+    if (da == 0.0f) {
+        b->unk38[0] -= push[0];
+        b->unk38[2] -= push[2];
+        D_00724230[j].x -= push[0];
+        D_00724230[j].z -= push[2];
+    } else if (db == 0.0f) {
+        a->unk38[0] += push[0];
+        a->unk38[2] += push[2];
+        D_00724230[i].x += push[0];
+        D_00724230[i].z += push[2];
+    }
+}
+#endif
 
 /* Hit entry i (o, shape w) against the others of the kinds in mask: the one overlapping most
    (ahead of o, for kind 1) is pushed off; 1 when there was one. */
