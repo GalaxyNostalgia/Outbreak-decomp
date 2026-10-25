@@ -227,7 +227,57 @@ extern u16 D_003065AC[];        /* the room we're in */
 s32 func_00562BF0(Zone *z, DrawObjFull *obj);
 s32 func_00562C80(u8 who, u8 item);
 u8 *func_00583E30(u8 item);
+u8 func_008360C0(DrawObjFull *obj, u16 id);
+s32 func_00583880(u8 a, u8 b);
+s32 func_005C1C50(DrawObjFull *obj);
+s32 func_005C1CD0(DrawObjFull *obj, u8 item);
+s32 func_00583EA0(u8 item, s32 flag);
+
+/* Whether the partner can take item: 1 it has room (func_005C1C50, two for 0x20000 items),
+   3 character 6 in her extra slots, 4 it combines (3) with one it has (in *at), 2 by using up an
+   item of its own; 0 not. */
 s32 func_00833530(DrawObjFull *obj, u8 item, u8 *at);
+#ifdef NON_MATCHING   /* one instruction short; register allocation differs */
+s32 func_00833530(DrawObjFull *obj, u8 item, u8 *at) {
+    s32 need = func_00583EA0(item, 0x20000) == 0 ? 1 : 2;
+    s32 room = func_005C1C50(obj);
+    s32 extra;
+    s32 i;
+    u8 k;
+
+    if (room >= need) {
+        return 1;
+    }
+    if (obj->unkB98 == 6) {
+        extra = func_005C1CD0(obj, item);
+        if (extra >= need) {
+            return 3;
+        }
+    }
+    k = func_008360C0(obj, D_003967D0[item].unk6);
+    if ((s32)k > 0) {
+        *at = k;
+        if ((s16)func_00583880(item, k) == 3) {
+            return 4;
+        }
+    }
+    for (i = 0; i < 4; i++) {
+        if (obj->unkC84[i] != 0 && func_00583E30(obj->unkC84[i])[0x15] <= 0 &&
+            (func_00583EA0(obj->unkC84[i], 0x20000) == 0 ? 1 : 2) + room >= need) {
+            return 2;
+        }
+    }
+    if (obj->unkB98 == 6) {
+        for (i = 0; i < 4; i++) {
+            if (obj->unkC84[i] != 0 && func_00583E30(obj->unkC88[i + 1])[0x15] <= 0 &&
+                (func_00583EA0(obj->unkC88[i + 1], 0x20000) == 0 ? 1 : 2) + extra >= need) {
+                return 2;
+            }
+        }
+    }
+    return 0;
+}
+#endif
 s32 func_00833740(DrawObjFull *obj, u8 item, u8 *at);
 
 /* An item the partner can take among the zones (kind 0x80 item spots) in our room: found gets
