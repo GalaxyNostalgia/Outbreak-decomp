@@ -860,7 +860,14 @@ void func_0068AD30(Npc *n);
 s32 func_0068ACA0(Npc *n);
 s32 func_0068A660(Npc *n);
 void func_005403E0(s32 a, s32 b);
-void func_005F4BB0(Npc *n, s32 a);
+/* The NPC's state becomes s (0xFCF), its steps from the start. */
+void func_005F4BB0(Npc *n, s8 s) {
+    n->unkFD0[3] = 0;
+    n->unkFD0[2] = 0;
+    n->unkFD0[1] = 0;
+    n->unkFD0[0] = 0;
+    n->unkFCF = s;
+}
 
 /* Unless held (0xBA0 & 0x80000): its mode 0xFB7 becomes m (restarting its actions if it changes),
    and it's shown. */
@@ -1040,7 +1047,11 @@ void func_005F3C90(Npc *n) {
     n->unk1024 = best;
 }
 #endif
-void func_005F4BD0(Npc *n, s32 a);
+/* Queues a func_00652B50 request (0x1138, 0x1139). */
+void func_005F4BD0(Npc *n, u8 kind) {
+    n->unk1138 = 1;
+    n->unk1139 = kind;
+}
 
 /* Whether it has a player to follow: online only for its owner (func_0064FD50), it looks
    (func_005F3C90) every 8 frames and takes the one found. */

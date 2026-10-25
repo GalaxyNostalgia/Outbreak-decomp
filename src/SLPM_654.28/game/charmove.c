@@ -3178,8 +3178,7 @@ s32 func_0061C650(DrawObjFull *o, u8 set) {
             o->act[3] = 0;
             func_00635920(o);
             return 1;
-        }
-        if (c & 4) {
+        } else if (c & 4) {
             o->act[0] = 1;
             o->act[1] = D_006DD930[set].s[2];
             o->act[2] = 0;
@@ -5475,6 +5474,65 @@ s32 func_0061A3A0(DrawObjFull *o) {
     }
     return 0;
 }
+
+/* Turning on the spot from the controls (0x8 left, 0x4 right: action 1's step from the floor's
+   step set); with 0x1 held, backing (step 3) unless 0x10. */
+#ifdef NON_MATCHING   /* the floor switch's compares: ours leaves a nop in every beq delay slot, the original fills every other */
+s32 func_0061EA40(DrawObjFull *o) {
+    u32 c = o->ctrl.cur;
+    u8 k;
+
+    if (!(c & 1)) {
+        switch (o->unk54F) {
+        default:
+            k = 0;
+            break;
+        case 3:
+        case 1:
+        case 2:
+        case 4:
+            k = 0;
+            break;
+        case 0x2E:
+        case 0x2F:
+            k = 2;
+            break;
+        case 0x22:
+        case 0x24:
+        case 0x23:
+            k = 1;
+            break;
+        }
+        if (c & 8) {
+            o->act[0] = 1;
+            o->act[1] = D_006DD930[k].s[1];
+            o->act[2] = 0;
+            o->act[3] = 0;
+            func_00635920(o);
+            return 1;
+        }
+        if (c & 4) {
+            o->act[0] = 1;
+            o->act[1] = D_006DD930[k].s[2];
+            o->act[2] = 0;
+            o->act[3] = 0;
+            func_00635920(o);
+            return 1;
+        } else {
+            o->act[2] = 0xFF;
+            return 1;
+        }
+    } else if (!(c & 0x10)) {
+        o->act[0] = 1;
+        o->act[1] = 3;
+        o->act[2] = 0;
+        o->act[3] = 0;
+        func_00635920(o);
+        return 1;
+    }
+    return 0;
+}
+#endif
 
 
 /* Starts action 1 step s[1] / s[2] of set when its button (8 / 4) is pressed. */
