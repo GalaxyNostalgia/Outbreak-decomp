@@ -100,9 +100,13 @@ typedef struct {
     void *unk1DC;       /* 0x1DC: -> unkAEC */ \
     u8 unk1E0[2]; \
     u16 unk1E2;         /* 0x1E2: the player's id (Options.unk1C is ours) */ \
-    u8 unk1E4[0x200 - 0x1E4]; \
+    u8 unk1E4[0x1F2 - 0x1E4]; \
+    u16 unk1F2;         /* 0x1F2: the second motion's id */ \
+    u8 unk1F4[0x200 - 0x1F4]; \
     u8 unk200[4];       /* 0x200 */ \
-    u8 unk204[0x20];    /* 0x204: the motion's state */ \
+    u8 unk204[0xE];     /* 0x204: the motion's state */ \
+    u16 unk212;         /* 0x212: the motion's id */ \
+    u8 unk214[0x224 - 0x214]; \
     u8 unk224[0x241 - 0x224]; \
     u8 unk241; \
     u8 unk242[0x4E4 - 0x242]; \

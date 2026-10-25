@@ -492,3 +492,87 @@ s32 func_00543460(DrawObjFull *o, u8 layer, f32 frame, f32 speed) {
     return 0;
 }
 #endif
+
+/* Item motions' timed events (sounds and effects at frames), by the motion (unk212) and the
+   second motion (unk1F2). */
+void func_00565790(s32 frame, DrawObjFull *o, s32 se, f32 speed);
+void func_005658B0(s32 frame, DrawObjFull *o, s32 n, s32 base, f32 speed);
+void func_005659F0(s32 frame, DrawObjFull *o, s32 unused, s32 se, f32 speed);
+void func_00565C80(s32 frame, DrawObjFull *o, s32 what, s32 b, f32 speed);
+void func_00565DA0(s32 frame, DrawObjFull *o, s32 a, s32 b, s32 c, f32 speed);
+
+void func_0058AA70(DrawObjFull *o, f32 speed) {
+    switch (o->unk212) {
+    case 0x65:
+        func_00565790(0x22, o, 0, speed);
+        func_00565790(0x48, o, 0, speed);
+        func_00565790(0x6E, o, 0, speed);
+        func_00565DA0(0x22, o, 6, 0x81, 0, speed);
+        func_00565DA0(0x48, o, 6, 0x82, 0, speed);
+        func_00565DA0(0x6E, o, 6, 0x81, 0, speed);
+        break;
+    case 0x66:
+        func_00565790(0x1C, o, 0, speed);
+        func_00565790(0x46, o, 0, speed);
+        func_00565790(0x72, o, 0, speed);
+        func_00565790(0xA0, o, 0, speed);
+        func_00565DA0(0x1C, o, 6, 0x41, 0, speed);
+        func_00565DA0(0x46, o, 6, 0x42, 0, speed);
+        func_00565DA0(0x72, o, 6, 0x41, 0, speed);
+        func_00565DA0(0xA0, o, 6, 0x42, 0, speed);
+        break;
+    case 0x67:
+        func_00565790(0x1C, o, 1, speed);
+        func_00565790(0x36, o, 1, speed);
+        func_005658B0(0x3A, o, 2, 8, speed);
+        func_00565DA0(0x1C, o, 6, 0x81, 0, speed);
+        func_00565DA0(0x36, o, 6, 0x82, 0, speed);
+        break;
+    case 0x68:
+        func_00565790(8, o, 0, speed);
+        func_00565790(0x18, o, 0, speed);
+        break;
+    case 0x6B:
+    case 0x122:
+    case 0x123:
+    case 0x124:
+    case 0x173:
+    case 0x175:
+    case 0x176:
+    case 0x177:
+    case 0x178:
+    case 0x179:
+        break;
+    case 0x130:
+        func_005658B0(0x16, o, 2, 3, speed);
+        func_00565C80(0x1E, o, 0, 0x7A, speed);
+        func_00565790(0x30, o, 0, speed);
+        func_00565790(0x60, o, 0, speed);
+        break;
+    case 0x133:
+        func_00565790(0x26, o, 0, speed);
+        func_00565790(0x46, o, 0, speed);
+        func_005659F0(0x12, o, 0, 1, speed);
+        func_005658B0(0x12, o, 2, 3, speed);
+        func_00565C80(0xC, o, 2, 0, speed);
+        func_00565C80(0x14, o, 3, 0, speed);
+        break;
+    case 0x172:
+        func_00565790(0x10, o, 0, speed);
+        func_00565790(0x18, o, 0, speed);
+        break;
+    case 0x174:
+        func_00565790(0x14, o, 0, speed);
+        break;
+    }
+    switch (o->unk1F2) {
+    case 0x17A:
+        func_00565790(0x12, o, 0, speed);
+        func_00565790(0x20, o, 0, speed);
+        break;
+    case 0x17B:
+        func_00565790(0x10, o, 0, speed);
+        func_00565790(0x16, o, 0, speed);
+        break;
+    }
+}
