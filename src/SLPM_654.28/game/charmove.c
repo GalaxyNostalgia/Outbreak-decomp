@@ -5553,7 +5553,6 @@ typedef struct {
     s32 n;
 } PhaseMap;
 
-extern u8 D_006E5944[][0x44];
 extern PhaseMap *D_006EFA60[4][4];  /* fine and caution, by walking/running motion pair */
 extern PhaseMap *D_00719F00[4][4];  /* danger */
 f32 func_005A40D0(DrawObjFull *o, u16 id, s32 c);
@@ -5569,7 +5568,7 @@ f32 func_005A6FF0(DrawObjFull *o, u16 motion) {
     s16 *r;
     s32 i;
 
-    if (o->unkCA8 != 0 && D_006E5944[(u16)o->unkCA8][0] != 0) {
+    if (o->unkCA8 != 0 && D_006E5940[(u16)o->unkCA8].unk4 != 0) {
         return func_005A42B0(o, motion, 0);
     }
     switch (o->unk520) {
