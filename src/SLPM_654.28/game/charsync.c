@@ -2,6 +2,7 @@
 #include "options.h"
 #include "game.h"
 #include "object.h"
+#include "item.h"
 
 /* GAME.BIN: telling the others (online the other players, offline the partners' code) about a
    character's state: one message kind per call, not the same kind twice in a row. */
@@ -750,7 +751,25 @@ s32 func_005C7A30(TalkCond *c, DrawObjFull *p) {
 }
 #endif
 
-u8 func_005C14C0(DrawObjFull *o, u16 id);
+/* The slot holding item id: the character's four (0xC84), then the 0x20 extra ones (0xC88). */
+u8 func_005C14C0(DrawObjFull *o, u16 id) {
+    u32 i;
+    u8 k;
+
+    for (i = 0; i < 4; i++) {
+        k = o->unkC84[i];
+        if (k != 0 && id == D_003967D0[k].unk6) {
+            return k;
+        }
+    }
+    for (i = 0; i < 0x20; i++) {
+        k = o->unkC88[i];
+        if (k != 0 && id == D_003967D0[k].unk6) {
+            return k;
+        }
+    }
+    return 0;
+}
 
 /* Kind 2: p has item arg (or not, val 0). */
 s32 func_005C6CA0(TalkCond *c, DrawObjFull *p) {
