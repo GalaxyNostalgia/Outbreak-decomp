@@ -5475,6 +5475,19 @@ s32 func_0061A3A0(DrawObjFull *o) {
     return 0;
 }
 
+/* With 0x1 held: running (action 1, step 6). */
+s32 func_0061EE40(DrawObjFull *o) {
+    if (o->ctrl.cur & 1) {
+        o->act[0] = 1;
+        o->act[1] = 6;
+        o->act[2] = 1;
+        o->act[3] = 0;
+        func_00635920(o);
+        return 1;
+    }
+    return 0;
+}
+
 /* Turning on the spot from the controls (0x8 left, 0x4 right: action 1's step from the floor's
    step set); with 0x1 held, backing (step 3) unless 0x10. */
 #ifdef NON_MATCHING   /* the floor switch's compares: ours leaves a nop in every beq delay slot, the original fills every other */
