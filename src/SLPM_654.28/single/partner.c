@@ -221,7 +221,67 @@ void func_00827130(f32 *out, s32 id, s32 place);
 s32 func_00826BD0(DrawObjFull *obj);
 SglLink *func_00829350(s32 room, s32 variant, s32 place);
 u16 func_00825CA0(s32 lo, s32 hi);
-s32 func_00823780(DrawObjFull *obj);
+s32 func_00823B90(DrawObjFull *obj);
+void func_0082C330(DrawObjFull *obj);
+u8 func_00833250(DrawObjFull *obj, Zone **zones, s32 n, Zone **found, u8 *at);
+void func_00834780(DrawObjFull *obj);
+s32 func_00835300(DrawObjFull *obj, s32 *item);
+s32 func_008359A0(DrawObjFull *obj, s32 *item, u8 *at);
+
+/* The partner's requests (0x1096: 1 pick up an item, 2 ..., 4, 8 items), each taken once: 1 when
+   one starts its thinking step (7, 8, 9); none while func_00823B90. */
+s32 func_00823780(DrawObjFull *obj) {
+    s32 busy = 0;
+    Zone *found;
+
+    if (func_00823B90(obj)) {
+        busy = 1;
+    }
+    if (busy) {
+        obj->unk1096 = 0;
+        return 0;
+    }
+    if (obj->unk1096 & 1) {
+        obj->unk1096 &= ~1;
+        if (!(obj->unkBA0 & 8) && obj->act[0] == 1) {
+            if (obj->unk105B == 0) {
+                obj->unk1095 = func_00833250(obj, D_0084E0A0, D_0023C264, &found, &obj->unk1094);
+                if (obj->unk1095) {
+                    obj->unk1090 = found->u.id;
+                    func_00823340(obj, 7);
+                    return 1;
+                }
+            } else {
+                func_0082C330(obj);
+                if (obj->unk1095) {
+                    func_00823340(obj, 7);
+                    return 1;
+                }
+            }
+        }
+    }
+    if (obj->unk1096 & 2) {
+        obj->unk1096 &= ~2;
+        if (obj->act[0] == 1) {
+            func_00834780(obj);
+        }
+    }
+    if (obj->unk1096 & 4) {
+        obj->unk1096 &= ~4;
+        if (!(obj->unkBA0 & 8) && obj->act[0] == 1 && (s8)func_00835300(obj, &obj->unk1090)) {
+            func_00823340(obj, 8);
+            return 1;
+        }
+    }
+    if (obj->unk1096 & 8) {
+        obj->unk1096 &= ~8;
+        if (!(obj->unkBA0 & 8) && obj->act[0] == 1 && (s8)func_008359A0(obj, &obj->unk1090, &obj->unk1094)) {
+            func_00823340(obj, 9);
+            return 1;
+        }
+    }
+    return 0;
+}
 s32 func_008270C0(f32 r, f32 *pos, f32 *to);
 extern u8 D_0048AEB0[];
 

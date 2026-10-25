@@ -351,7 +351,8 @@ typedef struct DrawObjFull {
     u16 unk108A;        /* 0x108A */
     u8 unk108C[4];
     s32 unk1090;        /* 0x1090: (partners) an item (func_00835C50's, or ours in hand) */
-    u16 unk1094;        /* 0x1094 */
+    u8 unk1094;         /* 0x1094: (partners) where the item is */
+    u8 unk1095;         /* 0x1095: (partners) an item was found */
     u16 unk1096;        /* 0x1096 */
     u8 unk1098;         /* 0x1098 */
     u8 unk1099;         /* 0x1099 */
