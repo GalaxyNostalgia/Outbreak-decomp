@@ -5959,6 +5959,19 @@ s32 func_0061E8B0(DrawObjFull *o) {
 }
 #endif
 
+/* With 0x1 held: walking (action 1, step 3). */
+s32 func_0061EDF0(DrawObjFull *o) {
+    if (o->ctrl.cur & 1) {
+        o->act[0] = 1;
+        o->act[1] = 3;
+        o->act[2] = 1;
+        o->act[3] = 0;
+        func_00635920(o);
+        return 1;
+    }
+    return 0;
+}
+
 /* With 0x1 held: running (action 1, step 6). */
 s32 func_0061EE40(DrawObjFull *o) {
     if (o->ctrl.cur & 1) {
