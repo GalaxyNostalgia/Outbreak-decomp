@@ -381,7 +381,125 @@ void func_00834800(DrawObjFull *obj) {
         }
     }
 }
+typedef struct {
+    s16 v[6];
+} ItemIds6;
+extern ItemIds6 D_0083A248;     /* (character 3) what goes with her item 0x195 */
+void func_005C15E0(DrawObjFull *obj);
+
+/* The partner combines items its character knows how to: character 3's 0x195 (with
+   D_0083A248's, some only hurt or ...), character 4's 0x19A and pairs func_00583880 rates,
+   character 7's 0x12C with 0x12E (in her extra slots). */
 void func_00834A20(DrawObjFull *obj);
+#ifdef NON_MATCHING   /* first draft: registers and loop layout */
+void func_00834A20(DrawObjFull *obj) {
+    u8 a = 0;
+    u8 b = 0;
+    ItemIds6 ids;
+    s32 i;
+    s32 j;
+    u8 x;
+    u8 y;
+    s32 ok;
+    u16 *id;
+
+    if (obj->unkB98 == 3) {
+        ids = D_0083A248;
+        if (D_003967D0[obj->unkC88[0]].unk6 != 0x195) {
+            return;
+        }
+        for (i = 0; i < 6; i++) {
+            if (i == 1 && (obj->unkBA0 & 1)) {
+                continue;
+            }
+            if (i >= 3 && obj->unk544 < obj->unk546 / 2) {
+                continue;
+            }
+            for (j = 0; j < 4; j++) {
+                x = obj->unkC84[j];
+                if (x != 0 && D_003967D0[x].unk6 == ids.v[i]) {
+                    b = x;
+                    a = obj->unkC88[0];
+                    func_00834E60(obj, a, x);
+                }
+            }
+        }
+    } else if (obj->unkB98 == 4) {
+        a = func_005C14C0(obj, 0x19A);
+        if (a != 0 && D_003967D0[a].unk24 > 0) {
+            for (j = 0; j < 4; j++) {
+                x = obj->unkC84[j];
+                if (x != 0) {
+                    b = x;
+                    switch (D_003967D0[x].unk6) {
+                    case 0x1C5:
+                    case 0x1C8:
+                    case 0x1C6:
+                        func_00834E60(obj, a, x);
+                        break;
+                    }
+                }
+            }
+        }
+        for (i = 0; i < 4; i++) {
+            x = obj->unkC84[i];
+            if (x == 0 || x == obj->unkC7C) {
+                continue;
+            }
+            a = x;
+            id = &D_003967D0[x].unk6;
+            for (j = 0; j < 4; j++) {
+                y = obj->unkC84[j];
+                if (y == 0 || y == x) {
+                    continue;
+                }
+                b = y;
+                ok = 0;
+                switch ((s16)func_00583880(a, y)) {
+                case 0x11:
+                    ok = 1;
+                    break;
+                case 5:
+                case 6:
+                    if (*id == 0x27A6 || *id == 0x1C3) {
+                        ok = 1;
+                    }
+                    break;
+                case 9:
+                case 0xA:
+                    if (*id == 0x1C2 || *id == 0x1C4) {
+                        ok = 1;
+                    }
+                    break;
+                }
+                if (ok) {
+                    func_00834E60(obj, a, y);
+                }
+            }
+        }
+    }
+    if (obj->unkB98 == 7 && obj->unkC88[0x1C] == 0) {
+        for (i = 0; i < 9; i++) {
+            x = obj->unkC88[i + 1];
+            if (x != 0 && D_003967D0[x].unk6 == 0x12C) {
+                a = x;
+                break;
+            }
+        }
+        for (i = 0; i < 9; i++) {
+            x = obj->unkC88[i + 0x13];
+            if (x != 0 && D_003967D0[x].unk6 == 0x12E) {
+                b = x;
+                break;
+            }
+        }
+        if (a != 0 && b != 0) {
+            func_00834E60(obj, a, b);
+            func_005C15E0(obj);
+        }
+    }
+}
+#endif
 
 void func_008347C0(DrawObjFull *obj) {
     if (obj != NULL) {
