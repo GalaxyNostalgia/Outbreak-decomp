@@ -5726,7 +5726,6 @@ s32 func_00619C00(DrawObjFull *o) {
 
 s32 func_0061EA40(DrawObjFull *o);
 
-s32 func_0061E8B0(DrawObjFull *o);
 
 /* Another chain of the action checks (cf. func_0061A1F0). */
 s32 func_00619DF0(DrawObjFull *o) {
@@ -5773,6 +5772,7 @@ s32 func_00619DF0(DrawObjFull *o) {
 }
 
 s32 func_0061EDF0(DrawObjFull *o);
+s32 func_0061E8B0(DrawObjFull *o);
 
 /* Another chain of the action checks (cf. func_0061A1F0). */
 s32 func_00619FE0(DrawObjFull *o) {
@@ -5898,6 +5898,66 @@ s32 func_0061A3A0(DrawObjFull *o) {
     }
     return 0;
 }
+
+s32 func_005A5130(DrawObjFull *o);
+
+/* Walking: turning (0x8 left, 0x4 right: action 1's step from the floor's step set) unless
+   0xBA0 & 0x2000 (then func_0061C650 for players); else carrying on (func_005A5130). */
+#ifdef NON_MATCHING   /* the floor switch's compares (as func_0061EA40), delay slots */
+s32 func_0061E8B0(DrawObjFull *o) {
+    u32 c = o->ctrl.cur;
+    u8 k;
+
+    if (c & 1) {
+        return 0;
+    }
+    switch (o->unk54F) {
+    default:
+        k = 0;
+        break;
+    case 3:
+    case 1:
+    case 2:
+    case 4:
+        k = 0;
+        break;
+    case 0x2E:
+    case 0x2F:
+        k = 2;
+        break;
+    case 0x22:
+    case 0x24:
+    case 0x23:
+        k = 1;
+        break;
+    }
+    if (!(o->unkBA0 & 0x2000)) {
+        if (c & 8) {
+            o->act[0] = 1;
+            o->act[1] = D_006DD930[k].s[1];
+            o->act[2] = 0;
+            o->act[3] = 0;
+            func_00635920(o);
+            return 1;
+        }
+        if (c & 4) {
+            o->act[0] = 1;
+            o->act[1] = D_006DD930[k].s[2];
+            o->act[2] = 0;
+            o->act[3] = 0;
+            func_00635920(o);
+            return 1;
+        }
+    } else if (o->type == 0 && func_0061C650(o, 0)) {
+        return 1;
+    }
+    if (!func_005A5130(o)) {
+        return 0;
+    }
+    o->act[2] = 0xFF;
+    return 1;
+}
+#endif
 
 /* With 0x1 held: running (action 1, step 6). */
 s32 func_0061EE40(DrawObjFull *o) {
