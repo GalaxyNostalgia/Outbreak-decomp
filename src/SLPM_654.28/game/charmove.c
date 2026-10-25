@@ -5295,6 +5295,56 @@ void func_0063A940(DrawObjFull *o) {
     }
     func_005A7320(o);
 }
+
+/* The motion layers as func_0063A4D0 sees them (cf. objmot.c ObjLayer at 0x1E4). */
+typedef struct {
+    u8 unk0[0x1E8];
+    f32 len0;           /* 0x1E8: the first layer's length */
+    u8 unk1EC[0x1F1 - 0x1EC];
+    s8 flags0;          /* 0x1F1 */
+    u8 unk1F2[0x364 - 0x1F2];
+    f32 frame;          /* 0x364: the extra layer's frame */
+    f32 len;            /* 0x368: its length */
+    u8 unk36C[0x4FC - 0x36C];
+    f32 root[3];        /* 0x4FC */
+} MotLayers;
+
+extern u8 D_30659C[];
+u8 func_00635160(DrawObjFull *o, f32 *out);
+s8 func_0055BC80(void *l, f32 speed);
+void func_192BD0(f32 frame, s32 a, s32 b);
+void func_191F90(f32 frame, f32 *root, void *b);
+
+/* Steps an extra motion layer along with the main one (twice as fast with D_30659C set). */
+void func_0063A4D0(DrawObjFull *o) {
+    MotLayers *l = (MotLayers *)o;
+    f32 tmp[4];
+    f32 len;
+    f32 k;
+    s32 a;
+
+    if (func_00635160(o, tmp) != 1) {
+        return;
+    }
+    len = l->len;
+    if (len == 0.0f || !(l->flags0 & 8)) {
+        return;
+    }
+    k = 1.0f;
+    if (D_30659C[0]) {
+        k *= 2.0f;
+    }
+    func_0055BC80(&l->frame, k * (o->unkBA8 * (len / l->len0)));
+    a = **(s32 **)((u8 *)o->model + 4);
+    if (a == 0) {
+        return;
+    }
+    func_192BD0(l->frame, a, 0);
+    func_191F90(l->frame - o->unkBA8 * (k * (l->len / l->len0)), l->root, *(void **)((u8 *)o->model + 0xA24));
+    (*(s32 **)((u8 *)o->model + 0xA24))[0x70 / 4] = 0;
+    (*(s32 **)((u8 *)o->model + 0xA24))[0x74 / 4] = 0;
+    (*(s32 **)((u8 *)o->model + 0xA24))[0x78 / 4] = 0;
+}
 #endif
 
 /* The actions a character may start this frame, first come first served (players only for

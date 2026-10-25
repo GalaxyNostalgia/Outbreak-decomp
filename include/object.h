@@ -385,8 +385,9 @@ typedef struct Npc {
     u8 unkFD4[2];
     u8 unkFD6;          /* 0xFD6 */
     s8 unkFD7;          /* 0xFD7 */
-    u8 unkFD8[0x1020 - 0xFD8];
-    s8 unk1020;         /* 0x1020 */
+    u8 unkFD8[0x101F - 0xFD8];
+    u8 unk101F;         /* 0x101F */
+    u8 unk1020;         /* 0x1020 */
     u8 unk1021[0x102C - 0x1021];
     s8 unk102C;         /* 0x102C */
     u8 unk102D[0x1040 - 0x102D];
@@ -395,7 +396,9 @@ typedef struct Npc {
     u8 unk1134[4];      /* 0x1134 */
     s8 unk1138;         /* 0x1138: a func_00652B50 request pending */
     u8 unk1139;         /* 0x1139: its argument */
-    u8 unk113A[0x1150 - 0x113A];
+    u8 unk113A[2];
+    u8 unk113C;         /* 0x113C */
+    u8 unk113D[0x1150 - 0x113D];
     s32 unk1150;        /* 0x1150 */
     u8 unk1154;         /* 0x1154 */
     u8 unk1155[0x1162 - 0x1155];

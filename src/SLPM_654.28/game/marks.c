@@ -700,7 +700,21 @@ typedef struct {
     s8 room;            /* 0x01 */
     u8 unk2[6];
     Vec3 pos;           /* 0x08 */
-    u8 unk14[0x78 - 0x14];
+    s16 unk14;          /* 0x14: heading */
+    s16 unk16;          /* 0x16: health */
+    u8 unk18[0x1E - 0x18];
+    u8 unk1E;           /* 0x1E */
+    u8 unk1F;
+    u8 unk20;           /* 0x20 */
+    u8 unk21;           /* 0x21 */
+    u8 unk22[2];
+    u8 unk24;           /* 0x24 */
+    u8 unk25;           /* 0x25 */
+    u8 unk26[2];
+    s32 unk28;          /* 0x28 */
+    u8 unk2C[4];
+    s32 unk30;          /* 0x30 */
+    u8 unk34[0x78 - 0x34];
 } ThingRec;             /* 0x78 */
 
 extern ThingRec D_3614F0[];
@@ -779,7 +793,22 @@ void func_0055D510(Mark *m) {
 }
 #endif
 
-void func_0064FC00(u8 id, u8 *data, u8 a, u8 kind);
+s32 func_1AF0A0(void);
+
+/* One mark's state from a message: kind 0 the four state bytes, kind 1 (unless func_1AF0A0) unk3. */
+void func_0064FC00(u8 id, u8 *data, u8 a, u8 kind) {
+    s32 r = func_1AF0A0();
+    Mark *m = (Mark *)((u8 *)&((Mark *)D_0070F8B0)[id & 0x3F] + 0x148);
+
+    if (kind == 0) {
+        m->state = data[0];
+        m->unk7 = data[1];
+        m->unk8 = data[2];
+        m->unk9[0] = data[3];
+    } else if (kind == 1 && r == 0) {
+        m->unk3 = data[0];
+    }
+}
 
 /* A mark-state message: kind 0 carries one mark, otherwise pairs of (id, byte) fill the rest. */
 void func_0064FCB0(s32 unused, u8 *msg);
@@ -800,3 +829,186 @@ void func_0064FCB0(s32 unused, u8 *msg) {
     }
 }
 #endif
+
+/* An NPC's message: its header, then what each kind carries. */
+typedef struct {
+    u8 kind;            /* 0x00 */
+    u8 size;            /* 0x01 */
+    u8 unk2;
+    u8 unk3;
+    u16 model;          /* 0x04 */
+    u8 b6;              /* 0x06 */
+    u8 b7;              /* 0x07 */
+    union {
+        struct { s32 state; s32 w; s16 hp; } k0;
+        struct { s32 state; f32 pos[3]; s32 w; s16 dir; } k1;
+        struct { s32 state; f32 pos[3]; s16 dir; s16 hp; s32 w; s32 b; } k6;
+        struct { f32 pos[3]; s16 dir; } k7;
+    } u;
+    u8 unk2C[4];
+} NpcMsg;               /* 0x30 */
+
+void func_1AF000(s32 type, void *msg, s32 a, s32 b);
+
+/* Sends an NPC's state (kinds 0-7) to the other players, keeping its D_3614F0 record up to date. */
+void func_00652B50(Npc *o, u8 kind) {
+    NpcMsg msg;
+    ThingRec *t;
+
+    if (o->type == 1 && func_0064FD50(1, o->slot)) {
+        msg.unk3 = 0;
+        msg.unk2 = 0;
+        msg.kind = kind;
+        msg.size = 0x2C;
+        t = &D_3614F0[o->slot];
+        switch (kind) {
+        case 0:
+            msg.size = 0x14;
+            msg.u.k0.state = o->unkFCF;
+            msg.u.k0.hp = o->unk544;
+            msg.b6 = o->unk1E2;
+            msg.model = o->unkBB4;
+            msg.b7 = o->unkB9B;
+            msg.u.k0.w = o->unk1150;
+            func_1AF000(9, &msg, 0, 4);
+            t->unk30 = o->unkFCF;
+            t->room = o->unk1E2;
+            t->unk16 = o->unk544;
+            t->unk20 = o->unkB9B;
+            t->unk28 = o->unk1150;
+            t->unk1E = 0;
+            break;
+        case 1:
+            msg.size = 0x20;
+            msg.u.k1.state = o->unkFCF;
+            msg.u.k1.pos[0] = o->unk38[0];
+            msg.u.k1.pos[1] = o->unk38[1];
+            msg.u.k1.pos[2] = o->unk38[2];
+            msg.u.k1.dir = o->unk92;
+            msg.model = o->unkBB4;
+            msg.b6 = o->unk1020;
+            msg.b7 = o->unk101F;
+            msg.u.k1.w = o->unk1150;
+            t->unk30 = o->unkFCF;
+            t->pos.x = o->unk38[0];
+            t->pos.y = o->unk38[1];
+            t->pos.z = o->unk38[2];
+            t->unk14 = o->unk92;
+            t->unk24 = o->unk1020;
+            t->unk25 = o->unk101F;
+            t->unk28 = o->unk1150;
+            t->unk1E = 0;
+            func_1AF000(9, &msg, 0, 4);
+            break;
+        case 2:
+            msg.size = 0x1C;
+            msg.u.k1.state = o->unkFCF;
+            msg.u.k1.pos[0] = o->unk38[0];
+            msg.u.k1.pos[1] = o->unk38[1];
+            msg.u.k1.pos[2] = o->unk38[2];
+            msg.b6 = o->unk1E2;
+            msg.model = o->unkBB4;
+            msg.b7 = o->unk1154;
+            msg.u.k1.w = o->unk1150;
+            t->unk30 = o->unkFCF;
+            t->pos.x = o->unk38[0];
+            t->pos.y = o->unk38[1];
+            t->pos.z = o->unk38[2];
+            t->room = o->unk1E2;
+            t->unk21 = o->unk1154;
+            t->unk28 = o->unk1150;
+            t->unk1E = 2;
+            func_1AF000(9, &msg, 0, 4);
+            break;
+        case 3:
+            msg.size = 0xC;
+            msg.u.k0.state = o->unkFCF;
+            msg.b6 = o->unk1020;
+            msg.b7 = o->unk101F;
+            msg.model = o->unkBB4;
+            func_1AF000(9, &msg, 0, 4);
+            t->unk30 = o->unkFCF;
+            t->room = o->unk1E2;
+            t->unk24 = o->unk1020;
+            t->unk25 = o->unk101F;
+            t->unk1E = 0;
+            break;
+        case 4:
+            msg.size = 0x1C;
+            msg.u.k1.state = o->unkFCF;
+            msg.u.k1.pos[0] = o->unk38[0];
+            msg.u.k1.pos[1] = o->unk38[1];
+            msg.u.k1.pos[2] = o->unk38[2];
+            msg.b6 = o->unk1E2;
+            msg.model = o->unkBB4;
+            msg.b7 = o->unk1154;
+            t->unk30 = o->unkFCF;
+            t->pos.x = o->unk38[0];
+            t->pos.y = o->unk38[1];
+            t->pos.z = o->unk38[2];
+            t->room = o->unk1E2;
+            t->unk21 = o->unk1154;
+            t->unk1E = 1;
+            func_1AF000(9, &msg, 0, 4);
+            break;
+        case 5:
+            msg.size = 0x20;
+            msg.u.k1.state = o->unkFCF;
+            msg.model = o->unkBB4;
+            msg.b6 = o->unk1020;
+            msg.b7 = o->unk101F;
+            msg.u.k1.w = o->unk1150;
+            msg.u.k1.pos[0] = o->unk38[0];
+            msg.u.k1.pos[1] = o->unk38[1];
+            msg.u.k1.pos[2] = o->unk38[2];
+            t->unk30 = o->unkFCF;
+            t->pos.x = o->unk38[0];
+            t->pos.y = o->unk38[1];
+            t->pos.z = o->unk38[2];
+            t->unk24 = o->unk1020;
+            t->unk25 = o->unk101F;
+            t->unk28 = o->unk1150;
+            t->unk1E = 0;
+            func_1AF000(9, &msg, 0, 4);
+            break;
+        case 6:
+            msg.size = 0x24;
+            msg.u.k6.state = o->unkFCF;
+            msg.u.k6.pos[0] = o->unk38[0];
+            msg.u.k6.pos[1] = o->unk38[1];
+            msg.u.k6.pos[2] = o->unk38[2];
+            msg.u.k6.dir = o->unk92;
+            msg.u.k6.hp = o->unk544;
+            msg.b6 = o->unk1E2;
+            msg.model = o->unkBB4;
+            msg.b7 = o->unkB9B;
+            msg.u.k6.w = o->unk1150;
+            msg.u.k6.b = o->unk113C;
+            func_1AF000(9, &msg, 0, 4);
+            t->unk30 = o->unkFCF;
+            t->pos.x = o->unk38[0];
+            t->pos.y = o->unk38[1];
+            t->pos.z = o->unk38[2];
+            t->room = o->unk1E2;
+            t->unk14 = o->unk92;
+            t->unk16 = o->unk544;
+            t->unk20 = o->unkB9B;
+            t->unk28 = o->unk1150;
+            t->unk1E = 0;
+            break;
+        case 7:
+            msg.size = 0x18;
+            msg.model = o->unkBB4;
+            msg.u.k7.pos[0] = o->unk38[0];
+            msg.u.k7.pos[1] = o->unk38[1];
+            msg.u.k7.pos[2] = o->unk38[2];
+            msg.u.k7.dir = o->unk92;
+            func_1AF000(9, &msg, 0, 2);
+            t->pos.x = o->unk38[0];
+            t->pos.y = o->unk38[1];
+            t->pos.z = o->unk38[2];
+            t->unk14 = o->unk92;
+            break;
+        }
+    }
+}
