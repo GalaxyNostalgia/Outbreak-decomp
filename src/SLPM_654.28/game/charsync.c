@@ -480,6 +480,30 @@ typedef struct {
     s32 val;            /* 0x4 */
 } TalkCond;
 
+u16 func_001ADEF0(s32 n);
+
+/* Kind 0xE: a random 0-9 against val (op c->not: ==, !=, <, >, <=, >=). */
+s32 func_005C74D0(TalkCond *c, DrawObjFull *p) {
+    u8 r = (func_001ADEF0(1) & 0xFFFF) % 10;
+
+    switch (c->not) {
+    case 0:
+        return r == c->val;
+    case 1:
+        return r != c->val;
+    case 2:
+        return r < c->val;
+    case 3:
+        return r > c->val;
+    case 4:
+        return r <= c->val;
+    case 5:
+        return r >= c->val;
+    default:
+        return 0;
+    }
+}
+
 /* Kind 0x15: p's state (0xBA0): 0 fine (none of 0xB3), 1, 2, 4 0x10, 5 0x20, 6 0x80 (or not). */
 s32 func_005C7B50(TalkCond *c, DrawObjFull *p) {
     if (c->not == 0) {
@@ -554,7 +578,6 @@ s16 func_005C7290(u8 *c, DrawObjFull *p);
 s16 func_005C7300(u8 *c, DrawObjFull *p);
 s16 func_005C7370(u8 *c, DrawObjFull *p);
 s16 func_005C7420(u8 *c, DrawObjFull *p);
-s16 func_005C74D0(u8 *c, DrawObjFull *p);
 s16 func_005C75B0(u8 *c, DrawObjFull *p);
 s16 func_005C7600(u8 *c, DrawObjFull *p);
 s16 func_005C7650(u8 *c, DrawObjFull *p);
@@ -640,7 +663,7 @@ s16 func_005C6480(u8 *c, DrawObjFull *p) {
         r = func_005C7420(c, p);
         break;
     case 0xE:
-        r = func_005C74D0(c, p);
+        r = func_005C74D0((TalkCond *)c, p);
         break;
     case 0xF:
         r = func_005C75B0(c, p);
