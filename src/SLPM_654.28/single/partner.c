@@ -2380,3 +2380,7 @@ s8 func_00835C50(DrawObjFull *obj, DrawObjFull *player, u8 *item, u16 id) {
     }
     return 0;
 }
+
+/* Empty. */
+void func_00825DA0(void) {
+}

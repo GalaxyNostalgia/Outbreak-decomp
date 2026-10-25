@@ -14,7 +14,7 @@ typedef struct {
     u8 unk7;            /* 0x07 */
     s8 unk8;            /* 0x08 */
     u8 unk9[0x10 - 9];
-    s16 unk10;
+    u16 unk10;
     s16 unk12;
     s16 unk14;
     s16 unk16;
@@ -691,9 +691,62 @@ void func_0055D330(Mark *m) {
     }
 }
 
-void func_005CCE40(s8 room, s8 a, u8 *out);
+s8 func_005CCE40(s8 room, s8 a, u8 *out);
 void func_00576B30(EnemySetRoom *e, u8 a, u8 b);
 void func_0055D5F0(EnemySetRoom *e, Mark *m, u8 a, s32 b);
+
+typedef struct {
+    u8 unk0;
+    s8 room;            /* 0x01 */
+    u8 unk2[6];
+    Vec3 pos;           /* 0x08 */
+    u8 unk14[0x78 - 0x14];
+} ThingRec;             /* 0x78 */
+
+extern ThingRec D_3614F0[];
+extern Vec3 D_006D59C0[];
+void func_006530F0(ThingRec *t, u8 a, u8 b);
+void func_00653090(ThingRec *t);
+
+/* A thing mark's step: 1 places it after its wait, 2 moves it round 7 spots every 150 frames. */
+#ifdef NON_MATCHING   /* loads the stack byte r before m->unk8 for func_006530F0 (as func_0055D510) */
+void func_0055D3A0(Mark *m) {
+    ThingRec *t = &D_3614F0[m->id];
+    u8 r;
+
+    switch (m->state) {
+    case 0:
+        break;
+    case 1:
+        switch (m->unk7) {
+        case 1:
+            if (m->unk12 <= 0) {
+                if (func_005CCE40(t->room, m->unk8, &r) >= 0) {
+                    func_006530F0(t, m->unk8, r);
+                }
+                m->state = 0;
+            } else {
+                m->unk12--;
+            }
+            break;
+        }
+        break;
+    case 2:
+        if (m->unk12 == 0) {
+            m->unk10 = (m->unk10 + 1) % 7;
+            m->unk12 = 150;
+            t->pos = D_006D59C0[m->unk10];
+            func_00653090(t);
+        } else {
+            m->unk12--;
+        }
+        break;
+    case 3:
+        func_0055D5F0((EnemySetRoom *)t, m, m->unk7, 1);
+        break;
+    }
+}
+#endif
 
 /* An enemy mark's step: 1 after its wait, 3 ... */
 #ifdef NON_MATCHING   /* argument load order of r vs m->unk8 in the func_00576B30 call */
@@ -722,6 +775,28 @@ void func_0055D510(Mark *m) {
     case 3:
         func_0055D5F0(e, m, m->unk7, 1);
         break;
+    }
+}
+#endif
+
+void func_0064FC00(u8 id, u8 *data, u8 a, u8 kind);
+
+/* A mark-state message: kind 0 carries one mark, otherwise pairs of (id, byte) fill the rest. */
+void func_0064FCB0(s32 unused, u8 *msg);
+#ifdef NON_MATCHING   /* p = msg + 4 computed from s3, not a1 */
+void func_0064FCB0(s32 unused, u8 *msg) {
+    u8 *p = msg + 4;
+    s32 i;
+    s32 n;
+
+    if (msg[0] == 0) {
+        func_0064FC00(p[0], p + 1, msg[2], msg[0]);
+        return;
+    }
+    n = (u32)(msg[1] - 4) >> 1;
+    for (i = 0; i < n; i++) {
+        func_0064FC00(p[0], p + 1, msg[2], msg[0]);
+        p += 2;
     }
 }
 #endif
