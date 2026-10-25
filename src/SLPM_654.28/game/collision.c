@@ -1069,7 +1069,63 @@ s32 func_005E6A90(CollSweep *s, CollTri *t, f32 *hit, f32 *n) {
 
 extern s8 D_0023BED0[];         /* the walls that pushed this time */
 extern f32 D_00239E70;          /* the longest push, as a share of the move */
-s8 func_005E8180(CollSweep *s, f32 *out, s8 i);
+
+/* The push off wall touch i for sweep s, into out (1; 0 when there is none): a face's out
+   along its normal from the touch, an edge's away from the edge point; either as far as the
+   sphere's centre then was from where it ends up. */
+s8 func_005E8180(CollSweep *s, f32 *out, s8 k);
+#ifdef NON_MATCHING   /* registers: the original keeps i * 12 (in i's s0) for the edge path's tables */
+s8 func_005E8180(CollSweep *s, f32 *out, s8 k) {
+    f32 n[3];
+    f32 b[3];
+    f32 a[3];
+    f32 c[3];
+    f32 l;
+    f32 *p;
+    s32 i = k;
+
+    if (D_0070EE50[i] != 1) {
+        n[0] = D_0070EF90[i].n[0];
+        n[1] = D_0070EF90[i].n[1];
+        n[2] = D_0070EF90[i].n[2];
+        func_003405D0(s->r, b, n);
+        func_003404F0(a, D_0070EED0[i], b);
+        func_00340410(b, a, D_0070EF30[i]);
+        l = func_00191690(b);
+        func_00191750(b);
+        func_003405D0(l, a, b);
+    } else {
+        switch (D_0070EE60[i]) {
+        case 0:
+            p = D_0070EED0[i];
+            func_00340410(a, D_0070EF30[i], p);
+            break;
+        case 1:
+        default:
+            p = D_0070EED0[i];
+            func_00340410(a, D_0070EE70[i], p);
+            break;
+        }
+        func_00191750(a);
+        func_003405D0(s->r, b, a);
+        func_003404F0(a, p, b);
+        c[0] = D_0070EF30[i][0];
+        c[1] = D_0070EF30[i][1];
+        c[2] = D_0070EF30[i][2];
+        func_00340410(b, a, c);
+        l = func_00191690(b);
+        if (l == 0.0f) {
+            return 0;
+        }
+        func_00191750(b);
+        func_003405D0(l, a, b);
+    }
+    out[0] = a[0];
+    out[1] = a[1];
+    out[2] = a[2];
+    return 1;
+}
+#endif
 void func_005E8410(const f32 *v, f32 *acc);
 
 /* Turns this frame's wall touches (D_0070EE50 on) into one push for sweep s, added to push
