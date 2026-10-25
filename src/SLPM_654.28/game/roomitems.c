@@ -1041,3 +1041,44 @@ void func_00562F10(ItemObj *o) {
     }
 }
 #endif
+
+/* An item spot zone's who-may-take test (0x44: 0 anyone, 1 the player numbered 0x46, 2 the
+   character 0x46; 0x48 says whether that must or mustn't be so). */
+typedef struct {
+    u8 unk0[0x44];
+    u16 test;           /* 0x44 */
+    u16 val;            /* 0x46 */
+    u16 want;           /* 0x48 */
+} ZoneWho;
+
+s32 func_00562BF0(ZoneWho *z, DrawObjFull *o) {
+    s32 r = 0;
+    s32 m;
+    u16 t;
+
+    if (z == NULL || o == NULL) {
+        return 0;
+    }
+    t = z->test;
+    if (t == 0) {
+        return 1;
+    }
+    m = (s32)o;
+    if (t == 1) {
+        if (o->kind == z->val) {
+            m = 1;
+        } else {
+            m = 0;
+        }
+    } else if (t == 2) {
+        if (o->unkB98 == z->val) {
+            m = 1;
+        } else {
+            m = 0;
+        }
+    }
+    if (m == z->want) {
+        r = 1;
+    }
+    return r;
+}
