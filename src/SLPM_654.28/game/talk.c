@@ -754,7 +754,7 @@ void func_00686090(DrawObjFull *p) {
    (D_00718AC0: [0] the one playing). */
 typedef struct {
     s16 active;         /* 0x00 */
-    u8 unk2[2];
+    s16 unk2;           /* 0x02 */
     s16 unk4;           /* 0x04 */
     s16 unk6;           /* 0x06 */
     s16 timer;          /* 0x08 */
@@ -783,7 +783,22 @@ extern Speech D_00718B40[0x10];
 void func_00687AD0(Speech *s, s8 a);
 void func_00687420(Speech *s, s32 ch);
 
-Speech *func_006854F0(void);
+/* A free speech (marked in use, reset), or NULL. */
+Speech *func_006854F0(void) {
+    s32 i;
+
+    for (i = 0; i < 0x10; i++) {
+        if (D_00718B40[i].active == 0) {
+            D_00718B40[i].active = 1;
+            D_00718B40[i].timer = 0;
+            D_00718B40[i].unk2 = 0;
+            D_00718B40[i].unkD = 0;
+            D_00718B40[i].unk60 = 0;
+            return &D_00718B40[i];
+        }
+    }
+    return NULL;
+}
 void func_00687E60(s32 id, s32 a);
 s32 sprintf(char *dst, const char *fmt, ...);
 f32 func_00634380(DrawObjFull *o, f32 *pos);
