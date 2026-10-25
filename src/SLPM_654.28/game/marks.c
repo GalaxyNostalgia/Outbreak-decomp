@@ -10,7 +10,10 @@ typedef struct {
     u8 unk2;
     u8 unk3;            /* 0x03 */
     s16 id;             /* 0x04 */
-    u8 unk6[0x10 - 6];
+    u8 state;           /* 0x06 */
+    u8 unk7;            /* 0x07 */
+    s8 unk8;            /* 0x08 */
+    u8 unk9[0x10 - 9];
     s16 unk10;
     s16 unk12;
     s16 unk14;
@@ -667,3 +670,58 @@ u8 func_0064F7A0(Mark *m) {
         return 0;
     }
 }
+
+/* A mark's thing gets ... by its type (0 a player: single's func_00825DA0, 1 a D_003614F0
+   record, 2 an enemy). */
+void func_0055D3A0(Mark *m);
+void func_0055D510(Mark *m);
+void func_00825DA0(Mark *m);
+
+void func_0055D330(Mark *m) {
+    switch (m->type) {
+    case 1:
+        func_0055D3A0(m);
+        break;
+    case 2:
+        func_0055D510(m);
+        break;
+    case 0:
+        func_00825DA0(m);
+        break;
+    }
+}
+
+void func_005CCE40(s8 room, s8 a, u8 *out);
+void func_00576B30(EnemySetRoom *e, u8 a, u8 b);
+void func_0055D5F0(EnemySetRoom *e, Mark *m, u8 a, s32 b);
+
+/* An enemy mark's step: 1 after its wait, 3 ... */
+#ifdef NON_MATCHING   /* argument load order of r vs m->unk8 in the func_00576B30 call */
+void func_0055D510(Mark *m) {
+    EnemySetRoom *e = &D_0071A030[m->id];
+    u8 r;
+
+    switch (m->state) {
+    case 0:
+        break;
+    case 1:
+        switch (m->unk7) {
+        case 1:
+            if (m->unk12 <= 0) {
+                func_005CCE40((s8)e->room, m->unk8, &r);
+                func_00576B30(e, m->unk8, r);
+                m->state = 0;
+            } else {
+                m->unk12--;
+            }
+            break;
+        }
+        break;
+    case 2:
+        break;
+    case 3:
+        func_0055D5F0(e, m, m->unk7, 1);
+        break;
+    }
+}
+#endif

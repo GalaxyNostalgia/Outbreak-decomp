@@ -562,6 +562,103 @@ void func_00565C80(s32 frame, DrawObjFull *o, s32 what, s32 b, f32 speed) {
     }
 }
 
+/* Effect events: 0 a muzzle (D_006D5C40[c]'s offset from bone b), 1 ..., 2 at its feet,
+   3/6 by b, 4/5 the weapon in hand's. */
+typedef struct {
+    f32 ry;
+    f32 rx;
+    f32 dy;
+    f32 ofs[3];
+} MuzzleDef;            /* 0x18 */
+
+typedef struct {
+    u8 unk0[0x1C];
+    u8 *obj;            /* 0x1C */
+    u8 unk20[0x3C - 0x20];
+} HeldItem;
+
+extern MuzzleDef D_006D5C40[];
+extern HeldItem D_003967D0[];
+void func_0018F830(f32 x, f32 y, f32 z, Mat44 *m);
+void func_0018F7C0(Mat44 *m);
+void func_0018FCA0(f32 rx, f32 ry, f32 rz, Mat44 *m);
+void func_0018FAB0(f32 *out, const Mat44 *m);
+void func_00190CD0(Mat44 *a, const Mat44 *b);
+void func_00190F00(Mat44 *dst, void *src);
+void func_005AC3D0(s32 a, Mat44 *m, f32 *pos, s32 b);
+void func_005AC6E0(DrawObjFull *o);
+void func_0062CDA0(DrawObjFull *o);
+void func_005B8FB0(DrawObjFull *o, s32 b);
+void func_005B93D0(DrawObjFull *o, s32 b);
+void func_00556AE0(f32 *pos);
+void func_0055E400(DrawObjFull *o, void *mtx, s32 n);
+void *func_00620DB0(Mat44 *m, f32 *ofs, s32 mask, s16 id, s32 variant, s32 flags, void *update);
+void func_00622590(void *e);
+
+#ifdef NON_MATCHING   /* the original keeps the unused offset vector's stores; registers */
+void func_00565DA0(s32 frame, DrawObjFull *o, s32 a, s32 b, s32 c, f32 speed) {
+    Mat44 **bones = (Mat44 **)((u8 *)o->model + 0x820);
+    u8 *obj;
+    u32 *e;
+    Mat44 m;
+    f32 v[4];
+    f32 pos[4];
+
+    if (func_00543460(o, 1, frame, speed)) {
+        switch ((u16)a) {
+        case 0:
+            if ((u8)D_0048BF60.unk60 != 0 && o->type == 2 && o->kind == 1) {
+                b = 0x12;
+            }
+            func_0018F7C0(&m);
+            c = (u16)c;
+            func_0018FCA0(D_006D5C40[c].rx, D_006D5C40[c].ry, 0.0f, &m);
+            v[0] = D_006D5C40[c].ofs[0];
+            v[1] = D_006D5C40[c].ofs[1];
+            v[2] = D_006D5C40[c].ofs[2] + D_006D5C40[c].dy;
+            func_00190CD0(&m, bones[(u16)b]);
+            func_0018FAB0(pos, &m);
+            func_0018F830(1.0f, 1.0f, 1.0f, &m);
+            func_005AC3D0(0, &m, pos, 1);
+            func_005AC6E0(o);
+            return;
+        case 1:
+            o->unkBA0 |= 0x80000000;
+            func_0062CDA0(o);
+            break;
+        case 6:
+            if (D_00306590.unk1A == 0x23) {
+                func_005B8FB0(o, (u16)b);
+            }
+            break;
+        case 3:
+            func_005B93D0(o, (u16)b);
+            break;
+        case 2:
+            func_00556AE0(o->unk38);
+            break;
+        case 4:
+            if (D_003967D0[o->unkC7C].obj != NULL) {
+                func_0055E400(o, D_003967D0[o->unkC7C].obj + 0x1C0, o->unkCA8 - 1);
+            }
+            break;
+        case 5:
+            obj = D_003967D0[o->unkC7C].obj;
+            if (obj != NULL) {
+                func_0018F7C0(&m);
+                func_00190F00(&m, (u8 *)o + 0x50);
+                e = func_00620DB0(&m, pos, 0xFF, (u16)b, 0, 0x1A193, func_00622590);
+                if (e != NULL) {
+                    e[9] = (u32)o;
+                    e[10] = (u32)obj;
+                }
+            }
+            break;
+        }
+    }
+}
+#endif
+
 void func_00566090(s32 frame, DrawObjFull *o, s32 what, f32 speed) {
     if (func_00543460(o, 1, frame, speed)) {
         switch ((u16)what) {

@@ -576,3 +576,49 @@ void func_0058AA70(DrawObjFull *o, f32 speed) {
         break;
     }
 }
+
+/* The same for another item's motions. */
+void func_0058BE00(DrawObjFull *o, f32 speed) {
+    switch (o->unk212) {
+    case 0x65:
+        func_00565790(0x1A, o, 0, speed);
+        func_00565790(0x46, o, 0, speed);
+        func_00565DA0(0x1A, o, 6, 0x81, 0, speed);
+        func_00565DA0(0x46, o, 6, 0x82, 0, speed);
+        break;
+    case 0x66:
+        func_00565790(0x1A, o, 0, speed);
+        func_00565790(0x4E, o, 0, speed);
+        func_00565790(0x7E, o, 0, speed);
+        func_00565790(0xB1, o, 0, speed);
+        func_00565DA0(0x1A, o, 6, 0x41, 0, speed);
+        func_00565DA0(0x4E, o, 6, 0x42, 0, speed);
+        func_00565DA0(0x7E, o, 6, 0x41, 0, speed);
+        func_00565DA0(0xB1, o, 6, 0x42, 0, speed);
+        break;
+    case 0x67:
+        func_00565790(0x16, o, 1, speed);
+        func_00565790(0x30, o, 1, speed);
+        func_005658B0(0x34, o, 2, 8, speed);
+        func_00565DA0(0x16, o, 6, 0x81, 0, speed);
+        func_00565DA0(0x30, o, 6, 0x82, 0, speed);
+        break;
+    case 0x68:
+        func_00565790(8, o, 0, speed);
+        func_00565790(0x18, o, 0, speed);
+        break;
+    case 0x6B:
+    case 0x122:
+    case 0x123:
+    case 0x124:
+        break;
+    case 0x125:
+        func_00565790(0x28, o, 0, speed);
+        func_00565790(0x3E, o, 0, speed);
+        break;
+    case 0x12C:
+        func_00565790(0xA, o, 0, speed);
+        func_005658B0(0xA, o, 2, 8, speed);
+        break;
+    }
+}
