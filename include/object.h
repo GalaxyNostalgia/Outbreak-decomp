@@ -249,7 +249,10 @@ typedef struct {
 
 typedef struct DrawObjFull {
     OBJ_FIELDS(DrawObjFull)
-    u8 unkDA2[0xE58 - 0xDA2];
+    u8 unkDA2[0xDA8 - 0xDA2];
+    s8 talk;            /* 0xDA8: (players) wants to ad-lib */
+    s8 talkCmd;         /* 0xDA9: which (D_0023AFA8 / D_0023AFB0) */
+    u8 unkDAA[0xE58 - 0xDAA];
     f32 unkE58[4][2][9];  /* 0xE58: the eyes' drift (func_005E9600; 3 used of each 9) */
     Ctrl ctrl;          /* 0xF78: (players) the controls */
     s16 unkFA8;         /* 0xFA8: (players) the stick's angle when the camera cut */

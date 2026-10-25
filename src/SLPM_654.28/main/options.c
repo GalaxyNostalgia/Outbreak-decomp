@@ -899,7 +899,7 @@ s32 func_001B7B50(f32 *pos, s32 *tbl, s32 *vol, s32 *pan) {
     return 1;
 }
 s32 func_001ABAA0(s32 bank, s32 id, s32 unused, u32 vol, s32 pan, s32 unused2, s32 flag);
-s32 func_001ABE10(s32 bank, s32 id, s32 unused, s32 vol, s32 pan, s32 flags);
+s32 func_001ABE10(s32 bank, s32 id, s32 unused, u32 vol, s32 pan, s32 unused2);
 
 void func_001B8230(PlacedSound *s) {
     s32 k = D_00239F90[s->unk38];

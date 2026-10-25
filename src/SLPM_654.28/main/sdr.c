@@ -53,7 +53,8 @@ extern char D_00223C20[];   /* "SDR: SdrInit: Error: TSNDGET_DEV: sceSifBindRpc 
 extern char D_00223C60[];   /* "SDR: SdrInit: Error: SmId_send faild.\n" */
 extern char D_00223C90[];   /* "SDR: SdrInit: Error: SmId_get faild.\n" */
 extern char D_00223CC0[];   /* "Connected to TamsoftSoundDriver: Version %d.%d (C)Tamsoft\n" */
-extern char D_002240C0[];   /* "SDR: SdrGetStateSend: Error: Rpc faild.\n" */
+extern char D_002240C0[];
+extern char D_00223D60[];   /* "SDR: SdrGetStateSend: Error: Rpc faild.\n" */
 
 s32 printf(const char *fmt, ...);
 void func_001AC860(void);
@@ -258,6 +259,32 @@ s32 func_001A68D0(u32 key) {
         return -1;
     }
     s->id = ((key << 8) >> 8) | 0x08000000;
+    D_00292DB0[0] = (D_00292DB0[0] + 1) % 32;
+    return 0;
+}
+#endif
+
+s32 func_001A69F0(u32 key, s8 vol, s8 pan, s16 pitch);
+#ifdef NON_MATCHING   /* first draft: as func_001A67B0 */
+/* SdrSeChange: change a playing sound's volume, pan or pitch (negative: leave it); 1 when none
+   is given. */
+s32 func_001A69F0(u32 key, s8 vol, s8 pan, s16 pitch) {
+    s32 w = D_00292DB0[0];
+    s8 op;
+
+    if (D_00292DC0[w].id >= 0) {
+        printf(D_00223D60);
+        return -1;
+    }
+    op = (vol >= 0) | 8 | ((pan >= 0) << 1) | ((pitch >= 0) << 2);
+    if (op == 8) {
+        return 1;
+    }
+    D_00292DC0[w].id = (op << 24) | ((key << 8) >> 8);
+    ((SdrSeSlot *)D_00292DC0)[w].vol = vol;
+    ((SdrSeSlot *)D_00292DC0)[w].pan = pan;
+    ((SdrSeSlot *)D_00292DC0)[w].pitch = pitch;
+    ((SdrSeSlot *)D_00292DC0)[w].flag = 0;
     D_00292DB0[0] = (D_00292DB0[0] + 1) % 32;
     return 0;
 }
