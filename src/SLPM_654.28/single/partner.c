@@ -525,7 +525,77 @@ void func_008347C0(DrawObjFull *obj) {
         func_00834A20(obj);
     }
 }
+typedef struct {
+    s8 hp;              /* when (func_00636540 under) to heal */
+    u8 unk1;
+    u16 flags;          /* 1, 2: try the lists from the end */
+} PartnerHeal;
+typedef struct {
+    u16 v[3];
+} ItemIds3;
+extern PartnerHeal D_0083A1B0[];
+extern ItemIds6 D_0083A258;     /* what cures poison, in order */
+extern ItemIds3 D_0023B990;     /* what heals */
+s8 func_00581B30(u8 slot, DrawObjFull *obj);
+void func_005C13D0(DrawObjFull *obj, u8 slot);
+f32 func_00636540(u8 who);
+
+/* Request 2's second pass: the partner uses item 0x137 when bleeding, a cure when poisoned
+   (0xBA0 & 1), item 0x138 or (unhurt otherwise and its health low) a healing item. */
 void func_00834F00(DrawObjFull *obj);
+#ifdef NON_MATCHING   /* first draft: the loops' index select and the ids' copies */
+void func_00834F00(DrawObjFull *obj) {
+    u8 k;
+    s32 i;
+    ItemIds6 cure;
+    ItemIds3 heal;
+
+    if (obj->unkBA0 & 2) {
+        k = func_008360C0(obj, 0x137);
+        if (k != 0 && func_00581B30(k, obj) == 2) {
+            func_005C13D0(obj, k);
+        }
+    }
+    if (obj->unkBA0 & 1) {
+        cure = D_0083A258;
+        for (i = 0; i < 6; i++) {
+            k = func_008360C0(obj, cure.v[D_0083A1B0[obj->unkB98].flags & 1 ? 5 - i : i]);
+            if (k != 0) {
+                if (func_00581B30(k, obj) == 2) {
+                    func_005C13D0(obj, k);
+                }
+                break;
+            }
+        }
+    }
+    if (obj->unkBA4 & 0x1000) {
+        return;
+    }
+    k = func_008360C0(obj, 0x138);
+    if (k != 0) {
+        if (func_00581B30(k, obj) == 2) {
+            func_005C13D0(obj, k);
+        }
+        return;
+    }
+    if (obj->unkBB6 != 0 || obj->unkBB8 != 0 || obj->unkBBA != 0) {
+        return;
+    }
+    if (func_00636540(obj->unkB98) < D_0083A1B0[obj->unkB98].hp) {
+        return;
+    }
+    heal = D_0023B990;
+    for (i = 0; i < 3; i++) {
+        k = func_008360C0(obj, heal.v[D_0083A1B0[obj->unkB98].flags & 2 ? 2 - i : i]);
+        if (k != 0) {
+            if (func_00581B30(k, obj) == 2) {
+                func_005C13D0(obj, k);
+            }
+            return;
+        }
+    }
+}
+#endif
 void func_00835180(DrawObjFull *obj);
 void func_008360B0(DrawObjFull *obj);
 
