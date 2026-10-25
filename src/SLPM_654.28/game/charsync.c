@@ -472,6 +472,30 @@ void func_0064C620(DrawObjFull *o, u8 kind) {
 }
 #endif
 
+/* A talk condition: its kind (func_005C6480), whether it's negated, and a value. */
+typedef struct {
+    u8 kind;
+    u8 not;             /* 0x1 */
+    u8 unk2[2];
+    s32 val;            /* 0x4 */
+} TalkCond;
+
+/* Kind 0x2E: p's talk command (0xDA9) is val (or not); none, or 0x80 ones, never. */
+s16 func_005C9210(TalkCond *c, DrawObjFull *p) {
+    s32 k = p->talkCmd;
+
+    if (k == 0) {
+        return 0;
+    }
+    if ((s8)k & 0x80) {
+        return 0;
+    }
+    if (c->not == 0) {
+        return (s8)k == c->val;
+    }
+    return (s8)k != c->val;
+}
+
 s16 func_005C6A40(u8 *c, DrawObjFull *p);
 s16 func_005C6AD0(u8 *c, DrawObjFull *p);
 s16 func_005C6CA0(u8 *c, DrawObjFull *p);
@@ -516,7 +540,6 @@ s16 func_005C8E50(u8 *c, DrawObjFull *p);
 s16 func_005C8F00(u8 *c, DrawObjFull *p);
 s16 func_005C8FB0(u8 *c, DrawObjFull *p);
 s16 func_005C9060(u8 *c, DrawObjFull *p);
-s16 func_005C9210(u8 *c, DrawObjFull *p);
 s16 func_005C9270(u8 *c, DrawObjFull *p);
 s16 func_005C92E0(u8 *c, DrawObjFull *p);
 
@@ -664,7 +687,7 @@ s16 func_005C6480(u8 *c, DrawObjFull *p) {
         r = func_005C9060(c, p);
         break;
     case 0x2E:
-        r = func_005C9210(c, p);
+        r = func_005C9210((TalkCond *)c, p);
         break;
     case 0x2F:
         r = func_005C9270(c, p);
