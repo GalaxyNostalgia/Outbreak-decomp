@@ -12,8 +12,8 @@ extern s16 D_006EF7B0[];
 s32 func_001AF4D0(void);
 s32 func_006859A0(DrawObjFull *p);
 void func_00686CF0(void);
-void func_00685D80(void *o);
-void func_00686090(void *o);
+void func_00685D80(DrawObjFull *p);
+void func_00686090(DrawObjFull *p);
 void func_006871E0(void);
 void func_00685CF0(void);
 
@@ -136,10 +136,16 @@ void *func_00686150(s32 a, s32 model, s32 which) {
 typedef struct {
     s16 id;             /* 0x0: (negative: none) */
     s8 kind;            /* 0x2 */
+    u8 unk3[0xA - 3];
+    s16 unkA;           /* 0xA */
+    u16 replies[4];     /* 0xC: (as a reply set) the entries that answer it */
 } TalkEntry;
 
 typedef struct {
-    u8 unk0[0xC4];
+    u8 unk0[0xB4];
+    DrawObjFull *unkB4; /* 0xB4: the last to talk to us */
+    DrawObjFull *unkB8; /* 0xB8 */
+    u8 unkBC[0xC4 - 0xBC];
     s32 unkC4[8];       /* 0xC4: per kind */
     s32 unkE4[0x20];    /* 0xE4 */
 } TalkWork;
@@ -204,5 +210,384 @@ void func_00686CF0(void) {
                 func_00686DF0(D_007194C0.unkC4[e->kind]);
             }
         }
+    }
+}
+
+/* Each frame, character p's talking: its timers, and when it asks to talk (func_006859A0),
+   picks what to say: a reply, a call, or one of its entries. */
+s16 func_00346C50(const f32 *from, const f32 *to);
+f32 func_00191A70(f32 x);
+f32 func_00634380(DrawObjFull *p, f32 *pos);
+
+/* Who p talks to: the nearest shown character or NPC in front of it (within a quarter turn
+   each way) in its game, unless the last one (unkDC5) is still within 300. */
+void func_00686530(DrawObjFull *p) {
+    s16 n;
+    DrawObjFull *o;
+    s16 i;
+    f32 best;
+    u16 who;
+    u16 pl;
+    DrawObjFull *q;
+    DrawObjFull *list[20];
+
+    for (i = 0, n = 0; i < 8; i++) {
+        o = &D_00476DD0[i];
+        if (o->active != 0 && o->visible != 0) {
+            list[n++] = o;
+        }
+    }
+    for (o = (DrawObjFull *)D_0023BE04; o != NULL; o = o->next) {
+        if (o->active != 0 && o->visible != 0) {
+            list[n++] = o;
+        }
+    }
+    best = 100.0f;
+    who = 0xFFFF;
+    pl = who;
+    for (i = 0; i < n; i++) {
+        q = list[i];
+        if (q->active == 0) {
+            continue;
+        }
+        if (q->type == 0 && q->kind == p->kind) {
+            continue;
+        }
+        if (q->unk1E2 != p->unk1E2) {
+            continue;
+        }
+        if (func_00191A70((s16)(func_00346C50(p->unk38, q->unk38) - p->unk92)) < 24576.0f) {
+            f32 d = func_00634380(p, q->unk38);
+
+            if (!(best <= d)) {
+                best = d;
+                if (q->type == 0) {
+                    who = q->unkB98;
+                    pl = 0xFFFF;
+                } else {
+                    who = q->unkBB4;
+                    pl = p->kind;
+                }
+            }
+        }
+    }
+    if (p->unkDC5 != 0) {
+        if (p->unkDC7 < 0) {
+            if (p->unkDC2 >= 0 && func_00634380(p, D_00476DD0[p->unkDC2].unk38) < 300.0f) {
+                return;
+            }
+        } else {
+            for (o = (DrawObjFull *)D_0023BE04; o != NULL; o = o->next) {
+                if (o->active != 0 && o->unkBB4 == p->unkDC2 && func_00634380(p, o->unk38) < 300.0f) {
+                    return;
+                }
+            }
+        }
+    }
+    p->unkDC5 = 0;
+    if (who < 0) {
+        p->unkDC2 = -1;
+        p->unkDC7 = -1;
+    } else {
+        p->unkDC2 = who;
+        p->unkDC7 = pl;
+    }
+    if (p->type != 0) {
+        p->unkDC2 = -1;
+        p->unkDC7 = -1;
+    }
+}
+
+s32 func_00687130(DrawObjFull *p, TalkEntry *e);
+
+/* Replies (kind 6): the first p's character may give now; 1 if it is to talk. */
+s32 func_00686BB0(DrawObjFull *p);
+#ifdef NON_MATCHING   /* f->unkA is loaded before the call; the original calls first and sets a1 once */
+s32 func_00686BB0(DrawObjFull *p) {
+    TalkEntry *e;
+    s32 i;
+    s32 r;
+    TalkEntry *f;
+
+    r = 0;
+    for (i = 0; i < 5000; i++) {
+        if (p->type != 0) {
+            continue;
+        }
+        e = func_00685190(p->unkB98, i, 0);
+        if (e == NULL || e->id < 0 || e->kind != 6) {
+            continue;
+        }
+        if (p->type == 0) {
+            f = func_00685190(p->unkB98, e->id, 1);
+        } else {
+            f = func_00685190(8, e->id, 1);
+        }
+        if (f == NULL || f->unkA < func_00687130(p, e)) {
+            func_00686F80(p, e);
+            if (D_007194C0.unkC4[6] != 0) {
+                p->unkDB4 = D_007194C0.unkC4[6];
+                D_007194C0.unkC4[6] = 0;
+                p->unkDC0 = 1;
+                p->unkDBE = 0;
+                p->talk = 1;
+                break;
+            }
+        }
+    }
+    if (p->talkCmd != 0) {
+        r = 1;
+    }
+    return r;
+}
+#endif
+
+void func_00686F10(DrawObjFull *p);
+void func_006862A0(DrawObjFull *p);
+
+/* p answers o when o's last talk was to p (or to everyone): with one of the kind-4 entries
+   o's talk lists as its replies. */
+s32 func_00686910(DrawObjFull *p, DrawObjFull *o);
+#ifdef NON_MATCHING   /* the original sets match with daddiu and tests it with one beqz to the end */
+s32 func_00686910(DrawObjFull *p, DrawObjFull *o) {
+    s32 r;
+    s32 match;
+    TalkEntry *f;
+    s32 i;
+    TalkEntry *e;
+    s32 id;
+
+    if (o == NULL) {
+        return 0;
+    }
+    if (o->active == 0) {
+        return 0;
+    }
+    if (o->kind == p->kind) {
+        return 0;
+    }
+    match = 0;
+    if (o->unkDC2 < 0 && o->unkDC7 < 0) {
+        match = 1;
+    } else if (p->type == 0) {
+        if (o->unkDC7 < 0) {
+            if (o->unkDC2 == p->unkB98) {
+                match = 1;
+            }
+        } else {
+            match = 0;
+        }
+    } else {
+        if (o->unkDC7 < 0) {
+            match = 0;
+        } else if (o->unkDC2 == p->unkBB4) {
+            match = 1;
+        }
+    }
+    if (match == 0) {
+        return 0;
+    }
+    r = o->unkDB4;
+    if (r == 0) {
+        return 0;
+    }
+    if (p->type == 0) {
+        if (o->type == 0) {
+            f = func_00685190(o->unkB98, r - 1, 1);
+        } else {
+            f = func_00685190(8, r - 1, 1);
+        }
+    } else {
+        if (o->type == 0) {
+            f = func_00685190(o->unkB98, r - 1, 1);
+        } else {
+            return 0;
+        }
+    }
+    if (f == NULL) {
+        return 0;
+    }
+    for (i = 0; i < 4; i++) {
+        id = f->replies[i];
+        if (id == 0) {
+            continue;
+        }
+        if (p->type == 0) {
+            e = func_00685190(p->unkB98, id & 0xFFFF, 0);
+        } else {
+            e = func_00685190(8, id & 0xFFFF, 0);
+        }
+        if (e != NULL && e->id >= 0 && e->kind == 4 && D_007194C0.unkC4[e->kind] == 0) {
+            func_00686F80(p, e);
+        }
+    }
+    if (D_007194C0.unkC4[4] != 0) {
+        D_007194C0.unkC4[7] = 0;
+        D_007194C0.unkC4[6] = 0;
+        D_007194C0.unkC4[5] = 0;
+        D_007194C0.unkC4[3] = 0;
+        D_007194C0.unkC4[2] = 0;
+        D_007194C0.unkC4[1] = 0;
+        D_007194C0.unkC4[0] = 0;
+        if (func_001AF4D0() == 1) {
+            o->unkDB4 = 0;
+        }
+    }
+    func_006862A0(p);
+    if (p->unkDC0) {
+        p->unkDC0 = 2;
+    }
+    return p->unkDC0;
+}
+#endif
+
+/* Whether p answers someone who talked to it: our player answers the last talker (others
+   answer us); NPCs answer unkB8, then unkB4. */
+s32 func_00686840(DrawObjFull *p) {
+    if (p->type == 0) {
+        if (p->kind == D_0048BF60.unk1D) {
+            if (func_00686910(p, D_007194C0.unkB4) != 0) {
+                return 1;
+            }
+        } else if (func_00686910(p, &D_00476DD0[D_0048BF60.unk1D]) != 0) {
+            return 1;
+        }
+    } else {
+        if (func_00686910(p, D_007194C0.unkB8) != 0) {
+            return 1;
+        }
+        if (func_00686910(p, D_007194C0.unkB4) != 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+void func_006862A0(DrawObjFull *p);
+
+#ifdef NON_MATCHING   /* a nop left in func_00686F10's delay slot */
+void func_00685D80(DrawObjFull *p) {
+    s32 i;
+    s32 k;
+    u32 j;
+    s32 n;
+    TalkEntry *e;
+
+    if (p->type == 0) {
+        if (D_0048BF60.unk1D == p->kind) {
+            if (D_0048BF60.unkA7 != 0) {
+                return;
+            }
+            p->talkWait--;
+            if (p->talkWait > 0) {
+                p->talk = 0;
+                p->talkCmd = 0;
+                return;
+            }
+            p->talkWait = 0;
+        }
+        for (i = 0; i < 4; i++) {
+            p->others[i] = -1;
+        }
+        for (j = 0, k = 0; j < D_0023BE14; j++) {
+            if (p->unkB98 != D_00476DD0[j].unkB98) {
+                p->others[k] = D_00476DD0[j].unkB98;
+                k++;
+            }
+        }
+    }
+    if (p->active == 0) {
+        return;
+    }
+    if (p->unkDBC != 0) {
+        p->unkDBC--;
+        if (p->unkDBC == 0) {
+            p->unkDC0 = 0;
+            p->unkDAA = 0;
+            p->unkDC5 = 0;
+        }
+    }
+    if (p->unkDBE != 0) {
+        p->unkDBE--;
+        if (p->unkDBE == 0) {
+            p->unkDC1 = 0;
+        }
+    }
+    if (p->unkDC8 != 0) {
+        p->unkDD0++;
+    }
+    if (p->type == 0 && func_001AF4D0() == 0 && p->kind != D_0048BF60.unk1D) {
+        return;
+    }
+    if (p->talk == 0) {
+        return;
+    }
+    if (func_006AC490() != 0) {
+        p->talk = 0;
+        p->talkCmd = 0;
+        return;
+    }
+    func_00686530(p);
+    D_007194C0.unkC4[7] = 0;
+    D_007194C0.unkC4[6] = 0;
+    D_007194C0.unkC4[5] = 0;
+    D_007194C0.unkC4[4] = 0;
+    D_007194C0.unkC4[3] = 0;
+    D_007194C0.unkC4[2] = 0;
+    D_007194C0.unkC4[1] = 0;
+    D_007194C0.unkC4[0] = 0;
+    p->unkDC0 = 0;
+    p->unkDC8 = 1;
+    p->unkDCC = p->unkDD0;
+    p->unkDD0 = 0;
+    if (func_00686BB0(p) == 0) {
+        if (p->kind == D_0048BF60.unk1D) {
+            func_00686F10(p);
+        }
+        if (func_00686840(p) == 0) {
+            n = p->type == 0 ? 5000 : 6000;
+            for (i = 0; i < n; i++) {
+                if (p->type == 0) {
+                    e = func_00685190(p->unkB98, i, 0);
+                } else {
+                    e = func_00685190(8, i, 0);
+                }
+                if (e != NULL && e->id >= 0 && e->kind < 3 && D_007194C0.unkC4[e->kind] == 0) {
+                    func_00686F80(p, e);
+                }
+            }
+            func_006862A0(p);
+        }
+    }
+    p->talk = 0;
+}
+#endif
+
+void func_00686290(DrawObjFull *p, s32 n) {
+}
+
+s32 func_00685590(DrawObjFull *p);
+void func_0064C620(DrawObjFull *o, u8 kind);
+
+/* Each frame after the talk is picked: says it (func_00685590) when one was chosen; our player
+   then waits a second (half online) before the next. */
+void func_00686090(DrawObjFull *p) {
+    s32 r;
+
+    if (p->unkDC0) {
+        if (p->unkDC0 == 2) {
+            p->unkDC1 = 1;
+        }
+        func_00686290(p, 2);
+        r = func_00685590(p);
+        if (p->type == 0) {
+            if (p->kind == D_0048BF60.unk1D && r != 0) {
+                p->talkWait = D_00306590.unkC != 0 ? 30 : 60;
+                func_0064C620(p, 0xB);
+            }
+        }
+        p->unkDAA = 1;
+        p->unkDC0 = 0;
+    } else {
+        func_00686290(p, 1);
     }
 }

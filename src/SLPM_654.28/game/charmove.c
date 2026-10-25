@@ -5054,6 +5054,18 @@ void func_00639FA0(DrawObjFull *o) {
 DrawObjFull *func_00634C00(s32 i);
 
 /* What o holds on to (0xC66: a player, or with 0x8000 a thing; 0xFFFF: nothing). */
+f32 func_00191690(const f32 *v);
+
+/* How far pos is from o. */
+f32 func_00634380(DrawObjFull *o, f32 *pos) {
+    f32 d[3];
+
+    d[0] = pos[0] - o->unk38[0];
+    d[1] = pos[1] - o->unk38[1];
+    d[2] = pos[2] - o->unk38[2];
+    return func_00191690(d);
+}
+
 DrawObjFull *func_006350A0(DrawObjFull *o) {
     DrawObjFull *r = NULL;
     u16 h = o->unkC66;

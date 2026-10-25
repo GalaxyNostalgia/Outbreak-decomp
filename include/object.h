@@ -252,7 +252,24 @@ typedef struct DrawObjFull {
     u8 unkDA2[0xDA8 - 0xDA2];
     s8 talk;            /* 0xDA8: (players) wants to ad-lib */
     s8 talkCmd;         /* 0xDA9: which (D_0023AFA8 / D_0023AFB0) */
-    u8 unkDAA[0xE58 - 0xDAA];
+    s16 unkDAA;         /* 0xDAA */
+    s8 others[4];       /* 0xDAC: (players) the other players' characters (-1: none) */
+    s32 talkWait;       /* 0xDB0: frames before it may talk again */
+    s32 unkDB4;         /* 0xDB4: the reply it talks with */
+    u8 unkDB8[0xDBC - 0xDB8];
+    s16 unkDBC;         /* 0xDBC: frames left of ... */
+    s16 unkDBE;         /* 0xDBE */
+    s8 unkDC0;          /* 0xDC0 */
+    s8 unkDC1;          /* 0xDC1 */
+    s16 unkDC2;         /* 0xDC2: who it talks to: a character, or an NPC's model + 1 (-1) */
+    s8 unkDC4;
+    s8 unkDC5;          /* 0xDC5: keep unkDC2 while within 300 */
+    s8 unkDC6;
+    s8 unkDC7;          /* 0xDC7: (an NPC) our player number, else -1 */
+    s32 unkDC8;         /* 0xDC8: it has talked */
+    s32 unkDCC;         /* 0xDCC: frames between its last two talks */
+    s32 unkDD0;         /* 0xDD0: frames since it last talked */
+    u8 unkDD4[0xE58 - 0xDD4];
     f32 unkE58[4][2][9];  /* 0xE58: the eyes' drift (func_005E9600; 3 used of each 9) */
     Ctrl ctrl;          /* 0xF78: (players) the controls */
     s16 unkFA8;         /* 0xFA8: (players) the stick's angle when the camera cut */
