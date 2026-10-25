@@ -5151,6 +5151,18 @@ f32 func_00634380(DrawObjFull *o, f32 *pos) {
     return func_00191690(d);
 }
 
+/* How far pos is from o across the floor (the height left out). */
+f32 func_006343D0(DrawObjFull *o, f32 *pos) {
+    Vec3 d;
+    f32 *p = &d.x;
+
+    p[0] = pos[0] - o->unk38[0];
+    p[1] = pos[1] - o->unk38[1];
+    p[2] = pos[2] - o->unk38[2];
+    d.y = 0.0f;
+    return func_00191690(p);
+}
+
 DrawObjFull *func_006350A0(DrawObjFull *o) {
     DrawObjFull *r = NULL;
     u16 h = o->unkC66;
