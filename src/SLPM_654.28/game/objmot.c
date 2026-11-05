@@ -64,7 +64,7 @@ void *memset(void *p, s32 c, u32 n);
 s32 func_0055B6D0(DrawObjFull *o, MotionSet *ms, s32 motion, u16 layer, f32 start, f32 blend);
 #ifdef NON_MATCHING   /* close: register choices and two operand orders */
 s32 func_0055B6D0(DrawObjFull *o, MotionSet *ms, s32 motion, u16 layer, f32 start, f32 blend) {
-    ObjLayer *l = &((ObjLayer *)o->unk1E4)[layer];
+    ObjLayer *l = &((ObjLayer *)&o->unk1E4)[layer];
     ObjAnim *a = *(ObjAnim **)o->model;
     f32 speed;
     f32 scale;
@@ -170,14 +170,14 @@ u8 func_0055C190(DrawObjFull *o, u16 layer) {
     f32 w;
     f32 inv;
 
-    if (!(((ObjLayer *)o->unk1E4)[layer].flags & 8)) {
+    if (!(((ObjLayer *)&o->unk1E4)[layer].flags & 8)) {
         return 0;
     }
     m = (void **)o->model;
-    if (((ObjLayer *)o->unk1E4)[layer].blendFrames == 0) {
+    if (((ObjLayer *)&o->unk1E4)[layer].blendFrames == 0) {
         return 0;
     }
-    l = &((ObjLayer *)o->unk1E4)[layer];
+    l = &((ObjLayer *)&o->unk1E4)[layer];
     l->blendPos += l->blendStep;
     w = func_001A42E0(l->blendPos, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f);
     inv = 1.0 - w;
