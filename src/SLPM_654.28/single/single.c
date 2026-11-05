@@ -1125,7 +1125,79 @@ typedef struct {
     u8 to;              /* 0x08 */
 } TimeMsg;
 
+void func_00820FD0(s32 to, s32 r, s32 req);
+s32 func_00821C30(s32 player);
+s32 func_00581140(u8 item, u8 who);
+void func_005810A0(u8 item, u8 who);
+void func_005810E0(u8 item, u8 who);
+s32 func_0067E0F0(u8 item, u16 dir);
+void func_0067E290(u8 item);
+s32 func_0067D110(u8 item);
+void func_0067D060(u8 item);
+void func_0067D0C0(u8 item);
+
+/* (Offline, standing in for the server) an item request from player to (func_0064E360's kinds),
+   answered (func_00820FD0: 1 yes, 2 no); with c, ours is only granted when func_00821C30 says. */
 void func_00821D60(FwdMsg *f, s32 to, s32 c);
+#ifdef NON_MATCHING   /* registers differ; the original repeats the switch's range test for the c branch */
+void func_00821D60(FwdMsg *f, s32 to, s32 c) {
+    s32 r;
+    s32 kind;
+    s32 ok;
+    s32 item;
+    s32 req;
+    u8 who;
+
+    kind = f->data[0];
+    item = f->data[4];
+    who = f->data[5];
+    req = f->data[6];
+
+    if (c != 0) {
+        ok = 0;
+        if (who == D_00476DD0[D_0048BF60.unk1D * 0x10E0 + 0x1E2]) {
+            ok = func_00821C30(D_0048BF60.unk1D);
+        }
+    } else {
+        ok = 1;
+    }
+    switch (kind) {
+    case 1:
+        r = 2;
+        if (func_00581140(item, to) == 0 && ok != 0) {
+            func_005810A0(item, to);
+            r = 1;
+        }
+        func_00820FD0(to, r, req);
+        break;
+    case 2:
+        func_005810E0(item, to);
+        break;
+    case 3:
+        r = 2;
+        if (func_0067E0F0(item, f->data[7] << 8) != 0 && ok != 0) {
+            r = 1;
+        }
+        func_00820FD0(to, r, req);
+        break;
+    case 4:
+        func_0067E290(item);
+        func_00820FD0(to, 1, req);
+        break;
+    case 5:
+        r = 2;
+        if (func_0067D110(item) != 0 && ok != 0) {
+            func_0067D060(item);
+            r = 1;
+        }
+        func_00820FD0(to, r, req);
+        break;
+    case 6:
+        func_0067D0C0(item);
+        break;
+    }
+}
+#endif
 void func_00821F40(s32 to);
 /* Takes rooms' scenario flags from a message: (len - 6) / 5 entries of a room and its 4 bytes. */
 void func_008218D0(u8 *data) {
