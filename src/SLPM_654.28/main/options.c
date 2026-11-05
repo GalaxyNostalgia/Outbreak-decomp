@@ -697,7 +697,33 @@ u16 func_001ADEF0(s32 which) {
 
 extern s32 D_0048BFB4[];    /* the music on each stream */
 s32 func_001ACCC0(s32 n, s32 fid, s32 ptid);
-s32 func_001AD570(s32 n, s32 what);
+s32 func_00132430(ADXT adxt, s32 a);
+s32 func_00132A30(ADXT adxt);
+
+/* What stream n is doing: 0 its ADXT status, 1 its volume, 2 / 3 two more of its handle's,
+   4 whether it's in use. */
+s32 func_001AD570(s32 n, s32 what) {
+    s32 r = 0;
+
+    switch (what) {
+    case 0:
+        r = ADXT_GetStat(D_0029B0B8[n]);
+        break;
+    case 1:
+        r = D_0029B060[n].vol;
+        break;
+    case 2:
+        r = func_00132430(D_0029B0B8[n], 0);
+        break;
+    case 3:
+        r = func_00132A30(D_0029B0B8[n]);
+        break;
+    case 4:
+        r = D_0029B060[n].active;
+        break;
+    }
+    return r;
+}
 void func_001AD1E0(s32 n);
 
 s32 func_001B87F0(s32 n, s32 bgm, s32 c);
