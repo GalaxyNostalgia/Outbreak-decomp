@@ -6426,3 +6426,90 @@ s32 func_00619840(DrawObjFull *o) {
     return r;
 }
 #endif
+
+void *func_00543800(void *owner, void *fn);
+void func_005A9680(void);
+void *func_005813A0(u8 slot, s32 owner);
+s16 func_005C1240(void *o);
+void func_00581560(u8 slot);
+
+/* Action 1/0x2F: taking item unkC7F in hand (func_00637510): (0) the motion, the item into the
+   hand (or put away if it's the one held), its effect's frames; (1) until the motion ends, then
+   standing (or action 0x40 if asked). */
+void func_00641190(DrawObjFull *o);
+#ifdef NON_MATCHING   /* first draft (172 vs 182) */
+void func_00641190(DrawObjFull *o) {
+    s16 *e;
+    s32 n;
+
+    o->unk54A |= 0xC;
+    if (func_00635970(o) != 0) {
+        PICKUP_DONE(o);
+        return;
+    }
+    switch (o->act[2]) {
+    case 0:
+        o->act[2]++;
+        o->unk54F = 0x17;
+        o->unkD10[0] = 1;
+        func_00635920(o);
+        o->unkBA8 = 1.0f;
+        func_005A4490(o, 0x2051, 0.0f, 10.0f);
+        func_005A4490(o, 0x2055, 0.0f, 10.0f);
+        if (func_001AF510() == 1 && o->kind != D_0048BF60.unk1D) {
+            break;
+        }
+        if (o->unkC7F == 0) {
+            break;
+        }
+        if (o->unkC7C != 0) {
+            if (o->unkC7C == o->unkC7F) {
+                func_00581560(o->unkC7C);
+                o->unkC7C = 0;
+                o->unkCA8 = 0;
+                break;
+            }
+            func_00581560(o->unkC7C);
+        }
+        o->unkC7C = o->unkC7F;
+        if (o->type == 0) {
+            n = o->kind + 1;
+        } else {
+            n = o->unkBB4 + 5;
+        }
+        D_003967D0[o->unkC7C].owner = n;
+        func_005813A0(o->unkC7C, n);
+        o->unkCA8 = func_005C1240(o);
+        e = func_00543800(o, func_005A9680);
+        if (e != NULL) {
+            if (D_00306590.unkC != 0) {
+                n = o->unkB9B == 2 ? 0x22 : 0x1A;
+                e[6] = n / 2;
+            } else {
+                e[6] = o->unkB9B == 2 ? 0x22 : 0x1A;
+            }
+        }
+        break;
+    case 1:
+        func_0055C030(o, o->unkBA8);
+        if (*(f32 *)&o->unk204[0] < *(f32 *)&o->unk204[4]) {
+            break;
+        }
+        func_005A4490(o, 0x2051, 0.0f, 20.0f);
+        if (o->act[3] == 0x40) {
+            o->act[0] = 1;
+            o->act[1] = 0x40;
+            o->act[2] = 1;
+            o->act[3] = 0;
+            func_00635920(o);
+        } else {
+            o->act[0] = 1;
+            o->act[1] = 0;
+            o->act[2] = 1;
+            o->act[3] = 0;
+            func_00635920(o);
+        }
+        break;
+    }
+}
+#endif
