@@ -412,6 +412,11 @@ void func_001B9E90(void) {
     D_002F8890.wait = 0;
 }
 
+/* Whether the fade is done. */
+s32 func_001B9EB0(void) {
+    return D_002F8890.wait == 0x63;
+}
+
 /* Drawing the fades. */
 
 extern Rect2D D_002F884C;
