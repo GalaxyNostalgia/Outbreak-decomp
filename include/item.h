@@ -20,7 +20,7 @@ typedef struct {
     s16 unk24;          /* 0x24: count */
     u8 unk26[2];
     s16 owner;          /* 0x28: (character + 1) */
-    u8 unk2A;
+    u8 unk2A;           /* 0x2A: reserved by (player + 1), being picked up */
     u8 type;            /* 0x2B: D_00716980's entry (0xFF: none) */
     u8 unk2C;           /* 0x2C */
     u8 unk2D;           /* 0x2D */

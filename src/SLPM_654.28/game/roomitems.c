@@ -1405,3 +1405,39 @@ ItemObj *func_005813A0(u8 i) {
     }
     return e->obj;
 }
+
+/* Player who reserves slot i (being picked up). */
+void func_005810A0(u8 i, u8 who) {
+    ItemSlot *e = &D_003967D0[i];
+
+    if (e->active != 0) {
+        e->unk2A = who + 1;
+    }
+}
+
+/* Player who (0xFF: anyone) lets go of slot i's reservation. */
+void func_005810E0(u8 i, u8 who) {
+    ItemSlot *e = &D_003967D0[i];
+
+    if (e->active != 0) {
+        if (e->unk2A == who + 1) {
+            e->unk2A = 0;
+        }
+        if (who == 0xFF) {
+            e->unk2A = 0;
+        }
+    }
+}
+
+/* Whether slot i is reserved by someone other than who. */
+s32 func_00581140(u8 i, u8 who) {
+    ItemSlot *e = &D_003967D0[i];
+
+    if (e->active == 0) {
+        return 0;
+    }
+    if (e->unk2A == 0) {
+        return 0;
+    }
+    return e->unk2A != who + 1;
+}
