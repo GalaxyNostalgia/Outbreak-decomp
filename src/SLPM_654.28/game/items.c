@@ -127,7 +127,7 @@ s32 func_00585EF0(DrawObjFull *o) {
 }
 
 void func_00561160(void *obj, u16 id);
-s32 func_00584910(u8 i);
+s16 func_00584910(u8 i);
 
 /* Slot e now holds item id: its type, and its thing in the room's look. */
 void func_00584740(ItemSlot *e, s16 id) {
@@ -155,4 +155,20 @@ s32 func_005846A0(u8 i, s16 id) {
         r = 1;
     }
     return r;
+}
+
+/* A full stack of the item in slot i (item 0x3717: 1200, or 600 with option unkC). */
+s16 func_00584910(u8 i) {
+    ItemSlot *e = &D_003967D0[i];
+
+    if (e->active == 0) {
+        return 0;
+    }
+    if (e->type == 0xFF) {
+        return 0;
+    }
+    if (e->unk6 == 0x3717) {
+        return D_00306590.unkC != 0 ? 0x258 : 0x4B0;
+    }
+    return D_00716980[e->type].max;
 }

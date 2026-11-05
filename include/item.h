@@ -33,7 +33,8 @@ typedef struct {
     u32 flags;          /* 0x00 */
     s16 combo;          /* 0x04: its first combination (D_007177A0, s16s) */
     s16 combos;         /* 0x06: how many */
-    u8 unk8[0xC - 8];
+    s16 max;            /* 0x08: a full stack */
+    u8 unkA[2];
     s8 unkC;            /* 0x0C: (D_006EF3A0's column) */
     s8 unkD;            /* 0x0D: (D_007175A0's entry) */
     s8 weapon;          /* 0x0E: the weapon sound bank (-1: none) */

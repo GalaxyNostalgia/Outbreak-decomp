@@ -782,7 +782,7 @@ s32 func_005C1C50(DrawObjFull *o) {
 
     do {
         if (o->unkC84[i] != 0) {
-            n += func_00583EA0(o->unkC84[i], 0x20000) ? 2 : 1;
+            n += func_00583EA0(o->unkC84[i], 0x20000) != 0 ? 2 : 1;
         }
         i++;
     } while (i < 4);
