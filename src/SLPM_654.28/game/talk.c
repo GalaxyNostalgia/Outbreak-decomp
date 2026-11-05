@@ -1250,3 +1250,24 @@ void func_00685CF0(void) {
         }
     }
 }
+
+/* Whether one of the two speaking now (D_007194C0.unkB8, unkB4) is character id (by == 0) or the
+   NPC of model id (+ 1). */
+s32 func_006861F0(s32 by, s32 id) {
+    if (by == 0) {
+        if (D_007194C0.unkB8 != NULL && D_007194C0.unkB8->unkB98 == id) {
+            return 1;
+        }
+        if (D_007194C0.unkB4 != NULL && D_007194C0.unkB4->unkB98 == id) {
+            return 1;
+        }
+    } else {
+        if (D_007194C0.unkB8 != NULL && D_007194C0.unkB8->unkBB4 == id) {
+            return 1;
+        }
+        if (D_007194C0.unkB4 != NULL && D_007194C0.unkB4->unkBB4 == id) {
+            return 1;
+        }
+    }
+    return 0;
+}
