@@ -887,7 +887,7 @@ void func_00541010(DrawObjFull *o) {
     s32 i;
 
     if (D_0048BF60.unk28 != 0) {
-        D_0035FFD0.unk134 = o;
+        D_0035FFD0.things = o;
         for (i = 0, p = (u8 *)o; i < 0x10; i++, p += 0x11A0) {
             memset(p, 0, 0x11A0);
             p[2] = 10;
@@ -908,6 +908,78 @@ void func_005C05B0(void) {
     }
     func_00541010(o);
 }
+
+s32 func_005BCD80(void);
+void func_005903A0(void);
+void func_00681540(void);
+void func_005907A0(void);
+void func_001BA0F0(u32 color);
+void func_0064A670(void);
+void func_005BB250(void);
+void func_005BB2D0(u8 room, u8 a, u8 b);
+void func_005BF950(void);
+void func_001D79A0(void);
+void func_005A74C0(void);
+void func_00546E30(void);
+void func_001D4E80(s32 room, s32 a, s32 b, s32 who);
+void func_001D56B0(u8 i, u16 id);
+void func_001D45B0(void *t, u8 i, u16 id);
+void func_001D4FC0(s32 room, s32 a, s32 b, s32 who);
+void func_0064A6F0(s32 id, s32 a, s32 x, s32 y);
+void func_001D5670(void);
+void func_001D43E0(void);
+void func_001D7260(s32 mode);
+
+/* The message's scene: its room, its things and their sets (1: not ready yet). */
+#ifdef NON_MATCHING   /* the sets loop: the original keeps &sets[i].id and &sets[i].n in their own registers (frame 0x60) */
+s32 func_005BC430(void) {
+    s32 i;
+    u8 *t;
+    s32 j;
+
+    if (D_0035FFD0.kind == 1) {
+        func_005BCEA0(0);
+        return 0;
+    }
+    if (func_005BCD80() != 0) {
+        return 1;
+    }
+    func_005903A0();
+    func_00681540();
+    func_005907A0();
+    func_001BA0F0(0xFF000000);
+    func_0064A670();
+    D_00306590.unk1A = D_0035FFD0.room2[0];
+    D_00306590.unk1C = D_0035FFD0.room2[1];
+    D_00306590.unk1E = D_0035FFD0.room2[2];
+    if (D_0023BB98 == 1) {
+        func_005BB250();
+    }
+    func_005BB2D0(D_0035FFD0.room2[0], D_0035FFD0.room2[1], D_0035FFD0.room2[2]);
+    func_005BF950();
+    func_001D79A0();
+    func_005A74C0();
+    func_00546E30();
+    func_001D4E80(D_00306590.unk1A, D_0035FFD0.a, D_0035FFD0.b, D_0035FFD0.who);
+    for (i = 0, t = D_0035FFD0.things; i < D_0035FFD0.unk18; i++, t += 0x11A0) {
+        func_001D56B0(i, *(u16 *)(t + 0x1180));
+        func_001D45B0(t, i, *(u16 *)(t + 0x1180));
+        for (j = 0; j < 8; j++) {
+            t[8 + j] = 1;
+        }
+    }
+    func_001D4FC0(D_00306590.unk1A, D_0035FFD0.a, D_0035FFD0.b, D_0035FFD0.who);
+    for (i = 0; i < 0x10; i++) {
+        for (j = 0; j < D_0035FFD0.sets[i].n; j++) {
+            func_0064A6F0(D_0035FFD0.sets[i].id, D_0035FFD0.a, D_0035FFD0.sets[i].a[j][0], D_0035FFD0.sets[i].b[j][0]);
+        }
+    }
+    func_001D5670();
+    func_001D43E0();
+    func_001D7260(0);
+    return 0;
+}
+#endif
 
 /* The next queued message comes up: the players it's for (those near its item's owner, or
    all), the room, and its fade. */

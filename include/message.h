@@ -13,6 +13,15 @@ extern EventMsg D_003839B0[16];
 extern s16 D_0023BD78;          /* write position */
 extern s16 D_0023BD7C;          /* read position */
 
+/* A message's set of positions (0x8C bytes). */
+typedef struct {
+    s32 id;             /* 0x00 */
+    s32 n;              /* 0x04 */
+    u16 a[16][2];       /* 0x08 */
+    u16 b[16][2];       /* 0x48 */
+    u8 unk88[4];
+} MsgSet;
+
 /* The message being shown (inside a 0xB10-byte work area). */
 typedef struct {
     u8 unk0[8];
@@ -27,7 +36,8 @@ typedef struct {
     s16 n3;             /* 0x1E: counts[3] */
     s16 unk20;
     s16 unk22;
-    u8 unk24[0x2B - 0x24];
+    u8 unk24[0x28 - 0x24];
+    u8 room2[3];        /* 0x28: the room it plays in */
     u8 room[3];         /* 0x2B: the room it's shown in (Options.unk1A, unk1C, unk1E) */
     s8 unk2E;           /* 0x2E */
     u8 kind;            /* 0x2F */
@@ -46,8 +56,10 @@ typedef struct {
     u8 unkF8[0x12C - 0xF8];
     s32 n;              /* 0x12C: players listed */
     void *objs;         /* 0x130: the message's 8 characters (DrawObjFull, in the work area) */
-    void *unk134;       /* 0x134 */
-    u8 unk138[0xB10 - 0x138];
+    void *things;       /* 0x134: its 16 things (0x11A0 bytes each) */
+    u8 unk138[4];
+    MsgSet sets[16];    /* 0x13C */
+    u8 unkAFC[0xB10 - 0xAFC];
 } MsgWork;
 
 extern MsgWork D_0035FFD0;
