@@ -684,7 +684,9 @@ void func_00835180(DrawObjFull *obj) {
     }
 }
 #endif
-void func_008360B0(DrawObjFull *obj);
+void func_008360B0(DrawObjFull *obj) {
+    func_005C15E0(obj);
+}
 
 /* Request 2: the partner looks over its items (four passes). */
 void func_00834780(DrawObjFull *obj) {
