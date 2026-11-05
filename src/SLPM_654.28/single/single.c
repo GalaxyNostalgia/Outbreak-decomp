@@ -948,7 +948,7 @@ void func_0064C130(u8 *m, s32 from);
 void func_00822090(u8 a, u8 *p);
 void func_0064E590(u8 a, u8 b, u8 c);
 void func_00821FE0(u8 *m, u8 from);
-void func_00821B10(u8 a, u8 b, s32 c);
+void func_00821B10(s32 player, s32 room, s32 gone);
 void func_0064FCB0(u8 n, u8 *m, s32 a);
 void func_00609590(s32 n, u8 *m, s32 a);
 void func_006531C0(u8 *m, s32 a);
@@ -1291,3 +1291,55 @@ void func_00821030(FwdMsg *f, s32 to) {
         break;
     }
 }
+
+/* (Offline) player 0 leaves room (gone 0: tells the others its room; else it leaves room's
+   list D_0083B960, when unk5). */
+#ifdef NON_MATCHING   /* the original adds 0x1E2 to the index before the base; ours folds it into the load; loop registers differ */
+void func_00821B10(s32 player, s32 room, s32 gone) {
+    struct {
+        u8 type;
+        u8 len;
+        u8 from;
+        u8 unk3;
+        u8 unk4;
+        u8 who;
+        u8 room;
+        u8 unk7;
+        u8 pad[8];
+    } m;
+    s32 i;
+    u8 *e;
+    s32 j;
+    u16 r;
+
+    if (player != 0) {
+        return;
+    }
+    if (player < 4) {
+    if (gone == 0) {
+        r = *(u16 *)(D_00476DD0 + (player * 0x10E0 + 0x1E2));
+        if (r < 0x80 && player == D_0048BF60.unk1D) {
+            m.len = 8;
+            m.room = r;
+            m.type = 4;
+            m.unk4 = 1;
+            m.from = D_0048BF60.unk1D;
+            m.who = D_0048BF60.unk1D;
+            m.unk3 = 4;
+            m.unk7 = 0;
+            func_00820940(7, (Msg *)&m, 0, 4);
+        }
+    } else if (D_0084E040.unk5 != 0) {
+        for (i = 0, e = D_0083B960[room]; i < 4; i++, e++) {
+            if (*e == (u8)player) {
+                u8 *q = e;
+                for (j = i; j < 3; j++, q++) {
+                    q[0] = q[1];
+                }
+                *q = 0xFF;
+            }
+        }
+    }
+    }
+}
+#endif
