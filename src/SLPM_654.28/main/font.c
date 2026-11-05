@@ -288,8 +288,41 @@ typedef struct {
 extern TextLines D_002F7440;
 void func_001B3400(void);
 
+/* 1 if a line of size at y doesn't cross one above prio and a line is free. */
 s32 func_001B3490(s32 prio, s32 x, s32 y, s32 size);
-s32 func_001B3550(s32 x, s32 y, u8 *text);
+#ifdef NON_MATCHING   /* the first loop's base isn't folded into its relocation (D_002F7450); the second loop's registers swap */
+s32 func_001B3490(s32 prio, s32 x, s32 y, s32 size) {
+    TextLines *t = &D_002F7440;
+    TextLine *l;
+    s32 i;
+    s32 bottom = y + size;
+
+    for (i = 0, l = D_002F7440.line; i < 32; i++, l++) {
+        if (l->used != 0 && l->prio < prio && l->y < bottom && y < l->y + l->size) {
+            return 0;
+        }
+    }
+    for (i = 0, l = t->line; i < 32; i++, l++) {
+        if (l->used == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+#endif
+
+/* 0 if text is shown at y already. */
+s32 func_001B3550(s32 x, s32 y, u8 *text) {
+    TextLine *l = D_002F7440.line;
+    s32 i;
+
+    for (i = 0; i < 32; i++, l++) {
+        if (l->used != 0 && l->y == y && strcmp((char *)l->text, (char *)text) == 0) {
+            return 0;
+        }
+    }
+    return 1;
+}
 
 /* Puts up a line of text (fade 0: at once, else fading in) if nothing above prio is in its way;
    its alpha, or NULL. */
