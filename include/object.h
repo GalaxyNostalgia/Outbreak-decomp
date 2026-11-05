@@ -300,7 +300,7 @@ typedef struct DrawObjFull {
     u16 unkFFA;         /* 0xFFA: unkFF8 before */
     u8 unkFFC[4];       /* 0xFFC: (partners) the thinking step's state */
     u16 unk1000[4];     /* 0x1000: (partners) its timers */
-    s8 unk1008[4];      /* 0x1008 */
+    u8 unk1008[4];      /* 0x1008: (partners) the thinking step's sub-step */
     s8 unk100C;         /* 0x100C: (partners) the place they wait at */
     s8 unk100D;         /* 0x100D: (partners) the place it heads for */
     s8 unk100E;         /* 0x100E: (partners) the place it goes to next */

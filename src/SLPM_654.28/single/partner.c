@@ -1492,6 +1492,30 @@ s16 func_00346C50(const f32 *a, const f32 *b);
 /* The partner's controls for this frame by how it should turn (func_0082B870's: 0 walk the
    stick toward unk1038, 1/2 press, 3 turn, 4 turn and step; -1 nothing). */
 void func_0082BB30(DrawObjFull *obj, s32 how);
+s32 func_00637810(DrawObjFull *obj, u8 item);
+
+/* Thinking step: (0) until func_00637810 says no for item unk1090 (then step 0), and on to 1 at
+   motion 9; (1) step 0 once out of motion 9; each frame func_0082BB30. */
+void func_0082B1C0(DrawObjFull *obj) {
+    switch (obj->unk1008[0]) {
+    case 0:
+        if (func_00637810(obj, obj->unk1090) != 0) {
+            func_0082A690(obj, 0);
+            return;
+        }
+        if (obj->unk54F == 9) {
+            obj->unk1008[0]++;
+        }
+        break;
+    case 1:
+        if (obj->unk54F != 9) {
+            func_0082A690(obj, 0);
+        }
+        break;
+    }
+    func_0082BB30(obj, -1);
+}
+
 #ifdef NON_MATCHING   /* the original's switch uses addi (ours addiu); load order of the heading difference */
 void func_0082BB30(DrawObjFull *obj, s32 how) {
     u16 d;
