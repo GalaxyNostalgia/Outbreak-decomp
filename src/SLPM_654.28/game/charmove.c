@@ -7058,3 +7058,110 @@ s32 func_0063C1B0(DrawObjFull *o, u8 how) {
     return 0;
 }
 #endif
+
+void func_00634420(f32 *pos, const f32 *from, const f32 *to, f32 t, f32 n);
+void func_00634580(s16 *h, const s16 *from, const s16 *to, f32 t, f32 n);
+
+#ifdef NON_MATCHING   /* first draft */
+/* (func_0063C1B0's how 1, or when 0xBA0 & 0x80) Getting to a door's spot by sliding there: near
+   enough (40) in 8 / 16 frames with the door's motion (0xF0), else walking the start motion's
+   frames (0xF1); 1 once there. */
+s32 func_0063BCB0(DrawObjFull *o) {
+    f32 d[3];
+    CmMotRef ref;
+    CmMotInfo info;
+    f32 n;
+    s16 m;
+    u32 w;
+
+    switch (o->act[2]) {
+    case 0:
+        o->unkC40[0] = o->unk38[0];
+        o->unkC40[1] = o->unk38[1];
+        o->unkC40[2] = o->unk38[2];
+        FIELD(o, s16, 0xC4E) = o->unk92;
+        if (o->unkBA0 & 0x80) {
+            func_005A4490(o, 0x2003, 0.0f, -16.0f);
+            FIELD(o, s16, 0x12) = D_00306590.unkC != 0 ? 8 : 16;
+            o->act[2] = 0xF0;
+            break;
+        }
+        switch (o->unkAB9) {
+        case 0x13:
+        case 0x28:
+        case 0x22:
+        case 0xA:
+        case 6:
+        case 4:
+        case 2:
+            m = 0x201C;
+            if (!((u16)((s16)func_00346C50(o->unk38, o->unkC34) - o->unkC4C) < 0x8001)) {
+                m = 0x201B;
+            }
+            break;
+        default:
+            m = 0x201B;
+            if ((u16)((s16)func_00346C50(o->unk38, o->unkC34) - o->unkC4C) < 0x8000) {
+                m = 0x201C;
+            }
+            break;
+        }
+        d[0] = o->unkC34[0] - o->unk38[0];
+        d[1] = o->unkC34[1] - o->unk38[1];
+        d[2] = o->unkC34[2] - o->unk38[2];
+        if (func_00191A70(func_00191690(d)) <= 40.0f) {
+            func_005A4490(o, D_006E78F0[o->unkAB9].motion, 0.0f, -16.0f);
+            FIELD(o, s16, 0x12) = D_00306590.unkC != 0 ? 8 : 16;
+            o->act[2] = 0xF0;
+            break;
+        }
+        func_005A4490(o, m, 0.0f, 2.0f);
+        w = *(u32 *)&D_006E78F0[o->unkAB9];
+        if (w & 0xF000) {
+            ref = *func_005A3E60(o, w & 0xFFFF);
+            func_005A3D10(o, &info, &ref);
+            func_0055BB70(o, info.frame1, 1, 0.0f, -1.0f * FIELD(o, f32, 0x1E8));
+            FIELD(o, s32, 0x388) = 0;
+        } else if (w & 0xFFF) {
+            func_0055BB70(o, w & 0xFFF, 1, 0.0f, -1.0f * FIELD(o, f32, 0x1E8));
+            FIELD(o, s32, 0x388) = 0;
+        }
+        if (D_00306590.unkC != 0) {
+            FIELD(o, s16, 0x12) = FIELD(o, f32, 0x1E8) / 2.0f;
+        } else {
+            FIELD(o, s16, 0x12) = FIELD(o, f32, 0x1E8);
+        }
+        o->act[2] = 0xF1;
+        break;
+    case 0xF0:
+    case 0xF1:
+        if (FIELD(o, s16, 0x12) != 0) {
+            if (o->act[2] == 0xF1) {
+                if (D_00306590.unkC != 0) {
+                    n = FIELD(o, f32, 0x1E8) / 2.0f;
+                } else {
+                    n = FIELD(o, f32, 0x1E8);
+                }
+            } else {
+                n = D_00306590.unkC != 0 ? 8 : 16;
+            }
+            FIELD(o, s16, 0x12)--;
+            func_00634420(o->unk38, o->unkC40, o->unkC34, n - FIELD(o, s16, 0x12), n);
+            func_00634580(&o->unk92, &FIELD(o, s16, 0xC4E), &o->unkC4C, n - FIELD(o, s16, 0x12), n);
+            if (FIELD(o, s16, 0x12) == 0) {
+                o->unk38[0] = o->unkC34[0];
+                o->unk38[1] = o->unkC34[1];
+                o->unk38[2] = o->unkC34[2];
+                o->unk92 = o->unkC4C;
+                return 1;
+            }
+        }
+        func_0055C030(o, 1.0f);
+        o->unk4E4[0] = 0;
+        o->unk4E4[1] = 0;
+        o->unk4E4[2] = 0;
+        break;
+    }
+    return 0;
+}
+#endif
