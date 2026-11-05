@@ -125,3 +125,34 @@ s32 func_00585EF0(DrawObjFull *o) {
     }
     return r;
 }
+
+void func_00561160(void *obj, u16 id);
+s32 func_00584910(u8 i);
+
+/* Slot e now holds item id: its type, and its thing in the room's look. */
+void func_00584740(ItemSlot *e, s16 id) {
+    e->unk6 = id;
+    e->type = func_00583D60(id);
+    if (e->obj != NULL) {
+        func_00561160(e->obj, id);
+    }
+}
+
+/* Turns the carried item in slot i into item id (with its count, func_00584910); 1 if done. */
+s32 func_005846A0(u8 i, s16 id) {
+    ItemSlot *e = &D_003967D0[i];
+    s32 r = 0;
+
+    if (e->active == 0) {
+        return 0;
+    }
+    if (e->unk6 == id) {
+        return 0;
+    }
+    if ((u16)e->owner != 0) {
+        func_00584740(e, id);
+        e->unk24 = func_00584910(i);
+        r = 1;
+    }
+    return r;
+}
