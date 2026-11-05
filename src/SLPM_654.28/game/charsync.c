@@ -982,6 +982,18 @@ s32 func_005C0F30(DrawObjFull *o, u8 what) {
     return 0;
 }
 
+s8 func_00584800(u8 i);
+
+/* The weapon kind of the item in o's hand (0 none). */
+s16 func_005C1240(DrawObjFull *o) {
+    s16 r = 0;
+
+    if (o->unkC7C != 0) {
+        r = func_00584800(o->unkC7C);
+    }
+    return r;
+}
+
 /* Where o keeps item slot: 0-3 its four, 0x80 + n the extra ones; 0xFF nowhere. */
 u8 func_005C1570(DrawObjFull *o, u8 slot) {
     u32 i;
