@@ -78,3 +78,10 @@ void func_00601FE0(s32 *f, s32 x) {
 NavNode *func_00602220(void) {
     return D_00394F20;
 }
+
+s8 func_006022B0(const f32 *pos, s32 a, s32 b, s32 c);
+
+/* The node nearest pos. */
+s8 func_00602290(const f32 *pos) {
+    return func_006022B0(pos, -1, 0, 0);
+}
