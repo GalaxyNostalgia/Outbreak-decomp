@@ -364,6 +364,41 @@ extern u8 D_0023A8F0[];
 extern u8 *D_006ED840[];        /* the switch animations */
 extern u8 D_006ED780[][2];
 void *func_00551820(u8 id);
+extern u16 D_0048AFB0[][6];
+extern u16 D_0048AFB6[][6];      /* (column 3) */
+extern u8 D_004747C0[][0x60];
+
+/* The state of the room's switch id: 1 / 2 / 3 by its flags (columns 2, 0, 3 of the room's row);
+   else by its kind (4-6), 0 if the room has no such switch. */
+s32 func_00551C20(s32 id);
+#ifdef NON_MATCHING   /* the three ands take their operands the other way round */
+s32 func_00551C20(s32 id) {
+    s32 bit = 1 << (u16)id;
+    u16 room = D_00306590.unk1C;
+
+    if (D_0048AFB4[room][0] & bit) {
+        return 1;
+    }
+    if (D_0048AFB0[room][0] & bit) {
+        return 2;
+    }
+    if (D_0048AFB6[room][0] & bit) {
+        return 3;
+    }
+    if (func_00551820(id) == NULL) {
+        return 0;
+    }
+    switch (D_004747C0[(u16)id][1]) {
+    case 0:
+        return 4;
+    case 1:
+        return 5;
+    case 2:
+        return 6;
+    }
+    return 0;
+}
+#endif
 void func_00682CC0(RoomSwitch *e, u8 *anim);
 
 /* Starts switch n (when the room has it) as its zone says. */
