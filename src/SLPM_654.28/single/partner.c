@@ -1101,6 +1101,36 @@ s32 func_00824B10(DrawObjFull *obj) {
     }
     return 0;
 }
+
+/* The same with func_0082A690 5. */
+s32 func_00824B90(DrawObjFull *obj) {
+    if (obj->unkFFC[0] == 0) {
+        obj->unkFFC[0]++;
+        func_0082A690(obj, 5);
+    }
+    if (obj->unkFF8 == 0) {
+        if (obj->unk1096 != 0 && func_00823780(obj) != 0) {
+            return 1;
+        }
+        func_00823340(obj, 0);
+    }
+    return 0;
+}
+
+/* The same with func_0082A690 6. */
+s32 func_00824C10(DrawObjFull *obj) {
+    if (obj->unkFFC[0] == 0) {
+        obj->unkFFC[0]++;
+        func_0082A690(obj, 6);
+    }
+    if (obj->unkFF8 == 0) {
+        if (obj->unk1096 != 0 && func_00823780(obj) != 0) {
+            return 1;
+        }
+        func_00823340(obj, 0);
+    }
+    return 0;
+}
 s32 func_008270C0(f32 r, f32 *pos, f32 *to);
 extern u8 D_0048AEB0[];
 
