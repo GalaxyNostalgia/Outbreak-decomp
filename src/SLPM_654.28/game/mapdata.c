@@ -1186,6 +1186,21 @@ void func_006ABBA0(void) {
 extern char D_0070D868[];   /* "%02d_%02d_%d" */
 extern char D_0070D878[];   /* "%s%s.adx" */
 extern char D_0070D888[];   /* "demo\\" */
+s32 strcmp(const char *a, const char *b);
+
+/* Per room, its demo streams by key. */
+typedef struct {
+    char *key;
+    char *name;
+} DemoName;
+
+typedef struct {
+    s32 room;           /* negative ends it */
+    DemoName *names;    /* NULL key ends it */
+} DemoRoom;
+
+extern DemoRoom D_006FE340[];
+
 char *func_006A4E40(char *key);
 void func_001ADA60(s32 n, s32 byId, s32 file, s32 ptid);
 s32 sprintf(char *dst, const char *fmt, ...);
@@ -1200,4 +1215,31 @@ void func_006A4D10(void) {
         sprintf(file, D_0070D878, D_0070D888, name);
         func_001ADA60(1, 0, (s32)file, 0);
     }
+}
+
+/* The demo stream for key in this room (NULL: none). */
+char *func_006A4E40(char *key) {
+    DemoRoom *r;
+    DemoName *n;
+    u16 room;
+
+    room = D_00306590.unk1A;
+    if (room == 0) {
+        return NULL;
+    }
+    for (r = D_006FE340, n = NULL; r->room >= 0; r++) {
+        if (r->room == (room & 0xFFFF)) {
+            n = r->names;
+            break;
+        }
+    }
+    if (n == NULL) {
+        return NULL;
+    }
+    for (; n->key != NULL; n++) {
+        if (strcmp(n->key, key) == 0) {
+            return n->name;
+        }
+    }
+    return NULL;
 }
