@@ -1267,3 +1267,15 @@ void func_006531C0(NpcMsg *msg) {
         }
     }
 }
+
+/* Player's marks lose their owner (0xFF) when it leaves. */
+void func_0064FDD0(u8 player) {
+    Mark *m;
+    s32 i;
+
+    for (m = D_0070F9F8, i = 0; i < 0x40; i++, m++) {
+        if (m->used == 1 && m->unk3 == player + 1) {
+            m->unk3 = 0xFF;
+        }
+    }
+}
