@@ -100,7 +100,7 @@ typedef struct {
     u8 state;           /* 0x000: 0 idle, 1 next request, 2 reading, 3-5 sending */
     u8 count;           /* 0x001: requests queued */
     u8 head;            /* 0x002 */
-    u8 pad3;
+    u8 tail;            /* 0x003: where the next request goes */
     s32 cur;            /* 0x004: request being loaded */
     u8 *buffer;         /* 0x008 */
     u8 slot[8];         /* 0x00C: each request's bank slot */
@@ -114,6 +114,39 @@ typedef struct {
 
 extern SeBankLoader D_00295B40;
 extern char D_00231AF8[];   /* "%s.snd" */
+
+extern u8 D_003065D5[];     /* GS memory for movies: 2 a movie's */
+
+/* Queues loading sound bank name into slot (-1 if it can't now). */
+s32 func_001AC8B0(char *name, s32 slot) {
+    SeBankLoader *q;
+    u8 next;
+
+    if (name == NULL) {
+        return -1;
+    }
+    if (D_003065D5[0] == 2) {
+        return -1;
+    }
+    q = &D_00295B40;
+    if (D_00295B40.count >= 8) {
+        return -1;
+    }
+    next = q->tail + 1;
+    if (next >= 8) {
+        next = 0;
+    }
+    q->result[q->tail] = 0;
+    q->slot[q->tail] = slot;
+    memcpy(q->name[q->tail], name, 0x10);
+    q->name[q->tail][15] = 0;
+    q->tail = next;
+    q->count++;
+    if (q->state == 0) {
+        q->state = 1;
+    }
+    return 0;
+}
 
 s32 func_001ACA30(SeBankLoader *q);
 #ifdef NON_MATCHING   /* first draft */
