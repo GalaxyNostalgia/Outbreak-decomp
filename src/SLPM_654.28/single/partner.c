@@ -705,10 +705,60 @@ typedef struct {
 } RangeBits;
 
 extern PartnerWeapon D_006E5940[];
+s8 func_00584800(u8 slot);
 extern RangeBits D_0083A290;    /* per rounds left (0-3): bit character * 4 + range */
 extern s16 D_0083A1F0[];         /* per character: the range to keep from its enemy */
 extern s8 D_0023B980[8];        /* per character: rounds below which to reload with the enemy near */
-u8 func_00836490(DrawObjFull *obj, u8 slot);
+/* Ammunition for the weapon in slot w when it isn't full: the fullest other weapon of its kind
+   (func_00583880 12) with more in it, else the fullest box that loads it (1 or 0x16); 0 none. */
+u8 func_00836490(DrawObjFull *obj, u8 w);
+#ifdef NON_MATCHING   /* registers differ (the two best slots, the slot pointer/entry) */
+u8 func_00836490(DrawObjFull *obj, u8 w) {
+    u8 slots[8];
+    s32 n;
+    s32 i;
+    s16 have;
+    s16 boxes = 0;
+    s16 most = 0;
+    u8 box = 0;
+    u8 gun = 0;
+    s8 k;
+
+    k = func_00584800(w);
+    if (k == 0 || !(D_006E5940[k].flags & 0x10)) {
+        return 0;
+    }
+    have = D_003967D0[w].unk24;
+    if (!(have < (s16)func_00584910(w))) {
+        return 0;
+    }
+    n = func_00836BD0(obj, slots);
+    for (i = 0; i < n; i++) {
+        u8 *p = &slots[i];
+        if (*p != 0 && *p != w) {
+            ItemSlot *e = &D_003967D0[*p];
+            if (e != NULL && e->active != 0) {
+                s16 c = func_00583880(w, *p);
+                if (c == 12 && have < e->unk24 && most < e->unk24) {
+                    gun = *p;
+                    most = e->unk24;
+                } else if (c == 1 || c == 0x16) {
+                    if (boxes < e->unk24) {
+                        box = *p;
+                        boxes = e->unk24;
+                    }
+                }
+            }
+        }
+    }
+    if (gun == 0) {
+        if (box != 0) {
+            gun = box;
+        }
+    }
+    return gun;
+}
+#endif
 u8 func_00836150(DrawObjFull *obj, u8 slot);
 
 /* With its enemy out of D_0083A1F0's range: the best (func_00836150) of the partner's other
@@ -765,7 +815,6 @@ s32 func_008356E0(DrawObjFull *obj, u8 *item) {
 #endif
 
 s16 func_008363A0(DrawObjFull *obj, u8 slot);
-s8 func_00584800(u8 slot);
 
 /* The weapon the partner should hold (the best func_00836150 ranks of the weapons it has, not
    0x135 or 0x20) into *item: 1 to change to it, 2 an empty one it keeps in hand at the range of its
