@@ -2458,3 +2458,25 @@ s32 func_0065EB20(u32 *args) {
     }
     return 0;
 }
+
+/* Script op: the doors' zones (kind 5) of switch args[0] are set off (func_00593FA0). */
+s32 func_0065CAC0(u32 *args) {
+    s32 id = args[0];
+    Zone *z;
+
+    if (D_0023BD88 == 0x80) {
+        return 0;
+    }
+    z = D_0023BD90;
+    while (z != NULL) {
+        if (z->kind == 5) {
+            if (z->u.id == id) {
+                func_00593FA0(z);
+            }
+            z = z->next;
+        } else {
+            z = z->next;
+        }
+    }
+    return 0;
+}
