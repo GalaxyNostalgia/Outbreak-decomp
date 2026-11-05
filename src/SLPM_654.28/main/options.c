@@ -469,6 +469,24 @@ void func_001AF000(s32 to, void *msg, s32 kind, s32 a3) {
     }
 }
 
+void func_00821B10(s32 player, s32 a, s32 b);  /* SINGLE.BIN */
+void func_008212F0(s32 player, s32 a, s32 b);  /* NETAQ.BIN */
+
+/* Player leaves the room (the others are told). */
+void func_001AF240(s32 player) {
+    switch (func_001AF500()) {
+    case 0:
+        func_00821B10(player, 0, 0);
+        break;
+    case 1:
+        func_008212F0(player, 0, 0);
+        break;
+    case 2:
+    case 3:
+        break;
+    }
+}
+
 /* The session is up (always, outside the network modes). */
 s32 func_001AF0A0(void) {
     switch (func_001AF500()) {
