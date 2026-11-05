@@ -172,3 +172,66 @@ s16 func_00584910(u8 i) {
     }
     return D_00716980[e->type].max;
 }
+
+s32 func_001AF540(DrawObjFull *o);
+void func_0034B7D0(s32 a, s32 b, s32 c);
+
+#ifdef NON_MATCHING   /* the original's jump table is indexed with addi (see CLAUDE.md) */
+/* After combining (kind, giving item arg), the file notes it unlocks for o's character
+   (func_0034B7D0): character 3's (kinds 15/16) and 4's (17-19), anyone's 0x19. */
+void func_005861E0(s16 kind, s16 arg, s16 x, DrawObjFull *o) {
+    u8 c;
+
+    if (func_001AF540(o) == 0) {
+        return;
+    }
+    c = o->unkB98;
+    if (c == 3 && (kind == 15 || kind == 16)) {
+        switch (arg) {
+        case 0x136:
+            func_0034B7D0(0x13, (u16)x, 0);
+            return;
+        case 0x13A:
+            func_0034B7D0(0x14, (u16)x, 0);
+            return;
+        case 0x137:
+            func_0034B7D0(0x15, (u16)x, 0);
+            return;
+        case 0x13B:
+            func_0034B7D0(0x16, (u16)x, 0);
+            return;
+        case 0x13C:
+            func_0034B7D0(0x17, (u16)x, 0);
+            return;
+        case 0x13D:
+            func_0034B7D0(0x18, (u16)x, 0);
+            return;
+        }
+        return;
+    }
+    if (c == 4 && ((u32)(kind - 0x11) < 2 || kind == 0x13)) {
+        switch (arg) {
+        case 0x71:
+            func_0034B7D0(0x1A, 0, 0);
+            return;
+        case 0x1D:
+            func_0034B7D0(0x1B, 0, 0);
+            return;
+        case 0x73:
+            func_0034B7D0(0x1C, 0, 0);
+            return;
+        case 0:
+        case 1:
+            func_0034B7D0(0x1D, 0, 0);
+            return;
+        case 0xB:
+            func_0034B7D0(0x1E, 0, 0);
+            return;
+        }
+        return;
+    }
+    if ((kind == 9 || kind == 10) && arg == 0x72) {
+        func_0034B7D0(0x19, 0, 0);
+    }
+}
+#endif
