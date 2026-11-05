@@ -314,7 +314,7 @@ void func_001AD470(void);
 void func_0065A960(void);
 s32 func_001B6980(s32 slot);
 void func_005D2920(s16 a);
-void func_005BF6E0(s16 a);
+void func_005BF6E0();           /* (s16, unused: one call passes nothing) */
 void func_005BDC20(void);
 void func_00349B40(void);
 void func_001B3960(void);
@@ -879,7 +879,6 @@ void func_005BC690(void);
 void func_005C05B0(void);
 void func_00341B50(void);
 void func_001BA0B0(s32 a, s32 b);
-void func_005BF6E0(s16 a);
 
 /* The message's 16 extra things (0x11A0 bytes each, type 10), cleared, when it has its characters. */
 void func_00541010(DrawObjFull *o) {
@@ -980,6 +979,73 @@ s32 func_005BC430(void) {
     return 0;
 }
 #endif
+
+typedef struct {
+    s8 step;
+    s8 sub;
+    s8 sub2;
+    s8 sub3;
+} MsgSteps;
+extern MsgSteps *D_0023BE7C;    /* the message's steps (D_0035FFD0) */
+void func_005BD690(MsgSteps *m);
+void func_005BC7D0(void);
+
+/* While changing rooms: the queued messages play (1 once the queue is empty). */
+s32 func_005BDA70(void) {
+    s32 r;
+
+    D_0023BE7C = (MsgSteps *)&D_0035FFD0;
+    r = 0;
+    switch (D_0023BE7C->step) {
+    case 0:
+        D_0023BE7C->step++;
+        break;
+    case 1:
+        func_005BD690(D_0023BE7C);
+        break;
+    case 2:
+        if (D_0023BD7C == D_0023BD78) {
+            D_0023BE7C->step = 0;
+            r = 1;
+            break;
+        }
+        func_001B9BA0(1, 0xFF000000);
+        func_001AE8E0(0);
+        D_0023BE7C->step++;
+        D_0023BE7C->sub = 0;
+        D_0023BE7C->sub2 = 0;
+        D_0023BE7C->sub3 = 0;
+        break;
+    case 3:
+        if (func_001B9EB0() == 0) {
+            break;
+        }
+        func_001AD420(1);
+        func_001AD420(2);
+        func_005BF6E0();
+        if (D_0035FFD0.item == 0) {
+            D_0035FFD0.owner = 0;
+        } else {
+            D_0035FFD0.owner = D_0048BBE0[D_0035FFD0.item];
+        }
+        memset(D_0035FFD0.unk138, 0, 0x9D8);
+        func_005BC7D0();
+        func_005BAD50();
+        if (func_005BC430() != 0) {
+            D_0048BF60.unk28 = 0;
+            D_0048BF60.unkCA = 0;
+        } else {
+            D_0048BF60.unk28 = 1;
+        }
+        D_0023BE7C->step = 1;
+        D_0023BE7C->sub = 0;
+        D_0023BE7C->sub2 = 0;
+        D_0023BE7C->sub3 = 0;
+        func_001B2C90();
+        break;
+    }
+    return r;
+}
 
 /* The next queued message comes up: the players it's for (those near its item's owner, or
    all), the room, and its fade. */
