@@ -1535,6 +1535,88 @@ void func_0082A830(DrawObjFull *obj) {
 
 
 Zone *func_0082A030(DrawObjFull *obj, s32 n);
+s32 func_00551C20(s32 id);
+s32 func_0082B870(DrawObjFull *obj, s32 sw);
+void func_0082BB30(DrawObjFull *obj, s32 how);
+
+/* Thinking step: going through the zone obj->unk1054 >> 8 names (a door or the like): (0, 1)
+   until func_0082B870 gets it there, (2) by what func_00551C20 says of it (2 done, 3-5 ..., 1 / 6
+   turn to it), into motion 10 or the 0x20000 state, (3) until it's through (or back to 2). */
+void func_0082AB20(DrawObjFull *obj) {
+    s32 r = -1;
+    u16 dir;
+    Zone *z;
+    s32 k;
+    s32 id;
+
+    z = func_0082A030(obj, (obj->unk1054 >> 8) & 0xFF);
+    if (z == NULL) {
+        return;
+    }
+    if (z->kind == 2) {
+        id = z->u.id;
+        dir = z->unk4C;
+    } else {
+        id = z->u.id;
+        dir = *(s32 *)&z->unk56[2] - 0x8000;
+    }
+    k = func_00551C20(id & 0xFFFF);
+    switch (obj->unk1008[0]) {
+    case 0:
+        obj->unk1008[0]++;
+        obj->unk103A = 1;
+        /* fall through */
+    case 1:
+        r = func_0082B870(obj, (obj->unk1054 >> 8) & 0xFF);
+        if (r == 0) {
+            break;
+        }
+        obj->unk1066 = obj->unk100C;
+        obj->unk1008[0]++;
+        /* fall through */
+    case 2:
+        r = func_0082B870(obj, (obj->unk1054 >> 8) & 0xFF);
+        switch (k) {
+        case 2:
+            func_0082A690(obj, 0);
+            return;
+        case 3:
+        case 4:
+        case 5:
+            obj->unkFF2[1] = 1;
+            break;
+        case 1:
+        case 6:
+            obj->unk1038 = dir;
+            r = 0;
+            break;
+        }
+        if ((u8)obj->unk1054 == 3) {
+            if (obj->unk1066 == obj->unk100C) {
+                break;
+            }
+            if (obj->unk54F != 10 && !(obj->unkBA4 & 0x20000)) {
+                break;
+            }
+        } else if (obj->unk54F != 10 && !(obj->unkBA4 & 0x20000)) {
+            break;
+        }
+        obj->unk103A = 0;
+        obj->unk1008[0]++;
+        /* fall through */
+    case 3:
+        if ((u8)obj->unk1054 == 3) {
+            if (obj->unk105A == 1) {
+                func_0082A690(obj, 0);
+                return;
+            }
+        } else if (!(obj->unkBA4 & 0x10000)) {
+            obj->unk1008[0] = 2;
+        }
+        break;
+    }
+    func_0082BB30(obj, r);
+}
 s32 func_00829FA0(DrawObjFull *obj, Zone **zones, s32 n, s32 sw);
 
 s32 func_005494C0(const f32 *from, const f32 *to, f32 *hit, f32 *normal, s32 mask, s32 b,

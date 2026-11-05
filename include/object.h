@@ -330,7 +330,7 @@ typedef struct DrawObjFull {
     s32 unk1060;        /* 0x1060: (partners) frames left */
     u8 unk1064;         /* 0x1064 */
     s8 unk1065;         /* 0x1065: (partners) the place it was at when it last looked for a way */
-    u8 unk1066;
+    s8 unk1066;         /* 0x1066: (partners) unk100C when it set out */
     s8 mode;            /* 0x1067: its D_00838860 entry */
     u8 unk1068[4];
     u8 unk106C;         /* 0x106C: (partners) how near the nearest dangerous enemy is (0-2, 3 none) */
