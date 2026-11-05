@@ -881,6 +881,22 @@ void func_00341B50(void);
 void func_001BA0B0(s32 a, s32 b);
 void func_005BF6E0(s16 a);
 
+void func_00541010(DrawObjFull *o);
+
+/* The message's work memory and its 8 characters, cleared. */
+void func_005C05B0(void) {
+    s32 i;
+    DrawObjFull *o;
+
+    memset((void *)(D_00306590.unk4C + 0x2FF000), 0, 0x20000);
+    D_0035FFD0.objs = (void *)(D_00306590.unk4C + 0x31F000);
+    for (i = 0, o = D_0035FFD0.objs; i < 8; i++, o++) {
+        memset(o, 0, sizeof(DrawObjFull));
+        o->kind = i;
+    }
+    func_00541010(o);
+}
+
 /* The next queued message comes up: the players it's for (those near its item's owner, or
    all), the room, and its fade. */
 #ifdef NON_MATCHING   /* regalloc in the player loop (11 differ) */

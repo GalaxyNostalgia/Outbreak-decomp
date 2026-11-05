@@ -45,7 +45,9 @@ typedef struct {
     u8 chr[8];          /* 0xF0: the listed players' characters */
     u8 unkF8[0x12C - 0xF8];
     s32 n;              /* 0x12C: players listed */
-    u8 unk130[0xB10 - 0x130];
+    void *objs;         /* 0x130: the message's 8 characters (DrawObjFull, in the work area) */
+    void *unk134;       /* 0x134 */
+    u8 unk138[0xB10 - 0x138];
 } MsgWork;
 
 extern MsgWork D_0035FFD0;
