@@ -288,6 +288,31 @@ typedef struct {
 extern TextLines D_002F7440;
 void func_001B3400(void);
 
+u8 *func_001B35E0(s32 prio, s32 x, s32 y, s32 timer, s32 size, u8 *text, s32 fade);
+
+/* Shows text at x, y for timer frames (prio 1, no fade) at alpha. */
+void func_001B37E0(s32 x, s32 y, s32 timer, s32 size, u8 *text, u8 alpha) {
+    u8 *a = func_001B35E0(1, x, y, timer, size, text, 0);
+
+    if (a != NULL) {
+        *a = alpha;
+    }
+}
+
+/* Takes away the lines showing text t. */
+void func_001B38B0(u8 *t) {
+    TextLine *l = D_002F7440.line;
+    s32 i = 0;
+
+    do {
+        if (l->used != 0 && strcmp((char *)l->text, (char *)t) == 0) {
+            l->used = 0;
+        }
+        i++;
+        l++;
+    } while (i < 32);
+}
+
 /* Clears every line. */
 void func_001B3960(void) {
     memset(&D_002F7440, 0, sizeof(TextLines));

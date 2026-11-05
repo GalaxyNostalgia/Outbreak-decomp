@@ -970,7 +970,7 @@ s32 func_00687A80(u8 c) {
 u16 func_001ADEF0(s32 n);
 s32 func_001B88D0(DrawObjFull *who, s32 a, s32 b);
 void func_001B38B0(u8 *buf);
-void func_001B37E0(s32 x, s32 y, s32 a, s32 b);
+void func_001B37E0(s32 x, s32 y, s32 timer, s32 size, u8 *text, u8 alpha);
 
 /* Plays speech s on channel ch (0 ours, 1 the other's): fades in each line of its text, shows it
    letter by letter (some letters garbled when the speaker's unkDB8 is set), holds it, fades it out,
@@ -1145,9 +1145,9 @@ void func_00687420(Speech *s, s32 ch) {
     }
     if (func_006AC490() == 0) {
         if (ch == 0) {
-            func_001B37E0(s->x, 0x140, 1, 0x14);
+            func_001B37E0(s->x, 0x140, 1, 0x14, s->buf, s->alpha);
         } else {
-            func_001B37E0(s->x, 0x15A, 1, 0x14);
+            func_001B37E0(s->x, 0x15A, 1, 0x14, s->buf, s->alpha);
         }
     }
     if (s->unk4 < 0x1E && (&D_0023BF78)[ch] >= 2) {
