@@ -145,9 +145,13 @@ typedef struct {
     u8 unkAB8;          /* 0xAB8 */ \
     u8 unkAB9;          /* 0xAB9 */ \
     u8 unkABA;          /* 0xABA */ \
-    u8 unkABB[0xAC8 - 0xABB]; \
-    s32 unkAC8;         /* 0xAC8 */ \
-    u8 unkACC[0xAD4 - 0xACC]; \
+    s8 unkABB;          /* 0xABB: (a door's) model */ \
+    f32 unkABC[3];      /* 0xABC: where to stand to go through */ \
+    s32 unkAC8;         /* 0xAC8: the heading for it */ \
+    f32 unkACC;         /* 0xACC */ \
+    s8 unkAD0;          /* 0xAD0: the door's switch */ \
+    u8 unkAD1;          /* 0xAD1 */ \
+    u8 unkAD2[2]; \
     u8 unkAD4;          /* 0xAD4: a reaction pending */ \
     u8 unkAD5;          /* 0xAD5: which (D_006DDA80) */ \
     u8 unkAD6[0xAEC - 0xAD6]; \

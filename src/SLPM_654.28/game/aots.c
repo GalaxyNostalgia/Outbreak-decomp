@@ -711,3 +711,359 @@ void func_00593FE0(ZoneMsg *z) {
     }
 }
 #endif
+
+#include "object.h"
+#include "game.h"
+
+/* A door's trigger zone (an Aot of kind 5) as func_00591160 reads it. */
+typedef struct {
+    u8 unk0[0x34];
+    DrawObjFull *who;   /* 0x34: who stepped in */
+    u8 unk38[6];
+    u8 kind;            /* 0x3E: the kind of who (5: a player opening it, 2 with a key, 6 ...) */
+    u8 unk3F;
+    s32 id;             /* 0x40: the door's switch */
+    s32 room2;          /* 0x44: the room on the other side */
+    s32 id2;            /* 0x48: its switch there */
+    s32 model;          /* 0x4C: whose matrix (D_00470090.mats) */
+    s32 unk50;
+    s32 type;           /* 0x54: the door's type (D_0023A8F0, D_006D7600) */
+    s32 dir;            /* 0x58 */
+    s32 unk5C;
+    s32 state;          /* 0x60: 0-3 */
+    s16 lock;           /* 0x64: what's left to open it (kind 6) */
+    s16 unk66;
+    u16 sound;          /* 0x68 */
+    u16 unk6A;
+    s32 key;            /* 0x6C: the item that opens it (-2: none) */
+    u8 unk70[2];
+    u8 linked;          /* 0x72: the other side follows */
+    s8 call;            /* 0x73: (1) func_00593920 when gone through */
+    u16 callArg;        /* 0x74 */
+} DoorZone;
+
+extern u16 D_0048AFB0[][6];     /* per room: [0] open, [1] seen, [2] locked, [3] ..., [5] ... */
+extern u8 D_0023A8F0[];         /* per door type: its first message */
+extern u8 D_00476DC5[];         /* per player */
+extern f32 D_006D7600[][3];     /* per door type: where to stand (this side) */
+extern f32 D_006D7630[][3];     /* the same, for 0x1A / 0x29 */
+extern f32 D_006D7660[][3];     /* the other side's */
+extern f32 D_006D7690[][3];
+s32 func_001AF540(DrawObjFull *o);
+void func_005406B0(s32 row, s32 bit, s32 col);
+void func_00540700(s32 row, s32 bit, s32 col);
+void func_00540E10(u8 room, u8 id, s32 v);
+void func_0064F3F0(u8 room, u8 id, s32 v);
+s32 func_00540ED0(u8 model, s32 a);
+s16 func_00540F40(s16 a, u8 item);
+void func_005400A0(s32 a, s32 b, s32 c);
+void func_00540100(s32 id, s32 a, s32 b, s32 c);
+void func_00590B40(s32 a);
+void func_00583F10(DrawObjFull *o, u16 item);
+void func_005C4260(void);
+void func_00593920(s32 a, s32 b);
+void func_001B70B0(void *p, s32 a);
+
+#define DOOR_SEEN(z) \
+    if (func_001AF540(o) != 0) { \
+        func_00590B40(1); \
+        D_0048AFB0[D_00306590.unk1C][1] |= (u16)(1 << (z)->id); \
+    }
+
+#ifdef NON_MATCHING   /* first draft (1044 instructions) */
+/* Someone at a door (zone z): what it says (o->unkAB9, the message), whether it opens
+   (o->unkAB8), where to stand to go through (o->unkABC, heading unkAC8), and the room flags. */
+void func_00591160(DoorZone *z) {
+    DrawObjFull *o = z->who;
+    f32 v[4];
+    f32 m[4];
+    u16 room;
+    s32 bit;
+
+    switch (o->type) {
+    case 0:
+        if (z->state == 2) {
+            if (D_00470090.entries[z->id][1] == 1) {
+                return;
+            }
+        } else {
+            if (D_00470090.entries[z->id][1] != 0) {
+                return;
+            }
+            if (D_0048AFB0[D_00306590.unk1C][2] & (1 << z->id)) {
+                return;
+            }
+        }
+        o->unkAD0 = z->id;
+        if (z->kind == 5) {
+            if (o->kind != D_0048BF60.unk1D || z->state != 0) {
+                return;
+            }
+            if (D_00470090.entries[z->id][1] != 0) {
+                return;
+            }
+            if (D_0048AFB0[D_00306590.unk1C][3] & (1 << z->id)) {
+                return;
+            }
+            o->unkAB8 = 1;
+            o->unkAD1 = 0xFF;
+            o->unkAB9 = D_0023A8F0[z->type] + 0x18;
+            if (!(D_0048AFB0[D_00306590.unk1C][5] & (1 << z->id))) {
+                func_005406B0(D_00306590.unk1C, z->id, 3);
+                func_005406B0(z->room2, z->id2, 3);
+            }
+            D_00476DC5[D_0048BF60.unk1D] = 1;
+            if (func_001AF540(o) != 0) {
+                D_0048AFB0[D_00306590.unk1C][1] |= (u16)(1 << z->id);
+            }
+            goto stand;
+        }
+        room = D_00306590.unk1C;
+        bit = 1 << z->id;
+        if (D_0048AFB0[room][0] & bit) {
+            /* open */
+            if (z->state != 0) {
+                o->unkAB9 = 0;
+            } else {
+                switch (z->kind) {
+                case 2: {
+                    u16 it = D_003967D0[o->unkC82].unk6;
+                    if (it >= 0x19E && it < 0x1A2) {
+                        o->unkAB9 = D_0023A8F0[z->type] + 0x21;
+                        o->unkAB8 = 1;
+                        z->lock = 200;
+                        if (func_001AF540(o) != 0) {
+                            D_0048AFB0[D_00306590.unk1C][1] |= (u16)(1 << z->id);
+                        }
+                        func_005C4260();
+                        o->unkABA = 0;
+                        goto msg;
+                    }
+                    if (z->key == it) {
+                        if (func_001AF540(o) != 0) {
+                            func_00590B40(1);
+                            func_005400A0(2, 0x28, 0x3C);
+                            D_0048AFB0[D_00306590.unk1C][1] |= (u16)(1 << z->id);
+                        }
+                        o->unkAB9 = D_0023A8F0[z->type] + 3;
+                        o->unkAB8 = 1;
+                        func_00540700(D_00306590.unk1C, z->id, 0);
+                        if (z->linked != 0) {
+                            func_00540700(z->room2, z->id2, 0);
+                        }
+                        func_00583F10(o, z->key);
+                        func_005C4260();
+                    } else {
+                        o->unkAB9 = 0;
+                    }
+                    break;
+                }
+                case 6:
+                    if (z->lock == 0) {
+                        break;
+                    }
+                    if (!(D_0048AFB0[room][5] & bit)) {
+                        z->lock -= func_00540F40(z->unk66, o->unkC82);
+                    }
+                    if (z->lock <= 0) {
+                        o->unkAB9 = D_0023A8F0[z->type] + 0x25;
+                        func_00540700(D_00306590.unk1C, z->id, 0);
+                        if (func_001AF540(o) != 0) {
+                            func_005400A0(2, 0x28, 0x3C);
+                        }
+                        if (z->linked != 0) {
+                            func_00540700(z->room2, z->id2, 0);
+                        }
+                        o->unkAB8 = 1;
+                    } else {
+                        o->unkAB9 = D_0023A8F0[z->type] + 0x23;
+                        o->unkAB8 = 0;
+                        func_001B70B0((u8 *)*(void **)((u8 *)o->model + 0x85C) + 0x30,
+                                      func_00540ED0((u8)z->model, 1));
+                    }
+                    break;
+                default:
+                    DOOR_SEEN(z);
+                    if (z->key == -2) {
+                        o->unkAB9 = D_0023A8F0[z->type] + 9;
+                        if (func_001AF540(o) != 0) {
+                            func_005400A0(2, 0x28, 0x3C);
+                        }
+                        func_00540700(D_00306590.unk1C, z->id, 0);
+                        if (z->linked != 0) {
+                            func_00540700(z->room2, z->id2, 0);
+                        }
+                    } else {
+                        o->unkAB9 = D_0023A8F0[z->type] + 5;
+                        if (func_001AF540(o) != 0) {
+                            if (z->sound != 0xFFFF) {
+                                func_00540100(z->sound, 0x14, 0x28, 3);
+                            }
+                            func_00590B40(1);
+                            D_0048AFB0[D_00306590.unk1C][1] |= (u16)(1 << z->id);
+                        }
+                    }
+                    o->unkAB8 = 1;
+                    break;
+                }
+            }
+            o->unkABA = 0;
+            goto msg;
+        }
+        /* closed */
+        if (z->kind == 2 || z->kind == 6) {
+            return;
+        }
+        switch (z->state) {
+        case 0:
+            DOOR_SEEN(z);
+            if (D_0048AFB0[D_00306590.unk1C][3] & (1 << z->id)) {
+                o->unkAB9 = D_0023A8F0[z->type] + 0x27;
+                if (func_001AF540(o) != 0) {
+                    func_005400A0(1, 0x28, 0x3C);
+                }
+            } else {
+                o->unkAB9 = D_0023A8F0[z->type] + 1;
+                func_00540700(D_00306590.unk1C, z->id, 3);
+                func_00540700(z->room2, z->id2, 3);
+                if (o->kind == D_0048BF60.unk1D) {
+                    o->unkABA = 1;
+                }
+            }
+            break;
+        case 1:
+            DOOR_SEEN(z);
+            o->unkACC = 168.0f;
+            o->unkAB9 = 0x1A;
+            o->unkABA = 1;
+            break;
+        case 2:
+            if (D_00470090.entries[z->id][1] == 0) {
+                func_0064F3F0(room, z->id, 1);
+                func_00540E10(D_00306590.unk1C, z->id, 1);
+                func_0064F3F0(z->room2, z->id2, 1);
+                o->unkAB9 = 0x1D;
+            } else {
+                func_0064F3F0(room, z->id, 0);
+                func_00540E10(D_00306590.unk1C, z->id, 0);
+                func_0064F3F0(z->room2, z->id2, 0);
+                o->unkAB9 = 0x1E;
+            }
+            break;
+        case 3:
+            DOOR_SEEN(z);
+            o->unkACC = 168.0f;
+            o->unkAB9 = 0x29;
+            o->unkABA = 1;
+            break;
+        default:
+            return;
+        }
+        o->unkAB8 = 1;
+        o->unkAD1 = 0xFF;
+        if (o->unkABA != 0 && func_001AF540(o) != 0) {
+            D_0048BF60.unk35 = z->id2;
+            D_0048BF60.unk37 = 1;
+            D_00306590.unk20 = D_00306590.unk1A;
+            D_00306590.unk22 = z->room2;
+        }
+    stand:
+    msg:
+        func_0018FAB0(v, D_00470090.mats[z->model]);
+        if (o->unkAB9 == 0x1A || o->unkAB9 == 0x29) {
+            func_001913A0(m, D_006D7630[z->type], D_00470090.mats[z->model]);
+        } else {
+            func_001913A0(m, D_006D7600[z->type], D_00470090.mats[z->model]);
+        }
+        if (z->call == 1 && o->unkABA == 1) {
+            z->call = -1;
+            func_00593920((z->callArg & 0xF000) >> 12, z->callArg & 0x1FF);
+        }
+        break;
+    case 1:
+        if (D_00470090.entries[z->id][1] != 0) {
+            return;
+        }
+        o->unkAD0 = z->id;
+        o->unkAD1 = 0xFF;
+        if (D_0048AFB0[D_00306590.unk1C][0] & (1 << z->id)) {
+            o->unkAB9 = D_0023A8F0[z->type] + 5;
+            o->unkABA = 0;
+        } else {
+            o->unkAB9 = D_0023A8F0[z->type] + 1;
+            ((u8 *)o)[0x102D] = z->id2;
+            ((u8 *)o)[0x115C] = z->room2;
+            o->unkABA = 1;
+        }
+        func_0018FAB0(v, D_00470090.mats[z->model]);
+        if (o->unkAB9 == 0x1A || o->unkAB9 == 0x29) {
+            func_001913A0(m, D_006D7630[z->type], D_00470090.mats[z->model]);
+        } else {
+            func_001913A0(m, D_006D7600[z->type], D_00470090.mats[z->model]);
+        }
+        o->unkAB8 = 1;
+        break;
+    case 2: {
+        u8 e = D_00470090.entries[z->id][1];
+
+        if (e == 2) {
+            o->unkAB9 = 7;
+            o->unkAB8 = 1;
+            func_0018FAB0(v, D_00470090.mats[z->model]);
+            if (o->kind == 0x29 || o->kind == 0x16 || o->kind == 1) {
+                func_001913A0(m, D_006D7660[z->type], D_00470090.mats[z->model]);
+            }
+            break;
+        }
+        if (e == 1) {
+            return;
+        }
+        if (e != 0) {
+            break;
+        }
+        bit = 1 << z->id;
+        room = D_00306590.unk1C;
+        if (D_0048AFB0[room][0] & bit) {
+            o->unkAB9 = D_0023A8F0[z->type] + 0x27;
+        } else {
+            switch (z->state) {
+            case 0:
+                if (D_0048AFB0[room][2] & bit) {
+                    o->unkAB9 = 7;
+                } else if (D_0048AFB0[room][3] & bit) {
+                    o->unkAB9 = D_0023A8F0[z->type] + 0x27;
+                } else {
+                    o->unkAB9 = D_0023A8F0[z->type] + 1;
+                }
+                break;
+            case 1:
+                o->unkACC = 168.0f;
+                o->unkAB9 = 0x1A;
+                break;
+            case 2:
+                break;
+            case 3:
+                o->unkACC = 168.0f;
+                o->unkAB9 = 0x29;
+                break;
+            default:
+                return;
+            }
+        }
+        func_0018FAB0(v, D_00470090.mats[z->model]);
+        if (o->kind == 0x29 || o->kind == 0x16 || o->kind == 1) {
+            if (o->unkAB9 == 0x27 || o->unkAB9 == 0x28) {
+                func_001913A0(m, D_006D7690[z->id2], D_00470090.mats[z->room2]);
+            } else {
+                func_001913A0(m, D_006D7660[z->id2], D_00470090.mats[z->room2]);
+            }
+        }
+        o->unkAB8 = 1;
+        break;
+    }
+    }
+    func_003404F0(o->unkABC, v, m);
+    o->unkAC8 = (u16)(z->dir - 0x8000);
+    o->unkABB = z->model;
+}
+#endif
