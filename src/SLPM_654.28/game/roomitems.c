@@ -690,6 +690,29 @@ void func_00581320(u8 i);
 /* The functions on the item at a place return the slot only when it's inactive (they fall off
    the end otherwise, as the original does; callers don't use it). */
 
+/* The item at place is placed again (flag 1, not 0x200000): its thing made if it hasn't one. */
+ItemSlot *func_00562580(s16 place);
+#ifdef NON_MATCHING   /* a nop the original leaves in a branch's delay slot */
+ItemSlot *func_00562580(s16 place) {
+    ItemSlot *e = func_00562520(place);
+
+    if (e != NULL) {
+        if (e->active == 0) {
+            return e;
+        }
+        if (e->unk3 != 0) {
+            e->flags |= 1;
+            e->flags &= ~0x200000;
+            if (e->obj == NULL || e->unk20 == 0) {
+                if (D_00306590.unk1C == (u8)e->unk1 && (u16)e->owner == 0) {
+                    func_00561270(e);
+                }
+            }
+        }
+    }
+}
+#endif
+
 /* The item at place is taken: no longer placed, its thing and its (unk20) gone. */
 ItemSlot *func_00562630(s16 place) {
     ItemSlot *e = func_00562520(place);
