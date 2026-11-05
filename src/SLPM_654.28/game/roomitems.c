@@ -1133,8 +1133,31 @@ s8 func_005827B0(ItemSlot *a, ItemSlot *b);
 s8 func_00582870(ItemSlot *a, ItemSlot *b);
 s8 func_00582B30(ItemSlot *a, ItemSlot *b);
 s8 func_00582BA0(ItemSlot *a, ItemSlot *b);
-s8 func_00582920(ItemSlot *a, ItemSlot *b, s16 arg);
-s8 func_00582970(ItemSlot *a, ItemSlot *b, s16 arg);
+void func_005846A0(u8 slot, s32 id);
+void func_005815C0(u8 slot);
+
+/* Combine kind: a becomes item arg, b is used up (3). */
+s8 func_00582920(ItemSlot *a, ItemSlot *b, s32 arg) {
+    s8 r = 0;
+
+    if ((s16)arg >= 0) {
+        func_005846A0(a->index, arg);
+        func_005815C0(b->index);
+        r = 3;
+    }
+    return r;
+}
+
+/* Combine kind: a becomes item arg, b stays (1). */
+s8 func_00582970(ItemSlot *a, ItemSlot *b, s32 arg) {
+    s8 r = 0;
+
+    if ((s16)arg >= 0) {
+        func_005846A0(a->index, arg);
+        r = 1;
+    }
+    return r;
+}
 s8 func_005829B0(ItemSlot *a, ItemSlot *b, s16 arg);
 s8 func_00582C60(ItemSlot *a, ItemSlot *b, s16 arg);
 s8 func_00582CB0(ItemSlot *a, ItemSlot *b, s16 arg);
