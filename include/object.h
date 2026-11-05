@@ -254,13 +254,16 @@ typedef struct {
     s16 unkD8C;         /* 0xD8C: the heading a push ends on */ \
     s16 unkD8E;         /* 0xD8E: the turn per frame */ \
     u16 unkD90;         /* 0xD90: the push's frames left */ \
-    u8 unkD92[2]; \
+    u16 unkD92;         /* 0xD92: what it did with items this frame (1 took, 4 combined) */ \
     f32 unkD94[3];      /* 0xD94: the start position */ \
     s16 unkDA0;         /* 0xDA0: the start heading */
 
 typedef struct DrawObjFull {
     OBJ_FIELDS(DrawObjFull)
-    u8 unkDA2[0xDA6 - 0xDA2];
+    u8 unkDA2;          /* 0xDA2: the item (unkD92) */
+    u8 unkDA3;          /* 0xDA3: the other one, or its holder */
+    u8 unkDA4;          /* 0xDA4: the holder */
+    u8 unkDA5;
     u8 unkDA6;          /* 0xDA6: (online) the last request's number */
     u8 unkDA7;          /* 0xDA7: (online) the current request */
     s8 talk;            /* 0xDA8: (players) wants to ad-lib */

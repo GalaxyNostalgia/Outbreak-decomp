@@ -702,7 +702,84 @@ void func_008360B0(DrawObjFull *obj) {
     func_005C15E0(obj);
 }
 
+s8 func_00581230(u8 item, u8 who);
+s8 func_005816C0(u8 item, u8 at);
+s8 func_005818B0(u8 item, u8 at);
+void func_005C1A60(DrawObjFull *obj, u8 slot);
+void func_005C1AC0(DrawObjFull *obj, u8 slot);
+u8 func_005C1570(DrawObjFull *obj, u8 slot);
+void func_00581560(u8 slot);
+s32 func_001AF540(DrawObjFull *o);
+void func_0034B7D0(s32 a, s32 b, s32 c);
+extern u16 D_0038968E[];        /* (file notes) items taken from others */
+extern u16 D_00389690[];        /* items given */
+
+/* The partner takes item (at 0) or combines it with at: from the floor or from the player who
+   holds it (unkD92 says which, for the others online). */
 s32 func_008341F0(DrawObjFull *obj, u8 item, u8 at);
+#ifdef NON_MATCHING   /* registers differ (187 vs 188) */
+s32 func_008341F0(DrawObjFull *obj, u8 item, u8 at) {
+    u16 own = D_003967D0[item].owner;
+    s32 r = 0;
+    DrawObjFull *p;
+    u8 k;
+
+    if (at == 0) {
+        if ((s8)func_00581230(item, obj->kind) == 1) {
+            func_005C1A60(obj, item);
+            if (own != 0) {
+                p = &D_00476DD0[own - 1];
+                func_005C1430(p, item);
+                func_005C15E0(p);
+                if (func_001AF540(p) == 1) {
+                    D_0038968E[0]++;
+                    func_0034B7D0(10, D_003967D0[item].unk6, obj->unkB98);
+                }
+            }
+            r = 1;
+            obj->unkD92 |= 1;
+            obj->unkDA2 = item;
+            obj->unkDA3 = own;
+        }
+    } else {
+        if (obj->unkC7C == at) {
+            obj->unkC7C = 0;
+            obj->unkCA8 = 0;
+        }
+        func_00581560(at);
+        if (own == 0) {
+            if ((s8)func_005816C0(item, at) == 1) {
+                if (obj->unkB98 == 6) {
+                    k = func_005C1570(obj, at);
+                    func_005C1430(obj, at);
+                    if (k & 0x80) {
+                        func_005C1AC0(obj, item);
+                    } else {
+                        func_005C1A60(obj, item);
+                    }
+                } else {
+                    func_005C1430(obj, at);
+                    func_005C1A60(obj, item);
+                }
+                r = 1;
+            }
+        } else if ((s8)func_005818B0(item, at) == 1) {
+            r = 1;
+            obj->unkD92 |= 4;
+            obj->unkDA2 = item;
+            obj->unkDA3 = at;
+            obj->unkDA4 = own;
+            if (func_001AF540(&D_00476DD0[own - 1]) == 1) {
+                D_0038968E[0]++;
+                func_0034B7D0(10, D_003967D0[at].unk6, obj->unkB98);
+                D_00389690[0]++;
+                func_0034B7D0(11, D_003967D0[item].unk6, obj->unkB98);
+            }
+        }
+    }
+    return r;
+}
+#endif
 s32 func_008344E0(DrawObjFull *obj, u8 item, u8 at);
 s32 func_00834630(DrawObjFull *obj, u8 item, u8 at);
 void func_005810E0(u8 item, u8 who);
