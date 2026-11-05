@@ -938,3 +938,19 @@ void func_005D3F50(TurnTask *t) {
     }
 }
 #endif
+
+extern u8 D_00713FC0[][0x800];  /* each player's weapon data */
+extern char D_0070BEE0[];       /* the weapon data file's name (%d) */
+s32 func_001CFBB0(const char *name, void *buf, s32 flags, s32 unused);
+
+/* Loads weapon w's data for player kind (when it holds something). */
+void func_00682750(s32 kind, s32 w) {
+    char name[0x100];
+    u8 *buf = D_00713FC0[kind];
+
+    memset(buf, 0, 0x800);
+    if (D_00476DD0[kind].unkC7C != 0) {
+        sprintf(name, D_0070BEE0, w);
+        func_001CFBB0(name, buf, 1, 0);
+    }
+}
