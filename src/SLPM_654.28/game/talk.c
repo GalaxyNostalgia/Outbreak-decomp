@@ -968,7 +968,7 @@ s32 func_00687A80(u8 c) {
 }
 
 u16 func_001ADEF0(s32 n);
-void func_001B88D0(DrawObjFull *who, s32 a, s32 b);
+s32 func_001B88D0(DrawObjFull *who, s32 a, s32 b);
 void func_001B38B0(u8 *buf);
 void func_001B37E0(s32 x, s32 y, s32 a, s32 b);
 

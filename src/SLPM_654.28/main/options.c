@@ -750,6 +750,41 @@ s32 func_001ACCC0(s32 n, s32 fid, s32 ptid) {
     return 0;
 }
 
+extern s32 *D_00217084[];   /* D_00217080[1] */
+s32 func_001B7B50(f32 *pos, s32 *tbl, s32 *vol, s32 *pan);
+
+/* Says voice clip id for o on stream 2 (its character's archive, 5 for any but players), at the
+   volume its distance gives (table 1); -1 if there's none or the stream is busy. */
+s32 func_001B88D0(DrawObjFull *o, s32 unused, s32 id) {
+    s32 vol;
+    s32 pan;
+    s32 c;
+    s32 c2;
+
+    if (id < 0) {
+        return -1;
+    }
+    c = 5;
+    if (o->type == 0) {
+        c = o->kind;
+    }
+    if (D_0048BF60.unkA1[c] == 0) {
+        return -1;
+    }
+    c2 = func_001AD570(2, 0);
+    if (c2 == 1 || c2 == 2) {
+        return -1;
+    }
+    if (func_001B87F0(2, id, c + 5) == 0) {
+        if (func_001B7B50(o->unk38, D_00217084[0], &vol, &pan) == 0) {
+            func_001AD260(2, 0);
+            return 0;
+        }
+        func_001AD260(2, vol);
+    }
+    return 0;
+}
+
 extern char D_00231B18[];
 
 /* Starts the stream for an event on the BGM stream (paused until it is ready). */
