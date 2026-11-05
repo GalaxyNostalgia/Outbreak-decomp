@@ -983,7 +983,39 @@ s32 func_00835300(DrawObjFull *obj, u8 *item) {
     return r;
 }
 #endif
-s32 func_008359A0(DrawObjFull *obj, s32 *item, u8 *at);
+/* Whether the partner should load the weapon in hand (the ammunition func_00836490 finds into
+   *at): with no enemy, or with few rounds left and its enemy out of D_0083A1F0's range. */
+s32 func_008359A0(DrawObjFull *obj, u8 *item, u8 *at);
+#ifdef NON_MATCHING   /* the rounds compare's registers (the original's goes through $at) */
+s32 func_008359A0(DrawObjFull *obj, u8 *item, u8 *at) {
+    s32 r = 0;
+    u8 a;
+
+    if ((u8)obj->unk106E == 0xFF) {
+        if (obj->unkC7C != 0) {
+            a = func_00836490(obj, obj->unkC7C);
+            if (a != 0) {
+                r = 1;
+                *item = obj->unkC7C;
+                *at = a;
+            }
+        }
+    } else {
+        if (obj->unkC7C == 0) {
+            return 0;
+        }
+        a = func_00836490(obj, obj->unkC7C);
+        if (a != 0 && D_0023B980[obj->unkB98] >= D_003967D0[obj->unkC7C].unk24) {
+            if (!(D_00385490[obj->kind][(u8)obj->unk106E].dist <= D_0083A1F0[obj->unkB98])) {
+                *item = obj->unkC7C;
+                r = 1;
+                *at = a;
+            }
+        }
+    }
+    return r;
+}
+#endif
 
 /* The partner's requests (0x1096: 1 pick up an item, 2 ..., 4, 8 items), each taken once: 1 when
    one starts its thinking step (7, 8, 9); none while func_00823B90. */
@@ -1032,7 +1064,7 @@ s32 func_00823780(DrawObjFull *obj) {
     }
     if (obj->unk1096 & 8) {
         obj->unk1096 &= ~8;
-        if (!(obj->unkBA0 & 8) && obj->act[0] == 1 && (s8)func_008359A0(obj, &obj->unk1090, &obj->unk1094)) {
+        if (!(obj->unkBA0 & 8) && obj->act[0] == 1 && (s8)func_008359A0(obj, (u8 *)&obj->unk1090, &obj->unk1094)) {
             func_00823340(obj, 9);
             return 1;
         }
