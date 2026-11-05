@@ -204,7 +204,10 @@ typedef struct {
     u8 unkC64;          /* 0xC64 */ \
     u8 unkC65;          /* 0xC65: what hit it (1-4) */ \
     s16 unkC66;         /* 0xC66 */ \
-    u8 unkC68[0xC7C - 0xC68]; \
+    u8 unkC68[0xC79 - 0xC68]; \
+    u8 unkC79;          /* 0xC79: how it picks up an item (0-3 the height, 2 a carried one) */ \
+    u8 unkC7A;          /* 0xC7A: the item it picks up */ \
+    u8 unkC7B; \
     u8 unkC7C;          /* 0xC7C: the item in hand (0xFF: none) */ \
     u8 unkC7D;          /* 0xC7D */ \
     u8 unkC7E;          /* 0xC7E */ \

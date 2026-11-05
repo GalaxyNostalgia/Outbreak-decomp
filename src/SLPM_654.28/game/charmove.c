@@ -1897,6 +1897,54 @@ void func_00636D50(DrawObjFull *o) {
     }
 }
 
+typedef struct {
+    s32 corner[4][2];
+    s32 top;            /* 0x20 */
+    s32 bottom;         /* 0x24 */
+} PickShape;            /* (D_006EF080's) */
+
+extern PickShape D_006EF080[];
+extern f32 D_006E76E0[4];       /* the heights of the four ways to pick up */
+s32 func_005C0E20(DrawObjFull *o, u8 item);
+
+/* o starts to pick up item (motion 9, action 1/0x16) at the height it lies (or 2: carried by
+   someone); 1 if it can't. */
+s32 func_00637810(DrawObjFull *o, u8 item);
+#ifdef NON_MATCHING   /* the slot's offset isn't kept (recomputed for the shape); the raw argument kept for unkC7A */
+s32 func_00637810(DrawObjFull *o, u8 item) {
+    u32 i;
+    f32 h;
+
+    if (D_003967D0[item].active == 0) {
+        return 1;
+    }
+    if (func_005C0E20(o, item) != 0) {
+        return 1;
+    }
+    o->unk54F = 9;
+    o->act[0] = 1;
+    o->act[1] = 0x16;
+    o->act[2] = 0;
+    o->act[3] = 0;
+    func_00635920(o);
+    o->unkC7A = item;
+    if ((u16)D_003967D0[item].owner != 0) {
+        o->unkC79 = 2;
+    } else {
+        h = D_003967D0[item].pos[1] +
+            (f32)((D_006EF080[(s8)D_003967D0[item].unk2C].bottom + D_006EF080[(s8)D_003967D0[item].unk2C].top) / 2) -
+            o->unk38[1];
+        for (i = 0; i < 4; i++) {
+            if (h < D_006E76E0[i]) {
+                break;
+            }
+        }
+        o->unkC79 = i;
+    }
+    return 0;
+}
+#endif
+
 /* (Offline) a player not in our scenario: kept still. */
 void func_00637B40(DrawObjFull *o) {
     o->unkBA4 |= 0x100;
