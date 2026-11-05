@@ -1152,7 +1152,51 @@ void func_0068B150(Npc *n) {
 }
 s32 func_0068B1B0(Npc *n);
 s32 func_00549860(const f32 *from, const f32 *to, s32 mask, s32 a, s32 *hit);
-void func_00602A20(f32 *out, f32 *a, f32 *b);
+typedef struct {
+    s32 unk0;
+    f32 pos[3];         /* 0x04 */
+    u8 unk10[0x30];
+} WayNode;              /* 0x40 */
+
+WayNode *func_00602220(void);
+s8 func_00602290(const f32 *pos);
+u8 func_00602230(s32 from, s32 to);
+
+/* The next point on the way from b to a (through the room's way nodes): the next node's spot,
+   or a itself; the next node (-1 none). */
+s32 func_00602A20(f32 *out, f32 *a, f32 *b);
+#ifdef NON_MATCHING   /* registers (b isn't kept in the original) and the vector copies' order */
+s32 func_00602A20(f32 *out, f32 *a, f32 *b) {
+    WayNode *nodes = func_00602220();
+    s8 from = func_00602290(b);
+    s8 to = func_00602290(a);
+    u8 next;
+
+    if (from < 0 || to < 0) {
+        out[0] = a[0];
+        out[1] = a[1];
+        out[2] = a[2];
+        return -1;
+    }
+    if (from == to) {
+        out[0] = a[0];
+        out[1] = a[1];
+        out[2] = a[2];
+        return to;
+    }
+    next = func_00602230(from, to);
+    if (next == 0xFF) {
+        out[0] = a[0];
+        out[1] = a[1];
+        out[2] = a[2];
+        return -1;
+    }
+    out[0] = nodes[next].pos[0];
+    out[1] = nodes[next].pos[1];
+    out[2] = nodes[next].pos[2];
+    return (s8)next;
+}
+#endif
 
 /* Walking up to player p: aims at where they stand (or, past a wall or with the 0x78th part
    flag, func_00602A20's way round), and stops within 100 or blocked. */
