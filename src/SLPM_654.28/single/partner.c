@@ -706,8 +706,64 @@ typedef struct {
 
 extern PartnerWeapon D_006E5940[];
 extern RangeBits D_0083A290;    /* per rounds left (0-3): bit character * 4 + range */
-s8 func_008356E0(DrawObjFull *obj);
+extern s16 D_0083A1F0[];         /* per character: the range to keep from its enemy */
+extern s8 D_0023B980[8];        /* per character: rounds below which to reload with the enemy near */
+u8 func_00836490(DrawObjFull *obj, u8 slot);
 u8 func_00836150(DrawObjFull *obj, u8 slot);
+
+/* With its enemy out of D_0083A1F0's range: the best (func_00836150) of the partner's other
+   weapons that can be loaded (func_00836490) into *item, 1; else 0. */
+s32 func_008356E0(DrawObjFull *obj, u8 *item);
+#ifdef NON_MATCHING   /* registers differ (rank/best/loop counters) */
+s32 func_008356E0(DrawObjFull *obj, u8 *item) {
+    u8 slots[8];
+    f32 dist = 10000;
+    u8 rank = 0xFF;
+    s32 n;
+    s32 i;
+    u8 best = 0;
+    u8 c;
+
+    if ((u8)obj->unk106E != 0xFF) {
+        dist = D_00385490[obj->kind][(u8)obj->unk106E].dist;
+    }
+    if (dist <= D_0083A1F0[obj->unkB98]) {
+        return 0;
+    }
+    n = func_00836BD0(obj, slots);
+    c = obj->unkB98;
+    if (c == 0 || c == 1) {
+        if (obj->unkC88[0] != 0 && obj->unkC88[0] != obj->unkC7C) {
+            slots[n] = obj->unkC88[0];
+            n++;
+        }
+    }
+    for (i = 0; i < n; i++) {
+        u8 *p = &slots[i];
+        if (*p != 0 && *p != obj->unkC7C) {
+            u8 w = func_00836490(obj, *p);
+            if (w != 0) {
+                if ((u8)obj->unk106E != 0xFF && D_0023B980[obj->unkB98] < D_003967D0[*p].unk24) {
+                    continue;
+                }
+                {
+                    u8 v = func_00836150(obj, w);
+                    if (v < rank) {
+                        best = *p;
+                        rank = v;
+                    }
+                }
+            }
+        }
+    }
+    if (best > 0) {
+        *item = best;
+        return 1;
+    }
+    return 0;
+}
+#endif
+
 s16 func_008363A0(DrawObjFull *obj, u8 slot);
 s8 func_00584800(u8 slot);
 
@@ -733,7 +789,7 @@ s32 func_00835300(DrawObjFull *obj, u8 *item) {
     r = 0;
     best = 0;
     *item = obj->unkC7C;
-    if (func_008356E0(obj) != 0) {
+    if ((s8)func_008356E0(obj, item) != 0) {
         return 1;
     }
     n = func_00836BD0(obj, slots);
