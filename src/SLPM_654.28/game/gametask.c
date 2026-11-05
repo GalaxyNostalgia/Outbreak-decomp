@@ -831,3 +831,179 @@ void func_005CD9E0(void) {
     func_001B2C90();
     D_00306590.unk10[2] = 0;
 }
+
+void func_001AF240(u8 player);
+void func_001B80D0(void);
+void func_001AD680(s32 n, s32 a, s32 b);
+s32 func_001B9BA0(s16 frames, u32 color);
+void func_001AF620(void);
+s32 func_001B9EB0(void);
+void func_00341B20(void);
+void func_001AD190(s32 n);
+void func_001AD420(s32 n);
+void func_001AC210(void);
+void func_005CDE40(void);
+void func_00348DA0(void);
+void func_005BC140(void);
+s32 func_005BDA70(void);
+void func_005BBF80(u8 a);
+void func_0064A6E0(void);
+void func_005BC020(void);
+void func_005BC080(void);
+void func_005A78C0(void);
+void func_00541080(void);
+void func_005437C0(void);
+void func_006206C0(void);
+void func_00543CA0(void);
+void func_005BCBF0(void);
+void func_001AEE30(void);
+void func_001B8F00(void);
+void func_0064FAD0(void);
+void func_005BB710(s32 i);
+void func_001B0E90(void);
+void func_005BAD50(void);
+void func_005CE280(void);
+void func_005811A0(void);
+void func_0064F8C0(void);
+extern s8 D_0048BF50[];
+extern s8 D_0048BF88[];
+extern u8 D_0035FFFB[];         /* (the next room's) */
+extern u8 D_0035FFFF[];
+
+/* State 4: changing rooms: (0) out with a fade (or straight to 2 for a cut), (1) until the
+   streams stop, (2) the old room goes, (3) the new one loads (func_005BDA70) and fades in, (4)
+   online until everyone's there (else on to 5), (5) the room starts: the characters, the items,
+   the fade in, back to state 2. */
+#ifdef NON_MATCHING   /* first draft (266 vs 262) */
+void func_005CE2F0(void) {
+    GameState *g = &D_0048BF60;
+    DrawObjFull *p;
+    s32 i;
+
+    switch (D_0048BF60.step) {
+    case 0:
+        g->timer = 0;
+        func_001AF240(D_0048BF60.unk1D);
+        func_001AC9F0();
+        if ((s8)g->unk65 != 0) {
+            g->step = 2;
+            return;
+        }
+        func_001B80D0();
+        func_001AD680(0, 0, 10);
+        func_001AD680(1, 0, 10);
+        func_001B9BA0(0x10, 0xFF000000);
+        func_001AF620();
+        g->step++;
+        return;
+    case 1:
+        if (func_001B9EB0() != 0) {
+            func_001AE8E0(0);
+            func_00341B20();
+            func_001AD190(0);
+            func_001AD420(1);
+            func_001AD420(2);
+            func_001AC210();
+            g->step++;
+            return;
+        }
+        func_005CDE40();
+        return;
+    case 2:
+        func_001AD190(0);
+        func_001AD420(1);
+        func_001AD420(2);
+        func_001AC210();
+        func_001B80D0();
+        func_00348DA0();
+        func_005BC140();
+        if (D_0048BF88[0] == 0) {
+            func_001B9BA0(0x10, 0xFF000000);
+            g->step = 4;
+            return;
+        }
+        func_001B2C90();
+        g->step++;
+        return;
+    case 3:
+        if (func_005BDA70() != 0) {
+            func_001B9BA0(1, 0xFF000000);
+            g->step++;
+        }
+        if (D_0035FFFF[0] != 1) {
+            func_005BBF80(D_0035FFFF[0]);
+            func_006897A0();
+            func_0064A6E0();
+            func_005BC020();
+            func_00346900();
+            func_00346990();
+            func_005BC080();
+            func_005A78C0();
+            func_00541080();
+            func_005437C0();
+            func_006206C0();
+            func_00543CA0();
+        }
+        return;
+    case 4:
+        if (g->unk29 != 0) {
+            func_005BCBF0();
+            g->unkA6 = 1;
+            g->unkA7 = 0;
+            D_00306590.unk1A = D_0035FFFB[0];
+            func_001AEE30();
+            func_005CE710(0xC);
+            func_001B8F00();
+            return;
+        }
+        if (g->unkA7 != 0) {
+            func_005BCBF0();
+            g->unkA6 = 1;
+            g->unk29 = 1;
+            D_00306590.unk1A = D_0035FFFB[0];
+            func_001AEE30();
+            func_005CE710(0xC);
+            func_001B8F00();
+            return;
+        }
+        func_00341B20();
+        func_001AE8E0(0);
+        g->step++;
+        return;
+    case 5:
+        func_0064FAD0();
+        for (i = 0, p = D_00476DD0; i < 8; i++, p++) {
+            func_005BB710(i);
+        }
+        func_001B0E90();
+        func_005BAD50();
+        func_005BCBF0();
+        D_0048BF50[0] = 0;
+        if ((s8)g->unk65 != 0) {
+            g->unk65 = 0;
+            func_005D2F00();
+        } else {
+            g->unk2B = 1;
+        }
+        if (D_0048BF60.unk37 == 0) {
+            g->unk37 = 3;
+        }
+        func_005CE280();
+        D_00306590.unk18 = 0;
+        for (i = 0, p = D_00476DD0; i < 8; i++, p++) {
+            func_001D6BA0(p);
+        }
+        func_006383E0();
+        func_006897A0();
+        func_00346900();
+        func_00346990();
+        func_001B9C30(0x10, 0xFF000000);
+        func_005CE710(2);
+        func_00341AB0();
+        func_001B2C90();
+        func_005811A0();
+        func_0064F8C0();
+        break;
+    }
+}
+#endif
