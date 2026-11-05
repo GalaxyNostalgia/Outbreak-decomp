@@ -989,7 +989,32 @@ void func_001ADC30(s32 n);
 s32 func_0034A290(void);
 s32 func_0034A2F0(void);
 void func_00349B40(void);
+
+/* Everyone has seen the message to its end (offline: we have). */
 s32 func_005C0C60(void);
+#ifdef NON_MATCHING   /* ours folds both return 1/0 tests into set-if */
+s32 func_005C0C60(void) {
+    s32 i;
+    s32 n;
+
+    if (func_001AF4D0() == 1) {
+        if (D_0048BF60.unk3D[1] == 0) {
+            return 0;
+        }
+        return 1;
+    }
+    for (n = 0, i = 0; i < (u8)D_0048BF60.unk62; i++) {
+        if (D_0048BF60.unk3D[1] & (1 << i)) {
+            n++;
+        }
+    }
+    if (n != (u8)D_0048BF60.unk62) {
+        return 0;
+    }
+    return 1;
+}
+#endif
+
 void func_001B3960(void);
 void func_001AC210(void);
 void func_00349DE0(void);
