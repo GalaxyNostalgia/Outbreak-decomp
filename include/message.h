@@ -40,8 +40,8 @@ typedef struct {
     s16 n3;             /* 0x1E: counts[3] */
     s16 unk20;
     s16 unk22;
-    u8 unk24;           /* 0x24 */
-    u8 unk25;           /* 0x25 */
+    s8 scene;           /* 0x24: the scene now (D_0023BD60's entries set it) */
+    s8 ended;           /* 0x25: a bit per move list ended; 3 both */
     u8 unk26[2];
     u8 room2[3];        /* 0x28: the room it plays in */
     u8 room[3];         /* 0x2B: the room it's shown in (Options.unk1A, unk1C, unk1E) */

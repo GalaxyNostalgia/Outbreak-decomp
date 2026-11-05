@@ -1030,6 +1030,83 @@ void func_005908A0(void);
 void func_001BA180(void);
 void func_005BF480(void);
 
+/* The loaded messages' scene table (0x10 bytes an entry, 0xFFFF time ends it). */
+typedef struct {
+    u16 unk0;
+    u16 time;           /* 0x02 */
+    s16 scene;          /* 0x04 */
+    u8 unk6[6];
+    u8 kind;            /* 0x0C */
+    u8 unkD[3];
+} MsgScene;
+
+/* Per scene, two lists of moves (0x38 bytes an entry, 0xFFFF time ends it). */
+typedef struct {
+    u16 unk0;
+    u16 time;           /* 0x02 */
+    u8 unk4[0x38 - 4];
+} MsgMove;
+
+extern MsgScene *D_0023BD60;
+extern MsgMove *D_003613B0[][2];
+void func_0067FEB0(u8 kind);
+void func_005903E0(MsgMove *m);
+
+/* Each frame of a message: the next scene when its time comes (or both its move lists ended),
+   then the scene's moves due now. */
+void func_005BDD10(void);
+#ifdef NON_MATCHING   /* a1/a2 swapped for the message pointer and &ended */
+void func_005BDD10(void) {
+    MsgScene *e;
+    MsgMove *m;
+    u16 t;
+    u16 now;
+    s32 i;
+
+    e = D_0023BD60;
+    if (e != NULL) {
+        now = D_0023BE7C->frames;
+        t = e->time;
+        if (D_00306590.unkC != 0) {
+            t >>= 1;
+            now >>= 1;
+        }
+        if (D_0023BE7C->ended == 3 || t == now) {
+            D_0023BE7C->ended = 0;
+            if (e->time == 0xFFFF) {
+                e = NULL;
+            } else {
+                func_0067FEB0(e->kind);
+                D_0023BE7C->scene = e->scene;
+                e++;
+            }
+        }
+    }
+    D_0023BD60 = e;
+    for (i = 0; i < 2; i++) {
+        m = D_003613B0[D_0023BE7C->scene][i];
+        if (m == NULL) {
+            continue;
+        }
+        t = m->time;
+        now = D_0023BE7C->frames;
+        if (D_00306590.unkC != 0) {
+            t >>= 1;
+            now >>= 1;
+        }
+        if (t == now) {
+            func_005903E0(m);
+            m++;
+            if (m->time == 0xFFFF) {
+                m = NULL;
+                D_0023BE7C->ended |= 1 << i;
+            }
+        }
+        D_003613B0[D_0023BE7C->scene][i] = m;
+    }
+}
+#endif
+
 /* The message plays: (0) its text or movie starts, (1) its stream is ready, (2) the movie ends,
    (3) each frame until it's over. */
 void func_005BD690(void) {
@@ -1068,8 +1145,8 @@ void func_005BD690(void) {
         }
         D_0023BE7C->frames = 0;
         D_0023BE7C->done = 0;
-        D_0023BE7C->unk24 = 0;
-        D_0023BE7C->unk25 = 0;
+        D_0023BE7C->scene = 0;
+        D_0023BE7C->ended = 0;
         break;
     case 2:
         if (func_0034A290() == 2) {
