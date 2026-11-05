@@ -316,6 +316,21 @@ s32 func_001A6BD0(u8 ch, u16 vol) {
     return 0;
 }
 
+extern char D_00223F00[];   /* "SDR: SdrAllStop: Warning: sndque overflow!\n" */
+
+/* SdrAllStop */
+s32 func_001A6F20(void) {
+    SdrSlot *s = &D_00292DC0[D_00292DB0[0]];
+
+    if (s->id >= 0) {
+        printf(D_00223F00);
+        return -1;
+    }
+    s->id = 0x40000000;
+    D_00292DB0[0] = (D_00292DB0[0] + 1) % 32;
+    return 0;
+}
+
 /* SdrAllMute */
 s32 func_001A7050(s32 mute) {
     SdrSlot *s = &D_00292DC0[D_00292DB0[0]];
