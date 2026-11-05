@@ -6411,3 +6411,18 @@ void func_0063B470(DrawObjFull *o) {
     }
 }
 #endif
+
+#ifdef NON_MATCHING   /* as func_0061AC60 */
+/* The same check as func_0061AC60 (another action's). */
+s32 func_00619840(DrawObjFull *o) {
+    s32 r = 0;
+
+    if (o->type == 0) {
+        if (func_0061D9A0(o) != 0) {
+            return 1;
+        }
+        r = 0;
+    }
+    return r;
+}
+#endif
