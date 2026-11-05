@@ -622,3 +622,1163 @@ void func_0058BE00(DrawObjFull *o, f32 speed) {
         break;
     }
 }
+
+/* (weapon flags, D_006E5940: 0x20 ...) */
+typedef struct {
+    u32 flags;
+    u8 unk4[0x40];
+} MotWeapon;
+
+extern MotWeapon D_006E5940[];
+void func_00565820(s32 frame, DrawObjFull *o, s32 a, f32 speed);
+void func_00565A50(s32 frame, DrawObjFull *o, s32 unused, f32 speed);
+void func_00565BC0(s32 frame, DrawObjFull *o, s32 a, f32 speed);
+void func_00565C20(s32 frame, DrawObjFull *o, s32 a, f32 speed);
+void func_00566090(s32 frame, DrawObjFull *o, s32 a, s32 unused, f32 speed);
+void func_0056E7D0(DrawObjFull *o, f32 speed);
+
+#ifdef NON_MATCHING   /* generated from the original's tables; the case order and shared tails differ */
+/* Player motions' timed events (sounds and effects at frames), by the second motion (unk1F2)
+   and the motion (unk212); then func_0056E7D0's. */
+void func_0056A440(DrawObjFull *o, f32 speed) {
+    switch (o->unk1F2) {
+    case 0x17B:
+        func_00565820(0x12, o, 0, speed);
+        func_00565820(0x26, o, 0, speed);
+        break;
+    case 0x17A:
+        func_00565820(0x14, o, 0, speed);
+        func_00565820(0x20, o, 0, speed);
+        break;
+    case 0xC0:
+        func_00565820(0x2E, o, 0, speed);
+        break;
+    case 0xBF:
+        func_00565820(0x2C, o, 0, speed);
+        break;
+    case 0xB0:
+        func_00565820(0x19, o, 0, speed);
+        func_00565820(0x43, o, 0, speed);
+        break;
+    case 0xAF:
+        func_00565820(1, o, 0, speed);
+        func_00565820(0x1F, o, 0, speed);
+        break;
+    case 0xA7:
+        func_00565820(0x16, o, 0, speed);
+        func_00565820(0x3E, o, 0, speed);
+        break;
+    case 0xA6:
+        func_00565820(0x1E, o, 0, speed);
+        func_00565820(0x42, o, 0, speed);
+        break;
+    case 0xA5:
+        func_00565820(0x22, o, 0, speed);
+        break;
+    case 0xA4:
+        func_00565820(0x16, o, 0, speed);
+        func_00565820(0x44, o, 0, speed);
+        break;
+    case 0xA3:
+        func_00565820(0x28, o, 0, speed);
+        break;
+    case 0xA2:
+        func_00565820(0x22, o, 0, speed);
+        break;
+    case 0xA1:
+        func_00565820(0x28, o, 0, speed);
+        break;
+    case 0xA0:
+        func_00565820(0x26, o, 0, speed);
+        break;
+    }
+    switch (o->unk212) {
+    case 0x193:
+        func_005659F0(0xA, o, 0, 0x18, speed);
+        func_00566090(0x22, o, 5, 0, speed);
+        break;
+    case 0x192:
+        func_00565A50(0, o, 0, speed);
+        if (D_006E5940[(u16)o->unkCA8].flags & 0x20) {
+            func_005659F0(0xA, o, 0, 7, speed);
+        }
+        break;
+    case 0x191:
+        func_005659F0(0x10, o, 0, 0x19, speed);
+        break;
+    case 0x190:
+        break;
+    case 0x18E:
+        func_005659F0(0xA, o, 0, 2, speed);
+        func_00566090(0, o, 3, 0, speed);
+        break;
+    case 0x18D:
+        func_005659F0(0x1E, o, 0, 4, speed);
+        func_005659F0(0x20, o, 0, 4, speed);
+        func_00566090(0, o, 2, 0, speed);
+        break;
+    case 0x39E:
+        func_00565790(4, o, 0, speed);
+        break;
+    case 0x39B:
+        func_005658B0(0xA, o, 2, 8, speed);
+        func_005658B0(0x26, o, 2, 0xC, speed);
+        break;
+    case 0x39A:
+        func_005658B0(0xA, o, 2, 8, speed);
+        func_005658B0(0x26, o, 2, 0xC, speed);
+        break;
+    case 0x399:
+        func_005658B0(0xE, o, 2, 8, speed);
+        break;
+    case 0xBA:
+        func_00565790(0xBC, o, 0, speed);
+        func_00565790(0xFC, o, 0, speed);
+        break;
+    case 0xB2:
+        func_00565790(0x10, o, 0, speed);
+        func_00565790(0x34, o, 0, speed);
+        func_00565790(0x96, o, 0, speed);
+        func_00565790(0xAC, o, 0, speed);
+        break;
+    case 0xAA:
+        func_00565790(0x19, o, 0, speed);
+        func_00565790(0x2E, o, 0, speed);
+        func_00565790(0x96, o, 0, speed);
+        func_00565790(0xAC, o, 0, speed);
+        break;
+    case 0x97:
+        func_00565790(0x4C, o, 0, speed);
+        func_00565790(0x86, o, 0, speed);
+        func_00565790(0x96, o, 0, speed);
+        break;
+    case 0x38E:
+        func_00565790(0x1C, o, 0, speed);
+        break;
+    case 0x386:
+        func_00565790(0xC, o, 0, speed);
+        func_00565790(0x16, o, 0, speed);
+        func_005658B0(0x24, o, 2, 3, speed);
+        func_00565790(0x48, o, 0, speed);
+        func_00565790(0x4C, o, 0, speed);
+        break;
+    case 0x385:
+        func_00565790(0x26, o, 0, speed);
+        break;
+    case 0x383:
+        func_005658B0(0, o, 0, 5, speed);
+        break;
+    case 0x382:
+        func_00565790(0xD, o, 0, speed);
+        func_00565790(0x7F, o, 0, speed);
+        func_00565790(0x150, o, 0, speed);
+        break;
+    case 0x381:
+        func_00565790(0xD7, o, 0, speed);
+        func_00565790(0xEE, o, 0, speed);
+        func_00565790(0x129, o, 0, speed);
+        func_00565790(0x139, o, 0, speed);
+        break;
+    case 0x380:
+        func_00565790(0x154, o, 0, speed);
+        func_00565790(0x180, o, 0, speed);
+        func_005658B0(0x4A, o, 0, 6, speed);
+        break;
+    case 0x37F:
+        func_005658B0(0, o, 2, 1, speed);
+        break;
+    case 0x37B:
+        func_005658B0(0, o, 2, 3, speed);
+        break;
+    case 0x37A:
+        func_00565790(0x1C, o, 0, speed);
+        func_00565790(0x26, o, 0, speed);
+        func_005658B0(0, o, 2, 3, speed);
+        func_00565790(0x86, o, 0, speed);
+        func_00565790(0xBC, o, 0, speed);
+        break;
+    case 0x379:
+        func_00565790(0x1E, o, 0, speed);
+        func_00565790(0x2E, o, 0, speed);
+        func_00565790(0x3C, o, 0, speed);
+        func_00565790(0x6C, o, 0, speed);
+        func_00565790(0x78, o, 0, speed);
+        func_00565790(0x9E, o, 0, speed);
+        func_00565790(0xB0, o, 0, speed);
+        break;
+    case 0x364:
+        func_00565790(0x14, o, 0, speed);
+        func_00565790(0x32, o, 0, speed);
+        func_00565790(0xA, o, 0, speed);
+        func_00565790(0x96, o, 0, speed);
+        func_00565790(0xAA, o, 0, speed);
+        func_00565790(0xD5, o, 0, speed);
+        func_00565790(0xE4, o, 0, speed);
+        func_00565790(0xFD, o, 0, speed);
+        func_00565790(0x195, o, 0, speed);
+        func_00565790(0x1B5, o, 0, speed);
+        break;
+    case 0x35A:
+        func_00565790(0x54, o, 0, speed);
+        break;
+    case 0x358:
+        func_00565790(0x14, o, 0, speed);
+        break;
+    case 0x357:
+        func_00565790(0x19, o, 0, speed);
+        break;
+    case 0x355:
+        func_00565790(0x19, o, 0, speed);
+        break;
+    case 0x319:
+        func_00565790(0x3C, o, 0, speed);
+        func_00565790(0x3F, o, 0, speed);
+        break;
+    case 0x318:
+        func_00565790(0x48, o, 0, speed);
+        func_00565790(0x60, o, 0, speed);
+        func_00565790(0x7D, o, 0, speed);
+        break;
+    case 0x30E:
+        func_00565790(0x14E, o, 0, speed);
+        func_00565790(0x178, o, 0, speed);
+        func_005658B0(0x3E, o, 0, 6, speed);
+        break;
+    case 0x30B:
+        func_00565790(0x24, o, 0, speed);
+        break;
+    case 0x30A:
+        func_00565790(0x22, o, 0, speed);
+        func_00565790(0x42, o, 0, speed);
+        func_00565790(0x68, o, 0, speed);
+        func_00565790(0x88, o, 0, speed);
+        func_00565790(0xAC, o, 0, speed);
+        break;
+    case 0x309:
+        func_00565790(0x22, o, 0, speed);
+        func_00565790(0x42, o, 0, speed);
+        func_00565790(0x68, o, 0, speed);
+        func_00565790(0x8A, o, 0, speed);
+        func_00565790(0xAC, o, 0, speed);
+        break;
+    case 0x308:
+        func_00565790(0x24, o, 0, speed);
+        func_00565790(0x36, o, 0, speed);
+        func_00565790(0x44, o, 0, speed);
+        break;
+    case 0x307:
+        func_00565790(0x24, o, 0, speed);
+        func_00565790(0x36, o, 0, speed);
+        func_00565790(0x44, o, 0, speed);
+        break;
+    case 0x306:
+        func_00565790(0x1A, o, 0, speed);
+        func_00565790(0x34, o, 0, speed);
+        func_00565790(0x50, o, 0, speed);
+        break;
+    case 0x305:
+        func_00565790(0x1A, o, 0, speed);
+        func_00565790(0x34, o, 0, speed);
+        func_00565790(0x50, o, 0, speed);
+        break;
+    case 0x303:
+        func_00565790(0xA, o, 0, speed);
+        func_00565790(0x20, o, 0, speed);
+        func_00565790(0x30, o, 0, speed);
+        func_00565790(0x42, o, 0, speed);
+        break;
+    case 0x302:
+        func_00565790(0xA, o, 0, speed);
+        func_00565790(0x20, o, 0, speed);
+        func_00565790(0x30, o, 0, speed);
+        func_00565790(0x42, o, 0, speed);
+        break;
+    case 0x2F8:
+        func_00565790(0xF, o, 0, speed);
+        func_00565790(0x14, o, 0, speed);
+        break;
+    case 0x2E3:
+        func_00565790(0x3A, o, 0, speed);
+        break;
+    case 0x2DF:
+        func_00565790(0x18, o, 4, speed);
+        break;
+    case 0x2DE:
+        func_00565790(2, o, 4, speed);
+        func_00565790(0x4C, o, 4, speed);
+        break;
+    case 0x2DD:
+        func_00565790(0x30, o, 0, speed);
+        func_00565790(0x4B, o, 0, speed);
+        break;
+    case 0x2E1:
+        func_00565790(0x18, o, 3, speed);
+        func_00565790(0x34, o, 0, speed);
+        func_00565790(0x4A, o, 0, speed);
+        break;
+    case 0x2D9:
+        func_00565790(0x18, o, 3, speed);
+        func_00565790(0x6E, o, 3, speed);
+        break;
+    case 0x2D8:
+        func_00565790(0x16, o, 0, speed);
+        func_00565790(0x8A, o, 3, speed);
+        func_00565790(0xC4, o, 3, speed);
+        break;
+    case 0x2D7:
+        func_00565790(0x32, o, 0, speed);
+        func_00565790(0x54, o, 0, speed);
+        func_00565790(0x66, o, 0, speed);
+        func_00565790(0x7A, o, 0, speed);
+        break;
+    case 0x2D6:
+        func_00565790(0x2E, o, 0, speed);
+        break;
+    case 0x2D5:
+        func_00565790(0x23, o, 0, speed);
+        func_00565790(0x3C, o, 0, speed);
+        break;
+    case 0x26B:
+        func_00565790(0x24, o, 0, speed);
+        break;
+    case 0x269:
+        func_00565790(0x12, o, 0, speed);
+        func_00565790(0x2B, o, 0, speed);
+        break;
+    case 0x268:
+        func_00565790(0x16, o, 0, speed);
+        func_00565790(0x22, o, 0, speed);
+        break;
+    case 0x266:
+        func_00565790(0x14, o, 0, speed);
+        func_00565790(0x28, o, 0, speed);
+        func_00565790(0x3C, o, 0, speed);
+        break;
+    case 0x263:
+        func_00565790(0x14, o, 0, speed);
+        func_00565790(0x28, o, 0, speed);
+        func_00565790(0x3C, o, 0, speed);
+        break;
+    case 0x25F:
+        func_00565790(0x1A, o, 0, speed);
+        func_00565790(0x44, o, 0, speed);
+        break;
+    case 0x25E:
+        func_00565790(0x23, o, 0, speed);
+        func_00565790(0x46, o, 0, speed);
+        break;
+    case 0x25D:
+        func_00565790(0x10, o, 0, speed);
+        func_00565790(0x2C, o, 0, speed);
+        break;
+    case 0x25C:
+        func_00565790(0x14, o, 0, speed);
+        func_00565790(0x5E, o, 0, speed);
+        func_005659F0(0x22, o, 0, 1, speed);
+        func_005658B0(0x22, o, 2, 3, speed);
+        func_00565C80(0x24, o, 2, 0, speed);
+        func_00565C80(0x2A, o, 3, 0, speed);
+        break;
+    case 0x25B:
+        func_00565790(0x16, o, 0, speed);
+        func_00565790(0x5E, o, 0, speed);
+        func_005659F0(0x24, o, 0, 1, speed);
+        func_005658B0(0x24, o, 2, 3, speed);
+        func_00565C80(0x26, o, 2, 0, speed);
+        func_00565C80(0x2C, o, 3, 0, speed);
+        break;
+    case 0x25A:
+        func_00565790(0x16, o, 0, speed);
+        func_00565790(0x5E, o, 0, speed);
+        func_005659F0(0x22, o, 0, 1, speed);
+        func_005658B0(0x22, o, 2, 3, speed);
+        func_00565C80(0x24, o, 2, 0, speed);
+        func_00565C80(0x2A, o, 3, 0, speed);
+        break;
+    case 0x259:
+        func_00565820(0x14, o, 0, speed);
+        func_00565820(0x28, o, 0, speed);
+        break;
+    case 0x258:
+        func_00565820(0x10, o, 0, speed);
+        func_00565820(0x26, o, 0, speed);
+        break;
+    case 0x257:
+        func_00565790(0xA, o, 0, speed);
+        break;
+    case 0x256:
+        func_00565790(0x14, o, 0, speed);
+        func_00565790(0x5E, o, 0, speed);
+        func_005659F0(0x18, o, 0, 1, speed);
+        func_005658B0(0x18, o, 2, 3, speed);
+        func_00565DA0(0x1E, o, 3, 0x12, 0, speed);
+        func_00565C80(0x1A, o, 2, 0, speed);
+        func_00565C80(0x26, o, 3, 0, speed);
+        break;
+    case 0x255:
+        func_005659F0(0x14, o, 0, 1, speed);
+        func_005658B0(0x14, o, 2, 3, speed);
+        func_00565790(0x24, o, 0, speed);
+        func_00565C80(0x14, o, 2, 0, speed);
+        func_00565C80(0x20, o, 3, 0, speed);
+        break;
+    case 0x254:
+        func_00565790(0x10, o, 0, speed);
+        func_005659F0(0x14, o, 0, 1, speed);
+        func_005658B0(0x14, o, 2, 3, speed);
+        func_00565C80(0x12, o, 2, 0, speed);
+        func_00565C80(0x22, o, 3, 0, speed);
+        break;
+    case 0x253:
+        func_00565790(8, o, 0, speed);
+        func_00565790(0x13, o, 0, speed);
+        break;
+    case 0x24E:
+        func_00565790(2, o, 4, speed);
+        func_00565790(0x38, o, 4, speed);
+        func_005658B0(0x6E, o, 2, 0xC, speed);
+        func_005658B0(0x94, o, 2, 0xC, speed);
+        func_00565790(0xCC, o, 0, speed);
+        func_00565790(0xF2, o, 0, speed);
+        func_00565790(0x12A, o, 0, speed);
+        func_00565790(0x146, o, 0, speed);
+        break;
+    case 0x24D:
+        func_00565790(0x36, o, 0, speed);
+        func_005658B0(0x72, o, 2, 0xC, speed);
+        func_005658B0(0xB2, o, 2, 0xC, speed);
+        func_005658B0(0xEA, o, 2, 0xC, speed);
+        func_005658B0(0x112, o, 2, 0xC, speed);
+        break;
+    case 0x24B:
+        func_00565790(0x1C, o, 0, speed);
+        func_00565790(0x34, o, 0, speed);
+        break;
+    case 0x24A:
+        func_00565790(0x1C, o, 0, speed);
+        func_00565790(0x34, o, 0, speed);
+        break;
+    case 0x249:
+        func_00565790(0x20, o, 0, speed);
+        func_00565790(0x64, o, 0, speed);
+        func_00565790(0x84, o, 0, speed);
+        func_00565790(0xAE, o, 0, speed);
+        func_00565790(0xCC, o, 0, speed);
+        break;
+    case 0x248:
+        func_00565790(0x16, o, 0, speed);
+        func_00565790(0x3E, o, 0, speed);
+        break;
+    case 0x247:
+        func_00565790(0x36, o, 0, speed);
+        func_00565790(0x54, o, 0, speed);
+        func_00565790(0x7C, o, 3, speed);
+        func_00565790(0xA2, o, 0, speed);
+        break;
+    case 0x246:
+        func_00565790(0x24, o, 0, speed);
+        func_00565790(0x3C, o, 0, speed);
+        break;
+    case 0x237:
+        func_005658B0(0x1E, o, 2, 8, speed);
+        func_005658B0(0x94, o, 0, 6, speed);
+        func_005658B0(0x94, o, 2, 0xC, speed);
+        func_005658B0(0xD8, o, 2, 0xC, speed);
+        func_005658B0(0x112, o, 2, 0xC, speed);
+        func_00565790(0x1A6, o, 0, speed);
+        break;
+    case 0x236:
+        func_00565790(0x5C, o, 0, speed);
+        break;
+    case 0x235:
+        func_00565790(0x12A, o, 0, speed);
+        func_00565790(0xA, o, 4, speed);
+        func_00565790(0x3E, o, 4, speed);
+        break;
+    case 0x234:
+        func_005658B0(0x1A, o, 2, 8, speed);
+        func_005658B0(0x94, o, 0, 6, speed);
+        func_005658B0(0x94, o, 2, 0xC, speed);
+        func_005658B0(0xE8, o, 2, 0xC, speed);
+        func_005658B0(0x136, o, 2, 0xC, speed);
+        func_005658B0(0x162, o, 2, 0xC, speed);
+        func_005658B0(0x1A8, o, 2, 0xC, speed);
+        func_005658B0(0x1DA, o, 2, 0xC, speed);
+        func_00565790(0x1F6, o, 4, speed);
+        func_00565790(0x23A, o, 4, speed);
+        break;
+    case 0x22E:
+        func_00565790(0x40, o, 0, speed);
+        func_00565790(0x60, o, 0, speed);
+        break;
+    case 0x22A:
+        func_00565790(0xC, o, 0, speed);
+        break;
+    case 0x229:
+        func_00565790(0x64, o, 0, speed);
+        break;
+    case 0x223:
+        func_00565790(0x54, o, 0, speed);
+        break;
+    case 0x222:
+        func_00565790(0x64, o, 0, speed);
+        func_005658B0(0x2C, o, 0, 6, speed);
+        break;
+    case 0x21E:
+        func_00565790(0x96, o, 0, speed);
+        func_00565790(0xA2, o, 0, speed);
+        break;
+    case 0x21D:
+        func_00565790(0x18, o, 0, speed);
+        func_00565790(0x28, o, 0, speed);
+        break;
+    case 0x21C:
+        func_00565790(0x14, o, 0, speed);
+        func_00565790(0x22, o, 0, speed);
+        break;
+    case 0x21B:
+        func_00565790(0x44, o, 0, speed);
+        func_00565790(0x78, o, 0, speed);
+        break;
+    case 0x21A:
+        func_00565790(0x36, o, 0, speed);
+        func_00565790(0x4A, o, 0, speed);
+        break;
+    case 0x216:
+        func_00565790(0xE, o, 0, speed);
+        func_005658B0(0x20, o, 2, 8, speed);
+        func_00565790(0x22, o, 0, speed);
+        break;
+    case 0x215:
+        func_00565790(0x16, o, 0, speed);
+        func_00565790(0x4A, o, 0, speed);
+        break;
+    case 0x214:
+        func_00565790(0xC, o, 0, speed);
+        func_00565790(0x44, o, 0, speed);
+        break;
+    case 0x213:
+        func_00565790(0xE, o, 0, speed);
+        func_005658B0(0x1E, o, 2, 8, speed);
+        func_00565790(0x20, o, 0, speed);
+        break;
+    case 0x212:
+        func_00565790(0x18, o, 0, speed);
+        func_00565790(0x5A, o, 0, speed);
+        break;
+    case 0x211:
+        func_00565790(0x28, o, 0, speed);
+        func_00565790(0x56, o, 0, speed);
+        break;
+    case 0x210:
+        func_00565790(8, o, 0, speed);
+        func_005658B0(0xC, o, 2, 8, speed);
+        func_00565790(0x28, o, 0, speed);
+        break;
+    case 0x20F:
+        func_00565790(0xC, o, 0, speed);
+        func_005658B0(0x12, o, 2, 0xA, speed);
+        func_00565790(0x5A, o, 0, speed);
+        break;
+    case 0x20E:
+        func_00565790(0x10, o, 0, speed);
+        func_005658B0(0x20, o, 2, 0xA, speed);
+        func_00565790(0x46, o, 0, speed);
+        break;
+    case 0x20D:
+        func_00565790(0x10, o, 0, speed);
+        func_005658B0(0x12, o, 2, 8, speed);
+        func_00565790(0x2E, o, 0, speed);
+        break;
+    case 0x20C:
+        func_005658B0(0x1E, o, 2, 0xA, speed);
+        func_00565790(0x1E, o, 0, speed);
+        func_00565790(0x62, o, 0, speed);
+        break;
+    case 0x20B:
+        func_00565790(0x18, o, 0, speed);
+        func_005658B0(0x1E, o, 2, 0xA, speed);
+        break;
+    case 0x20A:
+        func_00565790(0xA, o, 0, speed);
+        func_005658B0(0x1C, o, 2, 8, speed);
+        func_00565790(0x1E, o, 0, speed);
+        break;
+    case 0x209:
+        func_00565790(0x12, o, 0, speed);
+        func_00565790(0x4A, o, 0, speed);
+        break;
+    case 0x208:
+        func_00565790(0xC, o, 0, speed);
+        func_00565790(0x42, o, 0, speed);
+        break;
+    case 0x207:
+        func_00565790(0xC, o, 0, speed);
+        func_005658B0(0x1E, o, 2, 8, speed);
+        func_00565790(0x20, o, 0, speed);
+        break;
+    case 0x206:
+        func_00565790(0x1E, o, 0, speed);
+        func_00565790(0x54, o, 0, speed);
+        break;
+    case 0x205:
+        func_00565790(0x1E, o, 0, speed);
+        func_00565790(0x54, o, 0, speed);
+        break;
+    case 0x201:
+        func_00565790(0x130, o, 0, speed);
+        break;
+    case 0x200:
+        func_00565790(4, o, 0, speed);
+        func_00565790(0x24, o, 0, speed);
+        func_00565790(0x46, o, 0, speed);
+        break;
+    case 0x1FF:
+        func_00565790(0x1A, o, 0, speed);
+        func_00565790(0x28, o, 0, speed);
+        func_00565790(0x56, o, 0, speed);
+        break;
+    case 0x1FB:
+        func_00565790(0x10, o, 0, speed);
+        func_00565790(0x18, o, 0, speed);
+        func_00565790(0x30, o, 0, speed);
+        func_00565790(0x42, o, 0, speed);
+        break;
+    case 0x1F9:
+        func_00565790(0x1C, o, 0, speed);
+        func_00565790(0x26, o, 0, speed);
+        break;
+    case 0x350:
+        func_00565790(0x10, o, 0, speed);
+        func_00565790(0x1A, o, 0, speed);
+        func_00565790(0x32, o, 0, speed);
+        func_00565790(0x44, o, 0, speed);
+        break;
+    case 0x349:
+        func_00565790(0x10, o, 0, speed);
+        func_00565790(0x18, o, 0, speed);
+        break;
+    case 0x348:
+        func_00565790(0x28, o, 0, speed);
+        func_00565790(0x40, o, 0, speed);
+        break;
+    case 0x346:
+        func_00565790(0x1E, o, 0, speed);
+        func_00565790(0x32, o, 0, speed);
+        break;
+    case 0x11A:
+        func_00565790(0x18, o, 0, speed);
+        func_00565790(0x32, o, 0, speed);
+        break;
+    case 0x119:
+        func_00565790(0x24, o, 0, speed);
+        func_00565790(0x3C, o, 0, speed);
+        break;
+    case 0x117:
+        func_005659F0(0xE, o, 0, 1, speed);
+        func_005658B0(0xE, o, 2, 3, speed);
+        func_00565C80(0xE, o, 2, 0, speed);
+        func_00565C80(0x14, o, 3, 0, speed);
+        break;
+    case 0x116:
+        func_005659F0(0xE, o, 0, 1, speed);
+        func_005658B0(0xE, o, 2, 3, speed);
+        func_00565C80(0xE, o, 2, 0, speed);
+        func_00565C80(0x14, o, 3, 0, speed);
+        break;
+    case 0x115:
+        func_005659F0(0xE, o, 0, 1, speed);
+        func_005658B0(0xE, o, 2, 3, speed);
+        func_00565C80(0xE, o, 2, 0, speed);
+        func_00565C80(0x14, o, 3, 0, speed);
+        break;
+    case 0x110:
+        func_005659F0(0, o, 0, 0x11, speed);
+        break;
+    case 0x10F:
+        func_005659F0(0, o, 0, 0x11, speed);
+        break;
+    case 0x10E:
+        func_005659F0(0, o, 0, 0x11, speed);
+        break;
+    case 0x10D:
+        func_00565790(0x1A, o, 0, speed);
+        break;
+    case 0x10C:
+        func_00565790(0x1A, o, 0, speed);
+        break;
+    case 0x10A:
+        func_005659F0(0x14, o, 0, 1, speed);
+        func_005658B0(0x14, o, 2, 3, speed);
+        func_00565C80(0x12, o, 2, 0, speed);
+        func_00565C80(0x1C, o, 3, 0, speed);
+        break;
+    case 0x109:
+        func_005659F0(0x10, o, 0, 1, speed);
+        func_005658B0(0x10, o, 2, 3, speed);
+        func_00565C80(0x12, o, 2, 0, speed);
+        func_00565C80(0x1C, o, 3, 0, speed);
+        break;
+    case 0x108:
+        func_005659F0(0x12, o, 0, 1, speed);
+        func_005658B0(0x12, o, 2, 3, speed);
+        func_00565C80(0x12, o, 2, 0, speed);
+        func_00565C80(0x1C, o, 3, 0, speed);
+        break;
+    case 0xEC:
+        func_00565790(0xC, o, 0, speed);
+        break;
+    case 0xEB:
+        func_00565790(0x16, o, 0, speed);
+        break;
+    case 0x3A3:
+        func_00565C20(0x6E, o, 0xB7, speed);
+        break;
+    case 0x1DD:
+        func_00565790(0x1C, o, 0, speed);
+        func_00565790(0x44, o, 0, speed);
+        break;
+    case 0x1DC:
+        func_00565790(0x10, o, 0, speed);
+        func_00565790(0x2A, o, 0, speed);
+        break;
+    case 0x1DB:
+        func_00566090(0, o, 2, 0, speed);
+        func_00565DA0(0, o, 5, 0x19, 0, speed);
+        func_005659F0(0x10, o, 0, 2, speed);
+        func_005659F0(0x48, o, 0, 3, speed);
+        func_005659F0(0x70, o, 0, 0x18, speed);
+        break;
+    case 0x1D9:
+        func_00565790(0x10, o, 0, speed);
+        func_00565790(0x2A, o, 0, speed);
+        break;
+    case 0x1D8:
+        func_00565790(2, o, 0, speed);
+        func_00565790(0x20, o, 0, speed);
+        break;
+    case 0x1D7:
+        func_00565790(0x28, o, 0, speed);
+        func_00565790(0x3A, o, 0, speed);
+        break;
+    case 0x1D5:
+        func_00565790(0x26, o, 0, speed);
+        func_00565790(0x38, o, 0, speed);
+        break;
+    case 0x1D3:
+        func_00565790(0x1A, o, 0, speed);
+        func_00565790(0x36, o, 0, speed);
+        break;
+    case 0x1D2:
+        func_00565790(0x26, o, 0, speed);
+        func_00565790(0x38, o, 0, speed);
+        break;
+    case 0x1D0:
+        func_00565790(0x14, o, 0, speed);
+        func_00565790(0x28, o, 0, speed);
+        break;
+    case 0x9C:
+    case 0x9F:
+    case 0xA8:
+    case 0x1B5:
+    case 0x1B8:
+    case 0x1BD:
+    case 0x1BE:
+    case 0x36C:
+    case 0x371:
+        break;
+    case 0x1B4:
+        func_00565790(0x1E, o, 0, speed);
+        func_00565790(0x44, o, 0, speed);
+        break;
+    case 0x1B2:
+        func_00565790(0x1D, o, 0, speed);
+        func_00565790(0x2E, o, 0, speed);
+        break;
+    case 0x1B1:
+        func_00565790(0x16, o, 0, speed);
+        func_00565790(0x30, o, 0, speed);
+        break;
+    case 0x1AC:
+        func_00565790(0x10, o, 0, speed);
+        func_00565790(0x24, o, 0, speed);
+        break;
+    case 0x1A7:
+        func_005659F0(0x14, o, 0, 6, speed);
+        break;
+    case 0x1A6:
+        func_00566090(0, o, 2, 0, speed);
+        func_005659F0(0xE, o, 0, 2, speed);
+        break;
+    case 0x1A5:
+        func_00565790(0x1C, o, 0, speed);
+        func_00565790(0x46, o, 0, speed);
+        break;
+    case 0x1A4:
+        func_00565790(0x12, o, 0, speed);
+        break;
+    case 0x1A3:
+        func_00565790(0x14, o, 0, speed);
+        func_00565790(0x2D, o, 0, speed);
+        break;
+    case 0x1A2:
+        func_00565790(0x14, o, 0, speed);
+        func_00565790(0x2D, o, 0, speed);
+        break;
+    case 0x19D:
+        func_00565790(0x14, o, 0, speed);
+        func_00565790(0x26, o, 0, speed);
+        break;
+    case 0x1A1:
+        func_00565DA0(0x28, o, 4, 0, 0, speed);
+        func_005659F0(0x28, o, 0, 6, speed);
+        break;
+    case 0x19C:
+    case 0x19F:
+        func_00565DA0(0x28, o, 4, 0, 0, speed);
+        func_005659F0(0x28, o, 0, 6, speed);
+        break;
+    case 0x19A:
+        func_00565790(0x28, o, 0, speed);
+        break;
+    case 0x174:
+        func_00565790(2, o, 0, speed);
+        break;
+    case 0x172:
+        func_00565790(0x10, o, 0, speed);
+        break;
+    case 0x16E:
+        func_00565790(0x26, o, 0, speed);
+        func_00565790(0x104, o, 0, speed);
+        func_00565790(0x122, o, 0, speed);
+        break;
+    case 0x16D:
+        func_00565790(0x22, o, 0, speed);
+        func_00565790(0x106, o, 0, speed);
+        func_00565790(0x120, o, 0, speed);
+        break;
+    case 0x378:
+        func_00565790(0x41, o, 0, speed);
+        func_00565790(0x5A, o, 0, speed);
+        break;
+    case 0x377:
+        func_00565790(0x16, o, 0, speed);
+        func_00565790(0x42, o, 0, speed);
+        break;
+    case 0x376:
+        func_00565790(0x40, o, 0, speed);
+        func_00565790(0x5C, o, 0, speed);
+        break;
+    case 0x375:
+        func_00565790(0x15, o, 0, speed);
+        func_00565790(0x3A, o, 0, speed);
+        break;
+    case 0x372:
+        func_00565790(0x41, o, 0, speed);
+        func_00565790(0x57, o, 0, speed);
+        break;
+    case 0x370:
+        func_00565790(0x25, o, 0, speed);
+        func_00565790(0x3E, o, 0, speed);
+        break;
+    case 0x36D:
+        func_00565790(0x42, o, 0, speed);
+        break;
+    case 0x36B:
+        func_00565790(0x38, o, 0, speed);
+        break;
+    case 0x169:
+        func_00565790(0xC, o, 0, speed);
+        func_00565790(0x16, o, 0, speed);
+        func_00565790(0x24, o, 0, speed);
+        func_00565790(0x56, o, 0, speed);
+        break;
+    case 0x165:
+        func_00565790(0x30, o, 0, speed);
+        break;
+    case 0x164:
+        func_00565790(0xE, o, 0, speed);
+        func_00565790(0x18, o, 0, speed);
+        func_00565790(0x24, o, 0, speed);
+        break;
+    case 0x160:
+        func_00565790(0x14, o, 0, speed);
+        break;
+    case 0x15D:
+        func_00565BC0(0x24, o, 0, speed);
+        break;
+    case 0x15C:
+        func_00565BC0(0x24, o, 0, speed);
+        break;
+    case 0x15A:
+    case 0x15B:
+        if (o->unk54F == 0x39) {
+            func_00565C80(1, o, 0, 0xC8, speed);
+            func_00565C80(0x64, o, 3, 0, speed);
+        }
+        break;
+    case 0x159:
+        func_00565BC0(0x24, o, 0, speed);
+        break;
+    case 0x158:
+        func_00565BC0(0x24, o, 0, speed);
+        break;
+    case 0x157:
+        func_00565790(0x10, o, 0, speed);
+        func_00565790(0x32, o, 0, speed);
+        func_00565790(0x62, o, 0, speed);
+        func_00565790(0x80, o, 0, speed);
+        func_00565790(0x94, o, 0, speed);
+        func_00565790(0xCC, o, 0, speed);
+        break;
+    case 0x156:
+        func_00565790(0x1A, o, 0, speed);
+        func_00565790(0x56, o, 0, speed);
+        func_00565790(0x68, o, 0, speed);
+        func_00565790(0x88, o, 0, speed);
+        func_00565790(0xA2, o, 0, speed);
+        break;
+    case 0x155:
+        func_00565790(0x14, o, 0, speed);
+        func_00565790(0x34, o, 0, speed);
+        func_00565790(0x5A, o, 0, speed);
+        func_00565790(0x7E, o, 0, speed);
+        func_00565790(0x94, o, 0, speed);
+        break;
+    case 0x154:
+        func_00565790(0x16, o, 0, speed);
+        func_00565790(0x30, o, 0, speed);
+        func_00565790(0x50, o, 0, speed);
+        func_00565790(0x6A, o, 0, speed);
+        break;
+    case 0x11E:
+        func_00565790(0x3A, o, 0, speed);
+        func_005658B0(0x12, o, 2, 3, speed);
+        func_00565C80(0x10, o, 0, 0x7E, speed);
+        func_00565C80(0x16, o, 3, 0, speed);
+        break;
+    case 0xED:
+        func_00565790(0x1A, o, 0, speed);
+        func_00565790(0x24, o, 0, speed);
+        func_00565790(0x36, o, 0, speed);
+        break;
+    case 0xE9:
+        func_005658B0(0xA, o, 2, 3, speed);
+        func_00565790(0x16, o, 0, speed);
+        func_00565790(0x26, o, 0, speed);
+        func_00565790(0x36, o, 0, speed);
+        func_00565C80(0xA, o, 1, 0, speed);
+        func_00565C80(0x18, o, 3, 0, speed);
+        break;
+    case 0xE8:
+        func_00565790(2, o, 0, speed);
+        func_00565790(0x18, o, 0, speed);
+        func_00565790(0x4A, o, 0, speed);
+        func_00565790(0x6E, o, 0, speed);
+        func_00565790(0xA5, o, 0, speed);
+        func_00565790(0xC4, o, 0, speed);
+        break;
+    case 0xE7:
+        func_00565790(2, o, 0, speed);
+        func_00565790(0x29, o, 0, speed);
+        func_00565790(0x49, o, 0, speed);
+        func_00565790(0x74, o, 0, speed);
+        func_00565790(0x8C, o, 0, speed);
+        func_00565790(0xBE, o, 0, speed);
+        break;
+    case 0xE3:
+        func_00565790(0xA, o, 0, speed);
+        break;
+    case 0xFD:
+        func_00565C80(0x14, o, 1, 0, speed);
+        func_005659F0(0x14, o, 0, 0, speed);
+        break;
+    case 0xFC:
+        func_00565C80(0x14, o, 1, 0, speed);
+        func_005659F0(0x14, o, 0, 0, speed);
+        break;
+    case 0xD7:
+        func_00565C80(0x14, o, 1, 0, speed);
+        func_005659F0(0x14, o, 0, 0, speed);
+        break;
+    case 0xD5:
+        func_00565790(0xE, o, 0, speed);
+        break;
+    case 0xC0:
+        func_00565790(0x32, o, 0, speed);
+        break;
+    case 0xBF:
+        func_00565790(0x2E, o, 0, speed);
+        break;
+    case 0xBE:
+        func_00565790(0x3A, o, 0, speed);
+        func_00565790(0x56, o, 0, speed);
+        func_00565790(0x82, o, 0, speed);
+        func_00565790(0xA0, o, 0, speed);
+        break;
+    case 0xBD:
+        func_00565790(2, o, 0, speed);
+        func_00565790(0x32, o, 0, speed);
+        func_00565790(0x54, o, 0, speed);
+        func_00565790(0x87, o, 0, speed);
+        break;
+    case 0xBC:
+        func_00565790(0x17, o, 0, speed);
+        func_00565790(0x32, o, 0, speed);
+        break;
+    case 0xB9:
+        func_00565790(0xA, o, 0, speed);
+        func_00565790(0x2A, o, 0, speed);
+        break;
+    case 0xB1:
+        func_00565790(0x14, o, 0, speed);
+        func_00565790(0x29, o, 0, speed);
+        func_00565790(0x45, o, 0, speed);
+        func_00565790(0x7A, o, 0, speed);
+        func_00565790(0x8C, o, 0, speed);
+        break;
+    case 0xAE:
+        func_00565790(0xC, o, 0, speed);
+        func_00565790(0x42, o, 0, speed);
+        func_00565790(0x68, o, 0, speed);
+        func_00565790(0x8D, o, 0, speed);
+        break;
+    case 0xAD:
+        func_00565790(0x22, o, 0, speed);
+        func_00565790(0x48, o, 0, speed);
+        func_00565790(0x74, o, 0, speed);
+        func_00565790(0x96, o, 0, speed);
+        break;
+    case 0xAC:
+        func_00565790(0x34, o, 0, speed);
+        break;
+    case 0xA9:
+        func_00565790(0x28, o, 0, speed);
+        func_00565790(0x44, o, 0, speed);
+        func_00565790(0x76, o, 0, speed);
+        func_00565790(0x8C, o, 0, speed);
+        break;
+    case 0x9A:
+        func_00565DA0(0x5C, o, 2, 0, 0, speed);
+        func_00565790(0x10, o, 2, speed);
+        func_00565790(0x4A, o, 2, speed);
+        func_00565790(0x5C, o, 0, speed);
+        break;
+    case 0x99:
+        func_00565790(0x56, o, 2, speed);
+        func_00565790(0xB0, o, 2, speed);
+        break;
+    case 0x95:
+        func_00565790(2, o, 0, speed);
+        break;
+    case 0x92:
+        func_00565790(0x28, o, 0, speed);
+        func_00565790(0x50, o, 0, speed);
+        break;
+    case 0x8F:
+        func_00565790(0x12, o, 3, speed);
+        func_00565790(0x44, o, 3, speed);
+        func_005658B0(0x3C, o, 2, 0xA, speed);
+        break;
+    case 0x8E:
+        func_00565790(0x4A, o, 3, speed);
+        func_005658B0(0x22, o, 2, 0xA, speed);
+        break;
+    case 0x8D:
+        func_00565790(2, o, 0, speed);
+        func_00565790(0x12, o, 0, speed);
+        break;
+    case 0x8B:
+        func_005658B0(0x16, o, 2, 0xA, speed);
+        func_00565790(0x22, o, 0, speed);
+        func_00565790(0x38, o, 0, speed);
+        break;
+    case 0x8A:
+        func_005658B0(0x16, o, 2, 0xA, speed);
+        func_00565790(0x22, o, 0, speed);
+        func_00565790(0x38, o, 0, speed);
+        break;
+    case 0x89:
+        func_00565790(0x26, o, 0, speed);
+        func_00565790(0x44, o, 0, speed);
+        func_00565790(0x72, o, 0, speed);
+        func_005658B0(0x72, o, 2, 8, speed);
+        func_00565790(0x5C, o, 3, speed);
+        break;
+    case 0x88:
+        func_005658B0(0x38, o, 2, 0xA, speed);
+        func_00565790(0x34, o, 0, speed);
+        func_00565790(0x2C, o, 3, speed);
+        break;
+    case 0x87:
+        func_00565790(0x28, o, 0, speed);
+        func_00565790(0x3C, o, 3, speed);
+        func_005658B0(0x2E, o, 2, 0xA, speed);
+        func_00565790(0x68, o, 3, speed);
+        break;
+    case 0x86:
+        func_00565790(8, o, 0, speed);
+        break;
+    case 0x85:
+        func_00565790(0xC, o, 0, speed);
+        break;
+    case 0x84:
+        func_005658B0(0x46, o, 2, 0xA, speed);
+        break;
+    case 0x83:
+        func_005658B0(0x20, o, 2, 0xA, speed);
+        break;
+    case 0x7F:
+        func_00565790(0xC, o, 0, speed);
+        func_00565790(0x18, o, 0, speed);
+        break;
+    case 0x7E:
+        func_00565790(0x10, o, 0, speed);
+        func_00565790(0x44, o, 0, speed);
+        func_00565790(0x74, o, 0, speed);
+        func_00565790(0xA4, o, 0, speed);
+        func_00565DA0(0x10, o, 6, 0x81, 0, speed);
+        func_00565DA0(0x44, o, 6, 0x82, 0, speed);
+        func_00565DA0(0x74, o, 6, 0x81, 0, speed);
+        func_00565DA0(0xA4, o, 6, 0x82, 0, speed);
+        break;
+    case 0x7D:
+        func_00565790(0x1E, o, 1, speed);
+        func_00565790(0x36, o, 1, speed);
+        func_00565DA0(0x1E, o, 6, 0x81, 0, speed);
+        func_00565DA0(0x36, o, 6, 0x82, 0, speed);
+        break;
+    case 0x7C:
+        func_00565790(0x1A, o, 0, speed);
+        func_00565790(0x4C, o, 0, speed);
+        func_00565DA0(0x1A, o, 6, 0x81, 0, speed);
+        func_00565DA0(0x4C, o, 6, 0x82, 0, speed);
+        break;
+    case 0x68:
+        func_00565790(8, o, 0, speed);
+        func_00565790(0x18, o, 0, speed);
+        break;
+    case 0x67:
+        func_00565790(0x1C, o, 0, speed);
+        func_005658B0(0x32, o, 2, 8, speed);
+        func_00565790(0x34, o, 0, speed);
+        func_00565DA0(0x1C, o, 6, 0x81, 0, speed);
+        func_00565DA0(0x34, o, 6, 0x82, 0, speed);
+        break;
+    case 0x66:
+        func_00565790(0x16, o, 0, speed);
+        func_00565790(0x36, o, 0, speed);
+        func_00565DA0(0x16, o, 6, 0x41, 0, speed);
+        func_00565DA0(0x36, o, 6, 0x42, 0, speed);
+        break;
+    case 0x65:
+        func_00565790(0x18, o, 0, speed);
+        func_00565790(0x3A, o, 0, speed);
+        func_00565DA0(0x18, o, 6, 0x81, 0, speed);
+        func_00565DA0(0x3A, o, 6, 0x82, 0, speed);
+        break;
+    }
+    func_0056E7D0(o, speed);
+}
+
+#endif
