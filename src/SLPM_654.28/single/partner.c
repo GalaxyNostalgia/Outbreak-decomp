@@ -759,7 +759,78 @@ u8 func_00836490(DrawObjFull *obj, u8 w) {
     return gun;
 }
 #endif
-u8 func_00836150(DrawObjFull *obj, u8 slot);
+typedef struct {
+    u16 id;             /* 0xFFFF ends */
+    u8 min;             /* rounds in it, min-max */
+    u8 max;
+    u8 rank;            /* lower is better */
+    u8 unk5;
+} WeaponRank;
+
+extern WeaponRank D_00839D50[];     /* by weapon class (func_00583EA0 0xF000): 0x1000 */
+extern WeaponRank D_00839DF0[];     /* 0x2000 */
+extern WeaponRank D_00839ED0[];     /* 0x4000 */
+extern WeaponRank D_00839FD0[];     /* 0x8000 */
+extern WeaponRank D_0083A020[];     /* not a weapon: flag 4 */
+extern WeaponRank D_0083A0A0[];     /* flag 0xC02 */
+extern WeaponRank D_0083A180[];     /* others */
+
+/* How good the item in slot is to the partner in hand (lower better, 0xFF never): breakable
+   ones by what's left of them, others by D_00839D50's tables of id and rounds. */
+u8 func_00836150(DrawObjFull *obj, u8 slot) {
+    u8 rank;
+    ItemSlot *e;
+    s32 i;
+    WeaponRank *t;
+
+    rank = 0xFF;
+    e = &D_003967D0[slot];
+    if (e == NULL || e->active == 0) {
+        return 0xFF;
+    }
+    if (e->unk6 >= 10000 || func_00583E30(slot)[0x15] > 0) {
+        if ((u16)e->owner > 0) {
+            return 3 - func_00583E30(slot)[0x15];
+        }
+        return 0xFF;
+    }
+    if (func_00584800(slot) == 0 || e->unk6 == 0x135) {
+        if (obj != NULL && obj->unkB98 == 0 && e->unk6 == 0x106) {
+            return 0x6B;
+        }
+        if (func_00583EA0(slot, 4) != 0) {
+            t = D_0083A020;
+        } else if (func_00583EA0(slot, 0xC02) != 0) {
+            t = D_0083A0A0;
+        } else {
+            t = D_0083A180;
+        }
+    } else {
+        switch (func_00583EA0(slot, 0xF000)) {
+        case 0x1000:
+            t = D_00839D50;
+            break;
+        case 0x2000:
+            t = D_00839DF0;
+            break;
+        case 0x4000:
+            t = D_00839ED0;
+            break;
+        case 0x8000:
+            t = D_00839FD0;
+            break;
+        default:
+            return 0xFF;
+        }
+    }
+    for (i = 0; t[i].id != 0xFFFF; i++) {
+        if (e->unk6 == t[i].id && !(e->unk24 < (s16)t[i].min) && !(e->unk24 > (s16)t[i].max)) {
+            rank = t[i].rank;
+            break;
+        }
+    }
+    return rank;
+}
 
 /* With its enemy out of D_0083A1F0's range: the best (func_00836150) of the partner's other
    weapons that can be loaded (func_00836490) into *item, 1; else 0. */
