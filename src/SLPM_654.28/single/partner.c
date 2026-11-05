@@ -3390,3 +3390,7 @@ s8 func_00835C50(DrawObjFull *obj, DrawObjFull *player, u8 *item, u16 id) {
 /* Empty. */
 void func_00825DA0(void) {
 }
+
+/* An empty thinking step. */
+void func_0082A720(DrawObjFull *obj) {
+}
