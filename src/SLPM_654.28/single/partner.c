@@ -919,6 +919,22 @@ s32 func_00823780(DrawObjFull *obj) {
     }
     return 0;
 }
+
+/* Thinking step 0 (idle): on first entry func_0082A690 4; when it isn't moving, func_00823780
+   on unk1096 (1 if that acted), else back to step 0. */
+s32 func_00824B10(DrawObjFull *obj) {
+    if (obj->unkFFC[0] == 0) {
+        obj->unkFFC[0]++;
+        func_0082A690(obj, 4);
+    }
+    if (obj->unkFF8 == 0) {
+        if (obj->unk1096 != 0 && func_00823780(obj) != 0) {
+            return 1;
+        }
+        func_00823340(obj, 0);
+    }
+    return 0;
+}
 s32 func_008270C0(f32 r, f32 *pos, f32 *to);
 extern u8 D_0048AEB0[];
 
