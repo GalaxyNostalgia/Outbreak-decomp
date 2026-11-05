@@ -881,7 +881,19 @@ void func_00341B50(void);
 void func_001BA0B0(s32 a, s32 b);
 void func_005BF6E0(s16 a);
 
-void func_00541010(DrawObjFull *o);
+/* The message's 16 extra things (0x11A0 bytes each, type 10), cleared, when it has its characters. */
+void func_00541010(DrawObjFull *o) {
+    u8 *p;
+    s32 i;
+
+    if (D_0048BF60.unk28 != 0) {
+        D_0035FFD0.unk134 = o;
+        for (i = 0, p = (u8 *)o; i < 0x10; i++, p += 0x11A0) {
+            memset(p, 0, 0x11A0);
+            p[2] = 10;
+        }
+    }
+}
 
 /* The message's work memory and its 8 characters, cleared. */
 void func_005C05B0(void) {
