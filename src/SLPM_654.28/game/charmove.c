@@ -6600,3 +6600,113 @@ s32 func_0061AA50(DrawObjFull *o) {
     }
     return 0;
 }
+
+s32 func_0061F060(DrawObjFull *o);
+void func_0061EF30(DrawObjFull *o, s32 a);
+void func_00540080(s32 n);
+s32 func_0067D590(u8 thing, DrawObjFull *o);
+
+/* The action button's requests (unkC78, unkC74) when o may act: a reaction pending, online
+   func_0061F060's, func_0061D7A0's (3), a pick-up (1: action 1/0x16) or 3, then the things to
+   open or push (unkC75 1: action 0x36, 2: 0x37, told to the server). 1 if one was taken. */
+#ifdef NON_MATCHING   /* branch layout (a b the original keeps after the 0x1A test, the request switches) */
+s32 func_0061DB40(DrawObjFull *o) {
+    s32 a;
+    u8 k;
+
+    if (o->unkBA0 & 0x3E8) {
+        return 0;
+    }
+    if (o->unk544 == 0) {
+        return 0;
+    }
+    k = 0;
+    if (o->unk54F != 0x1A) {
+        k = 1;
+    }
+    func_00631760(o, k, 0);
+    if (o->unkBA0 & 0x4000) {
+        func_00631760(o, 2, 0);
+    }
+    if (o->unkAD4 != 0) {
+        o->unkAB8 = 0;
+        o->unkC78 = 0;
+        o->unkC74 = 0;
+        return 1;
+    }
+    if (o->type == 0 && func_001AF540(o) == 1 && (a = func_0061F060(o)) != 0) {
+        func_0061EF30(o, a);
+        o->unkAB8 = 0;
+        o->unkC78 = 0;
+        o->unkC74 = 0;
+        return 1;
+    }
+    if (func_0061D7A0(o, 0) != 0) {
+        o->unkC78 = 0;
+        o->unkC74 = 0;
+        func_0064C620(o, 3);
+        return 1;
+    }
+    if (o->type == 0 && !(o->unkBA0 & 0x80) && o->isNpc == 0) {
+        switch (o->unkC78) {
+        case 1:
+            o->unkC78 = 0;
+            o->unkC74 = 0;
+            if (o->act[1] == 0x1A) {
+                o->act[2] = 0x1E;
+            } else {
+                o->act[0] = 1;
+                o->act[1] = 0x16;
+                o->act[2] = 0;
+                o->act[3] = 0;
+                func_00635920(o);
+            }
+            func_0064C620(o, 4);
+            return 1;
+        case 3:
+            o->unkC78 = 0;
+            o->unkC74 = 0;
+            func_00540080(0xD);
+            return 1;
+        }
+    } else {
+        o->unkC78 = 0;
+    }
+    if (o->unkC74 != 1) {
+        return 0;
+    }
+    o->unkC74 = 0;
+    if (o->unkBA0 & 0x88) {
+        return 0;
+    }
+    switch (o->unkC75) {
+    case 1:
+        if (func_001AF510() == 0 && (s8)func_0067D590(o->unkCB0, o) == 0) {
+            break;
+        }
+        o->act[0] = 1;
+        o->act[1] = 0x36;
+        o->act[2] = 0;
+        o->act[3] = 0;
+        func_00635920(o);
+        o->act[3] = o->unkC76;
+        func_0064E360(o, 5, o->unkCB0);
+        func_0064C620(o, 1);
+        break;
+    case 2:
+        if (func_001AF510() == 0 && (s8)func_0067D6C0(o) == 0) {
+            break;
+        }
+        o->act[0] = 1;
+        o->act[1] = 0x37;
+        o->act[2] = 0;
+        o->act[3] = 0;
+        func_00635920(o);
+        o->act[3] = o->unkAC8 >> 8;
+        func_0064E360(o, 6, o->unkCB0);
+        func_0064C620(o, 1);
+        break;
+    }
+    return 1;
+}
+#endif

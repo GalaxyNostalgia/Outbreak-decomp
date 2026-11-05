@@ -145,7 +145,9 @@ typedef struct {
     u8 unkAB8;          /* 0xAB8 */ \
     u8 unkAB9;          /* 0xAB9 */ \
     u8 unkABA;          /* 0xABA */ \
-    u8 unkABB[0xAD4 - 0xABB]; \
+    u8 unkABB[0xAC8 - 0xABB]; \
+    s32 unkAC8;         /* 0xAC8 */ \
+    u8 unkACC[0xAD4 - 0xACC]; \
     u8 unkAD4;          /* 0xAD4: a reaction pending */ \
     u8 unkAD5;          /* 0xAD5: which (D_006DDA80) */ \
     u8 unkAD6[0xAEC - 0xAD6]; \
@@ -209,7 +211,12 @@ typedef struct {
     u8 unkC64;          /* 0xC64 */ \
     u8 unkC65;          /* 0xC65: what hit it (1-4) */ \
     s16 unkC66;         /* 0xC66 */ \
-    u8 unkC68[0xC79 - 0xC68]; \
+    u8 unkC68[0xC74 - 0xC68]; \
+    u8 unkC74;          /* 0xC74: (1) the action button asks for something */ \
+    u8 unkC75;          /* 0xC75: what (1 a thing to open, 2 ...) */ \
+    u8 unkC76;          /* 0xC76 */ \
+    u8 unkC77; \
+    u8 unkC78;          /* 0xC78: a pending pick-up (1) or 3 */ \
     u8 unkC79;          /* 0xC79: how it picks up an item (0-3 the height, 2 a carried one) */ \
     u8 unkC7A;          /* 0xC7A: the item it picks up */ \
     u8 unkC7B; \
