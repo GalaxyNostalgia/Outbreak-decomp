@@ -2912,6 +2912,21 @@ s32 func_0082A090(DrawObjFull *obj, s32 n, s32 id) {
     return r;
 }
 
+/* The room's zone that func_0082A090's choice n names (by unk3F, + 1); NULL if none. */
+Zone *func_0082A030(DrawObjFull *obj, s32 n) {
+    Zone *found = NULL;
+    Zone *z;
+
+    n = func_0082A090(obj, n, obj->unk1E2);
+    for (z = D_0023BD90; z != NULL; z = z->next) {
+        if ((s8)z->unk3F == n + 1) {
+            found = z;
+            break;
+        }
+    }
+    return found;
+}
+
 /* Whether switch n of room id lets the partner through. */
 #ifdef NON_MATCHING   /* if (bit) return 0; return 1; folds into sltu/xori */
 s32 func_008291D0(DrawObjFull *obj, s32 n, s32 id) {
