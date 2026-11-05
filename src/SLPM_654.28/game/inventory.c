@@ -7,6 +7,19 @@
 
 void func_005C15E0(DrawObjFull *p);
 
+/* Puts item slot in the first free of o's four (then func_005C15E0). */
+void func_005C1A60(DrawObjFull *o, u8 slot) {
+    u32 i;
+
+    for (i = 0; i < 4; i++) {
+        if (o->unkC84[i] == 0) {
+            o->unkC84[i] = D_003967D0[slot].index;
+            break;
+        }
+    }
+    func_005C15E0(o);
+}
+
 /* Item slot is added to p's extra slots. */
 void func_005C1AC0(DrawObjFull *p, u8 slot) {
     u32 i;

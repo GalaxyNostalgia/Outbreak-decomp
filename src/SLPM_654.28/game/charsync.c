@@ -1010,68 +1010,6 @@ s16 func_005C1240(DrawObjFull *o) {
     return r;
 }
 
-void func_005C15E0(DrawObjFull *o);
-
-/* Puts item slot in the first free of o's four (then func_005C15E0). */
-void func_005C1A60(DrawObjFull *o, u8 slot) {
-    u32 i;
-
-    for (i = 0; i < 4; i++) {
-        if (o->unkC84[i] == 0) {
-            o->unkC84[i] = D_003967D0[slot].index;
-            break;
-        }
-    }
-    func_005C15E0(o);
-}
-
-/* Puts item slot in o's extra slots: character 6's four, character 7's nine for each of the
-   items 0x12C-0x12E (the tenth if all are taken, as in the original); then func_005C15E0. */
-void func_005C1AC0(DrawObjFull *o, u8 slot) {
-    u32 i;
-
-    if (o->unkB98 == 6) {
-        for (i = 0; i < 4; i++) {
-            if (o->unkC88[1 + i] == 0) {
-                o->unkC88[1 + i] = D_003967D0[slot].index;
-                break;
-            }
-        }
-    }
-    if (o->unkB98 == 7) {
-        u16 id = D_003967D0[slot].unk6;
-
-        if (id >= 0x12C && id < 0x12F) {
-            switch (id) {
-            case 0x12C:
-                for (i = 0; i < 9; i++) {
-                    if (o->unkC88[1 + i] == 0) {
-                        break;
-                    }
-                }
-                o->unkC88[1 + i] = D_003967D0[slot].index;
-                break;
-            case 0x12D:
-                for (i = 0; i < 9; i++) {
-                    if (o->unkC88[10 + i] == 0) {
-                        break;
-                    }
-                }
-                o->unkC88[10 + i] = D_003967D0[slot].index;
-                break;
-            case 0x12E:
-                for (i = 0; i < 9; i++) {
-                    if (o->unkC88[0x13 + i] == 0) {
-                        break;
-                    }
-                }
-                o->unkC88[0x13 + i] = D_003967D0[slot].index;
-                break;
-            }
-        }
-    }
-    func_005C15E0(o);
-}
 
 /* Where o keeps item slot: 0-3 its four, 0x80 + n the extra ones; 0xFF nowhere. */
 u8 func_005C1570(DrawObjFull *o, u8 slot) {
