@@ -1146,7 +1146,7 @@ typedef struct {
     s16 kind;           /* how they combine (func_005823A0) */
 } ItemCombo;
 s16 func_00583AD0(ItemSlot *a, ItemSlot *b, s16 *arg);
-s16 *func_00583DD0(ItemSlot *a);
+ItemInfo *func_00583DD0(ItemSlot *a);
 
 /* How items a and b combine (and its arg): character 4 carrying both has her own ways for some
    (func_00583AD0); else a's entries in D_007177A0. 0: they don't. */
@@ -1184,8 +1184,8 @@ s16 func_005838F0(ItemSlot *a, ItemSlot *b, s16 *arg) {
             break;
         }
     }
-    first = func_00583DD0(a)[2];
-    n = func_00583DD0(a)[3];
+    first = func_00583DD0(a)->combo;
+    n = func_00583DD0(a)->combos;
     if (first < 0 || n <= 0) {
         return 0;
     }
@@ -1324,3 +1324,14 @@ s8 func_005823A0(u8 ia, u8 ib) {
     return r;
 }
 #endif
+
+/* Slot e's item type (the empty one, D_00716980[0x80], for none). */
+ItemInfo *func_00583DD0(ItemSlot *e) {
+    if (e == NULL || e->active == 0) {
+        return &D_00716980[0x80];
+    }
+    if (e->type == 0xFF) {
+        return &D_00716980[0x80];
+    }
+    return &D_00716980[e->type];
+}
