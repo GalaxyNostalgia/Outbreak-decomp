@@ -808,6 +808,51 @@ u8 func_005C14C0(DrawObjFull *o, u16 id) {
 }
 
 s32 func_00583EA0(u8 slot, s32 mask);
+/* Whether o is busy (not standing, or in an action that can't be cut) for picking up item: a
+   partner offline is free in actions 0-11, anyone in all but nine. */
+s32 func_005C0E20(DrawObjFull *o, u8 item);
+#ifdef NON_MATCHING   /* delay slots of the action compares filled differently */
+s32 func_005C0E20(DrawObjFull *o, u8 item) {
+    if (o->act[0] != 1) {
+        return 1;
+    }
+    if (o->type == 0 && func_001AF4D0() == 1 && o->isNpc != 0) {
+        switch (o->act[1]) {
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+        case 4:
+        case 5:
+        case 6:
+        case 7:
+        case 8:
+        case 9:
+        case 10:
+        case 11:
+            return 0;
+        default:
+            return 1;
+        }
+    }
+    switch (o->act[1]) {
+    case 0x1A:
+    case 0x34:
+    case 0x4A:
+    case 0x6D:
+    case 0x74:
+    case 0x81:
+    case 0x98:
+    case 0xA3:
+    case 0xC5:
+        return 1;
+    case 0xCD:
+        return 1;
+    }
+    return 0;
+}
+#endif
+
 /* Where o keeps item slot: 0-3 its four, 0x80 + n the extra ones; 0xFF nowhere. */
 u8 func_005C1570(DrawObjFull *o, u8 slot) {
     u32 i;
