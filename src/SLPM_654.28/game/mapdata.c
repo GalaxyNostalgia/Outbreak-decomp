@@ -1180,3 +1180,24 @@ void func_006ABBA0(void) {
     func_006A5A00();
     D_00306590.unk3E = 0;
 }
+
+/* The message's demo stream: its name from the text and speaker, then demo\<name>.adx. */
+#include "message.h"
+extern char D_0070D868[];   /* "%02d_%02d_%d" */
+extern char D_0070D878[];   /* "%s%s.adx" */
+extern char D_0070D888[];   /* "demo\\" */
+char *func_006A4E40(char *key);
+void func_001ADA60(s32 n, s32 byId, s32 file, s32 ptid);
+s32 sprintf(char *dst, const char *fmt, ...);
+
+void func_006A4D10(void) {
+    char file[0x80];
+    char key[0x80];
+    char *name;
+
+    sprintf(key, D_0070D868, D_0035FFD0.a, D_0035FFD0.b, D_0035FFD0.who);
+    if ((name = func_006A4E40(key)) != NULL) {
+        sprintf(file, D_0070D878, D_0070D888, name);
+        func_001ADA60(1, 0, (s32)file, 0);
+    }
+}
