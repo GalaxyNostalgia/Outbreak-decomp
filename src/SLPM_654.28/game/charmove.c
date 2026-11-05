@@ -7165,3 +7165,8 @@ s32 func_0063BCB0(DrawObjFull *o) {
     return 0;
 }
 #endif
+
+/* Never. */
+s32 func_00619830(DrawObjFull *o) {
+    return 0;
+}
