@@ -984,6 +984,11 @@ s32 func_005C0F30(DrawObjFull *o, u8 what) {
 
 s8 func_00584800(u8 i);
 
+/* The weapon kind of item slot i. */
+s16 func_005C1210(u8 i) {
+    return func_00584800(i);
+}
+
 /* The weapon kind of the item in o's hand (0 none). */
 s16 func_005C1240(DrawObjFull *o) {
     s16 r = 0;
