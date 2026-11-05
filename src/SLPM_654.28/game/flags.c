@@ -96,3 +96,30 @@ extern u16 D_0048BDE0[];        /* the map levels shown, a bit each */
 s32 func_00540A10(s32 n) {
     return (D_0048BDE0[0] & (1 << (n & 0xF))) != 0;
 }
+
+s32 func_001AF510(void);
+void func_001AF000(s32 to, void *msg, s32 kind, s32 a3);
+
+/* A flag word change of D_0048AFB0 (row, bit, on, col) told to the others (online). */
+void func_0064C0A0(s32 row, s32 bit, s32 on, s32 col) {
+    struct {
+        u8 kind;
+        u8 len;
+        u8 unk2[2];
+        u8 row;
+        u8 bit;
+        u8 on;
+        u8 col;
+        u8 pad[0x28];
+    } m;
+
+    if (func_001AF510() != 0) {
+        m.kind = 1;
+        m.len = 8;
+        m.row = row;
+        m.bit = bit;
+        m.on = on;
+        m.col = col;
+        func_001AF000(5, &m, 0, 4);
+    }
+}
