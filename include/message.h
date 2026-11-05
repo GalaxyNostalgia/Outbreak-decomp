@@ -24,7 +24,11 @@ typedef struct {
 
 /* The message being shown (inside a 0xB10-byte work area). */
 typedef struct {
-    u8 unk0[8];
+    s8 step;            /* 0x00 */
+    s8 sub;             /* 0x01 */
+    s8 sub2;            /* 0x02 */
+    s8 sub3;            /* 0x03 */
+    s32 done;           /* 0x04 */
     s32 frames;         /* 0x08: time the message has been up, in 60ths of a second */
     u8 unkC[4];
     s32 count;          /* 0x10: entries in the loaded messages (func_005BD280's counts[0]) */
@@ -36,7 +40,9 @@ typedef struct {
     s16 n3;             /* 0x1E: counts[3] */
     s16 unk20;
     s16 unk22;
-    u8 unk24[0x28 - 0x24];
+    u8 unk24;           /* 0x24 */
+    u8 unk25;           /* 0x25 */
+    u8 unk26[2];
     u8 room2[3];        /* 0x28: the room it plays in */
     u8 room[3];         /* 0x2B: the room it's shown in (Options.unk1A, unk1C, unk1E) */
     s8 unk2E;           /* 0x2E */

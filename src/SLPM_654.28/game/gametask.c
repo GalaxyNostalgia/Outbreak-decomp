@@ -980,28 +980,160 @@ s32 func_005BC430(void) {
 }
 #endif
 
-typedef struct {
-    s8 step;
-    s8 sub;
-    s8 sub2;
-    s8 sub3;
-} MsgSteps;
-extern MsgSteps *D_0023BE7C;    /* the message's steps (D_0035FFD0) */
-void func_005BD690(MsgSteps *m);
+extern MsgWork *D_0023BE7C;     /* the message (D_0035FFD0) */
 void func_005BC7D0(void);
+void func_006A4D10(void);
+void func_006A4D90(void);
+s32 func_001ADBA0(s32 n);
+void func_001ADC30(s32 n);
+s32 func_0034A290(void);
+s32 func_0034A2F0(void);
+void func_00349B40(void);
+s32 func_005C0C60(void);
+void func_001B3960(void);
+void func_001AC210(void);
+void func_00349DE0(void);
+void func_00349E20(void);
+void func_005BBF10(void);
+void func_005BBF20(void);
+s32 func_001AF510(void);
+void func_005C0E10(void);
+extern void (*D_006D8A70[16])(void);
+void func_00590400(void);
+void func_00681820(s8 i);
+void func_005908A0(void);
+void func_001BA180(void);
+void func_005BF480(void);
+
+/* The message plays: (0) its text or movie starts, (1) its stream is ready, (2) the movie ends,
+   (3) each frame until it's over. */
+void func_005BD690(void) {
+    s32 end;
+    s32 i;
+
+    switch (D_0023BE7C->sub) {
+    case 0:
+        if (D_0023BE7C->kind == 1) {
+            if (D_0048BF60.unk3B == 1) {
+                func_006A4D10();
+            } else {
+                func_006A4D90();
+            }
+        } else {
+            func_006A4D10();
+        }
+        D_0023BE7C->sub++;
+        break;
+    case 1:
+        if (D_0023BE7C->kind == 1) {
+            if (D_0048BF60.unk3B == 1 && func_001ADBA0(1) == 0) {
+                break;
+            }
+        } else if (func_001ADBA0(1) == 0) {
+            break;
+        }
+        if (D_0023BE7C->kind == 0) {
+            D_0023BE7C->sub = 3;
+            func_001ADC30(1);
+            func_001B9C30(1, 0xFF000000);
+            func_001BA0F0(0xFF000000);
+        } else {
+            func_00349B40();
+            D_0023BE7C->sub++;
+        }
+        D_0023BE7C->frames = 0;
+        D_0023BE7C->done = 0;
+        D_0023BE7C->unk24 = 0;
+        D_0023BE7C->unk25 = 0;
+        break;
+    case 2:
+        if (func_0034A290() == 2) {
+            D_0023BE7C->sub++;
+            if (D_0048BF60.unk3B == 1) {
+                func_001ADC30(1);
+            }
+            if (D_0048BF60.unk3B > 1) {
+                func_005BBF10();
+            }
+            func_001BA0F0(0xFF000000);
+            func_001B9C30(1, 0xFF000000);
+        }
+        break;
+    case 3:
+        end = 0;
+        if (D_0023BE7C->kind != 0) {
+            if (func_0034A2F0() == 0) {
+                end = 1;
+            }
+        } else {
+            end |= D_0023BE7C->done;
+        }
+        if (func_005C0C60() != 0) {
+            D_0023BE7C->step++;
+            D_0023BE7C->sub = 0;
+            D_0023BE7C->sub2 = 0;
+            D_0048BF60.unk3D[1] = 0;
+            func_001B3960();
+            func_001AD420(1);
+            func_001AD420(2);
+            func_001AC210();
+            if (D_0023BE7C->kind != 0) {
+                func_00349DE0();
+                func_00349E20();
+                func_005BBF20();
+            }
+            if (func_001AF510() == 1) {
+                func_005C0E10();
+            }
+        } else if (end != 0) {
+            if (D_0023BE7C->kind != 0) {
+                func_00349DE0();
+                func_005BBF20();
+            }
+            D_0023BE7C->step++;
+            D_0023BE7C->sub = 0;
+            D_0023BE7C->sub2 = 0;
+            D_0048BF60.unk3D[1] = 0;
+            func_001AD420(1);
+            func_001AD420(2);
+            func_001AC210();
+            func_001B3960();
+        } else {
+            for (i = 0; i < 0x10; i++) {
+                D_006D8A70[i]();
+            }
+            func_00590400();
+            for (i = 0; i < D_0035FFD0.unk1C; i++) {
+                func_00681820(i);
+            }
+            func_005908A0();
+            func_001BA180();
+            func_005BF480();
+            if (D_00306590.unkC != 0) {
+                D_0023BE7C->frames += 2;
+            } else {
+                D_0023BE7C->frames += 1;
+            }
+            if (D_0023BE7C->frames >= D_0023BE7C->count) {
+                D_0023BE7C->done = 1;
+            }
+        }
+        break;
+    }
+}
 
 /* While changing rooms: the queued messages play (1 once the queue is empty). */
 s32 func_005BDA70(void) {
     s32 r;
 
-    D_0023BE7C = (MsgSteps *)&D_0035FFD0;
+    D_0023BE7C = &D_0035FFD0;
     r = 0;
     switch (D_0023BE7C->step) {
     case 0:
         D_0023BE7C->step++;
         break;
     case 1:
-        func_005BD690(D_0023BE7C);
+        func_005BD690();
         break;
     case 2:
         if (D_0023BD7C == D_0023BD78) {
