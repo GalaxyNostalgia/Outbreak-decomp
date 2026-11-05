@@ -870,6 +870,102 @@ extern s8 D_0048BF88[];
 extern u8 D_0035FFFB[];         /* (the next room's) */
 extern u8 D_0035FFFF[];
 
+#include "message.h"
+extern u8 D_0048BBE0[];         /* per item: who has it (player + 1) */
+extern s32 D_003AEF6C[];
+extern s32 D_003AEF70[];
+s32 func_005BC430(void);
+void func_005BC690(void);
+void func_005C05B0(void);
+void func_00341B50(void);
+void func_001BA0B0(s32 a, s32 b);
+void func_005BF6E0(s16 a);
+
+/* The next queued message comes up: the players it's for (those near its item's owner, or
+   all), the room, and its fade. */
+#ifdef NON_MATCHING   /* regalloc in the player loop (11 differ) */
+void func_005BC140(void) {
+    s32 i;
+    s32 n;
+    s32 cnt;
+    s32 st;
+    DrawObjFull *o;
+
+    D_0048BF60.unk3A = 0;
+    D_0048BF60.unk1E[0] = 0;
+    D_0048BF60.unk3D[1] = 0;
+    memset(&D_0035FFD0, 0, sizeof(D_0035FFD0));
+    if (D_0023BD7C == D_0023BD78) {
+        D_0048BF60.unk28 = 0;
+        D_0048BF60.unkCA = 0;
+        return;
+    }
+    func_005BF6E0(D_0023BD7C);
+    D_0048BF60.unk28 = 1;
+    D_0048BF60.unkCA = 1;
+    func_005C05B0();
+    if (D_0035FFD0.item == 0) {
+        D_0035FFD0.owner = 0;
+    } else {
+        D_0035FFD0.owner = D_0048BBE0[D_0035FFD0.item];
+    }
+    cnt = D_0023BE14;
+    D_0035FFD0.n = 0;
+    for (i = 0, n = 0; i < cnt; i++) {
+        o = &D_00476DD0[i];
+        o->visible = 0;
+        st = o->unkBA0;
+        if (st & 0x5E0) {
+            continue;
+        }
+        if (D_0035FFD0.who2 == 4 || D_0035FFD0.who2 == 5) {
+            if (D_0035FFD0.owner == 0) {
+                continue;
+            }
+            if (D_00476DD0[D_0035FFD0.owner - 1].unk1E2 != o->unk1E2) {
+                continue;
+            }
+        } else if (D_0035FFD0.who2 == 6) {
+            if (D_0035FFD0.owner - 1 != i && D_0048AC10.players[D_0035FFD0.owner - 1][1] != o->unk1E2) {
+                continue;
+            }
+        }
+        D_0035FFD0.chr[n] = o->unkB98;
+        D_0035FFD0.status[n] = st;
+        D_0035FFD0.pl[n] = o->kind;
+        n++;
+        D_0035FFD0.n++;
+    }
+    if (D_0035FFD0.owner != 0) {
+        for (i = 0; i < D_0035FFD0.n; i++) {
+            if (D_0035FFD0.pl[i] == D_0035FFD0.owner - 1) {
+                D_0035FFD0.owner = i + 1;
+                break;
+            }
+        }
+    }
+    D_0035FFD0.room[0] = D_00306590.unk1A;
+    D_0035FFD0.room[1] = D_00306590.unk1C;
+    D_0035FFD0.room[2] = D_00306590.unk1E;
+    if (D_0035FFD0.kind != 1) {
+        func_005BAD50();
+        func_005BC690();
+        func_00341AB0();
+    } else {
+        func_00341B50();
+    }
+    D_003AEF6C[0] = 0;
+    D_003AEF70[0] = -1;
+    if (func_005BC430() != 0) {
+        D_0048BF60.unk28 = 0;
+        D_0048BF60.unkCA = 0;
+    }
+    func_001B9C30(1, 0xFF000000);
+    func_001BA0B0(1, 0);
+    func_001B2C90();
+}
+#endif
+
 /* State 4: changing rooms: (0) out with a fade (or straight to 2 for a cut), (1) until the
    streams stop, (2) the old room goes, (3) the new one loads (func_005BDA70) and fades in, (4)
    online until everyone's there (else on to 5), (5) the room starts: the characters, the items,

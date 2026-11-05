@@ -27,7 +27,8 @@ typedef struct {
     s16 n3;             /* 0x1E: counts[3] */
     s16 unk20;
     s16 unk22;
-    u8 unk24[0x2E - 0x24];
+    u8 unk24[0x2B - 0x24];
+    u8 room[3];         /* 0x2B: the room it's shown in (Options.unk1A, unk1C, unk1E) */
     s8 unk2E;           /* 0x2E */
     u8 kind;            /* 0x2F */
     u8 a;               /* 0x30: the text */
@@ -35,9 +36,16 @@ typedef struct {
     u8 who;             /* 0x32: the speaker's character */
     u8 unk33;
     s32 who2;           /* 0x34 */
-    u8 unk38[8];
+    u8 unk38[4];
+    s32 owner;          /* 0x3C: who has the item (player + 1), then its place in the list + 1 */
     s32 item;           /* 0x40 */
-    u8 unk44[0xB10 - 0x44];
+    u8 unk44[4];
+    s32 status[0x28];   /* 0x48: the listed players' status (unkBA0) */
+    u8 pl[8];           /* 0xE8: the listed players' numbers */
+    u8 chr[8];          /* 0xF0: the listed players' characters */
+    u8 unkF8[0x12C - 0xF8];
+    s32 n;              /* 0x12C: players listed */
+    u8 unk130[0xB10 - 0x130];
 } MsgWork;
 
 extern MsgWork D_0035FFD0;
