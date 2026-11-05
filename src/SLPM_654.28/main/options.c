@@ -304,6 +304,13 @@ s32 func_001AA5C0(const char *name);
 s32 func_001B6980(s32 slot);
 
 /* Sets stream n's volume now (vol 0-127, scaled by its set volume), stopping any fade. */
+/* Pauses stream n. */
+s32 func_001AD190(s32 n) {
+    D_0029B060[n].active = 1;
+    ADXT_Pause(D_0029B0B8[n], 1);
+    return 0;
+}
+
 s32 func_001AD260(s32 n, s32 vol) {
     s32 v;
 
