@@ -73,3 +73,8 @@ void func_00601FE0(s32 *f, s32 x) {
     func_00601F60();
     D_0023BED8 = func_00602040(f, x, D_00394F20, 32, D_0070F140);
 }
+
+/* The route nodes. */
+NavNode *func_00602220(void) {
+    return D_00394F20;
+}

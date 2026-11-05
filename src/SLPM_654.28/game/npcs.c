@@ -1158,7 +1158,7 @@ typedef struct {
     u8 unk10[0x30];
 } WayNode;              /* 0x40 */
 
-WayNode *func_00602220(void);
+WayNode *func_00602220(void);    /* (navnodes.c, as NavNode *) */
 s8 func_00602290(const f32 *pos);
 u8 func_00602230(s32 from, s32 to);
 
