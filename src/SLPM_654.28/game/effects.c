@@ -611,3 +611,50 @@ void func_0055FB20(Obj250L *p) {
         p->unk1 = 0;
     }
 }
+
+s16 func_005C1210(s32 slot);
+ItemInfo *func_00583E30(s32 i);
+u8 func_00556070(DrawObjFull *o, s32 slot, s32 kind);
+
+/* (weapon flags, D_006E5940: 0x1E0 its class) */
+typedef struct {
+    u32 flags;
+    u8 unk4[0x40];
+} EffWeapon;
+
+extern EffWeapon D_006E5940[];
+
+/* Whether o can load the weapon in slot now (not full, and ammunition of its kinds at hand,
+   func_00556070). */
+s32 func_005561A0(DrawObjFull *o, s32 slot) {
+    u16 w = func_005C1210(slot);
+    s16 n;
+
+    if (o->unkBA0 & 8) {
+        return 0;
+    }
+    if (slot == 0) {
+        return 0;
+    }
+    n = D_003967D0[slot & 0xFF].unk24;
+    if (!(n < func_00583E30(slot)->max)) {
+        return 0;
+    }
+    switch (D_006E5940[w].flags & 0x1E0) {
+    case 0x20:
+    case 0x40:
+        if (func_00556070(o, slot, 0xC) != 0xFF) {
+            break;
+        }
+        /* fall through */
+    case 0x80:
+    case 0x100:
+        if (func_00556070(o, slot, 1) != 0xFF) {
+            break;
+        }
+        return 0;
+    default:
+        return 0;
+    }
+    return 1;
+}
