@@ -1378,3 +1378,30 @@ void func_005815C0(u8 i) {
         func_00561810(e->index);
     }
 }
+
+void func_001D6C30(DrawObjFull *o);
+
+/* Shows the carried item in slot i in its holder's hand (its thing, flag 0x20000); the thing. */
+ItemObj *func_005813A0(u8 i) {
+    ItemSlot *e = &D_003967D0[i];
+
+    if (e->active == 0) {
+        return NULL;
+    }
+    if (!((u16)e->owner > 0)) {
+        return NULL;
+    }
+    func_00581320(i);
+    e->flags |= 0x20000;
+    e->obj = func_00560E80(e->unk6, 0);
+    if (e->obj != NULL) {
+        ((ItemObj *)e->obj)->flags = e->flags;
+        ((ItemObj *)e->obj)->index = i;
+    }
+    if (func_00583DD0(e)->flags & 1) {
+        if ((u16)e->owner <= D_0023BE14) {
+            func_001D6C30(&D_00476DD0[(u16)e->owner - 1]);
+        }
+    }
+    return e->obj;
+}

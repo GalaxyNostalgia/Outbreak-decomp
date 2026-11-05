@@ -6429,7 +6429,7 @@ s32 func_00619840(DrawObjFull *o) {
 
 void *func_00543800(void *owner, void *fn);
 void func_005A9680(void);
-void *func_005813A0(u8 slot, s32 owner);
+void *func_005813A0(u8 slot);
 s16 func_005C1240(void *o);
 void func_00581560(u8 slot);
 
@@ -6478,7 +6478,7 @@ void func_00641190(DrawObjFull *o) {
             n = o->unkBB4 + 5;
         }
         D_003967D0[o->unkC7C].owner = n;
-        func_005813A0(o->unkC7C, n);
+        func_005813A0(o->unkC7C);
         o->unkCA8 = func_005C1240(o);
         e = func_00543800(o, func_005A9680);
         if (e != NULL) {

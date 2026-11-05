@@ -202,7 +202,7 @@ Npc *func_00651810(u16 model) {
 extern u8 D_003967D2[][0x3C];
 extern u8 D_003967F8[][0x3C];
 s32 func_00583EA0(s16 id, s32 a);
-void *func_005813A0(u8 slot, s32 owner);
+void *func_005813A0(u8 slot);
 s16 func_005C1240(void *o);
 
 void func_00635390(DrawObjFull *o, u8 slot);
@@ -220,7 +220,7 @@ void func_00635390(DrawObjFull *o, u8 slot) {
         owner = o->unkBB4 + 5;
     }
     *(s16 *)D_003967F8[o->unkC7C] = owner;
-    func_005813A0(o->unkC7C, owner);
+    func_005813A0(o->unkC7C);
     o->unkCA8 = func_005C1240(o);
 }
 #endif
