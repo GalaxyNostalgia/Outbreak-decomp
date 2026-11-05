@@ -301,6 +301,24 @@ void func_001D6BA0(DrawObjFull *obj) {
     }
 }
 
+void func_001AC8B0(char *name, s32 slot);
+
+/* The same, loaded at once (func_001AC8B0). */
+void func_001D6C30(DrawObjFull *obj) {
+    char name[0x80];
+    s32 item = obj->unkC7C;
+    s32 w;
+
+    if (item != 0xFF) {
+        w = func_00584790(item);
+        if (w != -1) {
+            func_00682750(obj->kind, w);
+            sprintf(name, D_002385D8, w);
+            func_001AC8B0(name, obj->kind + 8);
+        }
+    }
+}
+
 void func_001D6DD0(DrawObjFull *obj) {
     char name[0x80];
 
