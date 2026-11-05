@@ -1733,7 +1733,7 @@ void func_0082AB20(DrawObjFull *obj) {
     }
     func_0082BB30(obj, r);
 }
-s32 func_00829FA0(DrawObjFull *obj, Zone **zones, s32 n, s32 sw);
+Zone *func_00829FA0(DrawObjFull *obj, Zone **zones, s32 n, s32 sw);
 
 s32 func_005494C0(const f32 *from, const f32 *to, f32 *hit, f32 *normal, s32 mask, s32 b,
                   s32 *kind);
@@ -2920,6 +2920,22 @@ Zone *func_0082A030(DrawObjFull *obj, s32 n) {
     n = func_0082A090(obj, n, obj->unk1E2);
     for (z = D_0023BD90; z != NULL; z = z->next) {
         if ((s8)z->unk3F == n + 1) {
+            found = z;
+            break;
+        }
+    }
+    return found;
+}
+
+/* The same among zones[0..n). */
+Zone *func_00829FA0(DrawObjFull *obj, Zone **zones, s32 n, s32 sw) {
+    Zone *found = NULL;
+    s32 i;
+
+    sw = func_0082A090(obj, sw, obj->unk1E2);
+    for (i = 0; i < n; i++) {
+        Zone *z = zones[i];
+        if ((s8)z->unk3F == sw + 1) {
             found = z;
             break;
         }
