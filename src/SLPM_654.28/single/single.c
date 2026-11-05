@@ -1125,7 +1125,35 @@ typedef struct {
     u8 to;              /* 0x08 */
 } TimeMsg;
 
+/* The answer to an item request (8 bytes). */
+typedef struct {
+    u8 type;
+    u8 len;
+    u8 from;            /* our player */
+    u8 unk3;
+    u8 to;              /* the player asking + 1 */
+    u8 r;               /* 1 granted, 2 refused */
+    u8 req;             /* its number */
+    u8 unk7[9];
+} ItemReply;
+
+/* Answers player to's item request req with r (as the server would). */
 void func_00820FD0(s32 to, s32 r, s32 req);
+#ifdef NON_MATCHING   /* the 7 is copied from v1 into a0 in the original */
+void func_00820FD0(s32 to, s32 r, s32 req) {
+    ItemReply m;
+    s32 n = 7;
+
+    m.to = to + 1;
+    m.r = r;
+    m.req = req;
+    m.len = n;
+    m.type = 0;
+    m.unk3 = 0;
+    m.from = D_0048BF60.unk1D;
+    func_00820940(n, (Msg *)&m, 0, 4);
+}
+#endif
 s32 func_00821C30(s32 player);
 s32 func_00581140(u8 item, u8 who);
 void func_005810A0(u8 item, u8 who);
