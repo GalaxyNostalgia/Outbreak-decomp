@@ -371,6 +371,24 @@ void func_001B9A60(Task *t) {
     }
 }
 
+/* Fades the screen in from color over frames (fewer at double speed). */
+s32 func_001B9BA0(s16 frames, u32 color) {
+    LevelFade *f = &D_002F8890;
+
+    if (D_002F8890.mode != 2 && D_002F8890.mode != 1) {
+        f->level = 0.0f;
+    }
+    frames = frames >> D_00306590.unkC;
+    if (frames == 0) {
+        frames = 1;
+    }
+    f->color = color;
+    f->step = 1.0f / frames;
+    D_002F8890.mode = 1;
+    D_002F8890.wait = 1;
+    return 1;
+}
+
 /* Fades the screen out to color over frames (fewer at double speed). */
 s32 func_001B9C30(s16 frames, u32 color) {
     LevelFade *f = &D_002F8890;
