@@ -321,6 +321,15 @@ void func_001BA060(s32 top, s32 bottom) {
 }
 #endif
 
+/* The bars come in (out != 0: go) over frames. */
+void func_001BA0B0(s32 frames, s32 out) {
+    D_002F8860.timer = frames;
+    D_002F8860.duration = frames;
+    D_002F8860.color = 0;
+    D_002F8860.color2 = 0;
+    D_002F8860.mode = out == 0 ? 1 : 2;
+}
+
 /* A full-screen fade with a float level. */
 typedef struct {
     u8 mode;            /* 0x00: 1 rising, 2 falling, 0x63 done */
