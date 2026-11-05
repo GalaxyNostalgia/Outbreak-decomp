@@ -202,7 +202,11 @@ typedef struct {
     u8 unkBE4[0xBF0 - 0xBE4]; \
     f32 unkBF0[16];     /* 0xBF0: the head bone's matrix */ \
     s16 unkC30;         /* 0xC30: frames before it looks for someone else */ \
-    u8 unkC32[0xC50 - 0xC32]; \
+    u8 unkC32[2]; \
+    f32 unkC34[3];      /* 0xC34: (going through a door) where it started */ \
+    f32 unkC40[3];      /* 0xC40: the motion's root moves meanwhile */ \
+    s16 unkC4C;         /* 0xC4C: the heading */ \
+    u8 unkC4E[2]; \
     u16 unkC50;         /* 0xC50: the breathing timer */ \
     u8 unkC52;          /* 0xC52: its key */ \
     u8 unkC53[0xC58 - 0xC53]; \

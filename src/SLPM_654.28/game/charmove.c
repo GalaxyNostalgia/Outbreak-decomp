@@ -6710,3 +6710,152 @@ s32 func_0061DB40(DrawObjFull *o) {
     return 1;
 }
 #endif
+
+typedef struct {
+    s16 motion;         /* 0x0 */
+    s16 unk2;
+    f32 frame[2];       /* 0x4: when it's through (own, shared motions) */
+    f32 open;           /* 0xC: the frame the door opens */
+} DoorMot;              /* (D_006E78F0, by unkAB9) */
+
+extern DoorMot D_006E78F0[];
+s32 func_0063C1B0(DrawObjFull *o, s32 a);
+void func_001AF240(u8 player);
+void func_00540260(DrawObjFull *o, u8 model);
+void func_00637B90(DrawObjFull *o);
+void func_006373F0(DrawObjFull *o);
+void func_00633D00(DrawObjFull *o, s32 a, s32 b);
+
+/* Adds the motion's root moves into unkC40 and moves the model's bones by them (unscaled). */
+#define DOOR_ROOT(o) \
+    do { \
+        f32 d[3]; \
+        f32 *r; \
+        (o)->unkC40[0] += *(f32 *)&(o)->unk4E4[0]; \
+        (o)->unkC40[1] += *(f32 *)&(o)->unk4E4[1]; \
+        (o)->unkC40[2] += *(f32 *)&(o)->unk4E4[2]; \
+        d[0] = (o)->unkC40[0] * (1.0f / (o)->unkB4[1]); \
+        d[1] = (o)->unkC40[1] * (1.0f / (o)->unkB4[1]); \
+        d[2] = (o)->unkC40[2] * (1.0f / (o)->unkB4[1]); \
+        r = (f32 *)(o)->model->unk828; \
+        r[0x11C / 4] += d[0]; \
+        r = (f32 *)(o)->model->unk828; \
+        r[0x120 / 4] += d[1]; \
+        r = (f32 *)(o)->model->unk828; \
+        r[0x124 / 4] += d[2]; \
+        r = (f32 *)(o)->model->unk828; \
+        r[0x70 / 4] += d[0]; \
+        r = (f32 *)(o)->model->unk828; \
+        r[0x74 / 4] += d[1]; \
+        r = (f32 *)(o)->model->unk828; \
+        r[0x78 / 4] += d[2]; \
+        (o)->unk4E4[0] = 0; \
+        (o)->unk4E4[1] = 0; \
+        (o)->unk4E4[2] = 0; \
+    } while (0)
+
+/* Going through a door (func_00591160 set it up): (0) stands where it should,
+   (1-3) func_0063C1B0 until (4) the door motion (D_006E78F0 by unkAB9), (5) its root moves
+   start, (6) until the door opens (func_00540260) and the motion's done (then it's moved by the
+   root moves, func_00633D00), (7) the room change (online the partner waits, func_006373F0),
+   then standing. */
+void func_0063CAD0(DrawObjFull *o);
+#ifdef NON_MATCHING   /* first draft (358 vs 376) */
+void func_0063CAD0(DrawObjFull *o) {
+    f32 m[16];
+    f32 v[4];
+
+    o->unk54A |= 0xD;
+    o->unkBA4 |= 0x10000;
+    o->unk31[1] = 0xFF;
+    if (func_00635970(o) != 0) {
+        o->act[2] = 0;
+    }
+    switch (o->act[2]) {
+    case 0:
+        o->act[2]++;
+        o->unk54F = 0x38;
+        o->unkD10[0] = 1;
+        func_00635920(o);
+        o->unkBA8 = 1.0f;
+        o->unkC34[0] = o->unkABC[0];
+        o->unkC34[2] = o->unkABC[2];
+        o->unkC34[1] = o->unk38[1];
+        o->unkC4C = o->unkAC8;
+        func_0063C1B0(o, 1);
+        return;
+    default:
+        if (func_0063C1B0(o, 1) != 0) {
+            o->act[2] = 4;
+            o->unk54F = 10;
+        }
+        break;
+    case 4:
+        o->act[2]++;
+        o->unk54F = 10;
+        o->unk38[0] = o->unkC34[0];
+        o->unk38[1] = o->unkC34[1];
+        o->unk38[2] = o->unkC34[2];
+        o->unk92 = o->unkC4C;
+        o->unkBA8 = 1.0f;
+        func_0055C520(o);
+        if (o->unk520 == 0x201C || o->unk520 == 0x201B) {
+            func_005A4490(o, D_006E78F0[o->unkAB9].motion, 0.0f, -10.0f);
+        } else {
+            func_005A4490(o, D_006E78F0[o->unkAB9].motion, 0.0f, 2.0f);
+        }
+        if (o->unkABA != 0 && o->type == 0) {
+            func_001AF240(o->kind);
+        }
+        o->unkBA0 |= 0x10000;
+        break;
+    case 5:
+        o->act[2]++;
+        o->unkC40[0] = 0;
+        o->unkC40[1] = 0;
+        o->unkC40[2] = 0;
+        DOOR_ROOT(o);
+        break;
+    case 6:
+        if (func_00543460(o, 0, D_006E78F0[o->unkAB9].frame[o->unkB99], o->unkBA8) != 0) {
+            func_00540260(o, o->unkABB);
+        }
+        if (o->type == 0 && func_00543460(o, 0, D_006E78F0[o->unkAB9].open, o->unkBA8) != 0) {
+            func_00637B90(o);
+        }
+        if ((s8)func_0055C030(o, o->unkBA8) > 0) {
+            func_0018F7C0(m);
+            func_00340310(0, o->unk92, 0, (Mat44 *)m);
+            func_001913A0(v, o->unkC40, m);
+            o->unk38[0] += v[0];
+            o->unk38[1] += v[1];
+            o->unk38[2] += v[2];
+            o->act[2]++;
+            func_00633D00(o, 0xFF, D_00306590.unkC != 0 ? 15 : 30);
+            o->unk4E4[0] = 0;
+            o->unk4E4[1] = 0;
+            o->unk4E4[2] = 0;
+            break;
+        }
+        DOOR_ROOT(o);
+        break;
+    case 7:
+        if (func_001AF4D0() == 1 && o->type == 0) {
+            if (o->unkCF0 == 0) {
+                func_006373F0(o);
+            }
+            break;
+        }
+        o->unk54F = 0;
+        o->unk548 &= ~1;
+        o->act[0] = 1;
+        o->act[1] = 0;
+        o->act[2] = 1;
+        o->act[3] = 0;
+        func_00635920(o);
+        func_005A4490(o, 0x2050, 0.0f, 20.0f);
+        func_0055C4E0(o);
+        break;
+    }
+}
+#endif
