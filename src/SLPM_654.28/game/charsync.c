@@ -808,7 +808,22 @@ u8 func_005C14C0(DrawObjFull *o, u16 id) {
 }
 
 s32 func_00583EA0(u8 slot, s32 mask);
-u8 func_005C1570(DrawObjFull *o, u8 slot);
+/* Where o keeps item slot: 0-3 its four, 0x80 + n the extra ones; 0xFF nowhere. */
+u8 func_005C1570(DrawObjFull *o, u8 slot) {
+    u32 i;
+
+    for (i = 0; i < 4; i++) {
+        if (o->unkC84[i] == slot) {
+            return i;
+        }
+    }
+    for (i = 0; i < 0x20; i++) {
+        if (o->unkC88[i] == slot) {
+            return i | 0x80;
+        }
+    }
+    return 0xFF;
+}
 void func_00581560(u8 slot);
 
 /* Takes item slot out of o's slots (func_005C1570: its place, bit 0x80 the extra ones); 1 if it
