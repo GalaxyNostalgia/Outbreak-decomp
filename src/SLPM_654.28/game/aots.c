@@ -64,6 +64,39 @@ Aot *func_00595AE0(Aot *a);
 void func_00593FA0(Aot *a);
 void func_005960A0(Aot *a);
 
+/* Takes zone a out of the list (prev at 0x28 towards D_0023BD90's end) into the free ones;
+   0 if those are full. */
+s32 func_00590CC0(Aot *a) {
+    if (D_0023BD88 == 0x80) {
+        return 0;
+    }
+    D_00386410[D_0023BD88] = a;
+    D_0023BD88++;
+    if (D_0023BD90 == a) {
+        if (a->prev == NULL) {
+            D_0023BD8C = NULL;
+            D_0023BD90 = NULL;
+        } else {
+            a->prev->next = NULL;
+            D_0023BD90 = a->prev;
+        }
+        return 1;
+    }
+    if (D_0023BD8C == a) {
+        if (a->next == NULL) {
+            D_0023BD8C = NULL;
+            D_0023BD90 = NULL;
+        } else {
+            a->next->prev = NULL;
+            D_0023BD8C = a->next;
+        }
+        return 1;
+    }
+    a->next->prev = a->prev;
+    a->prev->next = a->next;
+    return 1;
+}
+
 extern s8 D_0048BF88[];
 extern f32 D_00306338[3];       /* the camera */
 extern f32 D_006D6CF0[];        /* draw distances */
