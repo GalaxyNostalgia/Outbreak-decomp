@@ -6428,7 +6428,47 @@ s32 func_00619840(DrawObjFull *o) {
 #endif
 
 void *func_00543800(void *owner, void *fn);
-void func_005A9680(void);
+s32 func_005436F0(void *t);
+
+/* The task that hides the item being taken in hand (func_00641190) for timer frames. */
+typedef struct {
+    s8 active;          /* 0x00 */
+    u8 unk1[7];
+    u8 state;           /* 0x08: 0xFF ends it */
+    u8 unk9[3];
+    s16 timer;          /* 0x0C */
+    u8 unkE[0x28 - 0xE];
+    DrawObjFull *owner; /* 0x28 */
+} HandTask;
+
+/* Each frame: the item in the owner's hand stays hidden (unk1 0) until the time's up or it's no
+   longer taking it (motion 0x17), then shows again and the task ends. */
+void func_005A9680(HandTask *t) {
+    DrawObjFull *o = t->owner;
+    ItemObj *g;
+
+    if (--t->timer < 0) {
+        t->state = 0xFF;
+    }
+    if (o->unk54F != 0x17) {
+        t->state = 0xFF;
+    }
+    if (o->unkC7C == 0) {
+        t->state = 0xFF;
+    }
+    g = D_003967D0[o->unkC7C].obj;
+    if (g == NULL) {
+        t->state = 0xFF;
+    }
+    if (t->state == 0xFF) {
+        if (g != NULL) {
+            g->unk1 = 1;
+        }
+        func_005436F0(t);
+    } else if (g != NULL) {
+        g->unk1 = 0;
+    }
+}
 void *func_005813A0(u8 slot);
 s16 func_005C1240(void *o);
 void func_00581560(u8 slot);
