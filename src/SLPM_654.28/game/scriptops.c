@@ -2480,3 +2480,19 @@ s32 func_0065CAC0(u32 *args) {
     }
     return 0;
 }
+
+/* (part of D_0048AC10) */
+typedef struct {
+    u8 unk0[0x280];
+    u8 e[4][3];         /* 0x280: four entries of 3 bytes (0xFF first: none) */
+} SceneSlots;
+
+/* Script op: clears the four entries at D_0048AC10 + 0x280. */
+s32 func_0065D440(u32 *args) {
+    u32 i;
+
+    for (i = 0; i < 4; i++) {
+        ((SceneSlots *)D_0048AC10)->e[i][0] = 0xFF;
+    }
+    return 0;
+}
