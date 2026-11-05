@@ -15,11 +15,12 @@ extern s16 D_0023BD7C;          /* read position */
 
 /* A message's set of positions (0x8C bytes). */
 typedef struct {
-    s32 id;             /* 0x00 */
-    s32 n;              /* 0x04 */
-    u16 a[16][2];       /* 0x08 */
-    u16 b[16][2];       /* 0x48 */
-    u8 unk88[4];
+    s8 type;            /* 0x00: 0-2 its moves play */
+    u8 unk1[3];
+    s32 id;             /* 0x04: (its character, a DrawObjFull *) */
+    s32 n;              /* 0x08 */
+    u16 a[16][2];       /* 0x0C */
+    u16 b[16][2];       /* 0x4C */
 } MsgSet;
 
 /* The message being shown (inside a 0xB10-byte work area). */
@@ -63,9 +64,8 @@ typedef struct {
     s32 n;              /* 0x12C: players listed */
     void *objs;         /* 0x130: the message's 8 characters (DrawObjFull, in the work area) */
     void *things;       /* 0x134: its 16 things (0x11A0 bytes each) */
-    u8 unk138[4];
-    MsgSet sets[16];    /* 0x13C */
-    u8 unkAFC[0xB10 - 0xAFC];
+    MsgSet sets[16];    /* 0x138 */
+    u8 unkAF8[0xB10 - 0xAF8];
 } MsgWork;
 
 extern MsgWork D_0035FFD0;

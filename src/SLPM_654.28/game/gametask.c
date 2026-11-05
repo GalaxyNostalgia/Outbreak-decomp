@@ -1107,6 +1107,65 @@ void func_005BDD10(void) {
 }
 #endif
 
+/* Per set, 7 lists of moves (0x24 bytes an entry, 0xFFFF time ends it). */
+typedef struct {
+    u16 unk0;
+    u16 time;           /* 0x02 */
+    u8 unk4[0x24 - 4];
+} MsgSetMove;
+
+extern MsgSetMove *D_00360E80[16][8];
+void func_005BDFF0(s32 id, MsgSetMove *m);
+
+/* Each frame of a message: the sets' moves due now. */
+void func_005BDEA0(void);
+#ifdef NON_MATCHING   /* register allocation of the loop pointers (20 differ) */
+void func_005BDEA0(void) {
+    MsgSetMove *m;
+    MsgSetMove **pp;
+    u16 t;
+    u16 now;
+    s32 i;
+    s32 j;
+    s8 *ty;
+    s32 *id;
+    MsgSetMove **row;
+
+    for (i = 0; i < D_0035FFD0.unk16; i++) {
+        row = D_00360E80[i];
+        ty = &D_0035FFD0.sets[i].type;
+        id = &D_0035FFD0.sets[i].id;
+        for (j = 0; j < 7; j++) {
+            pp = &row[j];
+            m = *pp;
+            if (m == NULL) {
+                continue;
+            }
+            now = D_0023BE7C->frames;
+            t = m->time;
+            if (D_00306590.unkC != 0) {
+                t >>= 1;
+                now >>= 1;
+            }
+            if (t == now) {
+                switch (*ty) {
+                case 0:
+                case 1:
+                case 2:
+                    func_005BDFF0(*id, m);
+                    break;
+                }
+                m++;
+                if (m->time == 0xFFFF) {
+                    m = NULL;
+                }
+            }
+            *pp = m;
+        }
+    }
+}
+#endif
+
 /* The message plays: (0) its text or movie starts, (1) its stream is ready, (2) the movie ends,
    (3) each frame until it's over. */
 void func_005BD690(void) {
@@ -1262,7 +1321,7 @@ s32 func_005BDA70(void) {
         } else {
             D_0035FFD0.owner = D_0048BBE0[D_0035FFD0.item];
         }
-        memset(D_0035FFD0.unk138, 0, 0x9D8);
+        memset(D_0035FFD0.sets, 0, 0x9D8);
         func_005BC7D0();
         func_005BAD50();
         if (func_005BC430() != 0) {
