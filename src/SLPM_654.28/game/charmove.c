@@ -1907,6 +1907,26 @@ extern PickShape D_006EF080[];
 extern f32 D_006E76E0[4];       /* the heights of the four ways to pick up */
 s32 func_005C0E20(DrawObjFull *o, u8 item);
 
+s32 func_005C0F30(DrawObjFull *o, u8 what);
+
+/* o starts to use item (motion 0x17, action 1/0x2F) unless it's gone or o can't now. */
+s32 func_00637510(DrawObjFull *o, u8 item) {
+    if (D_003967D0[item].active == 0) {
+        return 1;
+    }
+    if (func_005C0F30(o, 1) != 0) {
+        return 1;
+    }
+    o->unkC7F = item;
+    o->unk54F = 0x17;
+    o->act[0] = 1;
+    o->act[1] = 0x2F;
+    o->act[2] = 0;
+    o->act[3] = 0;
+    func_00635920(o);
+    return 0;
+}
+
 /* o starts to pick up item (motion 9, action 1/0x16) at the height it lies (or 2: carried by
    someone); 1 if it can't. */
 s32 func_00637810(DrawObjFull *o, u8 item);
