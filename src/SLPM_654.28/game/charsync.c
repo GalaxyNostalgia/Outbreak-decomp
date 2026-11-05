@@ -287,6 +287,17 @@ void func_0064E360(DrawObjFull *o, u8 kind, u8 item) {
     }
 }
 
+/* The server's answer r (1 yes, 2 no) to player to's (1-based) item request req. */
+void func_0064E590(s32 to, s32 r, s32 req) {
+    DrawObjFull *p;
+
+    if (func_001AF510() != 0) {
+        p = &D_00476DD0[to - 1];
+        p->unkB34 = r;
+        p->unkB35 = req;
+    }
+}
+
 /* The message's bytes by their place in the original's stack frame (the message is at 0x50). */
 #define M8(off) (*(u8 *)&m.data[(off) - 0x54])
 #define M16(off) (*(s16 *)&m.data[(off) - 0x54])
