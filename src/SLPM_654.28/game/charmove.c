@@ -6209,3 +6209,205 @@ s32 func_0061AC60(DrawObjFull *o) {
     return r;
 }
 #endif
+
+s32 func_00543460(DrawObjFull *o, s32 layer, f32 frame, f32 speed);
+DrawObjFull *func_00651300(s32 i);
+void func_005810E0(u8 item, u8 who);
+s32 func_005C3C70(DrawObjFull *o, s32 a);
+s32 func_008340C0(DrawObjFull *o, u8 item, u8 at, s8 how);
+extern f32 D_006E76F0[][4][6];  /* pick-up motions' frame to take the item (shared motions, condition,
+                                   height) */
+extern s16 D_006E77E0[];        /* the pick-up motions by height (0xC79) */
+
+/* Back to standing after picking up. */
+#define PICKUP_DONE(o) \
+    (o)->unk54F = 0; \
+    (o)->unk548 &= ~1; \
+    (o)->act[0] = 1; \
+    (o)->act[1] = 0; \
+    (o)->act[2] = 1; \
+    (o)->act[3] = 0; \
+    func_00635920(o); \
+    func_005A4490(o, 0x2050, 0.0f, 10.0f); \
+    func_0055C4E0(o)
+
+/* Action 1/0x16: picking up item unkC7A (func_00637810): (0-2) the motion for its height (or a
+   carried one's), (3) until the frame it's taken, then asks for it (online: the server answers
+   in unkB34, 4), (5) partners wait and take it (func_008340C0), players until func_005C3C70 says,
+   (6) the rest of the motion, (7) back to standing. */
+void func_0063B470(DrawObjFull *o);
+#ifdef NON_MATCHING   /* a first draft (508 vs 526): the finishing block is shared in the original, registers differ */
+void func_0063B470(DrawObjFull *o) {
+    u8 cond = o->unkB9B;
+    u8 own;
+    DrawObjFull *q;
+
+    if (o->unkBA0 & 8) {
+        cond = 3;
+    }
+    o->unk54A |= 0xC;
+    o->unk31[1] = 0xFF;
+    if (o->unkBA4 & 0x400) {
+        if (o->kind == D_0048BF60.unk1D) {
+            if (o->kind + 1 != (u16)D_003967D0[o->unkC7A].owner) {
+                func_0064E360(o, 2, o->unkC7A);
+            }
+            o->unkC64 = 0;
+            if (o->act[2] == 0) {
+                o->act[0] = 1;
+                o->act[1] = 0;
+                o->act[2] = 0;
+                o->act[3] = 0;
+                func_00635920(o);
+                func_0064C620(o, 1);
+                PICKUP_DONE(o);
+                return;
+            }
+            o->act[2] = 6;
+            func_0064C620(o, 1);
+        }
+    }
+    if (func_00635970(o) != 0) {
+        PICKUP_DONE(o);
+        return;
+    }
+    switch (o->act[2]) {
+    case 0:
+        o->act[2]++;
+        o->unk54F = 9;
+        o->unkD10[0] = 1;
+        func_00635920(o);
+        o->unkE = D_00306590.unkC != 0 ? 900 : 1800;
+        if (o->type == 0 && func_001AF4D0() == 1 && o->isNpc != 0) {
+            o->unkE = D_00306590.unkC != 0 ? 15 : 30;
+        }
+        /* fall through */
+    case 1:
+        o->act[2]++;
+        /* fall through */
+    case 2:
+        o->act[2]++;
+        o->unkBA8 = 1.0f;
+        func_0055C520(o);
+        if ((u16)D_003967D0[o->unkC7A].owner != 0) {
+            o->unkC79 = 2;
+            func_005A4490(o, 0x2036, 0.0f, 10.0f);
+            o->act[3] = 5;
+        } else {
+            func_005A4490(o, D_006E77E0[o->unkC79], 0.0f, 10.0f);
+            o->act[3] = o->unkC79;
+        }
+        if (o->type == 1) {
+            o->act[2] = 6;
+        }
+        break;
+    case 3:
+        if (func_00543460(o, 0, D_006E76F0[o->unkB99][cond][o->act[3]], o->unkBA8) != 0) {
+            o->act[2]++;
+            o->unkC = D_00306590.unkC != 0 ? 600 : 1200;
+            if (func_001AF510() == 1) {
+                if (o->kind == D_0048BF60.unk1D) {
+                    func_0064E360(o, 1, o->unkC7A);
+                } else {
+                    o->act[2]++;
+                }
+            } else {
+                o->act[2]++;
+            }
+        }
+        func_0055C030(o, o->unkBA8);
+        break;
+    case 4:
+        if (func_001AF510() != 1) {
+            break;
+        }
+        own = (u8)D_003967D0[o->unkC7A].owner;
+        if (own != 0 && own != o->kind + 1) {
+            if (own < 5) {
+                if (D_00476DD0[own - 1].unk54F != 0x15) {
+                    o->act[2] = 6;
+                    func_0064C620(o, 1);
+                    if (func_001AF4D0() == 1) {
+                        o->unkB34 = 0;
+                        func_005810E0(o->unkC7A, o->kind);
+                    }
+                    break;
+                }
+            } else {
+                q = func_00651300(own - 1);
+                if (q == NULL || q->unk54F != 0x15) {
+                    o->act[2] = 6;
+                    func_0064C620(o, 1);
+                    if (func_001AF4D0() == 1) {
+                        o->unkB34 = 0;
+                        func_005810E0(o->unkC7A, o->kind);
+                    }
+                    break;
+                }
+            }
+        }
+        if (o->unkB34 != 0 && o->unkB35 != o->unkDA7) {
+            o->unkB34 = 0;
+        }
+        if (o->unkB34 == 1) {
+            o->unkB34 = 0;
+            o->act[2] = 5;
+            break;
+        }
+        if (--o->unkC == 0 || o->unkB34 == 2) {
+            o->unkB34 = 0;
+            o->act[2] = 6;
+            if (o->unkC == 0) {
+                func_0064E360(o, 2, o->unkC7A);
+            }
+            func_0064C620(o, 1);
+        }
+        break;
+    case 5:
+        o->unk31[1] = 0;
+        if (func_001AF4D0() == 1 && o->isNpc != 0) {
+            if (o->unkE != 0) {
+                o->unkE--;
+                break;
+            }
+            o->act[2]++;
+            if ((s8)func_008340C0(o, o->unk1090, o->unk1094, o->unk1095) == 0) {
+                func_0064E360(o, 2, o->unk1090);
+            }
+            break;
+        }
+        if (o->kind != D_0048BF60.unk1D) {
+            break;
+        }
+        if (o->unkE != 0) {
+            o->unkE--;
+        }
+        if (o->unkE == 0) {
+            o->ctrl.pressed = 0x10;
+            o->ctrl.prev[0] = 0;
+        }
+        own = (u8)D_003967D0[o->unkC7A].owner;
+        if (own != 0 && D_00476DD0[own - 1].unk54F != 0x15) {
+            o->ctrl.pressed = 0x10;
+            o->ctrl.prev[0] = 0;
+        }
+        if (func_005C3C70(o, 0) != 0) {
+            o->act[2]++;
+            func_0064C620(o, 1);
+        }
+        break;
+    case 6:
+        o->act[2]++;
+        func_0055C520(o);
+        func_005A4490(o, D_006E77E0[o->act[3]], D_006E76F0[o->unkB99][cond][o->act[3]], 10.0f);
+        o->unk31[1] = 0;
+        if ((s8)func_0055C030(o, o->unkBA8) <= 0) {
+            break;
+        }
+        /* fall through */
+    case 7:
+        PICKUP_DONE(o);
+        break;
+    }
+}
+#endif

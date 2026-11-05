@@ -42,7 +42,8 @@ typedef struct {
     u8 unk7; \
     u8 act[4];          /* 0x008: action, its step and sub-steps */ \
     s16 unkC;           /* 0x00C: (players) frames of a status left */ \
-    u8 unkE[0x14 - 0xE]; \
+    s16 unkE;           /* 0x00E: (players) frames of an action left */ \
+    u8 unk10[0x14 - 0x10]; \
     void *update;       /* 0x014 */ \
     void (*draw)(struct T *o); /* 0x018 */ \
     struct T *next; /* 0x01C: next in its pool's list */ \
@@ -50,7 +51,7 @@ typedef struct {
     s32 unk24;          /* 0x024: (players) the aim's target */ \
     u8 unk28[0x30 - 0x28]; \
     u8 unk30;           /* 0x030 */ \
-    u8 unk31[3]; \
+    u8 unk31[3];        /* 0x031: [1] 0xFF while picking up */ \
     ObjModel *model;    /* 0x034 */ \
     f32 unk38[3];       /* 0x038: position */ \
     f32 unk44[3];       /* 0x044: the position before the last move */ \
@@ -147,7 +148,10 @@ typedef struct {
     u8 unkAD4;          /* 0xAD4: a reaction pending */ \
     u8 unkAD5;          /* 0xAD5: which (D_006DDA80) */ \
     u8 unkAD6[0xAEC - 0xAD6]; \
-    u8 unkAEC[0xB40 - 0xAEC]; \
+    u8 unkAEC[0xB34 - 0xAEC]; \
+    u8 unkB34;          /* 0xB34: (online) the server's answer to picking up (1 yes, 2 no) */ \
+    u8 unkB35;          /* 0xB35: (online) for which request (cf. 0xDA7) */ \
+    u8 unkB36[0xB40 - 0xB36]; \
     s8 unkB40;          /* 0xB40 */ \
     u8 unkB41[0xB48 - 0xB41]; \
     s32 unkB48;         /* 0xB48: what look mode 4 looks at: 0 the point 0xB54, 1 0xB4C */ \
@@ -256,7 +260,8 @@ typedef struct {
 
 typedef struct DrawObjFull {
     OBJ_FIELDS(DrawObjFull)
-    u8 unkDA2[0xDA8 - 0xDA2];
+    u8 unkDA2[0xDA7 - 0xDA2];
+    u8 unkDA7;          /* 0xDA7: (online) the current request */
     s8 talk;            /* 0xDA8: (players) wants to ad-lib */
     s8 talkCmd;         /* 0xDA9: which (D_0023AFA8 / D_0023AFB0) */
     s16 unkDAA;         /* 0xDAA */
