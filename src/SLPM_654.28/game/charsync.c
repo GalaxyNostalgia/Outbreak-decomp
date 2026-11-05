@@ -853,6 +853,47 @@ s32 func_005C0E20(DrawObjFull *o, u8 item) {
 }
 #endif
 
+/* Whether o can't do what now (1 pick up, 3 / 9 / 6 / 7 ...): its status, not standing, or
+   func_005C0E20 busy (7 also on floor kind 1). */
+s32 func_005C0F30(DrawObjFull *o, u8 what) {
+    s32 f = o->unkBA0;
+
+    if (f & 0x160) {
+        return 1;
+    }
+    if (o->act[0] != 1) {
+        return 1;
+    }
+    if (o->unkBD0 != 0) {
+        return 1;
+    }
+    if (f & 0x80) {
+        return 1;
+    }
+    if ((f & 0x18) && what != 2) {
+        return 1;
+    }
+    switch (what) {
+    case 9:
+    case 1:
+    case 3:
+    case 6:
+        if (func_005C0E20(o, what) != 0) {
+            return 1;
+        }
+        break;
+    case 7:
+        if (func_005C0E20(o, what) != 0) {
+            return 1;
+        }
+        if (o->unk174 == 1) {
+            return 1;
+        }
+        break;
+    }
+    return 0;
+}
+
 /* Where o keeps item slot: 0-3 its four, 0x80 + n the extra ones; 0xFF nowhere. */
 u8 func_005C1570(DrawObjFull *o, u8 slot) {
     u32 i;
