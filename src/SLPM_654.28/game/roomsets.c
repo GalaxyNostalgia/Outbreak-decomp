@@ -715,3 +715,21 @@ void func_0067C8C0(ItemObj *o) {
         *(SlotVec3 *)&o->mat[12] = *(SlotVec3 *)o->pos;
     }
 }
+
+/* Script op: the room's extra thing args[0] (0-0x1F) gets flag 0x10. */
+s32 func_0065EDA0(u8 *args) {
+    u8 id = args[0];
+    s16 i;
+    RoomExtraSlot *s;
+
+    if (id < 0 || id >= 0x20) {
+        return 0;
+    }
+    for (i = 0, s = D_00395720; i < 32; i++, s++) {
+        if (s->used != 0 && s->unk2[0] == id) {
+            s->flags |= 0x10;
+            break;
+        }
+    }
+    return 0;
+}
