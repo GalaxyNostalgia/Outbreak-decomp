@@ -440,6 +440,37 @@ s32 func_001AF540(DrawObjFull *o) {
 }
 #endif
 
+extern u32 D_0023BE14;          /* players */
+extern u8 D_00476DC5[];         /* per player: a pending reset (D_00470090 + 0x6D35) */
+extern u8 D_00470090[];
+typedef struct {
+    u8 unk0[0x6D35];
+    u8 pend;
+} PendAt;
+extern DrawObjFull D_00476DD0[];
+void func_00540750(DrawObjFull *o);
+
+/* The players whose reset is pending: offline all of them, online ours. */
+void func_001AF620(void) {
+    u32 i;
+    u8 k;
+
+    if (func_001AF4D0() == 1) {
+        for (i = 0; i < D_0023BE14; i++) {
+            if (((PendAt *)(D_00470090 + i))->pend != 0) {
+                func_00540750(&D_00476DD0[i]);
+                ((PendAt *)(D_00470090 + i))->pend = 0;
+            }
+        }
+        return;
+    }
+    k = D_0048BF60.unk1D;
+    if (D_00476DC5[k] != 0) {
+        func_00540750(&D_00476DD0[k]);
+        D_00476DC5[D_0048BF60.unk1D] = 0;
+    }
+}
+
 void func_008201D0(s32 a);    /* SINGLE.BIN */
 void func_00821B50(s32 a);    /* NETAQ.BIN */
 void func_00820200(void);     /* SINGLE.BIN */
