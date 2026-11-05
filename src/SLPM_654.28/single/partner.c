@@ -702,6 +702,45 @@ void func_008360B0(DrawObjFull *obj) {
     func_005C15E0(obj);
 }
 
+s32 func_008341F0(DrawObjFull *obj, u8 item, u8 at);
+s32 func_008344E0(DrawObjFull *obj, u8 item, u8 at);
+s32 func_00834630(DrawObjFull *obj, u8 item, u8 at);
+void func_005810E0(u8 item, u8 who);
+
+/* The partner does what it picked up item for (how: 1 take it, 2 with at, 3, 4 ...), then the
+   reservations go; func_008360B0 if it did. */
+s32 func_008340C0(DrawObjFull *obj, u8 item, u8 at, s8 how) {
+    s32 r = 0;
+
+    if (item == 0) {
+        return 0;
+    }
+    switch (how) {
+    case 1:
+        r = (s8)func_008341F0(obj, item, 0);
+        break;
+    case 2:
+        r = (s8)func_008341F0(obj, item, at);
+        break;
+    case 3:
+        r = (s8)func_008344E0(obj, item, at);
+        break;
+    case 4:
+        r = (s8)func_00834630(obj, item, at);
+        break;
+    }
+    if (item != 0) {
+        func_005810E0(item, 0xFF);
+    }
+    if (at != 0) {
+        func_005810E0(at, 0xFF);
+    }
+    if ((s8)r != 0) {
+        func_008360B0(obj);
+    }
+    return r;
+}
+
 /* Request 2: the partner looks over its items (four passes). */
 void func_00834780(DrawObjFull *obj) {
     func_008347C0(obj);
