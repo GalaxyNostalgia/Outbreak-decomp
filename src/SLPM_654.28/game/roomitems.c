@@ -1358,3 +1358,13 @@ ItemInfo *func_00583DD0(ItemSlot *e) {
     }
     return &D_00716980[e->type];
 }
+
+/* Uses up the carried item in slot i (func_00581320, and its thing). */
+void func_005815C0(u8 i) {
+    ItemSlot *e = &D_003967D0[i];
+
+    if (e->active != 0 && (u16)e->owner != 0) {
+        func_00581320(i);
+        func_00561810(e->index);
+    }
+}
