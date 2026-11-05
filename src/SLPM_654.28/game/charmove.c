@@ -6173,3 +6173,19 @@ s32 func_0061EDC0(DrawObjFull *o) {
     }
     return 0;
 }
+
+/* Whether a player (not an NPC) is in func_0061D9A0's state. */
+s32 func_0061AC60(DrawObjFull *o);
+#ifdef NON_MATCHING   /* the type is loaded into v0 (ours v1) and the nop after its branch */
+s32 func_0061AC60(DrawObjFull *o) {
+    s32 r = 0;
+
+    if (o->type == 0) {
+        if (func_0061D9A0(o) != 0) {
+            return 1;
+        }
+        r = 0;
+    }
+    return r;
+}
+#endif
