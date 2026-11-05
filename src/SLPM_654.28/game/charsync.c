@@ -199,6 +199,94 @@ u8 func_00637150(DrawObjFull *o) {
     return r;
 }
 
+/* An item message to the server (8 bytes). */
+typedef struct {
+    u8 kind;            /* 1 ask to pick up, 2 give up ... */
+    u8 len;
+    u8 unk2;
+    u8 unk3;
+    u8 item;
+    u8 who;             /* the player's id */
+    u8 req;             /* the request's number */
+    s8 dir;             /* the heading's high byte (3, 5) */
+} ItemMsg;
+
+/* About item: online, our player tells the server (kinds 1, 3, 5 are new requests, answered in
+   unkB34); offline those are granted at once. */
+void func_0064E360(DrawObjFull *o, u8 kind, u8 item) {
+    ItemMsg m;
+
+    memset(&o->unkB34, 0, 4);
+    if (func_001AF510() == 1) {
+        if (o->type == 0 && o->kind == D_0048BF60.unk1D && item != 0) {
+            m.unk3 = 0;
+            m.unk2 = 0;
+            switch (kind) {
+            case 1:
+                o->unkDA7 = ++o->unkDA6;
+                m.kind = kind;
+                m.len = 8;
+                m.item = item;
+                m.who = o->unk1E2;
+                m.req = o->unkDA6;
+                break;
+            case 2:
+                m.kind = kind;
+                m.len = 8;
+                m.item = item;
+                m.who = o->unk1E2;
+                m.req = o->unkDA6;
+                break;
+            case 3:
+                o->unkDA7 = ++o->unkDA6;
+                m.kind = kind;
+                m.len = 8;
+                m.item = item;
+                m.dir = o->unk92 >> 8;
+                m.who = o->unk1E2;
+                m.req = o->unkDA6;
+                break;
+            case 4:
+                m.kind = kind;
+                m.len = 8;
+                m.item = item;
+                m.who = o->unk1E2;
+                m.req = o->unkDA6;
+                break;
+            case 5:
+                o->unkDA7 = ++o->unkDA6;
+                m.kind = kind;
+                m.len = 8;
+                m.item = item;
+                m.dir = o->unk92 >> 8;
+                m.who = o->unk1E2;
+                m.req = o->unkDA6;
+                break;
+            case 6:
+                m.kind = kind;
+                m.len = 8;
+                m.item = item;
+                m.who = o->unk1E2;
+                m.req = o->unkDA6;
+                break;
+            }
+            func_001AF000(o->kind + 1, &m, 1, 4);
+        }
+    } else {
+        switch (kind) {
+        case 1:
+            o->unkB34 = 1;
+            break;
+        case 3:
+            o->unkB34 = 1;
+            break;
+        case 5:
+            o->unkB34 = 1;
+            break;
+        }
+    }
+}
+
 /* The message's bytes by their place in the original's stack frame (the message is at 0x50). */
 #define M8(off) (*(u8 *)&m.data[(off) - 0x54])
 #define M16(off) (*(s16 *)&m.data[(off) - 0x54])

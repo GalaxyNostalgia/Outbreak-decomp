@@ -260,7 +260,8 @@ typedef struct {
 
 typedef struct DrawObjFull {
     OBJ_FIELDS(DrawObjFull)
-    u8 unkDA2[0xDA7 - 0xDA2];
+    u8 unkDA2[0xDA6 - 0xDA2];
+    u8 unkDA6;          /* 0xDA6: (online) the last request's number */
     u8 unkDA7;          /* 0xDA7: (online) the current request */
     s8 talk;            /* 0xDA8: (players) wants to ad-lib */
     s8 talkCmd;         /* 0xDA9: which (D_0023AFA8 / D_0023AFB0) */
