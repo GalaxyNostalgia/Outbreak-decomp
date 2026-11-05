@@ -695,7 +695,118 @@ void func_00834780(DrawObjFull *obj) {
     func_00835180(obj);
     func_008360B0(obj);
 }
-s32 func_00835300(DrawObjFull *obj, s32 *item);
+typedef struct {
+    u32 flags;          /* 0x00: 0x10 needs to be loaded */
+    u8 unk4[0x40];
+} PartnerWeapon;        /* (D_006E5940, 0x44 bytes) */
+
+typedef struct {
+    s32 v[4];
+} RangeBits;
+
+extern PartnerWeapon D_006E5940[];
+extern RangeBits D_0083A290;    /* per rounds left (0-3): bit character * 4 + range */
+s8 func_008356E0(DrawObjFull *obj);
+u8 func_00836150(DrawObjFull *obj, u8 slot);
+s16 func_008363A0(DrawObjFull *obj, u8 slot);
+s8 func_00584800(u8 slot);
+
+/* The weapon the partner should hold (the best func_00836150 ranks of the weapons it has, not
+   0x135 or 0x20) into *item: 1 to change to it, 2 an empty one it keeps in hand at the range of its
+   enemy (D_0083A290), 0 none. */
+s32 func_00835300(DrawObjFull *obj, u8 *item);
+#ifdef NON_MATCHING   /* registers and stack slots differ (244 vs 245) */
+s32 func_00835300(DrawObjFull *obj, u8 *item) {
+    u8 slots[8];
+    RangeBits bits;
+    f32 dist;
+    s32 i;
+    s32 n;
+    s32 rank;
+    s8 r;
+    u8 best;
+    u8 c;
+    s8 k;
+    s8 bit;
+
+    rank = 0xFF;
+    r = 0;
+    best = 0;
+    *item = obj->unkC7C;
+    if (func_008356E0(obj) != 0) {
+        return 1;
+    }
+    n = func_00836BD0(obj, slots);
+    c = obj->unkB98;
+    if (c == 0 || c == 1) {
+        if (obj->unkC88[0] != 0) {
+            slots[n] = obj->unkC88[0];
+            n++;
+        }
+    } else if (c == 4) {
+        for (i = 0; i < 4; i++) {
+            u8 x = obj->unkC88[1 + i];
+            if (x != 0 && D_003967D0[x].unk6 == 0x197) {
+                slots[n] = x;
+                n++;
+            }
+        }
+    }
+    for (i = 0; i < n; i++) {
+        u8 *p = &slots[i];
+        if (*p != 0 && func_00583EA0(*p, 1) != 0) {
+            u16 id = D_003967D0[*p].unk6;
+            if (id != 0x135 && id != 0x20) {
+                s32 v = func_00836150(obj, *p) & 0xFF;
+                if (v < (rank & 0xFF)) {
+                    best = *p;
+                    rank = v;
+                }
+            }
+        }
+    }
+    if (best == 0) {
+        return 0;
+    }
+    if (D_003967D0[best].unk24 <= 0) {
+        k = func_00584800(best);
+        if (k != 0 && (D_006E5940[k].flags & 0x10)) {
+            bits = D_0083A290;
+            dist = 10000;
+            if ((u8)obj->unk106E != 0xFF) {
+                dist = D_00385490[obj->kind][(u8)obj->unk106E].dist;
+            }
+            k = func_008363A0(obj, best);
+            if (k >= 3) {
+                k = 3;
+            }
+            if (dist == 10000) {
+                bit = obj->unkB98 * 4 + 3;
+            } else if (!(dist <= 500.0f)) {
+                bit = obj->unkB98 * 4 + 2;
+            } else if (!(dist <= 200.0f)) {
+                bit = obj->unkB98 * 4 + 1;
+            } else {
+                bit = obj->unkB98 * 4;
+            }
+            if ((1 << bit) & bits.v[k]) {
+                r = 2;
+            }
+            if (r == 2) {
+                return obj->unkC7C == 0 ? 0 : 2;
+            }
+            if (obj->unkC7C == 0) {
+                return 0;
+            }
+        }
+    }
+    if (obj->unkC7C != best) {
+        *item = best;
+        return 1;
+    }
+    return r;
+}
+#endif
 s32 func_008359A0(DrawObjFull *obj, s32 *item, u8 *at);
 
 /* The partner's requests (0x1096: 1 pick up an item, 2 ..., 4, 8 items), each taken once: 1 when
@@ -738,7 +849,7 @@ s32 func_00823780(DrawObjFull *obj) {
     }
     if (obj->unk1096 & 4) {
         obj->unk1096 &= ~4;
-        if (!(obj->unkBA0 & 8) && obj->act[0] == 1 && (s8)func_00835300(obj, &obj->unk1090)) {
+        if (!(obj->unkBA0 & 8) && obj->act[0] == 1 && (s8)func_00835300(obj, (u8 *)&obj->unk1090)) {
             func_00823340(obj, 8);
             return 1;
         }
