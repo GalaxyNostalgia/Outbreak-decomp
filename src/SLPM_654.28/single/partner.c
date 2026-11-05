@@ -1712,6 +1712,28 @@ void func_0082B1C0(DrawObjFull *obj) {
     func_0082BB30(obj, -1);
 }
 
+s32 func_00637510(DrawObjFull *obj, u8 item);
+
+/* Thinking step: the same with func_00637510 and motion 0x17, without func_0082BB30. */
+void func_0082B260(DrawObjFull *obj) {
+    switch (obj->unk1008[0]) {
+    case 0:
+        if (func_00637510(obj, obj->unk1090) != 0) {
+            func_0082A690(obj, 0);
+            return;
+        }
+        if (obj->unk54F == 0x17) {
+            obj->unk1008[0]++;
+        }
+        break;
+    case 1:
+        if (obj->unk54F != 0x17) {
+            func_0082A690(obj, 0);
+        }
+        break;
+    }
+}
+
 #ifdef NON_MATCHING   /* the original's switch uses addi (ours addiu); load order of the heading difference */
 void func_0082BB30(DrawObjFull *obj, s32 how) {
     u16 d;
