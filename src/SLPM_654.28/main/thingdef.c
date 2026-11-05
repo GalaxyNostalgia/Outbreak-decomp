@@ -98,3 +98,35 @@ void func_001B7F70(void) {
         }
     }
 }
+
+void func_001B7A70(s32 bank, s32 id, s32 unused, f32 *pos, s32 k, s32 once, s32 flag);
+s32 func_001B8000(RoomSoundDef *d, f32 *pos);
+
+/* Leaving the room: the sounds that don't loop play their end, then all are cleared. */
+void func_001B80D0(void) {
+    f32 pos[4];
+    s32 i;
+    RoomSound *s;
+    s32 k;
+
+    for (i = 0; i < 4; i++) {
+        s = &D_003938F0[i];
+        if (s->active != 0 && s->loop == 0) {
+            k = s->kind;
+            if (k == 0) {
+                if (s->def != NULL) {
+                    func_001B7A70(2, s->unk2 + 1, 0, s->def->pos, 1, 0, 0);
+                } else {
+                    func_001B7A70(2, s->unk2 + 1, 0, s->pos, 1, 0, 0);
+                }
+            } else if ((s8)k == 2) {
+                if (func_001B8000(s->def, pos) != 0) {
+                    func_001B7A70(2, s->unk2 + 1, 0, pos, 1, 0, 0);
+                } else {
+                    func_001B7A70(2, s->unk2 + 1, 0, NULL, 1, 0, 0);
+                }
+            }
+        }
+    }
+    memset(D_003938F0, 0, sizeof(D_003938F0));
+}
