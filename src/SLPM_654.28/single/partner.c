@@ -230,7 +230,7 @@ u8 *func_00583E30(u8 item);
 u8 func_008360C0(DrawObjFull *obj, u16 id);
 s32 func_00583880(u8 a, u8 b);
 s32 func_005C1C50(DrawObjFull *obj);
-s32 func_005C1CD0(DrawObjFull *obj, u8 item);
+s32 func_005C1CD0(DrawObjFull *obj, s32 item);
 s32 func_00583EA0(u8 item, s32 flag);
 
 /* Whether the partner can take item: 1 it has room (func_005C1C50, two for 0x20000 items),

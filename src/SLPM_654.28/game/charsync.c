@@ -771,6 +771,72 @@ u8 func_005C14C0(DrawObjFull *o, u16 id) {
     return 0;
 }
 
+s32 func_00583EA0(u8 slot, s32 mask);
+
+/* Room left in the character's four slots (an item with flag 0x20000 takes two). */
+s32 func_005C1C50(DrawObjFull *o);
+#ifdef NON_MATCHING   /* the original picks 1 or 2 with movz; ours branches */
+s32 func_005C1C50(DrawObjFull *o) {
+    u32 i = 0;
+    s32 n = 0;
+
+    do {
+        if (o->unkC84[i] != 0) {
+            n += func_00583EA0(o->unkC84[i], 0x20000) ? 2 : 1;
+        }
+        i++;
+    } while (i < 4);
+    return 4 - n;
+}
+#endif
+
+/* Room for item (slot) in character 6's extra four, or character 7's three for each of the
+   items 0x12C-0x12E. */
+s32 func_005C1CD0(DrawObjFull *o, s32 item) {
+    u8 c = o->unkB98;
+    s32 n = 0;
+    u32 i;
+    u16 id;
+
+    if (c == 6) {
+        for (i = 0; i < 4; i++) {
+            if (o->unkC88[1 + i] == 0) {
+                n++;
+            }
+        }
+    }
+    if (D_003967D0[item].active == 0) {
+        return n;
+    }
+    id = D_003967D0[item].unk6;
+    if (c == 7 && id >= 0x12C && id < 0x12F) {
+        switch (id) {
+        case 0x12C:
+            for (i = 0; i < 3; i++) {
+                if (o->unkC88[1 + i] == 0) {
+                    n++;
+                }
+            }
+            break;
+        case 0x12D:
+            for (i = 0; i < 3; i++) {
+                if (o->unkC88[10 + i] == 0) {
+                    n++;
+                }
+            }
+            break;
+        case 0x12E:
+            for (i = 0; i < 3; i++) {
+                if (o->unkC88[0x13 + i] == 0) {
+                    n++;
+                }
+            }
+            break;
+        }
+    }
+    return n;
+}
+
 /* Kind 2: p has item arg (or not, val 0). */
 s32 func_005C6CA0(TalkCond *c, DrawObjFull *p) {
     if (func_005C14C0(p, c->arg)) {
