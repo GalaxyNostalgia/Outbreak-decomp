@@ -758,19 +758,28 @@ typedef struct {
     s16 unk4;           /* 0x04 */
     s16 unk6;           /* 0x06 */
     s16 timer;          /* 0x08 */
-    u8 unkA[3];
+    s8 fade;            /* 0x0A: steps left of the fade in/out */
+    s8 wait;            /* 0x0B: frames to the next letter */
+    u8 alpha;           /* 0x0C */
     s8 unkD;            /* 0x0D: our own player's */
-    u8 unkE[6];
+    s16 shown;          /* 0x0E: bytes of the line shown */
+    s16 len;            /* 0x10: bytes of the line */
+    u8 unk12[2];
     u8 *text;           /* 0x14 */
-    u8 unk18[0x58 - 0x18];
+    u8 buf[0x40];       /* 0x18: what's drawn (name, then the line) */
     s16 unk58;          /* 0x58 */
-    u8 unk5A[2];
+    s16 x;              /* 0x5A */
     DrawObjFull *who;   /* 0x5C */
     u16 unk60;          /* 0x60: the talk entry */
-    u8 unk62[5];
-    u8 unk67;           /* 0x67 */
-    u8 unk68[2];
-    char name[0x92 - 0x6A]; /* 0x6A */
+    s16 chars;          /* 0x62: letters of the line */
+    u8 unk64;
+    s8 unk65;           /* 0x65: letters garbled */
+    s8 at;              /* 0x66: the letter being shown */
+    u8 unk67;           /* 0x67: shown whole, not garbled */
+    s8 line;            /* 0x68 */
+    s8 lines;           /* 0x69 */
+    char name[8];       /* 0x6A */
+    s8 garbled[0x20];   /* 0x72 */
     u8 unk92;           /* 0x92: the speaker's colour */
     u8 unk93[0x98 - 0x93];
 } Speech;
@@ -909,6 +918,244 @@ s32 func_00685590(DrawObjFull *p) {
         }
     }
     return r;
+}
+#endif
+
+extern f32 D_00239CF0;          /* 0.3 */
+extern u8 *D_0023AFB8;          /* the letter shown for a garbled one (two bytes) */
+/* The start of line n of text. */
+u8 *func_006873A0(u8 *text, s32 n) {
+    s32 i = 0;
+    u8 c;
+
+loop:
+    if (i != n) {
+        c = *text++;
+        if (c != 0) {
+            if (c == '\n') {
+                i++;
+            }
+            goto loop;
+        }
+    }
+    return text;
+}
+
+/* The bytes of a line (to its end, '\n' or '\r'). */
+s32 func_006873E0(u8 *line) {
+    s32 n = 0;
+    u8 c;
+
+    while (1) {
+        c = *line++;
+        if (c == 0 || c == '\n' || c == '\r') {
+            break;
+        }
+        n++;
+    }
+    return n;
+}
+
+/* 0 for the first byte of a two-byte (Shift-JIS) letter, else 1. */
+s32 func_00687A80(u8 c) {
+    if (c >= 0x80 && c < 0xA0) {
+        return 0;
+    }
+    if (c >= 0xE0 && c < 0x100) {
+        return 0;
+    }
+    return 1;
+}
+
+u16 func_001ADEF0(s32 n);
+void func_001B88D0(DrawObjFull *who, s32 a, s32 b);
+void func_001B38B0(u8 *buf);
+void func_001B37E0(s32 x, s32 y, s32 a, s32 b);
+
+/* Plays speech s on channel ch (0 ours, 1 the other's): fades in each line of its text, shows it
+   letter by letter (some letters garbled when the speaker's unkDB8 is set), holds it, fades it out,
+   and goes on to the next line. */
+#ifdef NON_MATCHING   /* registers and scheduling differ throughout (405 vs 409) */
+void func_00687420(Speech *s, s32 ch) {
+    DrawObjFull *who = s->who;
+    u8 *p;
+    s8 n;
+    s32 i;
+    s32 j;
+    s32 step;
+    s32 r;
+    s8 left;
+    u8 c;
+
+    switch (s->unk2) {
+    case 0:
+        s->unk2 = 1;
+        n = 0;
+        p = s->text;
+        while ((c = *p++) != 0) {
+            if (c == '\n') {
+                n++;
+            }
+        }
+        s->lines = n;
+        s->line = 0;
+        who->unk1075 = s->unk92;
+        /* fall through */
+    case 1:
+        s->fade = 8;
+        s->alpha = 0;
+        s->unk2 = 2;
+        s->wait = 0;
+        s->shown = 0;
+        s->unk4 = s->unk6;
+        memset(s->buf, 0, 0x40);
+        s->len = func_006873E0(func_006873A0(s->text, s->line));
+        s->x = 0x140 - s->len * 10 / 2;
+        if (ch == 1) {
+            func_001B88D0(s->who, 0, s->unk58);
+        } else if (D_007194C0.unkB8 == NULL) {
+            func_001B88D0(s->who, 0, s->unk58);
+        } else if (*(s16 *)((u8 *)D_007194C0.unkB8 + 0x58) >= 0) {
+            func_001B88D0(s->who, 0, s->unk58);
+        }
+        p = s->text;
+        memset(s->garbled, 0, 0x20);
+        s->chars = 0;
+        for (i = 0; i < s->len; s->chars++) {
+            /* (the original tests the first byte every time) */
+            if (func_00687A80(*p) == 0) {
+                i += 2;
+            } else {
+                i += 1;
+            }
+        }
+        if (s->chars >= 3) {
+            left = 0;
+            if (s->who != NULL && *(s32 *)s->who->unkDB8 != 0) {
+                s->unk65 = (s32)(D_00239CF0 * (f32)s->chars);
+                if (s->unk67 == 0) {
+                    left = s->unk65 + (func_001ADEF0(1) & 0xFFFF & 1);
+                } else {
+                    s->unk65 = 0;
+                    left = 0;
+                }
+            }
+            while (left != 0) {
+                n = s->chars;
+                if (n < 2) {
+                    break;
+                }
+                r = (func_001ADEF0(1) & 0xFFFF) % n;
+                if (r != 0 && r < n) {
+                    left--;
+                    if (s->garbled[r] == 0) {
+                        s->garbled[r] = 1;
+                    }
+                }
+            }
+        }
+        s->at = 0;
+        /* fall through */
+    case 2:
+        if (--s->fade < 0) {
+            s->unk2 = 3;
+            s->fade = 0;
+            s->alpha = 0x80;
+        } else {
+            s->alpha += 0x10;
+            if (s->alpha > 0x80) {
+                s->alpha = 0x80;
+            }
+        }
+        break;
+    case 3:
+        if (s->shown >= s->len) {
+            if (--s->unk4 < 0) {
+                s->fade = 8;
+                s->unk2 = 4;
+            }
+        }
+        break;
+    case 4:
+        if (--s->fade < 0) {
+            s->line++;
+            if (s->line < s->lines) {
+                s->unk2 = 1;
+            } else {
+                s->active = 0;
+                who->unk1075 = 0;
+            }
+            s->fade = 0;
+            s->alpha = 0;
+            func_001B38B0(s->buf);
+            return;
+        }
+        s->alpha -= 0x10;
+        if (s->alpha > 0x80) {
+            s->alpha = 0;
+        }
+        break;
+    }
+
+    s->wait--;
+    step = 0;
+    if (s->wait < 0) {
+        s->wait = 0;
+        step = 1;
+    }
+    func_001B38B0(s->buf);
+    if (step != 0) {
+        memset(s->buf, 0, 0x40);
+        p = s->text;
+        memcpy(s->buf, s->name, 4);
+        j = 0;
+        if (s->unk67 != 0) {
+            memcpy(s->buf + 4, p, s->shown);
+        } else {
+            for (i = 0; i < s->shown; j++) {
+                u8 *q = s->text + i;
+                if (func_00687A80(*q) == 0) {
+                    if (s->garbled[j] != 0) {
+                        memcpy(s->buf + 4 + i, D_0023AFB8, 2);
+                    } else {
+                        memcpy(s->buf + 4 + i, q, 2);
+                    }
+                    i += 2;
+                } else {
+                    memcpy(s->buf + 4 + i, q, 1);
+                    i += 1;
+                }
+            }
+        }
+        if (s->shown < s->len) {
+            p += s->shown;
+            if (func_00687A80(*p) == 0) {
+                if (s->garbled[s->at] != 0) {
+                    memcpy(s->buf + 4 + s->shown, D_0023AFB8, 2);
+                } else {
+                    memcpy(s->buf + 4 + s->shown, p, 2);
+                }
+                s->shown += 2;
+            } else {
+                memcpy(s->buf + 4 + s->shown, p, 1);
+                s->shown += 1;
+            }
+            s->at++;
+        }
+    }
+    if (func_006AC490() == 0) {
+        if (ch == 0) {
+            func_001B37E0(s->x, 0x140, 1, 0x14);
+        } else {
+            func_001B37E0(s->x, 0x15A, 1, 0x14);
+        }
+    }
+    if (s->unk4 < 0x1E && (&D_0023BF78)[ch] >= 2) {
+        Speech *t = D_00718AC0[ch][1];
+        if (t != NULL && t->active != 0) {
+            s->unk4 = 0;
+        }
+    }
 }
 #endif
 
