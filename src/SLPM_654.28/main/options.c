@@ -311,6 +311,13 @@ s32 func_001AD190(s32 n) {
     return 0;
 }
 
+/* Stops stream n. */
+s32 func_001AD420(s32 n) {
+    D_0029B060[n].active = 0;
+    ADXT_Stop(D_0029B0B8[n]);
+    return 0;
+}
+
 s32 func_001AD260(s32 n, s32 vol) {
     s32 v;
 
