@@ -6719,7 +6719,7 @@ typedef struct {
 } DoorMot;              /* (D_006E78F0, by unkAB9) */
 
 extern DoorMot D_006E78F0[];
-s32 func_0063C1B0(DrawObjFull *o, s32 a);
+s32 func_0063C1B0(DrawObjFull *o, u8 how);
 void func_001AF240(u8 player);
 void func_00540260(DrawObjFull *o, u8 model);
 void func_00637B90(DrawObjFull *o);
@@ -6857,5 +6857,204 @@ void func_0063CAD0(DrawObjFull *o) {
         func_0055C4E0(o);
         break;
     }
+}
+#endif
+
+typedef struct {
+    s16 v[4];
+} CmMotRef;
+typedef struct {
+    u8 unk0[8];
+    s16 frame1;         /* 0x8 */
+    s16 frame0;         /* 0xA */
+} CmMotInfo;
+
+s32 func_0063BCB0(DrawObjFull *o);
+s16 func_001918C0(f32 rad);
+CmMotRef *func_005A3E60(DrawObjFull *o, u16 motion);
+void func_005A3D10(DrawObjFull *o, CmMotInfo *info, CmMotRef *m);
+void func_0055BB70(DrawObjFull *o, s16 frame, s32 a, f32 start, f32 blend);
+void func_005A4D20(DrawObjFull *o, u16 a, u16 b, f32 c);
+s8 func_005A4F70(DrawObjFull *o, f32 speed, f32 w);
+void func_00543410(DrawObjFull *o, f32 speed);
+s8 func_0055CE10(DrawObjFull *o, s32 a, s32 b, f32 speed);
+void func_0055CB30(DrawObjFull *o, s32 a, f32 w, f32 inv);
+s32 func_0055BE60(DrawObjFull *o, u16 layer, f32 speed);
+
+#ifdef NON_MATCHING   /* first draft */
+/* Getting o to the spot (unkC34) and heading (unkC4C) before a door's motion (how: 0 walking,
+   1 ..., 2 / 3 other motions): turning on the spot if it's near (0xF2: in unk12 frames), else
+   turning towards it (0xF0) and walking there (0xF1); 1 once it's there (0xF3). */
+s32 func_0063C1B0(DrawObjFull *o, u8 how) {
+    f32 d[3];
+    f32 a[3];
+    f32 b[3];
+    CmMotRef ref;
+    CmMotInfo info;
+    f32 sp;
+    f32 t;
+    f32 n;
+    s16 h;
+    s32 sgn;
+    s8 r;
+
+    if (D_00306590.unkC != 0) {
+        sp = 2.0f;
+    } else {
+        sp = 1.0f;
+    }
+    o->unk54A |= 0x4000;
+    o->unk54A &= ~2;
+    if (how == 1 || (o->unkBA0 & 0x80)) {
+        return func_0063BCB0(o);
+    }
+    switch (o->act[2]) {
+    case 0:
+        o->unk4E4[0] = 0;
+        o->unk4E4[1] = 0;
+        o->unk4E4[2] = 0;
+        FIELD(o, s16, 0xBCE) = o->unkC4C;
+        FIELD(o, s16, 0x12) = 0;
+        a[0] = o->unkC34[0] - o->unk38[0];
+        a[2] = o->unkC34[2] - o->unk38[2];
+        if (!(func_00341860(a[0] * a[0] + a[2] * a[2]) < 20.0f) && how != 2 && how != 3) {
+            o->act[2] = 0xF0;
+            func_005A4490(o, 0x2001, 0.0f, -20.0f);
+            break;
+        }
+        FIELD(o, s16, 0xC4E) = func_0062DBC0(o);
+        if (FIELD(o, s16, 0xC4E) == 0) {
+            FIELD(o, s16, 0x12) = 0.0f;
+        } else {
+            FIELD(o, s16, 0x12) = func_00191A70((s16)(o->unkC4C - o->unk92) / FIELD(o, s16, 0xC4E));
+        }
+        sgn = 1;
+        if ((s16)(o->unkC4C - o->unk92) < 0) {
+            sgn = -1;
+        }
+        switch (how) {
+        case 0:
+        case 1:
+            func_005A4490(o, 0x2003, 0.0f, 10.0f);
+            break;
+        case 2:
+            func_005A4490(o, 0x2021, 0.0f, 10.0f);
+            break;
+        case 3:
+            func_005A4490(o, 0x1011, 0.0f, 20.0f);
+            break;
+        }
+        if (sgn == -1) {
+            FIELD(o, s16, 0xC4E) = -FIELD(o, s16, 0xC4E);
+        }
+        func_0055C4E0(o);
+        o->unk4E4[0] = 0;
+        o->unk4E4[1] = 0;
+        o->unk4E4[2] = 0;
+        o->unkC40[0] = o->unkC34[0] - o->unk38[0];
+        o->unkC40[1] = o->unkC34[1] - o->unk38[1];
+        o->unkC40[2] = o->unkC34[2] - o->unk38[2];
+        if (FIELD(o, s16, 0x12) < 7) {
+            FIELD(o, s16, 0xC4E) = FIELD(o, s16, 0xC4E) * ((1.0f + FIELD(o, s16, 0x12)) / 6.0f);
+            FIELD(o, s16, 0x12) = 6;
+        }
+        o->unkC40[0] /= FIELD(o, s16, 0x12);
+        o->unkC40[1] /= FIELD(o, s16, 0x12);
+        o->unkC40[2] /= FIELD(o, s16, 0x12);
+        o->act[2] = 0xF2;
+        break;
+    case 0xF0:
+        func_0055C030(o, 1.0f);
+        if (FIELD(o, s8, 0x1F1) & 0x10) {
+            break;
+        }
+        o->act[2]++;
+        b[0] = func_003400C0(o->unkC4C);
+        b[2] = func_00340100(o->unkC4C);
+        b[1] = 0;
+        d[0] = o->unkC34[0] - o->unk38[0];
+        d[1] = o->unkC34[1] - o->unk38[1];
+        d[2] = o->unkC34[2] - o->unk38[2];
+        d[1] = 0;
+        func_00191750(d);
+        h = func_001918C0(func_00191B50(d[0], d[2]));
+        t = func_00191A70(func_001917C0(d, b));
+        func_005A4D20(o, (s16)(o->unkC4C - h) > 0 ? 0x201B : 0x201C,
+                      (s16)(o->unkC4C - h) > 0 ? 0x201B : 0x201C, t);
+        switch (how) {
+        case 1:
+            ref = *func_005A3E60(o, D_006E78F0[o->unkAB9].motion);
+            func_005A3D10(o, &info, &ref);
+            func_0055BB70(o, info.frame1, 1, 0.0f, -1.0f * FIELD(o, f32, 0x1E8));
+            FIELD(o, s32, 0x388) = 0;
+            break;
+        case 0:
+            break;
+        }
+        FIELD(o, s16, 0x12) = (FIELD(o, f32, 0x1E8) - 12.0f) / sp;
+        FIELD(o, s16, 0xC4E) = (s16)(o->unkC4C - o->unk92) / FIELD(o, s16, 0x12);
+        o->unkC40[0] = o->unk38[0];
+        o->unkC40[1] = o->unk38[1];
+        o->unkC40[2] = o->unk38[2];
+        break;
+    case 0xF1:
+        if (FIELD(o, s16, 0x12) != 0) {
+            FIELD(o, s16, 0x12)--;
+            o->unk92 += FIELD(o, s16, 0xC4E);
+            a[0] = o->unkC34[0] - o->unkC40[0];
+            a[1] = o->unkC34[1] - o->unkC40[1];
+            a[2] = o->unkC34[2] - o->unkC40[2];
+            n = (FIELD(o, f32, 0x1E8) - 12.0f) / sp;
+            t = func_001A42E0((n - FIELD(o, s16, 0x12)) / n, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f);
+            t *= func_00191690(a);
+            func_00191750(a);
+            a[0] *= t;
+            a[1] *= t;
+            a[2] *= t;
+            o->unk38[0] = o->unkC40[0] + a[0];
+            o->unk38[1] = o->unkC40[1] + a[1];
+            o->unk38[2] = o->unkC40[2] + a[2];
+        }
+        r = 0;
+        switch (how) {
+        case 0:
+            r = func_005A4F70(o, o->unkBA8, FIELD(o, f32, 0x1F8));
+            break;
+        case 1:
+            func_00543410(o, o->unkBA8);
+            func_0055CE10(o, 0, 1, o->unkBA8);
+            r = func_0055CE10(o, 0, 0, o->unkBA8);
+            func_0055CB30(o, 0, FIELD(o, f32, 0x1F8), 1.0f - FIELD(o, f32, 0x1F8));
+            func_0055BE60(o, 1, o->unkBA8);
+            break;
+        }
+        if (r > 0) {
+            o->act[2] = 0xF3;
+        }
+        o->unk4E4[0] = 0;
+        o->unk4E4[1] = 0;
+        o->unk4E4[2] = 0;
+        break;
+    case 0xF2:
+        if (FIELD(o, s16, 0x12)-- != 0) {
+            func_0055C030(o, 1.0f);
+            o->unk4E4[0] = 0;
+            o->unk4E4[1] = 0;
+            o->unk4E4[2] = 0;
+            o->unk92 += FIELD(o, s16, 0xC4E);
+            o->unk38[0] += o->unkC40[0];
+            o->unk38[1] += o->unkC40[1];
+            o->unk38[2] += o->unkC40[2];
+            break;
+        }
+        /* fall through */
+    case 0xF3:
+        o->unk38[0] = o->unkC34[0];
+        o->unk38[1] = o->unkC34[1];
+        o->unk38[2] = o->unkC34[2];
+        o->unk92 = o->unkC4C;
+        return 1;
+    }
+    return 0;
 }
 #endif
