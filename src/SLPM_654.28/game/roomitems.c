@@ -795,7 +795,17 @@ ItemSlot *func_00584500(s16 id, u16 *who);
 DrawObjFull *func_00651300(s32 i);
 void func_005C1430(DrawObjFull *o, u8 slot);
 void func_005C15E0(DrawObjFull *o);
-void func_00561810(u8 slot);
+/* Frees slot i (flag 0x20000000: gone). */
+void func_00561810(u8 i) {
+    ItemSlot *e = &D_003967D0[i];
+
+    if (e->active != 0) {
+        e->active = 0;
+        e->flags &= ~1;
+        e->flags |= 0x20000000;
+        D_0023BE5C--;
+    }
+}
 extern DrawObjFull D_00476DD0[];
 
 /* Item id is taken from whoever holds it (players 0-3, then NPCs). */
