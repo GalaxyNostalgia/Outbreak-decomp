@@ -220,7 +220,21 @@ s32 func_00826850(DrawObjFull *obj, f32 *pos, s32 room);
 void func_00827130(f32 *out, s32 id, s32 place);
 s32 func_00826BD0(DrawObjFull *obj);
 SglLink *func_00829350(s32 room, s32 variant, s32 place);
-u16 func_00825CA0(s32 lo, s32 hi);
+u16 func_001ADEF0(s32 n);
+
+/* A random wait: 1-hi (at least lo) half-seconds, in frames. */
+s32 func_00825CA0(s32 lo, s32 hi) {
+    s32 n = func_001ADEF0(1) & 0xFFFF;
+
+    if (n != 0) {
+        n %= hi;
+    }
+    n++;
+    if (n < lo) {
+        n = lo;
+    }
+    return n * 30;
+}
 s32 func_00823B90(DrawObjFull *obj);
 void func_0082C330(DrawObjFull *obj);
 extern u16 D_003065AC[];        /* the room we're in */
