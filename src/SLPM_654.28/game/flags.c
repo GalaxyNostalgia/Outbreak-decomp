@@ -123,3 +123,116 @@ void func_0064C0A0(s32 row, s32 bit, s32 on, s32 col) {
         func_001AF000(5, &m, 0, 4);
     }
 }
+
+s32 func_001AF0A0(void);
+void func_00540C00(u8 room, u8 bit);
+void func_00540CD0(u8 a, u8 b, u8 c);
+void func_00540A30(u8 room, u8 bit, s32 value);
+void func_00585490(u16 a, u8 b, u8 c, u8 *data);
+void func_0064FDD0(u8 player);
+void func_0064E940(s8 a, s8 b, s8 c, s16 d);
+void func_0064E600(s32 i, s32 take, s16 value);
+
+extern u8 D_0048BBE0[];         /* per event flag: who set it + 1 */
+extern u8 D_0048AE20[];         /* per mark: who holds it (0xFF none) */
+extern s16 D_0048AE30[];
+extern s16 D_0048AE50[];        /* its value */
+extern s16 D_0048AE70[];
+extern u8 D_0071A000[][0x60];
+extern u8 D_0048BE24[][0x10];
+extern u8 D_0048BE28[][0x10];
+extern u16 D_0048BE2C[][8];
+
+/* A flag message from another player (online): 0 an event flag, 1 a flag word, 2 / 3 a mark
+   taken or given back (the server's word on it when we're it, func_001AF0A0), 4 several flag
+   words' values, 5 func_0064FDD0, 6 a room entry's byte, 7 func_00540CD0, 9 func_00585490,
+   10 a player's tables. */
+void func_0064C130(u8 *m);
+#ifdef NON_MATCHING   /* first draft (265 vs 258) */
+void func_0064C130(u8 *m) {
+    s32 i;
+    u8 *b;
+
+    if (func_001AF510() == 0) {
+        return;
+    }
+    switch (m[0]) {
+    case 0:
+        if (m[6] != 0) {
+            D_0048BBE0[*(u16 *)&m[4]] = m[2] + 1;
+            func_00540370(*(u16 *)&m[4]);
+            return;
+        }
+        func_005403A0(*(u16 *)&m[4]);
+        break;
+    case 1:
+        if (m[6] != 0) {
+            func_00540670(m[4], m[5], m[7]);
+            if (m[7] == 2) {
+                func_00540C00(m[4], m[5]);
+            }
+        } else {
+            func_00540620(m[4], m[5], m[7]);
+        }
+        break;
+    case 2:
+        b = m + 4;
+        if (func_001AF0A0() == 0) {
+            break;
+        }
+        if (b[1] != 0) {
+            if (D_0048AE20[b[0]] == 0xFF || D_0048AE20[b[0]] == m[2]) {
+                D_0048AE20[b[0]] = m[2];
+                D_0048AE50[b[0]] = *(s16 *)&b[2];
+                func_0064E940(b[0], m[2], 0, *(s16 *)&b[2]);
+            } else {
+                func_0064E940(b[0], m[2], 1, *(s16 *)&b[2]);
+            }
+        } else if (D_0048AE20[b[0]] == m[2] && D_0048AE50[b[0]] == *(s16 *)&b[2]) {
+            D_0048AE20[b[0]] = 0xFF;
+            D_0048AE50[b[0]] = -1;
+            func_0064E940(b[0], 0xFF, 0, -1);
+        }
+        break;
+    case 3:
+        b = m + 4;
+        if (m[6] != 0) {
+            if (D_0048BF60.unk1D == b[1] && D_0048AE70[b[0]] == *(s16 *)&b[4]) {
+                D_0048AE30[b[0]] = 0;
+            }
+        } else if (func_001AF0A0() == 0) {
+            if (D_0048BF60.unk1D == b[1] && D_0048AE70[b[0]] != *(s16 *)&b[4]) {
+                func_0064E600(b[0], 0, 0);
+                break;
+            }
+            D_0048AE20[b[0]] = b[1];
+            D_0048AE50[b[0]] = *(s16 *)&b[4];
+        }
+        break;
+    case 4:
+        for (i = 0; i < m[4]; i++) {
+            func_00540A30(m[8 + i * 4], m[9 + i * 4], *(s16 *)&m[0xA + i * 4]);
+        }
+        break;
+    case 5:
+        if (func_001AF0A0() != 0) {
+            func_0064FDD0(m[2]);
+        }
+        break;
+    case 6:
+        D_0071A000[m[4]][0x5E] = m[5];
+        break;
+    case 7:
+        func_00540CD0(m[4], m[5], m[6]);
+        break;
+    case 9:
+        func_00585490(*(u16 *)&m[4], m[6], m[7], m + 8);
+        break;
+    case 10:
+        D_0048BE24[m[2]][m[5]] = m[4];
+        D_0048BE28[m[2]][m[5]] = m[6];
+        D_0048BE2C[m[2]][m[5]] = *(u16 *)&m[8];
+        break;
+    }
+}
+#endif
