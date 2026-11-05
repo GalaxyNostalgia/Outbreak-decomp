@@ -1441,3 +1441,31 @@ s32 func_00581140(u8 i, u8 who) {
     }
     return e->unk2A != who + 1;
 }
+
+/* Player who picks up the item in slot i: 2 if func_00562C80 says no; else it's carried (its
+   thing and collision go), 1. */
+s8 func_00581230(u8 i, u16 who) {
+    ItemSlot *e = &D_003967D0[i];
+
+    if (e->active == 0) {
+        return 0;
+    }
+    e->flags |= 1;
+    if (func_00562C80(who, i) == 0) {
+        return 2;
+    }
+    e->owner = who + 1;
+    e->unk3 = 0;
+    e->flags |= 0x800;
+    e->flags &= ~0x400;
+    e->unk2C = func_00583DD0(e)->unkC + 2;
+    if (e->obj != NULL) {
+        func_005609F0(e->obj);
+        e->obj = NULL;
+    }
+    if (e->unk20 != 0) {
+        func_00590CC0(e->unk20);
+        e->unk20 = 0;
+    }
+    return 1;
+}
