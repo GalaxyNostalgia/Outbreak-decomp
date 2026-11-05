@@ -288,7 +288,48 @@ typedef struct {
 extern TextLines D_002F7440;
 void func_001B3400(void);
 
+s32 func_001B3490(s32 prio, s32 x, s32 y, s32 size);
+s32 func_001B3550(s32 x, s32 y, u8 *text);
+
+/* Puts up a line of text (fade 0: at once, else fading in) if nothing above prio is in its way;
+   its alpha, or NULL. */
 u8 *func_001B35E0(s32 prio, s32 x, s32 y, s32 timer, s32 size, u8 *text, s32 fade);
+#ifdef NON_MATCHING   /* two argument copies in the prologue are scheduled the other way round */
+u8 *func_001B35E0(s32 prio, s32 x, s32 y, s32 timer, s32 size, u8 *text, s32 fade) {
+    TextLines *t = &D_002F7440;
+    TextLine *l;
+    s32 i;
+
+    if (func_001B3490(prio, x, y, size) == 0) {
+        return NULL;
+    }
+    if (func_001B3550(x, y, text) == 0) {
+        return NULL;
+    }
+    for (i = 0, l = t->line; i < 32; i++, l++) {
+        if (l->used == 0) {
+            break;
+        }
+    }
+    if (i == 32) {
+        return NULL;
+    }
+    l->used = 1;
+    l->prio = prio;
+    l->x = x & 0xFFFE;
+    l->y = y & 0xFFFE;
+    strcpy((char *)l->text, (char *)text);
+    l->timer = timer;
+    l->size = size;
+    if (fade == 0) {
+        l->color = 0x80;
+    } else {
+        l->color = 0;
+    }
+    l->fade = (s16)fade;
+    return &l->color;
+}
+#endif
 
 /* Shows text at x, y for timer frames (prio 1, no fade) at alpha. */
 void func_001B37E0(s32 x, s32 y, s32 timer, s32 size, u8 *text, u8 alpha) {
