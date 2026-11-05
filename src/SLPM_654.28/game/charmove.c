@@ -6553,3 +6553,50 @@ void func_00641190(DrawObjFull *o) {
     }
 }
 #endif
+
+/* In motion 0x200B from frame 6 on: the action checks (cf. func_0061A1F0). */
+s32 func_0061AA50(DrawObjFull *o) {
+    if (o->unk520 != 0x200B) {
+        return 0;
+    }
+    if (o->unk1E4 < 6.0f) {
+        return 0;
+    }
+    if (o->type == 0 && func_0061D1F0(o)) {
+        return 1;
+    }
+    if (o->type == 0 && func_0061DE60(o)) {
+        return 1;
+    }
+    if (o->type == 0 && func_0061D9A0(o)) {
+        return 1;
+    }
+    if (o->type == 0 && func_0061E3E0(o)) {
+        return 1;
+    }
+    if (o->type == 0 && func_0061E3F0(o)) {
+        return 1;
+    }
+    if (o->type == 0 && func_0061CE50(o)) {
+        return 1;
+    }
+    if (o->type == 0 && func_0061CF40(o)) {
+        return 1;
+    }
+    if (o->type == 0 && func_0061C580(o, 0)) {
+        return 1;
+    }
+    if (o->type == 0 && func_0061C4F0(o, 0)) {
+        return 1;
+    }
+    if (o->type == 0 && func_0061C490(o, 0)) {
+        return 1;
+    }
+    if (o->type == 0 && func_0061C590(o, 0)) {
+        return 1;
+    }
+    if (o->type == 0 && func_0061C650(o, 0)) {
+        return 1;
+    }
+    return 0;
+}
