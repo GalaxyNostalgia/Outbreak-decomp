@@ -772,6 +772,42 @@ u8 func_005C14C0(DrawObjFull *o, u16 id) {
 }
 
 s32 func_00583EA0(u8 slot, s32 mask);
+u8 func_005C1570(DrawObjFull *o, u8 slot);
+void func_00581560(u8 slot);
+
+/* Takes item slot out of o's slots (func_005C1570: its place, bit 0x80 the extra ones); 1 if it
+   wasn't there. */
+s32 func_005C13D0(DrawObjFull *o, u8 slot) {
+    u8 k = func_005C1570(o, slot);
+
+    if (k == 0xFF) {
+        return 1;
+    }
+    if (k & 0x80) {
+        o->unkC88[k & 0x7F] = 0;
+    } else {
+        o->unkC84[k] = 0;
+    }
+    return 0;
+}
+
+/* o lets go of item slot (out of its hand too); 1 if it didn't have it. */
+s32 func_005C1430(DrawObjFull *o, u8 slot) {
+    if (func_005C13D0(o, slot) != 0) {
+        return 1;
+    }
+    if (o->unkC7D == slot) {
+        func_00581560(slot);
+        o->unkC7D = 0;
+        o->unkCA8 = 0;
+    }
+    if (o->unkC7C == slot) {
+        func_00581560(slot);
+        o->unkC7C = 0;
+        o->unkCA8 = 0;
+    }
+    return 0;
+}
 
 /* Room left in the character's four slots (an item with flag 0x20000 takes two). */
 s32 func_005C1C50(DrawObjFull *o);
