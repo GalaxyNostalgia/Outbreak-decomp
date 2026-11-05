@@ -780,7 +780,7 @@ extern s16 D_0023BF7A;
 extern s16 D_0023BF78;
 extern Speech *D_00718AC0[2][0x10];
 extern Speech D_00718B40[0x10];
-void func_00687AD0(Speech *s, s8 a);
+void func_00687AD0(Speech *s, s32 ch);
 void func_00687420(Speech *s, s32 ch);
 
 /* A free speech (marked in use, reset), or NULL. */
@@ -909,6 +909,39 @@ s32 func_00685590(DrawObjFull *p) {
         }
     }
     return r;
+}
+#endif
+
+/* Queues speech s on channel ch, kept in order of timer (largest first); 16 at most. */
+#ifdef NON_MATCHING   /* the swap's second store isn't moved into the loop branch's delay slot */
+void func_00687AD0(Speech *s, s32 ch) {
+    s16 *n;
+    s32 i;
+    s32 j;
+    Speech *t;
+    Speech **q;
+
+    if (s->active != 0) {
+        n = &(&D_0023BF78)[ch];
+        if (*n < 0x10) {
+            q = D_00718AC0[ch];
+            q[(*n)++] = s;
+            i = *n - 2;
+            j = *n - 1;
+            if (i >= 0) {
+                do {
+                    t = q[j - 1];
+                    if (!(t->timer < s->timer)) {
+                        break;
+                    }
+                    q[j - 1] = s;
+                    q[j] = t;
+                    i--;
+                    j--;
+                } while (i >= 0);
+            }
+        }
+    }
 }
 #endif
 
