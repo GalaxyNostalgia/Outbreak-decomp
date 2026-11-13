@@ -861,7 +861,65 @@ void func_001B8F00(void);
 void func_0064FAD0(void);
 void func_005BB710(s32 slot, DrawObjFull *obj);
 void func_001B0E90(void);
-void func_005BAD50(void);
+void func_001B2CC0(void);
+void func_003419C0(void);
+void func_006880C0(void);
+void func_00652360(void);
+void func_005BAF70(void);
+void func_005BAFB0(s32 keep);
+void func_005BB0C0(s32 keep);
+void func_001B1E30(void);
+void func_001B1C90(void);
+
+/* Leaving a room: the characters hidden, and the room's things, effects, routes and the rest
+   cleared (less of it when a message is to play in it). */
+void func_005BAD50(void) {
+    s32 i;
+    DrawObjFull *o;
+
+    func_001B2CC0();
+    func_003419C0();
+    for (i = 0, o = D_00476DD0; i < (s32)D_0023BE14; i++, o++) {
+        o->visible = 0;
+    }
+    D_00470090[1] = 0;
+    func_006880C0();
+    func_00652360();
+    if (D_0023BB98 == 1) {
+        func_005BAF70();
+        func_005BAFB0(0);
+        func_005BB0C0(0);
+    } else {
+        if ((s8)D_0048BF60.unk65 != 0) {
+            func_005BAF70();
+        }
+        if (D_0048BF60.unk28 != 0) {
+            func_005BB0C0(0);
+            func_001B1E30();
+            func_005BAFB0(0);
+        } else {
+            func_005BB0C0(1);
+            func_005BAFB0(1);
+        }
+    }
+    func_001B1C90();
+    func_00551DB0();
+    func_005A9740();
+    func_00590B60();
+    func_006200C0();
+    func_00543580();
+    func_00588A80();
+    func_00543C80();
+    func_00601F60();
+    func_00543D00();
+    func_0067B520();
+    func_006631B0();
+    func_005A9C70();
+    if (func_001AF4D0() == 1) {
+        func_00825DF0();
+    }
+    func_0018D730();
+}
 void func_005CE280(void);
 void func_005811A0(void);
 void func_0064F8C0(void);
