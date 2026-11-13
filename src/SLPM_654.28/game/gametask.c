@@ -1352,6 +1352,52 @@ void func_005BE8A0(void) {
     }
 }
 
+/* Per light (MsgWork.unk1C of them), two lists of changes (0x30 bytes an entry). */
+typedef struct {
+    u16 unk0;
+    u16 time;           /* 0x02 */
+    u8 unk4[0x30 - 4];
+} MsgLightMove;
+
+extern MsgLightMove *D_003612A0[][2];
+void func_00681570(MsgLightMove *m, s8 i);
+
+/* Each frame of a message: the lights' changes due now. */
+void func_005BE9E0(void) {
+    MsgLightMove *m;
+    s32 i;
+    s32 j;
+    MsgLightMove **row;
+    MsgLightMove **pp;
+    u16 t;
+    u16 now;
+
+    for (i = 0; i < D_0035FFD0.unk1C; i++) {
+        row = D_003612A0[i];
+        for (j = 0; j < 2; j++) {
+            pp = &row[j];
+            m = *pp;
+            if (m == NULL) {
+                continue;
+            }
+            now = D_0023BE7C->frames;
+            t = m->time;
+            if (D_00306590.unkC != 0) {
+                t >>= 1;
+                now >>= 1;
+            }
+            if (t == now) {
+                func_00681570(m, i);
+                m++;
+                if (m->time == 0xFFFF) {
+                    m = NULL;
+                }
+            }
+            *pp = m;
+        }
+    }
+}
+
 /* The message plays: (0) its text or movie starts, (1) its stream is ready, (2) the movie ends,
    (3) each frame until it's over. */
 void func_005BD690(void) {
