@@ -1442,6 +1442,41 @@ void func_005BEF10(void) {
     }
 }
 
+/* A message's scene effects (0x28 bytes an entry, MsgWork.unk22 of them). */
+typedef struct {
+    u16 unk0;
+    u16 time;           /* 0x02 */
+    u8 kind;            /* 0x04 */
+    u8 unk5[0x28 - 5];
+} MsgSceneFx;
+
+extern MsgSceneFx *D_0023BD64;
+
+/* Each frame of a message: the scene effects due now. */
+void func_005BEE70(void) {
+    MsgSceneFx *e;
+    u16 t;
+    u16 now;
+    s32 i;
+
+    e = D_0023BD64;
+    if (e == NULL) {
+        return;
+    }
+    for (i = 0; i < D_0035FFD0.unk22; i++, e++) {
+        now = D_0023BE7C->frames;
+        t = e->time;
+        if (D_00306590.unkC != 0) {
+            t >>= 1;
+            now >>= 1;
+        }
+        if (t == now) {
+            func_0067FEB0(e->kind);
+            e->time = 0xFFFF;
+        }
+    }
+}
+
 /* The message plays: (0) its text or movie starts, (1) its stream is ready, (2) the movie ends,
    (3) each frame until it's over. */
 void func_005BD690(void) {
