@@ -584,3 +584,101 @@ void func_0058E7B0(void) {
     func_00345740();
 }
 #endif
+
+#include "message.h"
+
+/* A message's camera: keys for the eye and for the target (0x38 bytes an entry; the time of the
+   one after is 0xFFFF at the end). */
+typedef struct {
+    u16 unk0;
+    u16 time;           /* 0x02 */
+    Vec3 pos;           /* 0x04 */
+    u8 unk10[4];
+    f32 fov;            /* 0x14 */
+    s32 roll;           /* 0x18 */
+    f32 tan[3];         /* 0x1C: (for the curve to the next key) */
+    u8 unk28[8];
+    f32 rollEase;       /* 0x30: not 0: the roll eases (func_00341550) */
+    f32 fovEase;        /* 0x34: the same for the field of view */
+} CamKey;
+
+typedef union {
+    struct {
+        Mat44 view;
+        Camera cam;
+    } v;
+    u128 q[11];
+} ViewCam;              /* D_003062E0 and D_00306320 together (copied by 16 bytes) */
+
+extern CamKey *D_0023BD48;      /* the eye's key now */
+extern CamKey *D_0023BD4C;      /* the target's */
+void func_003415E0(Vec3 *from, f32 *tan, Vec3 *to, Vec3 *out, f32 t);
+f32 func_00341550(f32 from, f32 to, f32 t, f32 ease);
+s32 func_001B6980(s32 flag);
+void func_00345740(void);
+
+/* Each frame of a message: the camera between its keys. */
+void func_00590400(void);
+#ifdef NON_MATCHING   /* the early return's own branch, a doubled sub.s and a nop after the copy loop (171 vs 176) */
+void func_00590400(void) {
+    ViewCam c;
+    CamKey *e;
+    f32 t;
+    s32 d;
+
+    if (D_0023BD48 != NULL) {
+    if (D_0023BD4C == NULL) {
+        return;
+    }
+    c = *(ViewCam *)&D_003062E0;
+    e = D_0023BD48;
+    if (e[1].time == 0xFFFF) {
+        c.v.cam.pos = e->pos;
+        c.v.cam.fov = e->fov;
+        c.v.cam.roll = e->roll;
+    } else {
+        d = e[1].time - e->time;
+        if (d == 0) {
+            t = 1.0f;
+        } else {
+            t = (f32)(D_0035FFD0.frames - e->time) / (f32)d;
+        }
+        func_003415E0(&e->pos, e->tan, &e[1].pos, &c.v.cam.pos, t);
+        if (e->roll != e[1].roll) {
+            if (e->rollEase != 0.0f) {
+                c.v.cam.roll = (s32)func_00341550(e->roll, e[1].roll, t, e->rollEase) & 0xFFFF;
+            } else {
+                c.v.cam.roll = e->roll + (s32)(t * (e[1].roll - e->roll));
+            }
+        } else {
+            c.v.cam.roll = e->roll;
+        }
+        if (e->fov != e[1].fov) {
+            if (e->fovEase != 0.0f) {
+                c.v.cam.fov = func_00341550(e->fov, e[1].fov, t, e->fovEase);
+            } else {
+                c.v.cam.fov = e->fov + t * (e[1].fov - e->fov);
+            }
+        } else {
+            c.v.cam.fov = e->fov;
+        }
+    }
+    e = D_0023BD4C;
+    if (e[1].time == 0xFFFF) {
+        c.v.cam.target = e->pos;
+    } else {
+        d = e[1].time - e->time;
+        if (d == 0) {
+            t = 1.0f;
+        } else {
+            t = (f32)(D_0035FFD0.frames - e->time) / (f32)d;
+        }
+        func_003415E0(&e->pos, e->tan, &e[1].pos, &c.v.cam.target, t);
+    }
+    if (func_001B6980(0x2B) == 0) {
+        *(ViewCam *)&D_003062E0 = c;
+        func_00345740();
+    }
+    }
+}
+#endif
