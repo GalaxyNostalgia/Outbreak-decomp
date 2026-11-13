@@ -297,7 +297,7 @@ void func_005CD890(void) {
 extern s16 D_0023BD78;          /* (pools.c) a queue's read and write positions */
 extern s16 D_0023BD7C;
 extern u32 D_0023BE14;          /* players */
-extern u32 D_003064D0;          /* buttons pressed this frame */
+extern u32 D_003064D0[];        /* buttons pressed this frame (unsized: not $gp-relative) */
 
 void func_005BA730(GameState *g) {
     D_00306590.unk1C = 0;
@@ -383,7 +383,7 @@ void func_005D2A90(void) {
             g->timer = 0x5A;
             g->step++;
         }
-        if (D_003064D0 & 0x8000) {
+        if (D_003064D0[0] & 0x8000) {
             g->unkA = 1;
         }
         break;
@@ -452,7 +452,7 @@ void func_005D2A90(void) {
             func_001AD470();
             break;
         }
-        if (D_003064D0 & 0x8000) {
+        if (D_003064D0[0] & 0x8000) {
             if (func_001AF500() == 1) {
                 func_006500B0(2);
             } else {
@@ -1479,6 +1479,30 @@ void func_005BEE70(void) {
 
 /* (Nothing.) */
 void func_005BDD00(void) {
+}
+
+void func_0064C540(s16 *m);
+
+/* Each frame of a message: START (not in its first or last half second) asks to skip it. */
+void func_005BEFD0(void) {
+    s16 m[5];
+    u16 now;
+    u16 end;
+
+    m[0] = D_0035FFD0.kind;
+    m[1] = D_0035FFD0.a;
+    m[2] = D_0035FFD0.b;
+    m[3] = D_0035FFD0.who;
+    m[4] = D_0035FFD0.who2;
+    now = D_0023BE7C->frames;
+    end = D_0023BE7C->count;
+    if (D_00306590.unkC != 0) {
+        now >>= 1;
+        end >>= 1;
+    }
+    if (now >= 0x20 && end - now >= 0x20 && (D_003064D0[0] & 0x8000)) {
+        func_0064C540(m);
+    }
 }
 
 /* The message plays: (0) its text or movie starts, (1) its stream is ready, (2) the movie ends,
