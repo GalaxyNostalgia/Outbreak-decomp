@@ -74,14 +74,78 @@ void func_00601FE0(s32 *f, s32 x) {
     D_0023BED8 = func_00602040(f, x, D_00394F20, 32, D_0070F140);
 }
 
+/* How many route nodes there are. */
+s32 func_00602210(void) {
+    return D_0023BED8;
+}
+
 /* The route nodes. */
 NavNode *func_00602220(void) {
     return D_00394F20;
 }
 
-s8 func_006022B0(const f32 *pos, s32 a, s32 b, s32 c);
+s8 func_006022B0(const f32 *pos, s8 group, s16 ang, s32 flags);
 
 /* The node nearest pos. */
 s8 func_00602290(const f32 *pos) {
     return func_006022B0(pos, -1, 0, 0);
 }
+
+f32 func_001916E0(const f32 *a, const f32 *b);
+s32 func_00346C50(const f32 *a, const f32 *b);
+s32 func_00549860(const f32 *from, const f32 *to, s32 mask, s32 a, s32 *hit);
+
+/* The node nearest pos (in group, unless negative). flags 2: one that can be seen from pos;
+   flags 1: rather the nearest within 45 degrees of ang, if there is one. */
+#ifdef NON_MATCHING   /* the original keeps a1-a3 across the calls to func_00602220/func_00602210 (static there?) */
+s8 func_006022B0(const f32 *pos, s8 group, s16 ang, s32 flags) {
+    s32 hit;
+    NavNode *n;
+    s32 cnt;
+    s8 best;
+    s8 best2;
+    s8 i;
+    f32 bestd;
+    f32 best2d;
+    f32 d;
+    s16 a;
+
+    best = -1;
+    best2 = -1;
+    bestd = 10000;
+    best2d = bestd;
+    n = func_00602220();
+    cnt = func_00602210();
+    for (i = 0; i < cnt; i++, n++) {
+        if (n->used == 0) {
+            continue;
+        }
+        if ((s8)n->nlinks <= 0) {
+            continue;
+        }
+        if (group >= 0 && (u16)n->unk2 != group) {
+            continue;
+        }
+        d = func_001916E0(n->pos, pos);
+        if (d < bestd) {
+            if ((flags & 2) && func_00549860(n->pos, pos, -1, 0, &hit) != 0) {
+                continue;
+            }
+            best = i;
+            bestd = d;
+        }
+        if ((flags & 1) && d < best2d) {
+            a = (s16)func_00346C50(pos, n->pos) - ang;
+            if (a >= -0x1FFF && a < 0x2000) {
+                best2d = d;
+                best2 = i;
+            }
+        }
+    }
+    if (best2 > 0) {
+        return best2;
+    }
+    best2 = best;
+    return best2;
+}
+#endif
