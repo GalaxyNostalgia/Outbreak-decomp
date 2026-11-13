@@ -1287,6 +1287,71 @@ void func_005BE4C0(void) {
 }
 #endif
 
+/* A message's effects (0x24 bytes an entry, MsgWork.unk2E of them; 0xFFFF time once done). */
+typedef struct {
+    f32 x, y, z;
+} MsgFxPos;
+
+typedef struct {
+    s16 x, y, z, w;
+} MsgFxRot;
+
+typedef struct {
+    u16 unk0;
+    u16 time;           /* 0x02 */
+    u16 id;             /* 0x04: 0x8000: a sound (unk6) */
+    s16 unk6;           /* 0x06 */
+    MsgFxPos pos;       /* 0x08 */
+    MsgFxRot rot;       /* 0x14 */
+    u8 unk1C[4];
+    s16 n;              /* 0x20: 1: on nothing */
+    s16 unk22;          /* 0x22 */
+} MsgEffect;
+
+extern MsgEffect *D_0023BD70;
+void func_005479C0(s32 n);
+s32 func_005BF410(s32 a, s32 n, s32 c);
+void func_00650200(s32 id, s32 on, f32 *pos, s16 *rot);
+
+/* Each frame of a message: the effects due now. */
+void func_005BE8A0(void) {
+    MsgFxPos pos;
+    MsgFxRot rot;
+    MsgEffect *e;
+    s32 i;
+    u16 t;
+    u16 now;
+    s32 n;
+
+    e = D_0023BD70;
+    if (e == NULL) {
+        return;
+    }
+    for (i = 0; i < (u8)D_0035FFD0.unk2E; i++, e++) {
+        now = D_0023BE7C->frames;
+        t = e->time;
+        if (D_00306590.unkC != 0) {
+            t >>= 1;
+            now >>= 1;
+        }
+        if (t == now) {
+            if (e->id & 0x8000) {
+                func_005479C0(e->unk6 & 0x7FFF);
+            } else {
+                pos = e->pos;
+                rot = e->rot;
+                n = e->n - 1;
+                if (n == 0) {
+                    func_00650200((s16)e->id, 0, &pos.x, &rot.x);
+                } else {
+                    func_00650200((s16)e->id, func_005BF410(e->unk6, n, e->unk22), &pos.x, &rot.x);
+                }
+            }
+            e->time = 0xFFFF;
+        }
+    }
+}
+
 /* The message plays: (0) its text or movie starts, (1) its stream is ready, (2) the movie ends,
    (3) each frame until it's over. */
 void func_005BD690(void) {
