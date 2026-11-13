@@ -1019,8 +1019,18 @@ void func_001B3960(void);
 void func_001AC210(void);
 void func_00349DE0(void);
 void func_00349E20(void);
-void func_005BBF10(void);
-void func_005BBF20(void);
+void func_001AD1E0(s32 n);
+void func_001ADD90(s32 n);
+
+/* The demo stream (1) resumes. */
+void func_005BBF10(void) {
+    func_001AD1E0(1);
+}
+
+/* The demo stream (1) is let go. */
+void func_005BBF20(void) {
+    func_001ADD90(1);
+}
 s32 func_001AF510(void);
 void func_005C0E10(void);
 extern void (*D_006D8A70[16])(void);
