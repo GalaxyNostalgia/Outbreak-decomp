@@ -318,6 +318,16 @@ s32 func_001AD420(s32 n) {
     return 0;
 }
 
+/* Lets go of stream n. */
+void func_001ADD90(s32 n) {
+    if (func_001B6980(0xE) == 0) {
+        if (D_0029B0B8[n] != NULL) {
+            func_0012A628(D_0029B0B8[n]);
+            ADXT_Stop(D_0029B0B8[n]);
+        }
+    }
+}
+
 s32 func_001AD260(s32 n, s32 vol) {
     s32 v;
 

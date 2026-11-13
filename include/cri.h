@@ -13,6 +13,7 @@ void ADXPS2_SetupVoice(s32 nStereo, s32 nMono);
 void ADXT_Init(void);
 ADXT ADXT_Create(s32 maxnch, void *work, s32 worksize);
 void ADXT_Stop(ADXT adxt);
+void func_0012A628(ADXT adxt);  /* (empty in this build of the library) */
 s32 ADXT_GetStat(ADXT adxt);           /* 3: playing */
 void ADXT_SetOutVol(ADXT adxt, s32 vol);
 void ADXT_SetSvrFreq(ADXT adxt, s32 freq);
