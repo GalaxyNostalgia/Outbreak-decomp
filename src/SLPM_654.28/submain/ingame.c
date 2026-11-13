@@ -1292,3 +1292,9 @@ void func_00342740(void *e0) {
     func_0018BC50(pt->model, 0);
 }
 #endif
+
+void func_001CF7B0(void);
+
+void func_003419C0(void) {
+    func_001CF7B0();
+}
