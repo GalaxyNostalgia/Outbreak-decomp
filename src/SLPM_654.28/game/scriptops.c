@@ -1384,6 +1384,30 @@ void func_005BF200(void) {
     }
 }
 
+/* The same while a message plays in a room change. */
+void func_005BEDD0(void) {
+    MsgCall *e = D_0023BD68;
+    u16 t;
+    u16 now;
+    s32 i;
+
+    if (e == NULL) {
+        return;
+    }
+    for (i = 0; i < D_0035FFD0.n3; i++, e++) {
+        now = D_0023BE7C->frames;
+        t = e->time;
+        if (D_00306590.unkC != 0) {
+            t >>= 1;
+            now >>= 1;
+        }
+        if (t == now) {
+            func_001B9060(e->arg);
+            e->time = 0xFFFF;
+        }
+    }
+}
+
 /* Count the cue effect down. */
 void func_005BF480(void) {
     MsgFx *fx = &D_0070E530;
