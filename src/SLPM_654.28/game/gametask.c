@@ -1477,6 +1477,10 @@ void func_005BEE70(void) {
     }
 }
 
+/* (Nothing.) */
+void func_005BDD00(void) {
+}
+
 /* The message plays: (0) its text or movie starts, (1) its stream is ready, (2) the movie ends,
    (3) each frame until it's over. */
 void func_005BD690(void) {
