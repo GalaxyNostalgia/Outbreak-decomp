@@ -1314,6 +1314,50 @@ void func_005BF2A0(void) {
     }
 }
 
+extern MsgWork *D_0023BE7C;
+
+/* The same while a message plays in a room change (through D_0023BE7C). */
+void func_005BEAE0(void) {
+    MsgAction *e = D_0023BD6C;
+    u16 t;
+    u16 now;
+    s32 i;
+    s32 j;
+    s32 k;
+    u16 bits;
+
+    if (e == NULL) {
+        return;
+    }
+    for (i = 0; i < D_0035FFD0.n2; i++, e++) {
+        now = D_0023BE7C->frames;
+        t = e->time;
+        if (D_00306590.unkC != 0) {
+            t >>= 1;
+            now >>= 1;
+        }
+        if (t == now) {
+            if (e->kind == 0) {
+                e->time = 0xFFFF;
+            } else if (e->kind == 1) {
+                for (j = 0; j < 8; j++) {
+                    bits = e->bits[j];
+                    for (k = 0; k < 0x10; k++) {
+                        D_00470090[0x8A0 + j * 0x10 + k] = (bits & (1 << k)) != 0;
+                    }
+                }
+                D_003AEF50[0].unk1C = e->a[0];
+                D_003AEF50[0].unk1C |= e->a[1] << 16;
+                D_003AEF50[0].unk20 = e->b[0];
+                D_003AEF50[0].unk20 |= e->b[1] << 16;
+                e->time = 0xFFFF;
+            } else if (e->kind == 2) {
+                func_001BA160(e);
+            }
+        }
+    }
+}
+
 void func_001B9060(s32 arg);
 
 /* Start the vibrations whose time has come. */
