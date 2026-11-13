@@ -528,3 +528,35 @@ void func_00671730(Thing *t) {
     t->unkC94 |= 0x201;
     t->unkC94 |= 8;
 }
+
+extern Thing *D_0023BDF4;       /* the enemies in use */
+s32 func_001AF510(void);
+
+/* Leaving a room (not as a guest online): each enemy's place, health and target go back into
+   its set entry, for when the room is entered again. */
+void func_006880C0(void) {
+    Thing *t;
+    EnemySet *e;
+
+    if (func_001AF510() == 1) {
+        return;
+    }
+    for (t = D_0023BDF4; t != NULL; t = t->next) {
+        if ((u8)t->unkBA6 != 0) {
+            continue;
+        }
+        e = &D_0071A030[D_0071A030[t->set].unk27[0]];
+        e->pos[0] = t->pos[0];
+        e->pos[1] = t->pos[1];
+        e->pos[2] = t->pos[2];
+        e->rot[0] = t->rot[0];
+        e->rot[1] = t->rot[1];
+        e->hp = t->hp;
+        e->unk20 = t->unkBA3;
+        e->unk21 = t->unkB9E;
+        e->unk7 = t->unkC26;
+        if ((u8)t->unkC25 == 1) {
+            e->unk7 |= 0x80;
+        }
+    }
+}
