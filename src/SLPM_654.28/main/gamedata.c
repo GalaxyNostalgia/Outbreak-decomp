@@ -369,6 +369,14 @@ void func_001B0BE0(u16 *anims, s32 first, s32 n) {
     }
 }
 
+/* A motion set (0x1F44 bytes), let go: its 2000 anims freed and its table cleared. */
+void func_001B0C60(u8 *set) {
+    func_001B0BE0((u16 *)(set + 4), 0, 2000);
+    memset(set + 0xFA4, 0, 0xFA0);
+    set[1] = 0;
+    set[0] = 0;
+}
+
 void func_001B0C50(u16 *anims) {
     func_001B0BE0(anims, 0, 0x640);
 }
