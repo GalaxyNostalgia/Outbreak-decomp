@@ -368,3 +368,28 @@ u8 func_006BC9D0(DrawObjFull *obj) {
     return 0;
 }
 #endif
+
+/* Character slot's model, let go. */
+extern u8 D_0070E4D4[];         /* D_0070E4D0.slot */
+
+void func_005BB710(s32 slot, DrawObjFull *obj);
+#ifdef NON_MATCHING   /* the original keeps the base and slot*2 apart and adds them again after the call (36 vs 42) */
+void func_005BB710(s32 slot, DrawObjFull *obj) {
+    u8 *base = (u8 *)&D_0070E4D0;
+    s32 o = slot * 2;
+    u8 *high;
+    u8 *kind;
+
+    if (D_0070E4D4[o] != 0xFF) {
+        high = &(o + base)[5];
+        if (*high == 0xFF) {
+            return;
+        }
+        func_005BB4B0(slot, obj, *high == 1 ? 0x1100 : 0x1000);
+        kind = &(o + base)[4];
+        func_005BB580(*kind);
+        *kind = 0xFF;
+        *high = 0xFF;
+    }
+}
+#endif
