@@ -65,7 +65,7 @@ typedef struct {
     void *objs;         /* 0x130: the message's 8 characters (DrawObjFull, in the work area) */
     void *things;       /* 0x134: its 16 things (0x11A0 bytes each) */
     MsgSet sets[16];    /* 0x138 */
-    u8 unkAF8[0xB10 - 0xAF8];
+    u8 unk9F8[0xB10 - 0x9F8];
 } MsgWork;
 
 extern MsgWork D_0035FFD0;

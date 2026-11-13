@@ -7,3 +7,6 @@ the run-and-decompile loop, the rules, and MWCC habits). In short:
   f1.<overlay> src/SLPM_654.28/<overlay>/<file>.c`; helpers in `tools/dev/`.
 - After one or two honest attempts, keep the C as `NON_MATCHING` (`tools/dev/nonmatch.py`).
 - Before committing: `python3 -I tools/build.py` (every target OK). No game data in commits.
+- `tools/build.py` doesn't rebuild a C file when only a header changed: after changing a struct's
+  layout, `rm -rf build/SLPM_654.28/<overlay>/{c,obj}` before trusting its OK (a wrong MsgWork
+  size once passed this way and broke scriptops.c's `sizeof`).
