@@ -1166,6 +1166,127 @@ void func_005BDEA0(void) {
 }
 #endif
 
+/* One of a message's 16 things (0x11A0 bytes). */
+typedef struct {
+    s8 on;              /* 0x00 */
+    s8 shown;           /* 0x01 */
+    u8 type;            /* 0x02: 10 */
+    u8 unk3[0x18 - 3];
+    s16 rot[3];         /* 0x18 */
+    u8 unk1E[2];
+    s32 x;              /* 0x20: (floats, copied as words) */
+    s32 y;              /* 0x24 */
+    f32 z;              /* 0x28 */
+    u8 unk2C[0x1178 - 0x2C];
+    void *placed;       /* 0x1178: the move that placed it */
+    s32 unk117C;        /* 0x117C */
+    u16 id;             /* 0x1180 */
+    u8 unk1182[0x118C - 0x1182];
+    s32 flags;          /* 0x118C: 1 unk117C set, 2 placed */
+    u8 unk1190[0x11A0 - 0x1190];
+} MsgThing;
+
+/* A thing's move (0x24 bytes, like MsgSetMove). */
+typedef struct {
+    u8 unk0;
+    u8 op;              /* 0x01: 0 place, 1 show/hide, 2 unk117C, 3 attach */
+    u16 time;           /* 0x02 */
+    s32 a;              /* 0x04 */
+    s32 b;              /* 0x08 */
+    f32 z;              /* 0x0C */
+    s16 ang[3];         /* 0x10: degrees */
+    u8 unk16[0x20 - 0x16];
+    s32 who;            /* 0x20: (3) a thing (b != 0) or a set */
+} MsgThingMove;
+
+extern MsgThingMove *D_00360AE0[16][7];
+void func_005417C0(MsgThing *t, s32 to, MsgThingMove *m, s32 n);
+
+/* Each frame of a message: the things' moves due now. */
+void func_005BE4C0(void);
+#ifdef NON_MATCHING   /* the field pointers' stack slots and registers (247 vs 248) */
+void func_005BE4C0(void) {
+    MsgThing *things = D_0035FFD0.things;
+    MsgThing *t;
+    MsgThingMove *m;
+    MsgThingMove **pp;
+    u16 tm;
+    u16 now;
+    s32 i;
+    s32 j;
+    s32 *px;
+    s32 *py;
+    f32 *pz;
+    s16 *r0;
+    s16 *r1;
+    s16 *r2;
+    void **pl;
+    s32 *pu;
+
+    for (i = 0; i < D_0035FFD0.unk18; i++) {
+        t = &things[i];
+        px = &t->x;
+        py = &t->y;
+        pz = &t->z;
+        r0 = &t->rot[0];
+        r1 = &t->rot[1];
+        r2 = &t->rot[2];
+        pl = &t->placed;
+        pu = &t->unk117C;
+        for (j = 0; j < 7; j++) {
+            pp = &D_00360AE0[i][j];
+            m = *pp;
+            if (m == NULL) {
+                continue;
+            }
+            now = D_0023BE7C->frames;
+            tm = m->time;
+            if (D_00306590.unkC != 0) {
+                tm >>= 1;
+                now >>= 1;
+            }
+            if (tm == now) {
+                switch (m->op) {
+                case 0:
+                    t->on = 1;
+                    t->shown = 1;
+                    *px = m->a;
+                    *py = m->b;
+                    *pz = m->z;
+                    *r0 = (u32)(65536.0f * m->ang[0] / 360.0f + 0.5f);
+                    *r1 = (u32)(65536.0f * m->ang[1] / 360.0f + 0.5f);
+                    *r2 = (u32)(65536.0f * m->ang[2] / 360.0f + 0.5f);
+                    *pl = m;
+                    t->flags |= 2;
+                    break;
+                case 2:
+                    t->flags |= 1;
+                    *pu = m->a;
+                    break;
+                case 3:
+                    if (m->a != 0) {
+                        if (m->b != 0) {
+                            func_005417C0(t, (s32)D_0035FFD0.things + m->who * 0x11A0, m, m->a - 1);
+                        } else {
+                            func_005417C0(t, D_0035FFD0.sets[m->who].id, m, m->a - 1);
+                        }
+                    }
+                    break;
+                case 1:
+                    t->shown = m->a;
+                    break;
+                }
+                m++;
+                if (m->time == 0xFFFF) {
+                    m = NULL;
+                }
+            }
+            *pp = m;
+        }
+    }
+}
+#endif
+
 /* The message plays: (0) its text or movie starts, (1) its stream is ready, (2) the movie ends,
    (3) each frame until it's over. */
 void func_005BD690(void) {
