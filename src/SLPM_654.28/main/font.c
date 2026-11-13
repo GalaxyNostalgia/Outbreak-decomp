@@ -409,6 +409,17 @@ void func_001B2C90(void) {
     func_001B3920();
 }
 
+/* The text is cleared and its drawing taken off the frame's jobs. */
+void func_001B2CC0(void);
+#ifdef NON_MATCHING   /* the original still reads Options.unk2A and loads 1 for a test with nothing in it */
+void func_001B2CC0(void) {
+    func_001B3960();
+    func_001AECB0(func_001B3400);
+    if (D_00306590.unk2A == 1) {
+    }
+}
+#endif
+
 #ifdef NON_MATCHING   /* first draft */
 /* Hide lines covered by a higher-priority line */
 void func_001B3350(void) {
