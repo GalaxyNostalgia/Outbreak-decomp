@@ -1398,6 +1398,50 @@ void func_005BE9E0(void) {
     }
 }
 
+/* A message's camera cuts (0x10 bytes an entry, MsgWork.unk20 of them). */
+typedef struct {
+    u16 unk0;
+    u16 time;           /* 0x02 */
+    u16 id;             /* 0x04 */
+    u8 flag;            /* 0x06 */
+    u8 unk7;
+    f32 a;              /* 0x08 */
+    f32 b;              /* 0x0C */
+} MsgCut;
+
+extern MsgCut *D_0023BE8C;
+void *func_005C0C00(s32 id);
+void func_005907C0(void *p, s32 flag, f32 a, f32 b);
+
+/* Each frame of a message: the cuts due now. */
+void func_005BEF10(void) {
+    MsgCut *e;
+    void *p;
+    u16 t;
+    u16 now;
+    s32 i;
+
+    e = D_0023BE8C;
+    if (e == NULL) {
+        return;
+    }
+    for (i = 0; i < D_0035FFD0.unk20; i++, e++) {
+        now = D_0023BE7C->frames;
+        t = e->time;
+        if (D_00306590.unkC != 0) {
+            t >>= 1;
+            now >>= 1;
+        }
+        if (t == now) {
+            p = func_005C0C00(e->id);
+            if (p != NULL) {
+                func_005907C0(p, e->flag, e->a, e->b);
+            }
+            e->time = 0xFFFF;
+        }
+    }
+}
+
 /* The message plays: (0) its text or movie starts, (1) its stream is ready, (2) the movie ends,
    (3) each frame until it's over. */
 void func_005BD690(void) {
