@@ -682,3 +682,74 @@ void func_00590400(void) {
     }
 }
 #endif
+
+#include "options.h"
+
+/* A message's cut: 12 channels of keys over time (func_005907C0 starts one). */
+typedef struct {
+    f32 val;            /* 0x00 */
+    f32 time;           /* 0x04 */
+    f32 in;             /* 0x08 */
+    f32 out;            /* 0x0C */
+} CutKey;
+
+typedef struct {
+    s8 on;              /* 0x00 */
+    u8 unk1[3];
+    f32 time;           /* 0x04 */
+    f32 end;            /* 0x08 */
+    CutKey *keys[12];   /* 0x0C: each channel's key now (NULL: none) */
+    f32 val[12];        /* 0x3C: 0 roll (radians), 1-3 the eye, 4 the lens, 5-7 the target;
+                                 8 isn't interpolated */
+} CutWork;
+
+extern CutWork D_0035FF60;
+extern f32 D_00239E18;          /* 2 pi */
+extern f32 D_00239EAC;
+f32 func_001A42E0(f32 t, f32 p0, f32 t0, f32 m0, f32 p1, f32 t1, f32 m1);
+f32 func_00590AE0(f32 lens);
+
+/* Each frame of a message: the cut's channels at their time, then the camera from them. */
+void func_005908A0(void) {
+    CutKey *k;
+    f32 step;
+    s32 i;
+
+    if (D_0035FF60.on == 0) {
+        return;
+    }
+    if (D_00306590.unkC != 0) {
+        step = 1.0f;
+    } else {
+        step = 0.5f;
+    }
+    if (D_0035FF60.time <= D_0035FF60.end) {
+        for (i = 0; i < 12; i++) {
+            k = D_0035FF60.keys[i];
+            if (k == NULL) {
+                continue;
+            }
+            if (i == 8) {
+                D_0035FF60.val[i] = k->val;
+            } else {
+                D_0035FF60.val[i] = func_001A42E0(D_0035FF60.time, k[0].val, k[0].time, k[0].out,
+                                                  k[1].val, k[1].time, k[1].in);
+            }
+            if (!(D_0035FF60.time + step < k[1].time)) {
+                D_0035FF60.keys[i]++;
+            }
+        }
+        D_0035FF60.time += step;
+    }
+    if (func_001B6980(0x2B) == 0) {
+        D_00306320.pos.x = D_0035FF60.val[1];
+        D_00306320.pos.y = D_0035FF60.val[2];
+        D_00306320.pos.z = D_0035FF60.val[3];
+        D_00306320.target.x = D_0035FF60.val[5];
+        D_00306320.target.y = D_0035FF60.val[6];
+        D_00306320.target.z = D_0035FF60.val[7];
+        D_00306320.roll = (u32)(65536.0f * D_0035FF60.val[0] / D_00239E18 + 0.5f) & 0xFFFF;
+        D_00306320.fov = func_00590AE0(D_0035FF60.val[4]) / D_00239EAC;
+        func_00345740();
+    }
+}
