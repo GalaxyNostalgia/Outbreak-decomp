@@ -1221,6 +1221,54 @@ void func_005BF080(void) {
 }
 #endif
 
+extern u8 *D_0023A948[2];
+
+/* The same from the room's speech data. */
+void func_005BEC50(void);
+#ifdef NON_MATCHING   /* register allocation, like func_005BF080 */
+void func_005BEC50(void) {
+    MsgCue *e = D_0023BD74;
+    u16 t;
+    u16 now;
+    u8 *base;
+    s32 *tab;
+    u8 **pp;
+    s32 n;
+    s32 i;
+
+    if (e == NULL) {
+        return;
+    }
+    now = D_0035FFD0.frames;
+    t = e->time;
+    if (D_00306590.unkC != 0) {
+        t >>= 1;
+        now >>= 1;
+    }
+    if (t == now) {
+        base = D_00306590.speech;
+        tab = (s32 *)(base + 4);
+        memset(&D_0070E530, 0, sizeof(D_0070E530));
+        if (*tab != 0) {
+            D_0070E530.dur = e->dur / 2;
+            D_0070E530.index = e->fx;
+            D_0070E530.data = (s32 *)(base + tab[D_0070E530.index * 2]);
+            n = tab[D_0070E530.index * 2 + 1];
+            pp = &D_0023A948[n - 1];
+            for (i = 0; i < n; i++) {
+                func_001B3720(0, 0, *pp + i * 0x16, D_0070E530.dur, 0x18, base + D_0070E530.data[i]);
+            }
+        }
+        e++;
+        if (e->time == 0xFFFF) {
+            e = NULL;
+        }
+    }
+    D_0023BD74 = e;
+}
+#endif
+
+
 extern u8 D_00470090[];
 void func_001BA160(MsgAction *e);
 
