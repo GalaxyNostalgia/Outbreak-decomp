@@ -859,7 +859,7 @@ void func_005BCBF0(void);
 void func_001AEE30(void);
 void func_001B8F00(void);
 void func_0064FAD0(void);
-void func_005BB710(s32 i);
+void func_005BB710(s32 slot, DrawObjFull *obj);
 void func_001B0E90(void);
 void func_005BAD50(void);
 void func_005CE280(void);
@@ -1877,7 +1877,7 @@ void func_005CE2F0(void) {
     case 5:
         func_0064FAD0();
         for (i = 0, p = D_00476DD0; i < 8; i++, p++) {
-            func_005BB710(i);
+            func_005BB710(i, p);
         }
         func_001B0E90();
         func_005BAD50();
